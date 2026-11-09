@@ -1148,11 +1148,11 @@ test.skipIf(!tmuxAvailable())(
     ] as const) {
       const result = toolResultEnvelope(gateway.requests[index]!.body, id);
       expect(result).toContain("TerminalEnded");
-      expect(result).toContain("ended when the tetris process that started it exited");
+      expect(result).toContain("ended when the Tetris process that started it exited");
       expect(result).toContain("Start a new terminal");
     }
     // The transcript shows why the terminal is gone.
-    expect(await resumed.captureFullScrollback()).toContain("ended when tetris exited");
+    expect(await resumed.captureFullScrollback()).toContain("ended when Tetris exited");
     expect(terminalRecord(fixture.home, sessionId).lifecycle).toBe("lost");
     expect(readFileSync(fixture.stderrPath, "utf8")).toBe("");
   },

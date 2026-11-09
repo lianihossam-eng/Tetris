@@ -631,7 +631,7 @@ fn writeFish(w: *Writer, model: *const Model) !void {
         \\
         \\end
         \\
-        \\set -g __tetris_keys
+        \\set -g __tetris_keys 
     );
     try writeWords(w, model.setting_keys.items);
     try w.writeAll(
@@ -645,7 +645,7 @@ fn writeFish(w: *Writer, model: *const Model) !void {
         \\
         \\end
         \\
-        \\set -g __tetris_settable_keys
+        \\set -g __tetris_settable_keys 
     );
     try writeWords(w, model.settable_keys.items);
     try w.writeAll(

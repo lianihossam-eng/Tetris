@@ -400,6 +400,10 @@ async function startFakeHerdr() {
   const server = createServer((socket) => {
     sockets.add(socket);
     socket.on("close", () => sockets.delete(socket));
+    // Tetris's reports use short-lived sockets and may close before their
+    // reply lands, such as while it exits, so a failed write is not a test
+    // failure.
+    socket.on("error", () => {});
     let input = "";
     socket.on("data", (chunk) => {
       input += chunk.toString();
@@ -408,7 +412,7 @@ async function startFakeHerdr() {
       const request = JSON.parse(input.slice(0, newline));
       if (request.method === "pane.report_agent") {
         expect(request.params.source).toBe("custom:fx");
-        expect(request.params.agent).toBe("fx");
+        expect(request.params.agent).toBe("tetris");
         expect(request.params.pane_id).toBe("w1:p1");
         reports.push(request.params.state);
       }
@@ -3045,17 +3049,22 @@ describe.skipIf(SKIP)("tui: decision prompt input isolation", () => {
       // The resolved question and answer wrap into hanging continuation rows
       // in the transcript instead of trailing off with an ellipsis.
       const resolvedRows = stripAnsi(await ctx.session.captureFullScrollbackEscapes()).split("\n");
-      const resolvedQuestionRow = resolvedRows.find((line) =>
+      const resolvedQuestionIndex = resolvedRows.findIndex((line) =>
         line.includes("1) When you ask tetris to ask a question"),
       );
-      expect(resolvedQuestionRow).toBeDefined();
-      expect(resolvedQuestionRow).not.toContain("…");
-      const resolvedContinuation = resolvedRows.find((line) =>
-        line.includes("remain fully visible even when it wraps."),
+      expect(resolvedQuestionIndex).toBeGreaterThanOrEqual(0);
+      expect(resolvedRows[resolvedQuestionIndex]).not.toContain("…");
+      const resolvedAnswerIndex = resolvedRows.findIndex(
+        (line, index) => index > resolvedQuestionIndex && line.includes(LONG_QUESTION_ANSWER),
       );
-      expect(resolvedContinuation?.indexOf("remain fully visible even when it wraps.")).toBe(5);
-      const resolvedAnswer = resolvedRows.find((line) => line.includes(LONG_QUESTION_ANSWER));
-      expect(resolvedAnswer?.indexOf(LONG_QUESTION_ANSWER)).toBe(5);
+      expect(resolvedAnswerIndex).toBeGreaterThan(resolvedQuestionIndex);
+      // The "  1) " ordinal is 5 columns wide, so both the question's and the
+      // answer's continuation rows hang at column 5 instead of trailing off.
+      for (const row of resolvedRows.slice(resolvedQuestionIndex, resolvedAnswerIndex + 1)) {
+        expect(row).not.toContain("…");
+        if (!row.includes("1) When you ask tetris")) expect(row).toMatch(/^ {5}\S/);
+      }
+      expect(resolvedRows[resolvedAnswerIndex].indexOf(LONG_QUESTION_ANSWER)).toBe(5);
       await assertProcessAliveAndClean(ctx);
     },
     TIMEOUT,

@@ -22,7 +22,7 @@ const maxEffortBytes = 64;
 const maxUrlBytes = 16 * 1024;
 // The answer a resumed turn gives a call its crash left running; matches
 // unfinished_tool_output in session_adapter.zig.
-const unfinishedToolOutput = "fx stopped while this tool was running, so it may have partly run. Check its effects before running it again.";
+const unfinishedToolOutput = "Tetris stopped while this tool was running, so it may have partly run. Check its effects before running it again.";
 const maxModelCatalogBytes = 4 * 1024 * 1024;
 const maxModelCatalogEntries = 10_000;
 const transportActivityIntervalMs = 250;

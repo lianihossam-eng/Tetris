@@ -306,7 +306,7 @@ describe("tetris mcp", () => {
     expect(profile.code).toBe(1);
     // The older --profile still names the profile file, with a warning.
     expect(profile.stderr).toBe(
-      "tetris mcp remove: --profile is deprecated and stops working in Tetris 0.0.18; use --global\nNo MCP server named twin in ~/.tetris/mcp.json.\n",
+      "tetris mcp remove: --profile is deprecated and stops working in Tetris 0.1.1; use --global\nNo MCP server named twin in ~/.tetris/mcp.json.\n",
     );
   });
 

@@ -357,7 +357,7 @@ describe("cli: help", () => {
         `tetris v${sourceVersion()}\nFast, native coding agent for the terminal.\n`,
       );
       expect(stdout.match(/^tetris v/gm) ?? []).toHaveLength(1);
-      expect(stdout).toContain("tetris starts an interactive session by default.");
+      expect(stdout).toContain("Tetris starts an interactive session by default.");
       expect(stdout).toContain("Commands:\n");
       expect(stdout).toContain("Run one noninteractive request");
       expect(stdout).toContain("Sign in to a model provider");
@@ -2333,10 +2333,10 @@ describe("cli: doctor", () => {
             expect.objectContaining({
               name: "sessions",
               status: "ok",
-              // Sessions an older fx saved, each converted when first
+              // Sessions an older Tetris saved, each converted when first
               // opened (D73).
               detail: expect.stringContaining(
-                `${sessionCount} session(s) saved by an older tetris`,
+                `${sessionCount} session(s) saved by an older Tetris`,
               ),
             }),
           ]),

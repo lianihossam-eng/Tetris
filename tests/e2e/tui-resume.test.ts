@@ -9163,7 +9163,7 @@ test.skipIf(!tmuxAvailable())(
       expect(resumed).toBeTruthy();
       // The call that was running is answered as possibly run, so the model
       // decides whether running it again is safe.
-      expect(resumed!.body).toContain("tetris stopped while this tool was running");
+      expect(resumed!.body).toContain("Tetris stopped while this tool was running");
       // With a tool in flight the note keeps its caveat.
       expect(resumed!.body).toContain("A tool that was running may have partly run.");
       expect(readFileSync(second.stderrPath, "utf8")).toBe("");

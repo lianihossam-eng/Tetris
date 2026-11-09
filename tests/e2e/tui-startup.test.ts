@@ -885,7 +885,10 @@ describe.skipIf(SKIP_TMUX)("tui: standard terminal variables", () => {
       });
       await session.waitForPane(() => session!.paneStatus().dead === true, TIMEOUT);
       expect(session.paneStatus().status).toBe(1);
-      expect(await session.captureFullScrollback()).toContain(
+      // The pane is 120 columns wide, narrower than the message, so joining
+      // its rows keeps the check about the text rather than where it wrapped.
+      const scrollback = await session.captureFullScrollback();
+      expect(scrollback.replace(/\n/g, "")).toContain(
         "tetris: TERM=dumb can't show the interactive session; use tetris ask, or run tetris in a terminal that supports cursor movement",
       );
     },
@@ -968,7 +971,7 @@ describe.skipIf(SKIP_TMUX)("tui: credential onboarding", () => {
       expect(picker).not.toContain("Credential source");
       // `/setup` is the deprecated alias of `/provider`. The full notice wraps,
       // so check the part that names the release.
-      expect(await session.captureFullScrollback()).toContain("/setup is deprecated and stops working in Tetris 0.0.18; use /login");
+      expect(await session.captureFullScrollback()).toContain("/setup is deprecated and stops working in Tetris 0.1.1; use /login");
 
       await session.sendKeys("Enter");
       await session.waitForPane(

@@ -76,7 +76,7 @@ describe.skipIf(!tmuxAvailable())("tui: skills command recovery", () => {
         expect(existsSync(join(home, ".tetris", "escape-attempt"))).toBe(false);
 
         await session.sendText("/skills path");
-        const recovered = await session.waitForText("tetris managed install root:", 5_000);
+        const recovered = await session.waitForText("Tetris managed install root:", 5_000);
         expect(hasEmptyComposer(recovered)).toBe(true);
         expect(readFileSync(stderrPath, "utf8")).toBe("");
       } finally {

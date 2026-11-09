@@ -109,7 +109,7 @@ function hasModernMetadata(message) {
     ? capabilities === declared
     : capabilities === "{}" || capabilities === declared;
   return meta?.["io.modelcontextprotocol/protocolVersion"] === protocolVersion &&
-    meta?.["io.modelcontextprotocol/clientInfo"]?.name === "fx" &&
+    meta?.["io.modelcontextprotocol/clientInfo"]?.name === "tetris" &&
     typeof meta?.["io.modelcontextprotocol/clientInfo"]?.version === "string" &&
     capabilitiesMatch;
 }
