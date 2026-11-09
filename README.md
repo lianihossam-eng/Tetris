@@ -55,9 +55,9 @@ Tetris loads skills from `.fx/skills`, `~/.tetris/skills`, and compatible folder
 
 ### Equipment and profiles
 
-Tetris equipment is the set of executable native tools a profile selects: workspace read, edit, and search, shell commands, web access, user questions, delegation, and MCP. Profiles filter those tools before the model sees them, and sensitive tool calls still go through the native permission system.
+Tetris's equipment is its native executable tool registry: file access and editing, shell commands, web access, user questions, delegation, MCP, and the existing native integrations. Tool calls continue through Tetris's native permission system.
 
-The built-in `main` profile is the default and keeps a curated tool list for everyday coding. The built-in `full` profile allows every native tool, including optional vision and skill-management tools; start it with `tetris --profile full`. To choose a different set, create `~/.tetris/agents/<name>/profile.json` with a `description` and a `tools` list, then select it for an interactive session with `tetris --profile <name>`:
+The built-in `main` profile keeps the complete native tool set so the fork does not narrow or replace Fx behavior by default. Custom profiles can filter that set; create `~/.tetris/agents/<name>/profile.json` with a `description` and a `tools` list, then select it with `tetris --profile <name>`:
 
 ```json
 {
@@ -66,9 +66,7 @@ The built-in `main` profile is the default and keeps a curated tool list for eve
 }
 ```
 
-A `tools` list names native tools; `*` adds every native tool and `!name` removes one. The list selects that profile's tools. Profiles also resolve from a repository's `.tetris/agents/`, but a repository profile cannot set the permission mode.
-
-Skills are not equipment. A skill is a Markdown instruction set loaded from the folders above; it guides the model but adds no executable tool or permission.
+A `tools` list names native tools; `*` keeps every native tool and `!name` removes one. Repository profiles resolve from `.tetris/agents/`, but cannot set the permission mode. Markdown skills are instructions, not executable equipment or a way around tool permissions.
 
 ## Documentation
 

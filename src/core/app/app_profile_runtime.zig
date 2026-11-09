@@ -29,7 +29,7 @@ pub fn launchFailure(alloc: std.mem.Allocator, name: []const u8) !?[]u8 {
 }
 
 /// Why a profile cannot be loaded, such as "no profile named 'x'.
-/// Profiles: agent, full, main", or null if it loads. Resolves from the same
+/// Profiles: agent, main", or null if it loads. Resolves from the same
 /// home and workspace that startup uses. Caller owns the reason.
 pub fn failureReason(alloc: std.mem.Allocator, name: []const u8) !?[]u8 {
     var arena_state = std.heap.ArenaAllocator.init(alloc);
@@ -140,7 +140,8 @@ pub fn Runtime(comptime App: type) type {
                     @tagName(ignored.reason),
                 });
             }
-            // `tools=*` means every tool fx has; otherwise the names main kept.
+            // `tools=*` represents the unfiltered native registry; otherwise
+            // it lists the tools this profile kept.
             var names: std.ArrayList(u8) = .empty;
             defer names.deinit(app.alloc);
             if (agent.profile_tools) |set| {
