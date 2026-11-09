@@ -193,7 +193,11 @@ case ":${PATH:-}:" in
     ;;
   *)
     printf 'PATH may need updating. Add %s to it, for example:\n' "$INSTALL_DIR"
+    # Keep $PATH literal for the command the user will run in their shell.
+    # shellcheck disable=SC2016
     printf '  export PATH="%s:$PATH"\n' "$INSTALL_DIR"
     ;;
 esac
+# These backticks are display formatting, not command substitution here.
+# shellcheck disable=SC2016
 printf 'Run `%s --version` to verify the installation.\n' "$PRODUCT"
