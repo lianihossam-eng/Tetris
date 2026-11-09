@@ -128,40 +128,20 @@ jobs:
           cache-key: ${{ steps.zig.outputs.cache-key }}
           cache-hit: ${{ steps.zig.outputs.cache-hit }}
 
-  # The agent and SDK package jobs join unit tests in this required check.
+  # The SDK package jobs and model checks join unit tests in this required check.
   # Publish libfx relies on the SDK jobs instead of rerunning qualification.
-  agent:
-    name: Tetris agent
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: "24"
-          cache: npm
-          cache-dependency-path: agent/package-lock.json
-
-      - name: Install agent dependencies
-        run: npm ci --prefix agent
-
-      - name: Verify agent
-        run: npm run verify --prefix agent
-
   zig:
     name: Build & Test
     if: ${{ always() }}
-    needs: [zig_mode, agent, sdk-node-wasm, sdk-node-napi, sdk-bun, sdk-package-guards, sdk-browser-wasm, tla-mcp, tla-transcript-window]
+    needs: [zig_mode, sdk-node-wasm, sdk-node-napi, sdk-bun, sdk-package-guards, sdk-browser-wasm, tla-mcp, tla-transcript-window]
     runs-on: ubuntu-latest
     steps:
-      - name: Require unit tests, agent verification, and every SDK job
+      - name: Require unit tests, SDK jobs, and model checks
         env:
           RESULTS: ${{ toJSON(needs.*.result) }}
         run: |
           printf '%s\n' "$RESULTS"
-          jq -e 'length == 9 and all(.[]; . == "success")' <<<"$RESULTS"
+          jq -e 'length == 8 and all(.[]; . == "success")' <<<"$RESULTS"
 
   build:
     name: Build tetris (ReleaseSafe)

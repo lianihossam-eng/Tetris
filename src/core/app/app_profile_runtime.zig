@@ -1,5 +1,5 @@
-//! Puts each instance in its profile: the first in its launch profile, `fx
-//! --profile <name>` or fx's own `main`, and every later one in its own.
+//! Puts each instance in its profile: the first in its launch profile, chosen
+//! with `tetris --profile <name>` (default `main`), and every later one in its own.
 
 const std = @import("std");
 const profiles = @import("../profiles/profiles.zig");
@@ -28,9 +28,9 @@ pub fn launchFailure(alloc: std.mem.Allocator, name: []const u8) !?[]u8 {
     return try alloc.print("tetris: {s}\n", .{reason});
 }
 
-/// Why profile `name` cannot be loaded, such as "no profile named 'x'.
-/// Profiles: agent, main", or null when it loads. Resolves from the same home
-/// and workspace that startup uses. Caller owns the reason.
+/// Why a profile cannot be loaded, such as "no profile named 'x'.
+/// Profiles: agent, full, main", or null if it loads. Resolves from the same
+/// home and workspace that startup uses. Caller owns the reason.
 pub fn failureReason(alloc: std.mem.Allocator, name: []const u8) !?[]u8 {
     var arena_state = std.heap.ArenaAllocator.init(alloc);
     defer arena_state.deinit();

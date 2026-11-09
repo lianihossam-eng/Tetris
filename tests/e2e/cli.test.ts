@@ -70,7 +70,7 @@ const MODERN_MCP_FIXTURE = join(
   "mcp-modern-stdio.mjs",
 );
 
-const KEYCHAIN_SERVICE = "FX_AI_GATEWAY_API_KEY";
+const KEYCHAIN_SERVICE = "TETRIS_AI_GATEWAY_API_KEY";
 
 function maxLineWidth(text: string): number {
   return Math.max(...text.split(/\r?\n/).map((line) => Bun.stringWidth(line)));

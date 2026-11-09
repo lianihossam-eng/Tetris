@@ -26,7 +26,7 @@ import { artifacts, binary, repetitions } from "../lib/context";
 import { fixture, save, writeProfile, type Fixture } from "./driver";
 import { checkTrace, type TraceRecord, type Verdict } from "./trace";
 
-const SERVICE = "FX_MCP_OAUTH_CREDENTIALS_V3";
+const SERVICE = "TETRIS_MCP_OAUTH_CREDENTIALS_V3";
 const ACCOUNT_PREFIX = "fx-tla-mcp-lock-";
 /** credentials.zig hold_budget_ms and hold_slack_ms. */
 const BUDGET = 10_000;

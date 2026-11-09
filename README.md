@@ -6,6 +6,8 @@ Tetris has its own installation, release channel, and global profile. The instal
 
 Some integration contracts retain their Fx names for compatibility: the npm SDK is `libfx`, ACP metadata uses `_meta.fx`, project defaults use `.fx.json`, workspace skills use `.fx/skills`, and some runtime controls retain `FX_*` names. These shared names do not change Tetris's executable, release source, or global profile.
 
+On macOS, Tetris uses separate `TETRIS_*` Keychain services. Existing Fx credentials remain untouched; sign in to Tetris separately.
+
 ## Features
 
 - **Terminal-first agent**: conversations stay in terminal scrollback, with shell commands, file operations, web access, and subagents.
@@ -51,7 +53,22 @@ tetris ask --json "Summarize the failing tests" | jq -r .final_output
 
 Tetris loads skills from `.fx/skills`, `~/.tetris/skills`, and compatible folders such as `.claude/skills` and `.agents/skills`. It reads project `AGENTS.md` files and global instructions from `~/.tetris/AGENTS.md`. MCP servers can be managed with `tetris mcp`.
 
-The separate equipment-based Node.js agent lives in [`agent/`](agent/README.md). Its command is `tetris-agent`, so it can be installed alongside the native `tetris` executable.
+### Equipment and profiles
+
+Tetris equipment is the set of executable native tools a profile selects: workspace read, edit, and search, shell commands, web access, user questions, delegation, and MCP. Profiles filter those tools before the model sees them, and sensitive tool calls still go through the native permission system.
+
+The built-in `main` profile is the default and keeps a curated tool list for everyday coding. The built-in `full` profile allows every native tool, including optional vision and skill-management tools; start it with `tetris --profile full`. To choose a different set, create `~/.tetris/agents/<name>/profile.json` with a `description` and a `tools` list, then select it for an interactive session with `tetris --profile <name>`:
+
+```json
+{
+  "description": "Review-only equipment",
+  "tools": ["read_file", "glob_files", "grep_files", "web_fetch"]
+}
+```
+
+A `tools` list names native tools; `*` adds every native tool and `!name` removes one. The list selects that profile's tools. Profiles also resolve from a repository's `.tetris/agents/`, but a repository profile cannot set the permission mode.
+
+Skills are not equipment. A skill is a Markdown instruction set loaded from the folders above; it guides the model but adds no executable tool or permission.
 
 ## Documentation
 

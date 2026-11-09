@@ -13,8 +13,10 @@
 //! write it back, erasing every login in it, and fx processes still running
 //! those builds keep refreshing the logins they hold in memory. A login
 //! shared with them would be refreshed apart and signed out, so this store
-//! starts empty, in files and a Keychain item no older fx opens, and each
-//! server signs in once.
+//! starts empty, in files and a Keychain item (`TETRIS_MCP_OAUTH_CREDENTIALS_V3`)
+//! that neither older builds nor Fx opens, and each server signs in once. Fx
+//! keeps its credentials in its own `FX_*` Keychain items; this build never
+//! reads, overwrites, or deletes them.
 //!
 //! TLA+ models: `tests/tla/mcp_host/Credentials.tla`; for logins shared between
 //! processes, `tests/tla/mcp_host/SharedLogins.tla`; for processes running
@@ -639,8 +641,8 @@ test "credentials-v2.json's logins aren't taken over, and an older fx rewriting 
 test "the store is the one no older fx opens" {
     try testing.expectEqualStrings("credentials-v3.json", file_name);
     try testing.expectEqualStrings("credentials-v3.lock", lock_file_name);
-    try testing.expectEqualStrings("FX_MCP_OAUTH_CREDENTIALS_V3", native_keychain.mcp_host_credentials_service_name);
-    try testing.expectEqualStrings("the Keychain item FX_MCP_OAUTH_CREDENTIALS_V3", (Store{ .home = "/Users/example", .backend = .keychain }).place());
+    try testing.expectEqualStrings("TETRIS_MCP_OAUTH_CREDENTIALS_V3", native_keychain.mcp_host_credentials_service_name);
+    try testing.expectEqualStrings("the Keychain item TETRIS_MCP_OAUTH_CREDENTIALS_V3", (Store{ .home = "/Users/example", .backend = .keychain }).place());
     try testing.expectEqualStrings("~/.tetris/mcp-credentials/credentials-v3.json", (Store{ .home = "/Users/example", .backend = .file }).place());
 }
 

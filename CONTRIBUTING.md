@@ -47,7 +47,7 @@ These rules apply to every change:
 
 - `src/main.zig` only wires runtimes together. Feature logic and state belong to the module that owns them.
 - Sensitive tool behavior goes through the permission system in `src/core/permissions/permissions.zig`. Don't add a path around it.
-- The native Zig runtime uses only the standard library. Keep npm dependencies for the separate `agent/` package there unless the native runtime needs them.
+- The native Zig runtime uses only the standard library. Add executable tools to the native registry in `src/builtins/tools.zig`; profiles select them, and their calls go through the native permission engine. Don't add a parallel tool runtime or an npm dependency that bypasses those checks.
 - Don't commit generated state from `.tetris/`, `.zig-cache/`, or `zig-out/`.
 - Don't commit home-directory paths, real team IDs, or personal project slugs. `scripts/check-public-surface.sh` rejects them in CI, so use `/Users/example/` in fixtures.
 - Don't document behavior that doesn't exist yet.
@@ -200,7 +200,7 @@ The PR verification baseline is:
 
 | Check | What it runs |
 | --- | --- |
-| `Build & Test` | Formatting, PGSO corpus, public-surface and module-boundary checks, unit tests, the Tetris agent, and SDK package jobs |
+| `Build & Test` | Formatting, PGSO corpus, public-surface and module-boundary checks, unit tests, and SDK package jobs |
 | `E2E (deterministic)` | End-to-end files split across weighted shards plus the MCP conformance baseline |
 | `Shellcheck` | `bash -n` and `shellcheck` on workflow scripts |
 | `Startup Latency` | ReleaseSafe CLI startup benchmarks and the interactive performance test |

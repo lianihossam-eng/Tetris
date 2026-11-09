@@ -8,8 +8,10 @@
 \*       older build reads and writes it. Builds from before version 2 of the
 \*       document read only version 1: a version-2 document reads as empty,
 \*       so their next write replaces it with version 1 and their own login.
-\*   v3  `credentials-v3.json`, FX_MCP_OAUTH_CREDENTIALS_V3, which only this
-\*       build opens.
+\*   v3  `credentials-v3.json`, Keychain item TETRIS_MCP_OAUTH_CREDENTIALS_V3,
+\*       which only this build opens. Fx keeps its credentials under the FX_*
+\*       names, including FX_MCP_OAUTH_CREDENTIALS_V3; they are outside this
+\*       model, as no transition here reads or writes them.
 \* `Loc` is where this build keeps its logins and `Copy` whether it carries
 \* the v2 login over; the code has Loc = "v3" and Copy = FALSE.
 \*

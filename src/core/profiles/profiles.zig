@@ -3,11 +3,12 @@
 //! subagent starts in the profile main names for it, `main` by default.
 //!
 //! A profile is a folder, `<name>/profile.json` with an optional
-//! `<name>/prompt.md`. A name resolves from the user's `~/.tetris/agents/` first,
-//! then the repository's `.tetris/agents/`, then Tetris's own `main` and `agent`.
-//! A repository's profile never sets the permission mode, so a cloned
-//! repository cannot grant itself access, and its files never resolve
-//! outside the repository, so it cannot read the user's other files.
+//! `<name>/prompt.md`. Names except `main` resolve from the user's
+//! `~/.tetris/agents/` first, then the repository's `.tetris/agents/`, then
+//! Tetris's built-ins. `main` is reserved and always resolves to Tetris's
+//! curated profile. A repository's profile never sets the permission mode,
+//! so a cloned repository cannot grant itself access, and its files never
+//! resolve outside the repository, so it cannot read the user's other files.
 
 const std = @import("std");
 const types = @import("../shared/types.zig");
@@ -27,6 +28,7 @@ pub const settings_file_name = "profile.json";
 pub const prompt_file_name = "prompt.md";
 pub const main_name = "main";
 pub const agent_name = "agent";
+pub const full_name = "full";
 
 const subagent_tool = "subagent";
 const wildcard = "*";
@@ -56,7 +58,7 @@ pub const Profile = struct {
     effort: ?types.ReasoningEffort = null,
     /// Null means the agent runs under its parent's mode.
     permission_mode: ?types.PermissionMode = null,
-    /// Tool names. `*` means every tool Tetris has and `!name` removes one.
+    /// Tool names. `*` means every registered Tetris tool and `!name` removes one.
     /// Set, it decides the agent's tools, even ones its parent lacks;
     /// null, the agent has its parent's.
     tools: ?[]const []const u8 = null,
@@ -168,14 +170,34 @@ pub fn validName(name: []const u8) bool {
     return true;
 }
 
-/// Tetris's own profiles: `main` and `agent`. Neither sets tools, MCP servers,
-/// or a mode, so an agent in either is a copy of the one that started it,
-/// and an instance in `main` has every tool Tetris has.
+/// Tetris's own profiles: `main` keeps a curated everyday tool set, `full`
+/// keeps every native tool, and `agent` inherits its parent's settings.
 pub fn builtin(name: []const u8) ?Profile {
     if (std.mem.eql(u8, name, main_name)) return .{
         .name = main_name,
-        .description = "Tetris itself, with every tool",
+        .description = "Everyday coding tools",
         .source = .builtin,
+        .tools = &.{
+            "read_file",
+            "glob_files",
+            "grep_files",
+            "edit_file",
+            "write_file",
+            "shell",
+            "web_fetch",
+            "web_search",
+            "subagent",
+            "ask_user_question",
+            "capability_search",
+            "mcp_select_tool",
+            "read_tool_result",
+        },
+    };
+    if (std.mem.eql(u8, name, full_name)) return .{
+        .name = full_name,
+        .description = "Every native tool",
+        .source = .builtin,
+        .tools = &.{"*"},
     };
     if (std.mem.eql(u8, name, agent_name)) return .{
         .name = agent_name,
@@ -328,7 +350,7 @@ pub fn list(arena: Allocator, roots: Roots) ![]Entry {
             try entries.append(arena, .{ .name = profile.name, .description = profile.description, .source = profile.source });
         }
     }
-    for ([_][]const u8{ main_name, agent_name }) |name| {
+    for ([_][]const u8{ main_name, agent_name, full_name }) |name| {
         if (hasEntry(entries.items, name)) continue;
         const profile = builtin(name).?;
         try entries.append(arena, .{ .name = profile.name, .description = profile.description, .source = .builtin });
@@ -644,16 +666,42 @@ test "a profile without a description, with bad JSON, or with a bad value is ref
     try testing.expectError(error.InvalidProfile, parse(arena, "Bad Name", .home, "{\"description\": \"x\"}", "", &failure));
 }
 
-test "Tetris's main and agent profiles decide nothing, so an agent in either copies its parent" {
+test "Tetris's main profile selects core tools while full includes every native tool" {
     const main = builtin(main_name).?;
     const agent = builtin(agent_name).?;
-    try testing.expect(allowsTool(&main, "subagent"));
-    try testing.expect(allowsTool(&main, "write_file"));
+    const full_profile = builtin(full_name);
+    try testing.expect(full_profile != null);
+    const full = full_profile.?;
+    const equipped_tools = [_][]const u8{
+        "read_file",
+        "glob_files",
+        "grep_files",
+        "edit_file",
+        "write_file",
+        "shell",
+        "web_fetch",
+        "web_search",
+        "subagent",
+        "ask_user_question",
+        "capability_search",
+        "mcp_select_tool",
+        "read_tool_result",
+    };
+    for (equipped_tools) |name| {
+        try testing.expect(allowsTool(&main, name));
+        try testing.expect(allowsTool(&full, name));
+    }
+    for ([_][]const u8{ "skill", "install_skill", "vision" }) |name| {
+        try testing.expect(!allowsTool(&main, name));
+        try testing.expect(allowsTool(&full, name));
+    }
+    try testing.expect(allowsTool(&full, "future_native_tool"));
     try testing.expect(allowsTool(&agent, "subagent"));
     try testing.expect(allowsTool(&agent, "write_file"));
-    try testing.expect(!setsTools(&main) and !setsTools(&agent));
-    try testing.expect(!setsMcpServers(&main) and !setsMcpServers(&agent));
-    try testing.expect(main.permission_mode == null and agent.permission_mode == null);
+    try testing.expect(setsTools(&main) and setsTools(&full));
+    try testing.expect(!setsTools(&agent));
+    try testing.expect(!setsMcpServers(&main) and !setsMcpServers(&full) and !setsMcpServers(&agent));
+    try testing.expect(main.permission_mode == null and full.permission_mode == null and agent.permission_mode == null);
     try testing.expect(builtin("reviewer") == null);
 }
 
@@ -732,15 +780,21 @@ test "a name resolves from the user's profiles, then the repository's, then Tetr
     const main = try load(arena, roots, "main", &failure);
     try testing.expectEqual(Source.builtin, main.source);
     try testing.expect(allowsTool(&main, "read_file"));
+    const full = try load(arena, roots, full_name, &failure);
+    try testing.expectEqual(Source.builtin, full.source);
+    try testing.expect(allowsTool(&full, "vision"));
     try testing.expectError(error.InvalidProfile, load(arena, roots, "broken", &failure));
     try testing.expect(std.mem.find(u8, failure.?, "not valid JSON") != null);
     try testing.expectError(error.ProfileNotFound, load(arena, roots, "missing", &failure));
-    try testing.expectEqualStrings("no profile named 'missing'. Profiles: agent, main, reviewer, tester", failure.?);
+    try testing.expectEqualStrings("no profile named 'missing'. Profiles: agent, full, main, reviewer, tester", failure.?);
 
     const entries = try list(arena, roots);
-    try testing.expectEqual(@as(usize, 4), entries.len);
-    try testing.expectEqualStrings("reviewer", entries[2].name);
-    try testing.expectEqual(Source.home, entries[2].source);
+    try testing.expectEqual(@as(usize, 5), entries.len);
+    try testing.expectEqualStrings("agent", entries[0].name);
+    try testing.expectEqualStrings("full", entries[1].name);
+    try testing.expectEqualStrings("main", entries[2].name);
+    try testing.expectEqualStrings("reviewer", entries[3].name);
+    try testing.expectEqual(Source.home, entries[3].source);
     try testing.expectEqual(Source.builtin, entries[0].source);
 }
 

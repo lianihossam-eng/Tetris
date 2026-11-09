@@ -11,7 +11,8 @@
 - The native executable is `tetris`, its default user profile is `~/.tetris`, and stable updates come from Tetris releases. Installing Tetris leaves an existing `fx` executable and profile unchanged.
 - The installer verifies release archives with SHA-256 before installing the Tetris executable.
 - The `libfx` SDK and shared project integration names remain compatible with Fx.
-- The lightweight `tetris-agent` package ships with validated, executable equipment packs for workspace files, search, approved shell, web retrieval, session todos, and bounded delegation; no OMP `SKILL.md` files are bundled.
+- Native profiles select the executable equipment the model sees: the built-in `main` profile keeps a curated tool list for everyday coding, `full` allows every native tool, and custom profiles in `~/.tetris/agents/<name>/profile.json` can declare explicit `tools` lists. Tool calls pass through the native permission system, and Markdown skills remain instructions rather than tools.
+- On macOS, Tetris stores AI Gateway keys, OAuth sessions, and MCP OAuth credentials in its own `TETRIS_*` Keychain services. It never reads, overwrites, or deletes Fx's `FX_*` Keychain items, so installing or signing in to Tetris leaves an existing Fx login untouched.
 <!-- release:end -->
 
 ## Before Tetris: upstream Fx history

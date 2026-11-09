@@ -604,7 +604,7 @@ function seedV2Credential(root: ReturnType<typeof createRoot>, activeAuth: AuthF
  * needs Keychain access to it. `op` is "load" (the item's text, "" when
  * there is none) or "delete".
  */
-const MCP_KEYCHAIN_SERVICE = "FX_MCP_OAUTH_CREDENTIALS_V3";
+const MCP_KEYCHAIN_SERVICE = "TETRIS_MCP_OAUTH_CREDENTIALS_V3";
 const MCP_KEYCHAIN_ACCOUNT_PREFIX = "fx-e2e-mcp-lock-";
 const MCP_KEYCHAIN_SCRIPT = `
 ObjC.import("Security");

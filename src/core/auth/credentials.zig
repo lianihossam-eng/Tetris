@@ -1120,8 +1120,8 @@ const CredentialTestEnv = struct {
     /// environment, `HOME` included, is absent for the duration of the test.
     /// The Keychain is force-disabled: it is keyed by service and account, not
     /// by `HOME`, so without this a fixture session written under a tmp HOME
-    /// migrates into the developer's real `FX_OAUTH_SESSION_V1` item and
-    /// destroys their fx login.
+    /// migrates into the developer's real `TETRIS_OAUTH_SESSION_V1` item and
+    /// destroys their saved Tetris sign-in.
     fn install(alloc: std.mem.Allocator, entries: []const [2][]const u8) !*CredentialTestEnv {
         const self = try alloc.create(CredentialTestEnv);
         errdefer alloc.destroy(self);

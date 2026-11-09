@@ -21,7 +21,9 @@ import {
 } from "./tmux-helpers";
 
 const TIMEOUT = 30_000;
-const OAUTH_SERVICE = "FX_OAUTH_SESSION_V1";
+const OAUTH_SERVICE = "TETRIS_OAUTH_SESSION_V1";
+/** Fx's own OAuth item, which Tetris must never read, overwrite, or delete. */
+const FX_OAUTH_SERVICE = "FX_OAUTH_SESSION_V1";
 const TEST_ACCOUNT_PREFIX = "fx-e2e-oauth-";
 const activeCleanups = new Set<() => void>();
 const KEYCHAIN_PROBE_SCRIPT = `
@@ -94,10 +96,10 @@ function loadKeychainItem(account: string, home: string): string | null {
   throw new Error(`isolated OAuth Keychain lookup failed: ${result.stderr.trim()}`);
 }
 
-function productionMetadata(): string | null {
+function productionMetadata(service: string): string | null {
   const result = spawnSync(
     "/usr/bin/security",
-    ["find-generic-password", "-a", userInfo().username, "-s", OAUTH_SERVICE],
+    ["find-generic-password", "-a", userInfo().username, "-s", service],
     { encoding: "utf8" },
   );
   if (result.status === 0) return `${result.stdout}\n${result.stderr}`;
@@ -233,7 +235,8 @@ keychainTest(
   "OAuth file migration survives restart and logout in an isolated Keychain account",
   async () => {
     const account = isolatedAccount();
-    const before = productionMetadata();
+    const before = productionMetadata(OAUTH_SERVICE);
+    const fxBefore = productionMetadata(FX_OAUTH_SERVICE);
     const home = mkdtempSync(join(tmpdir(), "fx-oauth-keychain-migration-"));
     attachSystemKeychain(home);
     const issuer = startOAuthIssuer();
@@ -302,7 +305,8 @@ keychainTest(
       rmSync(home, { recursive: true, force: true });
     }
 
-    expect(productionMetadata()).toBe(before);
+    expect(productionMetadata(OAUTH_SERVICE)).toBe(before);
+    expect(productionMetadata(FX_OAUTH_SERVICE)).toBe(fxBefore);
   },
   TIMEOUT,
 );
@@ -311,7 +315,8 @@ keychainTest(
   "OAuth Keychain cleanup survives a failure after migration",
   async () => {
     const account = isolatedAccount();
-    const before = productionMetadata();
+    const before = productionMetadata(OAUTH_SERVICE);
+    const fxBefore = productionMetadata(FX_OAUTH_SERVICE);
     const home = mkdtempSync(join(tmpdir(), "fx-oauth-keychain-failure-"));
     attachSystemKeychain(home);
     const issuer = startOAuthIssuer();
@@ -341,7 +346,8 @@ keychainTest(
     try {
       expect(injectedFailureObserved).toBe(true);
       expect(loadKeychainItem(account, home)).toBeNull();
-      expect(productionMetadata()).toBe(before);
+      expect(productionMetadata(OAUTH_SERVICE)).toBe(before);
+      expect(productionMetadata(FX_OAUTH_SERVICE)).toBe(fxBefore);
     } finally {
       rmSync(home, { recursive: true, force: true });
     }
