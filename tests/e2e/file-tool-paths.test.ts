@@ -228,10 +228,10 @@ function createIsolatedRoot() {
   const home = join(root, "home");
   const workspace = join(root, "workspace");
   const external = join(root, "external");
-  mkdirSync(join(home, ".fx"), { recursive: true });
+  mkdirSync(join(home, ".tetris"), { recursive: true });
   mkdirSync(workspace, { recursive: true });
   mkdirSync(external, { recursive: true });
-  writeFileSync(join(home, ".fx", "settings.json"), "{}");
+  writeFileSync(join(home, ".tetris", "settings.json"), "{}");
   return {
     root,
     home: realpathSync(home),
@@ -263,7 +263,7 @@ function gatewayEnv(
 function parseFxJson(result: Awaited<ReturnType<typeof runFx>>) {
   if (result.code !== 0) {
     throw new Error(
-      `fx exited ${result.code}\nstdout: ${result.stdout}\nstderr: ${result.stderr}`,
+      `tetris exited ${result.code}\nstdout: ${result.stdout}\nstderr: ${result.stderr}`,
     );
   }
   return JSON.parse(result.stdout.trim()) as {
@@ -1089,7 +1089,7 @@ describe("filesystem path handling", () => {
       const root = createIsolatedRoot();
       try {
         writeFileSync(
-          join(root.home, ".fx", "settings.json"),
+          join(root.home, ".tetris", "settings.json"),
           JSON.stringify({ sandbox: "none" }),
         );
         const cases = [
@@ -1257,7 +1257,7 @@ describe("filesystem path handling", () => {
         }
 
         writeFileSync(
-          join(root.home, ".fx", "settings.json"),
+          join(root.home, ".tetris", "settings.json"),
           JSON.stringify({
             permission: {
               edit: {
@@ -1422,7 +1422,7 @@ describe("filesystem path handling", () => {
   );
 
   test(
-    "registered typed write and edit use one canonical fx ask mutation path",
+    "registered typed write and edit use one canonical tetris ask mutation path",
     async () => {
       const root = createIsolatedRoot();
       try {
@@ -1671,7 +1671,7 @@ describe("filesystem path handling", () => {
         const editTarget = join(root.external, "edit.txt");
         writeFileSync(editTarget, "BEFORE_EDIT\n");
         writeFileSync(
-          join(root.home, ".fx", "settings.json"),
+          join(root.home, ".tetris", "settings.json"),
           JSON.stringify({
             permission: {
               edit: {

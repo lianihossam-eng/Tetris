@@ -55,7 +55,7 @@ const NO_GATEWAY_AUTH = {
   AI_GATEWAY_API_KEY: undefined,
   VERCEL_OIDC_TOKEN: undefined,
 };
-// `fx config` shows these when they're set, so its tests clear them.
+// `tetris config` shows these when they're set, so its tests clear them.
 const NO_SETTING_ENV = Object.fromEntries(
   [
     "FX_PROVIDER", "FX_MODEL", "FX_ULTRAFAST", "FX_REVIEW_MODEL", "FX_PROVIDER_ORDER", "FX_PROVIDER_STRICT",
@@ -63,7 +63,7 @@ const NO_SETTING_ENV = Object.fromEntries(
   ].map((name) => [name, undefined]),
 );
 const MISSING_AUTH_MESSAGE =
-  "fx needs access to Vercel AI Gateway. Run fx login to sign in, fx login vercel --api-key to use an API key, or set AI_GATEWAY_API_KEY.";
+  "Tetris needs access to Vercel AI Gateway. Run tetris login to sign in, tetris login vercel --api-key to use an API key, or set AI_GATEWAY_API_KEY.";
 const MODERN_MCP_FIXTURE = join(
   import.meta.dirname,
   "fixtures",
@@ -101,7 +101,7 @@ function writeSeededFxAuth(
   issuer = "https://vercel.com",
   expiresAtMs = Date.now() + 60 * 60 * 1000,
 ): void {
-  const fxDir = join(home, ".fx");
+  const fxDir = join(home, ".tetris");
   mkdirSync(fxDir, { recursive: true, mode: 0o700 });
   chmodSync(fxDir, 0o700);
   const authPath = join(fxDir, "auth.json");
@@ -248,10 +248,10 @@ function writeLegacySession(
     historyLen?: number;
   } = {},
 ): void {
-  const sessionDir = join(home, ".fx", "sessions", sessionId);
+  const sessionDir = join(home, ".tetris", "sessions", sessionId);
   mkdirSync(sessionDir, { recursive: true, mode: 0o700 });
-  chmodSync(join(home, ".fx"), 0o700);
-  chmodSync(join(home, ".fx", "sessions"), 0o700);
+  chmodSync(join(home, ".tetris"), 0o700);
+  chmodSync(join(home, ".tetris", "sessions"), 0o700);
   chmodSync(sessionDir, 0o700);
   const historyLen = opts.historyLen ?? 0;
   writeFileSync(
@@ -284,10 +284,10 @@ function writeConversationSession(
     turns?: string[];
   } = {},
 ): void {
-  const sessionDir = join(home, ".fx", "sessions", sessionId);
+  const sessionDir = join(home, ".tetris", "sessions", sessionId);
   mkdirSync(sessionDir, { recursive: true, mode: 0o700 });
-  chmodSync(join(home, ".fx"), 0o700);
-  chmodSync(join(home, ".fx", "sessions"), 0o700);
+  chmodSync(join(home, ".tetris"), 0o700);
+  chmodSync(join(home, ".tetris", "sessions"), 0o700);
   chmodSync(sessionDir, 0o700);
   writeFileSync(
     join(sessionDir, "session.json"),
@@ -354,16 +354,16 @@ describe("cli: help", () => {
       expect(stdout).not.toContain("\x1b[");
       expect(stdout).not.toContain("\x1b]2;");
       expect(stdout).toStartWith(
-        `𝒇x v${sourceVersion()}\nFast, native coding agent for the terminal.\n`,
+        `tetris v${sourceVersion()}\nFast, native coding agent for the terminal.\n`,
       );
-      expect(stdout.match(/𝒇x/g) ?? []).toHaveLength(1);
-      expect(stdout).toContain("fx starts an interactive session by default.");
+      expect(stdout.match(/^tetris v/gm) ?? []).toHaveLength(1);
+      expect(stdout).toContain("tetris starts an interactive session by default.");
       expect(stdout).toContain("Commands:\n");
       expect(stdout).toContain("Run one noninteractive request");
       expect(stdout).toContain("Sign in to a model provider");
       expect(stdout).toContain("Sign out of a model provider");
       expect(stdout).toContain("Choose the active model provider");
-      // `fx setup` is deprecated and hidden; `fx login --api-key` replaces it.
+      // `tetris setup` is deprecated and hidden; `tetris login --api-key` replaces it.
       expect(stdout).not.toContain("Configure a Vercel AI Gateway API key");
       expect(stdout).toContain("login [vercel|codex|grok] [--api-key]");
       expect(stdout).toContain("Choose a Vercel AI Gateway team");
@@ -378,45 +378,45 @@ describe("cli: help", () => {
       expect(stdout).toContain("-r, --resume [last|<id>]");
       expect(stdout).toContain("Pick a saved session, or resume");
       expect(stdout).not.toContain("-c, -r, --continue");
-      expect(stdout).toContain('fx [flags] "<prompt>"');
+      expect(stdout).toContain('tetris [flags] "<prompt>"');
       expect(stdout).not.toContain("--resume-last");
       expect(stdout).not.toContain("--resume-<id>");
       expect(stdout).toContain("session resume [last|id]");
       expect(stdout).toContain("-v, --version");
-      expect(stdout).toContain("Print the fx version and exit");
+      expect(stdout).toContain("Print the Tetris version and exit");
       expect(stdout).not.toContain("Must appear before the command");
       expect(stdout).toContain("Examples:\n");
-      expect(stdout).toContain("https://fx.sh/docs");
-      expect(stdout).toContain("run `/feedback` inside fx");
+      expect(stdout).toContain("https://github.com/lianihossam-eng/Tetris");
+      expect(stdout).toContain("run `/feedback` inside Tetris");
       expect(stdout).toContain(
-        "Run `fx <command> --help` for command-specific usage and options.",
+        "Run `tetris <command> --help` for command-specific usage and options.",
       );
       expect(stdout).not.toContain("command-specific options and examples");
       expect(stdout).not.toContain("  Work      ");
-      expect(stdout).not.toContain("\n\n\nRun `fx <command> --help`");
+      expect(stdout).not.toContain("\n\n\nRun `tetris <command> --help`");
     },
     TIMEOUT,
   );
 
   test(
-    "fx ask help renders documented options through both aliases",
+    "tetris ask help renders documented options through both aliases",
     async () => {
       const env = {
         ...NO_GATEWAY_AUTH,
         FX_DISABLE_KEYCHAIN: "1",
       };
-      const expected = `fx ask
+      const expected = `tetris ask
 
 Run one noninteractive request
 
 Usage:
-  fx ask [--permission-mode <mode>|--ask|--auto|--full-access] [--provider <name>] [--model <id>] [--effort <level>] [--fast|--no-fast] [--ultrafast|--no-ultrafast] [--provider-order <a,b,...>] [--provider-strict|--no-provider-strict] [--image PATH] [--system TEXT] [--json] [--quiet] [--prompt-permissions] [--timeout <seconds>] [--config <key=value>] [--no-save] [--no-color] [--resume <last|<id>>] [--] <prompt>
+  tetris ask [--permission-mode <mode>|--ask|--auto|--full-access] [--provider <name>] [--model <id>] [--effort <level>] [--fast|--no-fast] [--ultrafast|--no-ultrafast] [--provider-order <a,b,...>] [--provider-strict|--no-provider-strict] [--image PATH] [--system TEXT] [--json] [--quiet] [--prompt-permissions] [--timeout <seconds>] [--config <key=value>] [--no-save] [--no-color] [--resume <last|<id>>] [--] <prompt>
 
 Options:
   --permission-mode <mode>    Set the permission mode for this request: ask, auto, or full-access
   --ask                       Ask before each action that needs permission
   --auto                      Automatically review unresolved permission requests
-  --full-access               Disable fx permission checks
+  --full-access               Disable Tetris permission checks
   --yolo                      Alias for --full-access
   --provider <name>           Override the model provider for this request (gateway, codex, grok, or a configured name)
   --model <id>                Override the model for this request
@@ -434,7 +434,7 @@ Options:
   --quiet                     Suppress assistant output
   --prompt-permissions        Prompt for Y/N permission approval when stdin is a TTY
   --timeout <seconds>         Time limit for each shell command the agent runs
-  --config <key=value>        Override a setting for this request, with the keys fx config set takes; repeatable
+  --config <key=value>        Override a setting for this request, with the keys tetris config set takes; repeatable
   --no-save                   Do not save the session; incompatible with --resume
   --no-color                  Render TTY output without colors or hyperlinks; NO_COLOR or TERM=dumb also turns color off
   --resume <last|<id>>        Continue the last session or a session by id
@@ -459,7 +459,7 @@ With --prompt-permissions, JSON and quiet requests may prompt on stderr only whe
   );
 
   test(
-    "fx session help documents inspect resume and recover",
+    "tetris session help documents inspect resume and recover",
     async () => {
       for (const args of [
         ["session", "--help"],
@@ -481,14 +481,14 @@ With --prompt-permissions, JSON and quiet requests may prompt on stderr only whe
   );
 
   test(
-    "fx acp help documents accepted options",
+    "tetris acp help documents accepted options",
     async () => {
       for (const alias of ["--help", "-h"]) {
         const r = await runFx(["acp", alias]);
         expect(r.code).toBe(0);
         expect(r.stderr).toBe("");
         expect(r.stdout).toContain(
-          "Usage:\n  fx acp [--permission-mode <mode>|--ask|--auto|--full-access] [--provider <name>] [--model <id>] [--effort <level>] [--fast|--no-fast] [--ultrafast|--no-ultrafast] [--log-file <path>]",
+          "Usage:\n  tetris acp [--permission-mode <mode>|--ask|--auto|--full-access] [--provider <name>] [--model <id>] [--effort <level>] [--fast|--no-fast] [--ultrafast|--no-ultrafast] [--log-file <path>]",
         );
         expect(r.stdout).toContain("--model <id>");
         expect(r.stdout).toContain("--ultrafast");
@@ -500,7 +500,7 @@ With --prompt-permissions, JSON and quiet requests may prompt on stderr only whe
   );
 
   test(
-    "fx replay help describes golden output",
+    "tetris replay help describes golden output",
     async () => {
       const r = await runFx(["replay", "--help"]);
       expect(r.code).toBe(0);
@@ -514,17 +514,17 @@ With --prompt-permissions, JSON and quiet requests may prompt on stderr only whe
   );
 
   test(
-    "fx acp rejects unknown options and missing option values",
+    "tetris acp rejects unknown options and missing option values",
     async () => {
       const cases: [string[], string][] = [
-        [["--bogus"], "fx acp: unknown flag --bogus\n"],
-        [["--model"], "fx acp: --model needs a value\n"],
-        [["--log-file"], "fx acp: --log-file needs a value\n"],
-        [["--effort", "high effort"], "fx acp: invalid value for --effort: high effort\n"],
-        [["--permission-mode", "never"], "fx acp: invalid value for --permission-mode: never\n"],
+        [["--bogus"], "tetris acp: unknown flag --bogus\n"],
+        [["--model"], "tetris acp: --model needs a value\n"],
+        [["--log-file"], "tetris acp: --log-file needs a value\n"],
+        [["--effort", "high effort"], "tetris acp: invalid value for --effort: high effort\n"],
+        [["--permission-mode", "never"], "tetris acp: invalid value for --permission-mode: never\n"],
         // ACP sessions don't apply gateway provider routing.
-        [["--provider-order", "a"], "fx acp: unknown flag --provider-order\n"],
-        [["--add-dir", "/tmp"], "fx acp: unknown flag --add-dir; it goes before the command: fx --add-dir <path> acp\n"],
+        [["--provider-order", "a"], "tetris acp: unknown flag --provider-order\n"],
+        [["--add-dir", "/tmp"], "tetris acp: unknown flag --add-dir; it goes before the command: tetris --add-dir <path> acp\n"],
       ];
       for (const [args, problem] of cases) {
         const result = await runFx(["acp", ...args]);
@@ -532,7 +532,7 @@ With --prompt-permissions, JSON and quiet requests may prompt on stderr only whe
         expect(result.stdout).toBe("");
         expect(result.stderr).toBe(
           problem +
-            "usage: fx acp [--permission-mode <mode>|--ask|--auto|--full-access] [--provider <name>] [--model <id>] [--effort <level>] [--fast|--no-fast] [--ultrafast|--no-ultrafast] [--log-file <path>]\n",
+            "usage: tetris acp [--permission-mode <mode>|--ask|--auto|--full-access] [--provider <name>] [--model <id>] [--effort <level>] [--fast|--no-fast] [--ultrafast|--no-ultrafast] [--log-file <path>]\n",
         );
       }
     },
@@ -541,7 +541,7 @@ With --prompt-permissions, JSON and quiet requests may prompt on stderr only whe
 
   for (const alias of ["help", "--help", "-h"]) {
     test(
-      `fx ${alias} respects COLUMNS=60`,
+      `tetris ${alias} respects COLUMNS=60`,
       async () => {
         const r = await runFx([alias], { env: { COLUMNS: "60" } });
         expect(r.code).toBe(0);
@@ -559,7 +559,7 @@ With --prompt-permissions, JSON and quiet requests may prompt on stderr only whe
 
   for (const alias of ["help", "--help", "-h"]) {
     test(
-      `fx ${alias} hides developer recording surfaces`,
+      `tetris ${alias} hides developer recording surfaces`,
       async () => {
         const r = await runFx([alias]);
         expect(r.code).toBe(0);
@@ -572,11 +572,11 @@ With --prompt-permissions, JSON and quiet requests may prompt on stderr only whe
   }
 
   test(
-    "fx rejects the removed record flag as unknown input",
+    "tetris rejects the removed record flag as unknown input",
     async () => {
       const r = await runFx(["--record"]);
       expect(r.code).toBe(2);
-      expect(r.stderr).toContain("fx: unknown flag --record");
+      expect(r.stderr).toContain("tetris: unknown flag --record");
       expect(r.stderr).not.toContain("visual terminal capture:");
     },
     TIMEOUT,
@@ -588,7 +588,7 @@ describe("cli: launch flags", () => {
     for (const args of [["--instances", "2", "ask", "hi"], ["--instances=1", "ask", "hi"]]) {
       const result = await runFx(args);
       expect(result.code).toBe(2);
-      expect(result.stderr).toBe("fx: --instances applies to interactive sessions\n");
+      expect(result.stderr).toBe("tetris: --instances applies to interactive sessions\n");
       expect(result.stdout).toBe("");
     }
   });
@@ -597,7 +597,7 @@ describe("cli: launch flags", () => {
     for (const args of [["--profile", "reviewer", "ask", "hi"], ["--profile=reviewer", "status"]]) {
       const result = await runFx(args);
       expect(result.code).toBe(2);
-      expect(result.stderr).toBe("fx: --profile applies to interactive sessions\n");
+      expect(result.stderr).toBe("tetris: --profile applies to interactive sessions\n");
       expect(result.stdout).toBe("");
     }
   });
@@ -606,7 +606,7 @@ describe("cli: launch flags", () => {
 describe("cli: version", () => {
   for (const alias of ["--version", "-v"]) {
     test(
-      `fx ${alias} prints the source version`,
+      `tetris ${alias} prints the source version`,
       async () => {
         const r = await runFx([alias]);
         expect(r.code).toBe(0);
@@ -640,7 +640,7 @@ describe("cli: output errors", () => {
             },
           });
           expect(result.status, args.join(" ")).toBe(1);
-          expect(result.stderr).toBe("fx: couldn't write the output\n");
+          expect(result.stderr).toBe("tetris: couldn't write the output\n");
         }
         // The raw name stays in the trace.
         const trace = readFileSync(tracePath, "utf8");
@@ -655,7 +655,7 @@ describe("cli: output errors", () => {
 
   for (const [label, flags] of [["text", []], ["--json", ["--json"]]] as const) {
     test(
-      `fx ask ${label} that can't write its answer fails and keeps the answer in the session`,
+      `tetris ask ${label} that can't write its answer fails and keeps the answer in the session`,
       async () => {
         const root = realpathSync(mkdtempSync(join(tmpdir(), "fx-ask-closed-stdout-")));
         const home = join(root, "home");
@@ -689,13 +689,13 @@ describe("cli: output errors", () => {
           });
           const stderr = await new Response(proc.stderr).text();
           expect(await proc.exited, stderr).toBe(1);
-          expect(stderr).toBe("fx: couldn't write the output\n");
+          expect(stderr).toBe("tetris: couldn't write the output\n");
           const trace = readFileSync(tracePath, "utf8");
           expect(trace).toContain("ask output write failed err=");
           expect(trace).toContain("command error err=OutputWriteFailed");
 
           // No file fx opened took stdout's place, such as the store's lock.
-          const lock = join(home, ".fx", "sessions", "v2", "index.lock");
+          const lock = join(home, ".tetris", "sessions", "v2", "index.lock");
           if (existsSync(lock)) expect(readFileSync(lock, "utf8")).not.toContain("ANSWER_KEPT_IN_SESSION");
 
           // The turn is saved, so the answer can still be read.
@@ -737,8 +737,8 @@ describe("cli: closed output pipe", () => {
       const home = createIsolatedTestHome();
       try {
         const env = { PATH: process.env.PATH, HOME: home, FX_SOUND: "0", FX_AUTO_UPGRADE: "0", FX_DISABLE_KEYCHAIN: "1" };
-        // `fx --version` ends before fx's I/O starts, so SIGPIPE ends it;
-        // `fx status` gets the closed pipe as a failed write.
+        // `tetris --version` ends before fx's I/O starts, so SIGPIPE ends it;
+        // `tetris status` gets the closed pipe as a failed write.
         for (const args of [["--version"], ["status"]]) {
           const result = await runWithReaderGone(args, env);
           expect(result.status, args.join(" ")).toBe(141);
@@ -753,7 +753,7 @@ describe("cli: closed output pipe", () => {
 
   for (const [label, flags] of [["text", []], ["--json", ["--json"]]] as const) {
     test(
-      `fx ask ${label} whose reader went away ends quietly and still saves the answer`,
+      `tetris ask ${label} whose reader went away ends quietly and still saves the answer`,
       async () => {
         const root = realpathSync(mkdtempSync(join(tmpdir(), "fx-ask-reader-gone-")));
         const home = join(root, "home");
@@ -799,7 +799,7 @@ describe("cli: status", () => {
       const root = mkdtempSync(join(tmpdir(), "fx-e2e-mcp-config-diagnostic-"));
       const home = join(root, "home");
       const workspace = join(root, "workspace");
-      const fxDir = join(home, ".fx");
+      const fxDir = join(home, ".tetris");
       mkdirSync(fxDir, { recursive: true, mode: 0o700 });
       mkdirSync(workspace);
       writeFileSync(join(fxDir, "mcp.json"), "{invalid json", { mode: 0o600 });
@@ -839,7 +839,7 @@ describe("cli: status", () => {
           mcp_config_error: "McpConfigInvalidJson",
         });
         expect(doctorText.stdout).toContain(
-          "[fail] mcp_config: failed to load ~/.fx/mcp.json: McpConfigInvalidJson\n",
+          "[fail] mcp_config: failed to load ~/.tetris/mcp.json: McpConfigInvalidJson\n",
         );
         const doctorJson = JSON.parse(doctorJsonResult.stdout);
         expect(doctorJson.fail_count).toBe(1);
@@ -851,7 +851,7 @@ describe("cli: status", () => {
           {
             name: "mcp_config",
             status: "fail",
-            detail: "failed to load ~/.fx/mcp.json: McpConfigInvalidJson",
+            detail: "failed to load ~/.tetris/mcp.json: McpConfigInvalidJson",
           },
         ]);
         expect(ask.code).toBe(1);
@@ -914,10 +914,10 @@ describe("cli: status", () => {
       try {
         const home = join(root, "home");
         const cwd = join(root, "workspace");
-        mkdirSync(join(home, ".fx"), { recursive: true });
+        mkdirSync(join(home, ".tetris"), { recursive: true });
         mkdirSync(cwd);
         writeFileSync(
-          join(home, ".fx", "settings.json"),
+          join(home, ".tetris", "settings.json"),
           JSON.stringify({
             $schema: "https://fx.sh/schemas/settings.json",
             fast_mdoe: true,
@@ -937,10 +937,10 @@ describe("cli: status", () => {
           .checks.filter((check: { name: string; status: string }) => check.name === "config" && check.status === "warn")
           .map((check: { detail: string }) => check.detail);
         expect(warnings).toEqual([
-          "unknown setting fast_mdoe in ~/.fx/settings.json (did you mean fast_mode?)",
-          "unknown setting statusLine.contxt in ~/.fx/settings.json (did you mean statusLine.context?)",
-          `unknown setting efort in ~/.fx/settings.json for workspace ${cwd} (did you mean effort?)`,
-          "statusLine and status_line are both set in ~/.fx/settings.json; fx uses status_line where they differ, so remove statusLine",
+          "unknown setting fast_mdoe in ~/.tetris/settings.json (did you mean fast_mode?)",
+          "unknown setting statusLine.contxt in ~/.tetris/settings.json (did you mean statusLine.context?)",
+          `unknown setting efort in ~/.tetris/settings.json for workspace ${cwd} (did you mean effort?)`,
+          "statusLine and status_line are both set in ~/.tetris/settings.json; Tetris uses status_line where they differ, so remove statusLine",
           "unknown setting max_agent_step in .fx.json (did you mean max_agent_steps?)",
         ]);
 
@@ -955,7 +955,7 @@ describe("cli: status", () => {
   );
 
   test(
-    "fx config schema prints the settings.json and .fx.json schemas",
+    "tetris config schema prints the settings.json and .fx.json schemas",
     async () => {
       const home = realpathSync(mkdtempSync(join(tmpdir(), "fx-e2e-config-schema-")));
       try {
@@ -991,7 +991,7 @@ describe("cli: status", () => {
         const misplaced = await runFx(["config", "list", "--project"], { env });
         expect(misplaced.code).toBe(2);
         expect(misplaced.stdout).toBe("");
-        expect(misplaced.stderr).toContain("usage: fx config [list|get <key>|set <key> <value>|unset <key>|schema [--project]]");
+        expect(misplaced.stderr).toContain("usage: tetris config [list|get <key>|set <key> <value>|unset <key>|schema [--project]]");
       } finally {
         rmSync(home, { recursive: true, force: true });
       }
@@ -1000,15 +1000,15 @@ describe("cli: status", () => {
   );
 
   test(
-    "fx config lists settings in precedence order and gets the value fx uses",
+    "tetris config lists settings in precedence order and gets the value tetris uses",
     async () => {
       const root = realpathSync(mkdtempSync(join(tmpdir(), "fx-e2e-config-")));
       try {
         const home = join(root, "home");
         const cwd = join(root, "workspace");
-        mkdirSync(join(home, ".fx"), { recursive: true });
+        mkdirSync(join(home, ".tetris"), { recursive: true });
         mkdirSync(cwd);
-        const settingsPath = join(home, ".fx", "settings.json");
+        const settingsPath = join(home, ".tetris", "settings.json");
         writeFileSync(
           settingsPath,
           JSON.stringify({
@@ -1030,19 +1030,19 @@ describe("cli: status", () => {
         expect(list.stdout).toBe(
           [
             "file:.fx.json\tmax_agent_steps=7",
-            "file:~/.fx/settings.json\tfast_mode=true",
-            "file:~/.fx/settings.json\tstatus_line.context=true",
-            "file:~/.fx/settings.json\tmodels.codex=gpt-5.5",
-            'file:~/.fx/settings.json\tprovider_order=["a","b"]',
+            "file:~/.tetris/settings.json\tfast_mode=true",
+            "file:~/.tetris/settings.json\tstatus_line.context=true",
+            "file:~/.tetris/settings.json\tmodels.codex=gpt-5.5",
+            'file:~/.tetris/settings.json\tprovider_order=["a","b"]',
             `workspace:${cwd}\tfast_mode=false`,
             "",
           ].join("\n"),
         );
-        expect(list.stderr).toBe("fx config: unknown setting fast_mdoe in ~/.fx/settings.json (did you mean fast_mode?)\n");
+        expect(list.stderr).toBe("tetris config: unknown setting fast_mdoe in ~/.tetris/settings.json (did you mean fast_mode?)\n");
 
         // get reads the settings the runtime resolves, so it gives the same
         // warnings a run does: this .fx.json sets a profile-only key.
-        const projectWarning = "fx: config project: ignored_project_user_only_setting; key=model\n";
+        const projectWarning = "tetris: config project: ignored_project_user_only_setting; key=model\n";
         const get = await runFx(["config", "get", "fast_mode"], { cwd, env });
         expect([get.code, get.stdout, get.stderr]).toEqual([0, "false\n", projectWarning]);
         const global = await runFx(["config", "get", "fast_mode", "--global"], { cwd, env });
@@ -1055,7 +1055,7 @@ describe("cli: status", () => {
 
         const typo = await runFx(["config", "get", "fast_mdoe"], { cwd, env });
         expect(typo.code).toBe(2);
-        expect(typo.stderr).toStartWith("fx config: unknown setting fast_mdoe (did you mean fast_mode?)\nusage: fx config");
+        expect(typo.stderr).toStartWith("tetris config: unknown setting fast_mdoe (did you mean fast_mode?)\nusage: tetris config");
 
         // Documented FX_* overrides come last, as fx applies them; an ignored value doesn't show.
         const withEnv = { ...env, FX_MAX_AGENT_STEPS: "20", FX_SOUND: "off" };
@@ -1077,7 +1077,7 @@ describe("cli: status", () => {
         expect(json.code).toBe(0);
         expect(JSON.parse(json.stdout)).toEqual({
           kind: "config",
-          entries: [{ key: "fast_mode", value: false, origin: "workspace", file: "~/.fx/settings.json", workspace: cwd }],
+          entries: [{ key: "fast_mode", value: false, origin: "workspace", file: "~/.tetris/settings.json", workspace: cwd }],
           unknown: [],
         });
 
@@ -1090,21 +1090,21 @@ describe("cli: status", () => {
   );
 
   test(
-    "fx config set and unset change plain preferences and refuse the rest",
+    "tetris config set and unset change plain preferences and refuse the rest",
     async () => {
       const root = realpathSync(mkdtempSync(join(tmpdir(), "fx-e2e-config-set-")));
       try {
         const home = join(root, "home");
         const cwd = join(root, "workspace");
-        mkdirSync(join(home, ".fx"), { recursive: true });
+        mkdirSync(join(home, ".tetris"), { recursive: true });
         mkdirSync(cwd);
-        const settingsPath = join(home, ".fx", "settings.json");
+        const settingsPath = join(home, ".tetris", "settings.json");
         writeFileSync(settingsPath, JSON.stringify({ statusLine: { session: true } }) + "\n", { mode: 0o600 });
         const env = { ...NO_GATEWAY_AUTH, ...NO_SETTING_ENV, HOME: home, FX_DISABLE_KEYCHAIN: "1" };
         const settings = () => JSON.parse(readFileSync(settingsPath, "utf8"));
 
         const set = await runFx(["config", "set", "fast_mode", "on"], { cwd, env });
-        expect([set.code, set.stdout, set.stderr]).toEqual([0, "fast_mode set to true in ~/.fx/settings.json.\n", ""]);
+        expect([set.code, set.stdout, set.stderr]).toEqual([0, "fast_mode set to true in ~/.tetris/settings.json.\n", ""]);
         const again = await runFx(["config", "set", "fast_mode", "true"], { cwd, env });
         expect([again.code, again.stdout]).toEqual([0, "fast_mode is already true.\n"]);
         const steps = await runFx(["config", "set", "max_agent_steps", "40", "--json"], { cwd, env });
@@ -1115,10 +1115,10 @@ describe("cli: status", () => {
           key: "max_agent_steps",
           value: 40,
           changed: true,
-          file: "~/.fx/settings.json",
+          file: "~/.tetris/settings.json",
         });
         const unset = await runFx(["config", "unset", "statusLine.session"], { cwd, env });
-        expect([unset.code, unset.stdout]).toEqual([0, "status_line.session removed from ~/.fx/settings.json.\n"]);
+        expect([unset.code, unset.stdout]).toEqual([0, "status_line.session removed from ~/.tetris/settings.json.\n"]);
         expect(settings()).toEqual({ fast_mode: true, max_agent_steps: 40 });
         const get = await runFx(["config", "get", "max_agent_steps"], { cwd, env });
         expect([get.code, get.stdout]).toEqual([0, "40\n"]);
@@ -1127,10 +1127,10 @@ describe("cli: status", () => {
         const refusals: Array<[string[], string]> = [
           [
             ["config", "set", "permission_mode", "full-access"],
-            "fx config: can't change permission_mode with fx config; use /permissions in a session, or --permission-mode for one run\n",
+            "tetris config: can't change permission_mode with tetris config; use /permissions in a session, or --permission-mode for one run\n",
           ],
-          [["config", "set", "fast_mode", "maybe"], "fx config: invalid value for fast_mode: maybe (use true or false)\n"],
-          [["config", "set", "models.codex", "gpt-5.5"], "fx config: can't change models.codex with fx config; use /model in a session\n"],
+          [["config", "set", "fast_mode", "maybe"], "tetris config: invalid value for fast_mode: maybe (use true or false)\n"],
+          [["config", "set", "models.codex", "gpt-5.5"], "tetris config: can't change models.codex with tetris config; use /model in a session\n"],
         ];
         for (const [args, stderr] of refusals) {
           const result = await runFx(args, { cwd, env });
@@ -1139,7 +1139,7 @@ describe("cli: status", () => {
         const workspace = await runFx(["config", "set", "--workspace", "fast_mode", "off"], { cwd, env });
         expect(workspace.code).toBe(2);
         expect(workspace.stderr).toStartWith(
-          "fx config: preferences apply to every workspace, so set and unset don't take --workspace\nusage: fx config",
+          "tetris config: preferences apply to every workspace, so set and unset don't take --workspace\nusage: tetris config",
         );
         expect(readFileSync(settingsPath, "utf8")).toBe(before);
       } finally {
@@ -1192,12 +1192,12 @@ describe("cli: status", () => {
     { name: "automatic Gateway", provider: "gateway", source: undefined, help: MISSING_AUTH_MESSAGE },
     { name: "Gateway with a stale Codex preference", provider: "gateway", source: "chatgpt_subscription", help: MISSING_AUTH_MESSAGE },
     { name: "Gateway with a stale Grok preference", provider: "gateway", source: "grok_subscription", help: MISSING_AUTH_MESSAGE },
-    { name: "an exact Gateway login", provider: "gateway", source: "fx_login", help: "fx login is selected but unavailable. Run fx login to reconnect; no other credential was selected." },
-    { name: "an exact OIDC token", provider: "gateway", source: "vercel_oidc_token", help: "VERCEL_OIDC_TOKEN is selected but unavailable. Set VERCEL_OIDC_TOKEN before starting fx; no other credential was selected." },
-    { name: "an exact environment key", provider: "gateway", source: "ai_gateway_api_key", help: "AI_GATEWAY_API_KEY is selected but unavailable. Set AI_GATEWAY_API_KEY before starting fx; no other credential was selected." },
-    { name: "an exact stored key", provider: "gateway", source: "stored_key", help: "A stored API key is selected but unavailable. Start fx and open /provider to choose an available credential; no other credential was selected." },
-    { name: "Codex", provider: "codex", source: undefined, help: "fx needs a Codex subscription login for this model. Run fx login codex." },
-    { name: "Grok", provider: "grok", source: undefined, help: "fx needs a Grok subscription login for this model. Run fx login grok." },
+    { name: "an exact Gateway login", provider: "gateway", source: "fx_login", help: "Tetris login is selected but unavailable. Run tetris login to reconnect; no other credential was selected." },
+    { name: "an exact OIDC token", provider: "gateway", source: "vercel_oidc_token", help: "VERCEL_OIDC_TOKEN is selected but unavailable. Set VERCEL_OIDC_TOKEN before starting Tetris; no other credential was selected." },
+    { name: "an exact environment key", provider: "gateway", source: "ai_gateway_api_key", help: "AI_GATEWAY_API_KEY is selected but unavailable. Set AI_GATEWAY_API_KEY before starting Tetris; no other credential was selected." },
+    { name: "an exact stored key", provider: "gateway", source: "stored_key", help: "A stored API key is selected but unavailable. Start Tetris and open /provider to choose an available credential; no other credential was selected." },
+    { name: "Codex", provider: "codex", source: undefined, help: "Tetris needs a Codex subscription login for this model. Run tetris login codex." },
+    { name: "Grok", provider: "grok", source: undefined, help: "Tetris needs a Grok subscription login for this model. Run tetris login grok." },
   ]) {
     test(
       `status and doctor respect ${scenario.name} when credentials are missing`,
@@ -1206,9 +1206,9 @@ describe("cli: status", () => {
         try {
           const home = join(root, "home");
           const workspace = join(root, "workspace");
-          mkdirSync(join(home, ".fx"), { recursive: true });
+          mkdirSync(join(home, ".tetris"), { recursive: true });
           mkdirSync(workspace);
-          const settingsPath = join(home, ".fx", "settings.json");
+          const settingsPath = join(home, ".tetris", "settings.json");
           const settings = JSON.stringify({
             provider: scenario.provider,
             models: { [scenario.provider]: "test-model" },
@@ -1253,20 +1253,20 @@ describe("cli: status", () => {
     );
   }
 
-  test("FX_HOME holds settings and sessions in place of ~/.fx", async () => {
-    const root = realpathSync(mkdtempSync(join(tmpdir(), "fx-home-")));
-    const gateway = startFakeGateway([fakeGatewayFinalText("SAVED_UNDER_FX_HOME")]);
+  test("TETRIS_HOME holds settings and sessions in place of ~/.tetris", async () => {
+    const root = realpathSync(mkdtempSync(join(tmpdir(), "tetris-home-")));
+    const gateway = startFakeGateway([fakeGatewayFinalText("SAVED_UNDER_TETRIS_HOME")]);
     try {
       const home = join(root, "home");
       const workspace = join(root, "workspace");
-      const fxHome = join(root, "profile");
+      const tetrisHome = join(root, "profile");
       mkdirSync(home);
       mkdirSync(workspace);
       const options = {
         cwd: workspace,
         env: {
           HOME: home,
-          FX_HOME: fxHome,
+          TETRIS_HOME: tetrisHome,
           AI_GATEWAY_API_KEY: "fx-home-key",
           VERCEL_OIDC_TOKEN: undefined,
           FX_MODEL: FAKE_GATEWAY_MODEL,
@@ -1279,44 +1279,44 @@ describe("cli: status", () => {
 
       const set = await runFx(["config", "set", "theme", "light"], options);
       expect(set.code).toBe(0);
-      expect(set.stdout).toBe("theme set to light in $FX_HOME/settings.json.\n");
-      expect(JSON.parse(readFileSync(join(fxHome, "settings.json"), "utf8")).theme).toBe("light");
+      expect(set.stdout).toBe("theme set to light in $TETRIS_HOME/settings.json.\n");
+      expect(JSON.parse(readFileSync(join(tetrisHome, "settings.json"), "utf8")).theme).toBe("light");
 
       const status = await runFx(["status", "--json"], options);
       expect(status.code).toBe(0);
-      expect(JSON.parse(status.stdout).fx_home).toBe(fxHome);
+      expect(JSON.parse(status.stdout).fx_home).toBe(tetrisHome);
 
       const asked = await runFx(["ask", "--json", "Say something."], options);
       expect(asked.code).toBe(0);
       const sessionId = JSON.parse(asked.stdout).session_id;
-      expect(existsSync(join(fxHome, "sessions"))).toBe(true);
+      expect(existsSync(join(tetrisHome, "sessions"))).toBe(true);
       const sessions = await runFx(["sessions", "--json"], options);
       expect(sessions.stdout).toContain(sessionId);
 
-      expect(existsSync(join(home, ".fx"))).toBe(false);
+      expect(existsSync(join(home, ".tetris"))).toBe(false);
 
-      const relative = await runFx(["status"], { ...options, env: { ...options.env, FX_HOME: "profile" } });
+      const relative = await runFx(["status"], { ...options, env: { ...options.env, TETRIS_HOME: "profile" } });
       expect(relative.code).toBe(1);
-      expect(relative.stderr).toBe("fx: FX_HOME must be an absolute path\n");
+      expect(relative.stderr).toBe("tetris: TETRIS_HOME must be an absolute path\n");
 
-      // A relative HOME counts as unset, so with FX_HOME unset fx has no
-      // folder of its own, and status names none.
+      // A relative HOME counts as unset, so with TETRIS_HOME unset Tetris has
+      // no folder of its own, and status names none.
       const relativeHome = await runFx(["status", "--json"], {
         ...options,
-        env: { ...options.env, HOME: "relative/home", FX_HOME: undefined },
+        env: { ...options.env, HOME: "relative/home", TETRIS_HOME: undefined },
       });
       expect(relativeHome.code).toBe(0);
       expect(JSON.parse(relativeHome.stdout).fx_home).toBeUndefined();
 
-      // With FX_HOME set, a relative HOME counts as unset the same way, so
-      // FX_HOME still holds fx's files.
-      const relativeWithFxHome = { ...options, env: { ...options.env, HOME: "relative/home" } };
-      const statusWithFxHome = await runFx(["status", "--json"], relativeWithFxHome);
-      expect(statusWithFxHome.code).toBe(0);
-      expect(JSON.parse(statusWithFxHome.stdout).fx_home).toBe(fxHome);
-      const added = await runFx(["mcp", "add", "probe", "--", "/bin/echo", "hi"], relativeWithFxHome);
+      // With TETRIS_HOME set, a relative HOME counts as unset the same way, so
+      // TETRIS_HOME still holds Tetris's files.
+      const relativeWithTetrisHome = { ...options, env: { ...options.env, HOME: "relative/home" } };
+      const statusWithTetrisHome = await runFx(["status", "--json"], relativeWithTetrisHome);
+      expect(statusWithTetrisHome.code).toBe(0);
+      expect(JSON.parse(statusWithTetrisHome.stdout).fx_home).toBe(tetrisHome);
+      const added = await runFx(["mcp", "add", "probe", "--", "/bin/echo", "hi"], relativeWithTetrisHome);
       expect(added.code).toBe(0);
-      expect(added.stdout).toBe("Added probe to $FX_HOME/mcp.json.\n");
+      expect(added.stdout).toBe("Added probe to $TETRIS_HOME/mcp.json.\n");
       expect(existsSync(join(workspace, "relative"))).toBe(false);
     } finally {
       gateway.stop();
@@ -1333,9 +1333,9 @@ describe("cli: status", () => {
     try {
       const home = join(root, "home");
       const workspace = join(root, "workspace");
-      mkdirSync(join(home, ".fx"), { recursive: true });
+      mkdirSync(join(home, ".tetris"), { recursive: true });
       mkdirSync(workspace);
-      const settingsPath = join(home, ".fx", "settings.json");
+      const settingsPath = join(home, ".tetris", "settings.json");
       const settings = { provider: "gateway", models: { gateway: FAKE_GATEWAY_MODEL } };
       writeFileSync(settingsPath, JSON.stringify(settings));
       const options = {
@@ -1361,7 +1361,7 @@ describe("cli: status", () => {
       writeFileSync(settingsPath, pinned);
       const status = await runFx(["status", "--json"], options);
       const help = JSON.parse(status.stdout).auth_help;
-      expect(help).toContain("fx login is selected but unavailable");
+      expect(help).toContain("Tetris login is selected but unavailable");
       for (const resumed of [false, true]) {
         for (const json of [false, true]) {
           const result = await runFx([
@@ -1390,7 +1390,7 @@ describe("cli: status", () => {
   }, TIMEOUT);
 
   test(
-    "status and doctor share fx login source, team, and refreshability",
+    "status and doctor share tetris login source, team, and refreshability",
     async () => {
       const root = mkdtempSync(join(tmpdir(), "fx-e2e-status-auth-"));
       try {
@@ -1416,14 +1416,14 @@ describe("cli: status", () => {
         expect(doctorText.code).toBe(0);
         expect(doctorJsonResult.code).toBe(0);
         const expectedAuth = {
-          auth: "fx login",
+          auth: "tetris login",
           auth_refreshable: true,
           team: "vercel-labs",
         };
         expect(JSON.parse(statusJsonResult.stdout.trim())).toMatchObject(expectedAuth);
         expect(JSON.parse(doctorJsonResult.stdout.trim())).toMatchObject(expectedAuth);
         for (const output of [statusText.stdout, doctorText.stdout]) {
-          expect(output).toContain("auth=fx login");
+          expect(output).toContain("auth=tetris login");
           expect(output).toContain("auth_refreshable=true");
           expect(output).toContain("team=vercel-labs");
         }
@@ -1473,7 +1473,7 @@ describe("cli: status", () => {
         expect(status.code).toBe(0);
         expect(doctor.code).toBe(0);
         const expectedAuth = {
-          auth: "fx login",
+          auth: "tetris login",
           auth_refreshable: true,
           team: "vercel-labs",
         };
@@ -1521,13 +1521,13 @@ describe("cli: status", () => {
   );
 
   test(
-    "fx status --json returns valid status JSON",
+    "tetris status --json returns valid status JSON",
     async () => {
       // A fresh profile, so a developer's own settings can't leak in,
-      // including through FX_HOME.
+      // including through TETRIS_HOME.
       const home = createIsolatedTestHome();
       try {
-        const r = await runFx(["status", "--json"], { env: { HOME: home, FX_HOME: undefined } });
+        const r = await runFx(["status", "--json"], { env: { HOME: home, TETRIS_HOME: undefined } });
         expect(r.code).toBe(0);
         const json = JSON.parse(r.stdout.trim());
         expect(json.kind).toBe("status");
@@ -1547,16 +1547,16 @@ describe("cli: status", () => {
   );
 
   test(
-    "fx status reports a persisted dev update channel",
+    "tetris status reports a persisted dev update channel",
     async () => {
       const root = mkdtempSync(join(tmpdir(), "fx-e2e-update-channel-"));
       try {
         const home = join(root, "home");
         const workspace = join(root, "workspace");
-        mkdirSync(join(home, ".fx"), { recursive: true, mode: 0o700 });
+        mkdirSync(join(home, ".tetris"), { recursive: true, mode: 0o700 });
         mkdirSync(workspace);
         writeFileSync(
-          join(home, ".fx", "settings.json"),
+          join(home, ".tetris", "settings.json"),
           '{"update_channel":"dev"}\n',
           { mode: 0o600 },
         );
@@ -1579,14 +1579,14 @@ describe("cli: status", () => {
   );
 
   test(
-    "fx status reports the effort a new session starts with, workspace override first",
+    "tetris status reports the effort a new session starts with, workspace override first",
     async () => {
       const root = mkdtempSync(join(tmpdir(), "fx-e2e-status-effort-"));
       try {
         const home = join(root, "home");
         const workspace = join(root, "workspace");
         const elsewhere = join(root, "elsewhere");
-        mkdirSync(join(home, ".fx"), { recursive: true, mode: 0o700 });
+        mkdirSync(join(home, ".tetris"), { recursive: true, mode: 0o700 });
         mkdirSync(workspace);
         mkdirSync(elsewhere);
         const env = { ...NO_GATEWAY_AUTH, HOME: home };
@@ -1596,7 +1596,7 @@ describe("cli: status", () => {
         expect(JSON.parse(unset.stdout.trim()).effort).toBe("auto");
 
         writeFileSync(
-          join(home, ".fx", "settings.json"),
+          join(home, ".tetris", "settings.json"),
           JSON.stringify({ effort: "xhigh", workspaces: { [realpathSync(workspace)]: { effort: "low" } } }) + "\n",
           { mode: 0o600 },
         );
@@ -1618,7 +1618,7 @@ describe("cli: status", () => {
   );
 
   test(
-    "fx upgrade help documents release channels",
+    "tetris upgrade help documents release channels",
     async () => {
       const result = await runFx(["upgrade", "--help"]);
       expect(result.code).toBe(0);
@@ -1629,14 +1629,14 @@ describe("cli: status", () => {
   );
 
   test(
-    "fx mcp list reports bad arguments as JSON when --json is given",
+    "tetris mcp list reports bad arguments as JSON when --json is given",
     async () => {
       const home = mkdtempSync(join(tmpdir(), "fx-mcp-list-json-"));
       try {
         for (const [args, error] of [
           [["mcp", "list", "--bogus", "--json"], "unknown flag --bogus"],
           [["mcp", "list", "--json", "--bogus"], "unknown flag --bogus"],
-          [["mcp", "list", "extra", "--json"], "fx mcp list takes no server name."],
+          [["mcp", "list", "extra", "--json"], "tetris mcp list takes no server name."],
         ] as const) {
           const result = await runFx([...args], { env: { HOME: home } });
           expect(result.code).toBe(2);
@@ -1650,7 +1650,7 @@ describe("cli: status", () => {
         const text = await runFx(["mcp", "list", "--bogus"], { env: { HOME: home } });
         expect(text.code).toBe(2);
         expect(text.stdout).toBe("");
-        expect(text.stderr).toStartWith("fx mcp list: unknown flag --bogus\nusage: fx mcp list");
+        expect(text.stderr).toStartWith("tetris mcp list: unknown flag --bogus\nusage: tetris mcp list");
       } finally {
         rmSync(home, { recursive: true, force: true });
       }
@@ -1659,7 +1659,7 @@ describe("cli: status", () => {
   );
 
   test(
-    "fx upgrade names a channel that does not exist and saves nothing",
+    "tetris upgrade names a channel that does not exist and saves nothing",
     async () => {
       const home = mkdtempSync(join(tmpdir(), "fx-upgrade-channel-"));
       try {
@@ -1667,12 +1667,12 @@ describe("cli: status", () => {
           const result = await runFx(args, { env: { HOME: home } });
           expect(result.code).toBe(2);
           expect(result.stdout).toBe("");
-          expect(result.stderr).toStartWith("fx upgrade: invalid value for --channel: nightly\nusage: fx upgrade");
+          expect(result.stderr).toStartWith("tetris upgrade: invalid value for --channel: nightly\nusage: tetris upgrade");
         }
         const json = await runFx(["upgrade", "--json", "--channel=nightly"], { env: { HOME: home } });
         expect(json.code).toBe(2);
         expect(JSON.parse(json.stdout)).toEqual({ kind: "upgrade", error: "invalid arguments", code: "InvalidUpgradeArgs" });
-        expect(existsSync(join(home, ".fx", "settings.json"))).toBe(false);
+        expect(existsSync(join(home, ".tetris", "settings.json"))).toBe(false);
       } finally {
         rmSync(home, { recursive: true, force: true });
       }
@@ -1681,7 +1681,7 @@ describe("cli: status", () => {
   );
 
   test(
-    "fx status --json defaults permission mode to auto",
+    "tetris status --json defaults permission mode to auto",
     async () => {
       const root = mkdtempSync(join(tmpdir(), "fx-e2e-permission-default-"));
       try {
@@ -1755,7 +1755,7 @@ describe("cli: status", () => {
       try {
         const home = join(root, "home");
         const workspace = join(root, "workspace");
-        mkdirSync(join(home, ".fx"), { recursive: true });
+        mkdirSync(join(home, ".tetris"), { recursive: true });
         mkdirSync(workspace);
         const homeRoot = realpathSync(home);
         const workspaceRoot = realpathSync(workspace);
@@ -1768,7 +1768,7 @@ describe("cli: status", () => {
         };
 
         writeFileSync(
-          join(home, ".fx", "settings.json"),
+          join(home, ".tetris", "settings.json"),
           JSON.stringify({
             model: "anthropic/claude-sonnet-4.6",
             permission_mode: "auto",
@@ -1796,21 +1796,21 @@ describe("cli: status", () => {
         expect(first.permission_mode).toBe("auto");
         expect(first.agent_step_limit).toBe(7);
         expect(status.stderr).toContain(
-          "fx: config project: ignored_project_user_only_setting; key=model",
+          "tetris: config project: ignored_project_user_only_setting; key=model",
         );
         expect(status.stderr).toContain(
-          "fx: config project: ignored_project_user_only_setting; key=permission_mode",
+          "tetris: config project: ignored_project_user_only_setting; key=permission_mode",
         );
         expect(status.stderr).toContain(
-          "fx: config project: ignored_project_user_only_setting; key=permission",
+          "tetris: config project: ignored_project_user_only_setting; key=permission",
         );
         expect(status.stderr).toContain(
-          "fx: config project: ignored_project_user_only_setting; key=statusLine",
+          "tetris: config project: ignored_project_user_only_setting; key=statusLine",
         );
         expect(status.stderr).not.toContain("danger");
 
         writeFileSync(
-          join(home, ".fx", "settings.json"),
+          join(home, ".tetris", "settings.json"),
           JSON.stringify({
             model: "anthropic/claude-sonnet-4.6",
             permission_mode: "auto",
@@ -1847,7 +1847,7 @@ describe("cli: status", () => {
       try {
         const home = join(root, "home");
         const workspace = join(root, "workspace");
-        const fxDir = join(home, ".fx");
+        const fxDir = join(home, ".tetris");
         mkdirSync(fxDir, { recursive: true, mode: 0o700 });
         mkdirSync(workspace);
         chmodSync(fxDir, 0o700);
@@ -1870,7 +1870,7 @@ describe("cli: status", () => {
         expect(Date.now() - userStartedAt).toBeLessThan(3_000);
         expect(user.code).toBe(0);
         expect(JSON.parse(user.stdout)).toMatchObject({ kind: "status" });
-        expect(user.stderr).toContain("fx: config user: durable_path_unsafe");
+        expect(user.stderr).toContain("tetris: config user: durable_path_unsafe");
 
         rmSync(join(fxDir, "settings.json"));
         expect(spawnSync("mkfifo", [join(workspace, ".fx.json")]).status).toBe(0);
@@ -1883,7 +1883,7 @@ describe("cli: status", () => {
         expect(Date.now() - projectStartedAt).toBeLessThan(3_000);
         expect(project.code).toBe(0);
         expect(JSON.parse(project.stdout)).toMatchObject({ kind: "status" });
-        expect(project.stderr).toContain("fx: config project: durable_path_unsafe");
+        expect(project.stderr).toContain("tetris: config project: durable_path_unsafe");
       } finally {
         rmSync(root, { recursive: true, force: true });
       }
@@ -1936,13 +1936,13 @@ describe("cli: usage", () => {
   }
 
   test(
-    "fx usage without a sign-in says so, reads nothing, and leaves the profile alone",
+    "tetris usage without a sign-in says so, reads nothing, and leaves the profile alone",
     async () => {
       const fixture = usageFixture("fx-e2e-usage-none-");
       try {
         const text = await runFx(["usage"], { env: fixture.env });
         expect(text.code).toBe(1);
-        expect(text.stdout).toContain("Usage needs an AI Gateway sign-in: run fx login or set an API key.");
+        expect(text.stdout).toContain("Usage needs an AI Gateway sign-in: run tetris login or set an API key.");
         const json = await runFx(["usage", "--json"], { env: fixture.env });
         expect(json.code).toBe(1);
         expect(JSON.parse(json.stdout)).toMatchObject({
@@ -1962,7 +1962,7 @@ describe("cli: usage", () => {
   );
 
   test(
-    "fx usage reads an API key's spend from AI Gateway and fetches finished days once a day",
+    "tetris usage reads an API key's spend from AI Gateway and fetches finished days once a day",
     async () => {
       const fixture = usageFixture("fx-e2e-usage-key-");
       const env = { ...fixture.env, AI_GATEWAY_API_KEY: "e2e-usage-key" };
@@ -2020,7 +2020,7 @@ describe("cli: usage", () => {
   );
 
   test(
-    "fx usage with fx login reads the member's team spend and budget",
+    "tetris usage with tetris login reads the member's team spend and budget",
     async () => {
       const fixture = usageFixture("fx-e2e-usage-member-", {
         budget: {
@@ -2060,16 +2060,16 @@ describe("cli: usage", () => {
   );
 
   test(
-    "fx usage keeps its cache in FX_HOME",
+    "tetris usage keeps its cache in TETRIS_HOME",
     async () => {
-      const fixture = usageFixture("fx-e2e-usage-fx-home-");
-      const fxHome = join(realpathSync(fixture.root), "profile");
-      const env = { ...fixture.env, AI_GATEWAY_API_KEY: "e2e-usage-key", FX_HOME: fxHome };
+      const fixture = usageFixture("fx-e2e-usage-tetris-home-");
+      const tetrisHome = join(realpathSync(fixture.root), "profile");
+      const env = { ...fixture.env, AI_GATEWAY_API_KEY: "e2e-usage-key", TETRIS_HOME: tetrisHome };
       try {
         const json = await runFx(["usage", "--json"], { env });
         expect(json.code).toBe(0);
-        expect(readdirSync(join(fxHome, "usage-cache")).length).toBeGreaterThan(0);
-        expect(existsSync(join(fixture.home, ".fx"))).toBe(false);
+        expect(readdirSync(join(tetrisHome, "usage-cache")).length).toBeGreaterThan(0);
+        expect(existsSync(join(fixture.home, ".tetris"))).toBe(false);
       } finally {
         fixture.stop();
       }
@@ -2078,7 +2078,7 @@ describe("cli: usage", () => {
   );
 
   test(
-    "fx usage keeps the last numbers when AI Gateway refuses the sign-in",
+    "tetris usage keeps the last numbers when AI Gateway refuses the sign-in",
     async () => {
       let refuse = false;
       const fixture = usageFixture("fx-e2e-usage-refused-", {
@@ -2107,7 +2107,7 @@ describe("cli: usage", () => {
   );
 
   test(
-    "fx usage with Codex reads the ChatGPT plan's limits and activity",
+    "tetris usage with Codex reads the ChatGPT plan's limits and activity",
     async () => {
       const fixture = usageFixture("fx-e2e-usage-codex-", {
         codex: {
@@ -2156,7 +2156,7 @@ describe("cli: usage", () => {
   );
 
   test(
-    "fx usage with Grok reads the plan's allowance and credits",
+    "tetris usage with Grok reads the plan's allowance and credits",
     async () => {
       const fixture = usageFixture("fx-e2e-usage-grok-", {
         grok: { billing: grokBillingBody(), settings: grokSettingsBody() },
@@ -2192,7 +2192,7 @@ describe("cli: usage", () => {
 
 describe("cli: permissions", () => {
   test(
-    "fx permissions --json returns valid permissions JSON",
+    "Tetris permissions --json returns valid permissions JSON",
     async () => {
       const r = await runFx(["permissions", "--json"]);
       expect(r.code).toBe(0);
@@ -2212,7 +2212,7 @@ describe("cli: permissions", () => {
 
 describe("cli: doctor", () => {
   test(
-    "fx doctor --json returns valid doctor JSON",
+    "tetris doctor --json returns valid doctor JSON",
     async () => {
       const root = mkdtempSync(join(tmpdir(), "fx-e2e-doctor-json-"));
       try {
@@ -2255,7 +2255,7 @@ describe("cli: doctor", () => {
   );
 
   test(
-    "fx doctor --json leaves an empty home unchanged",
+    "tetris doctor --json leaves an empty home unchanged",
     async () => {
       const root = mkdtempSync(join(tmpdir(), "fx-e2e-doctor-no-create-"));
       try {
@@ -2275,7 +2275,7 @@ describe("cli: doctor", () => {
 
         expect(r.code).toBe(0);
         expect(JSON.parse(r.stdout.trim()).kind).toBe("doctor");
-        expect(existsSync(join(home, ".fx"))).toBe(false);
+        expect(existsSync(join(home, ".tetris"))).toBe(false);
       } finally {
         rmSync(root, { recursive: true, force: true });
       }
@@ -2284,7 +2284,7 @@ describe("cli: doctor", () => {
   );
 
   test(
-    "fx doctor --json bounds diagnostics while reporting the cache-free session count",
+    "tetris doctor --json bounds diagnostics while reporting the cache-free session count",
     async () => {
       const root = mkdtempSync(join(tmpdir(), "fx-e2e-doctor-bounded-"));
       try {
@@ -2304,7 +2304,7 @@ describe("cli: doctor", () => {
           );
         }
 
-        expect(existsSync(join(home, ".fx", "sessions", "summary.json"))).toBe(false);
+        expect(existsSync(join(home, ".tetris", "sessions", "summary.json"))).toBe(false);
 
         const r = await runFx(["doctor", "--json"], {
           cwd: workspaceRoot,
@@ -2336,7 +2336,7 @@ describe("cli: doctor", () => {
               // Sessions an older fx saved, each converted when first
               // opened (D73).
               detail: expect.stringContaining(
-                `${sessionCount} session(s) saved by an older fx`,
+                `${sessionCount} session(s) saved by an older tetris`,
               ),
             }),
           ]),
@@ -2351,10 +2351,10 @@ describe("cli: doctor", () => {
 
 describe("cli: logout", () => {
   test(
-    "fx logout revokes refresh and access tokens after local deletion",
+    "tetris logout revokes refresh and access tokens after local deletion",
     async () => {
       const home = mkdtempSync(join(tmpdir(), "fx-e2e-logout-revocation-"));
-      const authPath = join(home, ".fx", "auth.json");
+      const authPath = join(home, ".tetris", "auth.json");
       const issuer = startLogoutIssuer([200, 200], authPath);
       try {
         writeSeededFxAuth(home, undefined, issuer.issuerUrl);
@@ -2368,7 +2368,7 @@ describe("cli: logout", () => {
         });
 
         expect(logout.code).toBe(0);
-        expect(logout.stdout).toBe("Signed out of fx.\n");
+        expect(logout.stdout).toBe("Signed out of Tetris.\n");
         expect(logout.stderr).toBe("");
         expect(existsSync(authPath)).toBe(false);
         expect(issuer.requests).toEqual([
@@ -2405,10 +2405,10 @@ describe("cli: logout", () => {
   );
 
   test(
-    "fx logout warns once and sends no tokens without a revocation endpoint",
+    "tetris logout warns once and sends no tokens without a revocation endpoint",
     async () => {
       const home = mkdtempSync(join(tmpdir(), "fx-e2e-logout-no-revocation-"));
-      const authPath = join(home, ".fx", "auth.json");
+      const authPath = join(home, ".tetris", "auth.json");
       const issuer = startLogoutIssuer([], authPath, null);
       try {
         writeSeededFxAuth(home, undefined, issuer.issuerUrl);
@@ -2422,7 +2422,7 @@ describe("cli: logout", () => {
         });
 
         expect(logout.code).toBe(0);
-        expect(logout.stdout).toBe("Signed out of fx.\n");
+        expect(logout.stdout).toBe("Signed out of Tetris.\n");
         expect(logout.stderr).toBe(
           "Warning: signed out locally, but the remote session could not be revoked.\n",
         );
@@ -2439,10 +2439,10 @@ describe("cli: logout", () => {
   );
 
   test(
-    "fx logout warns once and sends no tokens to an invalid revocation endpoint",
+    "tetris logout warns once and sends no tokens to an invalid revocation endpoint",
     async () => {
       const home = mkdtempSync(join(tmpdir(), "fx-e2e-logout-invalid-revocation-"));
-      const authPath = join(home, ".fx", "auth.json");
+      const authPath = join(home, ".tetris", "auth.json");
       const catcher = startRequestCatcher();
       const issuer = startLogoutIssuer([], authPath, catcher.endpoint);
       try {
@@ -2457,7 +2457,7 @@ describe("cli: logout", () => {
         });
 
         expect(logout.code).toBe(0);
-        expect(logout.stdout).toBe("Signed out of fx.\n");
+        expect(logout.stdout).toBe("Signed out of Tetris.\n");
         expect(catcher.requests).toEqual([]);
         expect(logout.stderr).toBe(
           "Warning: signed out locally, but the remote session could not be revoked.\n",
@@ -2476,11 +2476,11 @@ describe("cli: logout", () => {
   );
 
   test(
-    "fx logout removes an unsafe saved login and warns that it could not revoke it",
+    "tetris logout removes an unsafe saved login and warns that it could not revoke it",
     async () => {
       const home = mkdtempSync(join(tmpdir(), "fx-e2e-logout-rejected-login-"));
       const issuer = startLogoutIssuer([200, 200]);
-      const authPath = join(home, ".fx", "auth.json");
+      const authPath = join(home, ".tetris", "auth.json");
       try {
         writeSeededFxAuth(home, undefined, issuer.issuerUrl);
         chmodSync(authPath, 0o644);
@@ -2494,7 +2494,7 @@ describe("cli: logout", () => {
         });
 
         expect(logout.code).toBe(0);
-        expect(logout.stdout).toBe("Signed out of fx.\n");
+        expect(logout.stdout).toBe("Signed out of Tetris.\n");
         expect(logout.stderr).toBe(
           "Warning: signed out locally, but the remote session could not be revoked.\n",
         );
@@ -2517,11 +2517,11 @@ describe("cli: logout", () => {
   );
 
   test(
-    "fx logout fails when the saved login cannot be deleted",
+    "tetris logout fails when the saved login cannot be deleted",
     async () => {
       const home = mkdtempSync(join(tmpdir(), "fx-e2e-logout-delete-failure-"));
       const issuer = startLogoutIssuer([200, 200]);
-      const fxDir = join(home, ".fx");
+      const fxDir = join(home, ".tetris");
       const authPath = join(fxDir, "auth.json");
       try {
         writeSeededFxAuth(home, undefined, issuer.issuerUrl);
@@ -2538,10 +2538,10 @@ describe("cli: logout", () => {
         expect(logout.code).toBe(1);
         expect(logout.stdout).toBe("");
         expect(logout.stderr).toBe(
-          "fx logout: failed to durably remove saved fx login\n",
+          "tetris logout: failed to durably remove saved Tetris login\n",
         );
         expect(existsSync(authPath)).toBe(true);
-        expect(JSON.parse(status.stdout).auth).toBe("fx login");
+        expect(JSON.parse(status.stdout).auth).toBe("tetris login");
         expect(issuer.requests).toEqual([]);
       } finally {
         chmodSync(fxDir, 0o700);
@@ -2553,10 +2553,10 @@ describe("cli: logout", () => {
   );
 
   test(
-    "fx logout deletes only the saved login and keeps environment credentials available",
+    "tetris logout deletes only the saved login and keeps environment credentials available",
     async () => {
       const home = mkdtempSync(join(tmpdir(), "fx-e2e-logout-env-"));
-      const authPath = join(home, ".fx", "auth.json");
+      const authPath = join(home, ".tetris", "auth.json");
       const issuer = startLogoutIssuer([500, 200], authPath);
       const oidcToken = "logout-oidc-token";
       const apiToken = "logout-api-key-token";
@@ -2571,11 +2571,11 @@ describe("cli: logout", () => {
 
         const logout = await runFx(["logout"], { env });
         expect(logout.code).toBe(0);
-        expect(logout.stdout).toBe("Signed out of fx.\n");
+        expect(logout.stdout).toBe("Signed out of Tetris.\n");
         expect(logout.stderr).toBe(
           "Warning: signed out locally, but the remote session could not be revoked.\n",
         );
-        expect(existsSync(join(home, ".fx", "auth.json"))).toBe(false);
+        expect(existsSync(join(home, ".tetris", "auth.json"))).toBe(false);
         expect(issuer.requests).toEqual([
           { method: "GET", path: "/.well-known/openid-configuration" },
           {
@@ -2637,7 +2637,7 @@ describe("cli: logout", () => {
   );
 
   test(
-    "fx logout leaves an active API key unchanged when no login exists",
+    "tetris logout leaves an active API key unchanged when no login exists",
     async () => {
       const home = mkdtempSync(join(tmpdir(), "fx-e2e-logout-no-login-"));
       const apiToken = "logout-existing-api-key";
@@ -2652,7 +2652,7 @@ describe("cli: logout", () => {
         const status = await runFx(["status", "--json"], { env });
 
         expect(logout.code).toBe(0);
-        expect(logout.stdout).toBe("No fx login session found.\n");
+        expect(logout.stdout).toBe("No Tetris login session found.\n");
         expect(logout.stderr).toBe("");
         expect(JSON.parse(status.stdout)).toMatchObject({
           auth: "AI_GATEWAY_API_KEY",
@@ -2668,7 +2668,7 @@ describe("cli: logout", () => {
   );
 
   test.skipIf(platform() !== "darwin")(
-    "fx logout leaves the macOS Keychain API key untouched",
+    "tetris logout leaves the macOS Keychain API key untouched",
     async () => {
       const runId = `${process.pid}-${Date.now()}`;
       const account = `fx-e2e-logout-${runId}`;
@@ -2707,10 +2707,10 @@ describe("cli: logout", () => {
 
         expect(logout.code).toBe(0);
         expect(logout.stderr).toBe("");
-        expect(existsSync(join(home, ".fx", "auth.json"))).toBe(false);
+        expect(existsSync(join(home, ".tetris", "auth.json"))).toBe(false);
         expect(stored.status).toBe(0);
         expect(stored.stdout.trim()).toBe(keychainToken);
-        expect(JSON.parse(status.stdout).auth).not.toBe("fx login");
+        expect(JSON.parse(status.stdout).auth).not.toBe("tetris login");
         expect(logout.stdout).not.toContain(keychainToken);
         expect(status.stdout).not.toContain(keychainToken);
       } finally {
@@ -2729,7 +2729,7 @@ describe("cli: logout", () => {
 
 describe("cli: setup", () => {
   test(
-    "fx setup is a top-level command and fails cleanly when Keychain is disabled",
+    "tetris setup is a top-level command and fails cleanly when Keychain is disabled",
     async () => {
       const r = await runFx(["setup"], {
         env: { ...NO_GATEWAY_AUTH, FX_DISABLE_KEYCHAIN: "1" },
@@ -2737,31 +2737,31 @@ describe("cli: setup", () => {
       expect(r.code).toBe(1);
       expect(r.stdout).toBe("");
       expect(r.stderr).toBe(
-        "fx setup is deprecated and stops working in fx 0.0.18; use fx login vercel --api-key\n" +
-          "fx setup: stored API keys are disabled by FX_DISABLE_KEYCHAIN\n",
+        "tetris setup is deprecated and stops working in Tetris 0.1.1; use tetris login vercel --api-key\n" +
+          "tetris setup: stored API keys are disabled by FX_DISABLE_KEYCHAIN\n",
       );
     },
     TIMEOUT,
   );
 
   test(
-    "fx login --api-key replaces fx setup and is only for vercel",
+    "tetris login --api-key replaces tetris setup and is only for vercel",
     async () => {
       for (const args of [["login", "--api-key"], ["login", "vercel", "--api-key"]]) {
         const disabled = await runFx(args, { env: { ...NO_GATEWAY_AUTH, FX_DISABLE_KEYCHAIN: "1" } });
         expect(disabled.code).toBe(1);
         expect(disabled.stdout).toBe("");
-        expect(disabled.stderr).toBe("fx login: stored API keys are disabled by FX_DISABLE_KEYCHAIN\n");
+        expect(disabled.stderr).toBe("tetris login: stored API keys are disabled by FX_DISABLE_KEYCHAIN\n");
       }
 
       const noTerminal = await runFx(["login", "--api-key"], { env: { ...NO_GATEWAY_AUTH } });
       expect(noTerminal.code).toBe(1);
-      expect(noTerminal.stderr).toBe("fx login: an interactive terminal is required to paste an API key\n");
+      expect(noTerminal.stderr).toBe("tetris login: an interactive terminal is required to paste an API key\n");
 
-      const usage = "usage: fx login [vercel|codex|grok] [--api-key]\n";
+      const usage = "usage: tetris login [vercel|codex|grok] [--api-key]\n";
       const cases: [string[], string][] = [
-        [["login", "codex", "--api-key"], "fx login: --api-key works only with vercel\n"],
-        [["login", "--bogus"], "fx login: unknown flag --bogus\n" + usage],
+        [["login", "codex", "--api-key"], "tetris login: --api-key works only with vercel\n"],
+        [["login", "--bogus"], "tetris login: unknown flag --bogus\n" + usage],
         [["login", "vercel", "codex"], usage],
       ];
       for (const [args, stderr] of cases) {
@@ -2775,7 +2775,7 @@ describe("cli: setup", () => {
   );
 
   test(
-    "fx setup never invokes the configured Vercel CLI",
+    "tetris setup never invokes the configured Vercel CLI",
     async () => {
       const runId = `${process.pid}-${Date.now()}`;
       const fakeDir = mkdtempSync(join(tmpdir(), "fx-e2e-vercel-cli-"));
@@ -2803,7 +2803,7 @@ exit 99
         });
         expect(r.code).toBe(1);
         expect(r.stdout).toBe("");
-        expect(r.stderr).toContain("fx setup is deprecated and stops working in fx 0.0.18; use fx login vercel --api-key\n");
+        expect(r.stderr).toContain("tetris setup is deprecated and stops working in Tetris 0.1.1; use tetris login vercel --api-key\n");
         expect(r.stderr).toContain("interactive terminal is required");
         expect(existsSync(invocationLog)).toBe(false);
       } finally {
@@ -2820,7 +2820,7 @@ describe("cli: stored key file backend", () => {
     "a 0600 key file resolves, and a loosened one is refused rather than reported absent",
     async () => {
       const home = mkdtempSync(join(tmpdir(), "fx-stored-key-file-"));
-      const fxDir = join(home, ".fx");
+      const fxDir = join(home, ".tetris");
       mkdirSync(fxDir, { recursive: true, mode: 0o700 });
       chmodSync(fxDir, 0o700);
       const keyPath = join(fxDir, "api-key");
@@ -2860,7 +2860,7 @@ describe("cli: stored key file backend", () => {
 
 describe("cli: Keychain authentication", () => {
   test.skipIf(platform() !== "darwin")(
-    "fx ask reads an existing Keychain credential without onboarding",
+    "tetris ask reads an existing Keychain credential without onboarding",
     async () => {
       const runId = `${process.pid}-${Date.now()}`;
       const account = `fx-e2e-ask-${runId}`;
@@ -2948,7 +2948,7 @@ describe("cli: Keychain authentication", () => {
           "Keychain ask complete",
         );
         expect(result.stdout).not.toContain(fakeKey);
-        expect(existsSync(join(home, ".fx"))).toBe(false);
+        expect(existsSync(join(home, ".tetris"))).toBe(false);
         expect(gateway.requests).toHaveLength(1);
         expect(gateway.requests[0]!.headers.get("authorization")).toBe(
           `Bearer ${fakeKey}`,
@@ -3015,7 +3015,7 @@ describe("cli: read-only no-create matrix", () => {
             expect(result.stderr).toBe("");
           }
           expect(snapshotTree(home)).toEqual(before);
-          expect(existsSync(join(home, ".fx"))).toBe(false);
+          expect(existsSync(join(home, ".tetris"))).toBe(false);
         } finally {
           rmSync(root, { recursive: true, force: true });
         }
@@ -3086,7 +3086,7 @@ describe("cli: missing durable home", () => {
         expect(JSON.parse(asked.stdout).output.trim()).toBe(
           "missing home persisted",
         );
-        expect(existsSync(join(home, ".fx", "sessions"))).toBe(true);
+        expect(existsSync(join(home, ".tetris", "sessions"))).toBe(true);
         expect(gateway.requests).toHaveLength(1);
       } finally {
         gateway.stop();
@@ -3148,7 +3148,7 @@ describe("cli: missing durable home", () => {
 
 describe("cli: sessions", () => {
   test(
-    "fx sessions --json returns valid sessions JSON",
+    "tetris sessions --json returns valid sessions JSON",
     async () => {
       const home = mkdtempSync(join(tmpdir(), "fx-e2e-sessions-empty-"));
       try {
@@ -3166,16 +3166,16 @@ describe("cli: sessions", () => {
   );
 
   test(
-    "fx sessions text shows named, unnamed, and renamed sessions",
+    "tetris sessions text shows named, unnamed, and renamed sessions",
     async () => {
       const root = mkdtempSync(join(tmpdir(), "fx-e2e-session-names-"));
       try {
         const home = join(root, "home");
         const workspace = join(root, "workspace");
-        const sessionsDir = join(home, ".fx", "sessions");
+        const sessionsDir = join(home, ".tetris", "sessions");
         mkdirSync(sessionsDir, { recursive: true, mode: 0o700 });
         mkdirSync(workspace);
-        chmodSync(join(home, ".fx"), 0o700);
+        chmodSync(join(home, ".tetris"), 0o700);
         chmodSync(sessionsDir, 0o700);
         const workspaceRoot = realpathSync(workspace);
         writeConversationSession(home, workspaceRoot, "named-session", {
@@ -3251,7 +3251,7 @@ describe("cli: sessions", () => {
   );
 
   test(
-    "fx sessions text applies daylight saving time for each session's own date",
+    "tetris sessions text applies daylight saving time for each session's own date",
     async () => {
       const root = mkdtempSync(join(tmpdir(), "fx-e2e-session-dst-"));
       try {
@@ -3297,10 +3297,10 @@ describe("cli: sessions", () => {
       try {
         const home = join(root, "home");
         const workspace = join(root, "workspace");
-        const sessionsDir = join(home, ".fx", "sessions");
+        const sessionsDir = join(home, ".tetris", "sessions");
         mkdirSync(sessionsDir, { recursive: true, mode: 0o700 });
         mkdirSync(workspace);
-        chmodSync(join(home, ".fx"), 0o700);
+        chmodSync(join(home, ".tetris"), 0o700);
         chmodSync(sessionsDir, 0o700);
         const workspaceRoot = realpathSync(workspace);
         for (let index = 0; index < 201; index += 1) {
@@ -3407,7 +3407,7 @@ describe("cli: sessions", () => {
         );
         expect(fixture.status).toBe(0);
 
-        const before = snapshotTree(join(home, ".fx"));
+        const before = snapshotTree(join(home, ".tetris"));
         const listed = await runFx(["sessions", "--json"], {
           cwd: workspaceRoot,
           env: { HOME: home },
@@ -3442,7 +3442,7 @@ describe("cli: sessions", () => {
             },
           ],
         });
-        expect(snapshotTree(join(home, ".fx"))).toEqual(before);
+        expect(snapshotTree(join(home, ".tetris"))).toEqual(before);
 
         const latest = await runFx(["session", "last", "--json"], {
           cwd: workspaceRoot,
@@ -3462,7 +3462,7 @@ describe("cli: sessions", () => {
           history_len: 1,
           conversation_language: "en",
         });
-        expect(snapshotTree(join(home, ".fx"))).toEqual(before);
+        expect(snapshotTree(join(home, ".tetris"))).toEqual(before);
 
         const detail = await runFx(
           ["session", "--id", "benchmark-session-00", "--json"],
@@ -3478,8 +3478,8 @@ describe("cli: sessions", () => {
         const failure = JSON.parse(detail.stdout);
         expect(failure.code).toBe("InvalidSessionFormat");
         expect(failure.error).toContain("AccessDenied");
-        expect(failure.error).toContain("run `fx doctor`");
-        expect(snapshotTree(join(home, ".fx"))).toEqual(before);
+        expect(failure.error).toContain("run `tetris doctor`");
+        expect(snapshotTree(join(home, ".tetris"))).toEqual(before);
       } finally {
         rmSync(root, { recursive: true, force: true });
       }
@@ -3576,7 +3576,7 @@ describe("cli: sessions", () => {
           ["invalid-json", "{"],
           ["truncated", '{"schema_version":2,"id":"truncated"}'],
         ] as const) {
-          const directory = join(home, ".fx", "sessions", id);
+          const directory = join(home, ".tetris", "sessions", id);
           mkdirSync(directory, { recursive: true, mode: 0o700 });
           writeFileSync(join(directory, "session.json"), contents, {
             mode: 0o600,
@@ -3596,7 +3596,7 @@ describe("cli: sessions", () => {
           sessions: [{ id: "readable-session" }],
         });
 
-        rmSync(join(home, ".fx", "sessions", "readable-session"), {
+        rmSync(join(home, ".tetris", "sessions", "readable-session"), {
           recursive: true,
           force: true,
         });
@@ -3664,16 +3664,16 @@ describe("cli: sessions", () => {
   );
 
   test(
-    "fx sessions --json ignores malformed and oversized list caches",
+    "tetris sessions --json ignores malformed and oversized list caches",
     async () => {
       for (const cached of ["{", "x".repeat(4 * 1024 * 1024 + 1)]) {
         const root = mkdtempSync(join(tmpdir(), "fx-e2e-sessions-cache-"));
         try {
           const home = join(root, "home");
           const workspace = join(root, "workspace");
-          mkdirSync(join(home, ".fx", "sessions"), { recursive: true });
+          mkdirSync(join(home, ".tetris", "sessions"), { recursive: true });
           mkdirSync(workspace, { recursive: true });
-          writeFileSync(join(home, ".fx", "sessions", "list.json"), cached);
+          writeFileSync(join(home, ".tetris", "sessions", "list.json"), cached);
 
           const r = await runFx(["sessions", "--json"], {
             cwd: realpathSync(workspace),
@@ -3794,17 +3794,17 @@ describe("cli: sessions", () => {
 
 describe("cli: removed task and background commands", () => {
   test(
-    "fx task, fx tasks, and fx background are not commands",
+    "tetris task, tetris tasks, and tetris background are not commands",
     async () => {
       for (const command of ["task", "tasks"]) {
         const result = await runFx([command], { env: NO_GATEWAY_AUTH });
         expect(result.code).toBe(2);
-        expect(result.stderr).toContain(`fx: unknown command ${command} (did you mean ask?)`);
+        expect(result.stderr).toContain(`tetris: unknown command ${command} (did you mean ask?)`);
       }
       // A word that isn't close to a command is a first prompt for a session.
       const background = await runFx(["background"], { env: NO_GATEWAY_AUTH });
       expect(background.code).toBe(1);
-      expect(background.stderr).toContain("fx requires an interactive terminal (TTY).");
+      expect(background.stderr).toContain("tetris requires an interactive terminal (TTY).");
     },
     TIMEOUT,
   );
@@ -3820,7 +3820,7 @@ describe("cli: removed task and background commands", () => {
         mkdirSync(workspace, { recursive: true });
         const workspaceRoot = realpathSync(workspace);
         writeLegacySession(home, workspaceRoot, "legacy-tasks-session");
-        const tasksDir = join(home, ".fx", "sessions", "legacy-tasks-session", "tasks");
+        const tasksDir = join(home, ".tetris", "sessions", "legacy-tasks-session", "tasks");
         mkdirSync(tasksDir, { recursive: true });
         writeFileSync(join(tasksDir, "unreadable-legacy-shape.json"), "not json\n");
 
@@ -3876,7 +3876,7 @@ describe("cli: models", () => {
     },
   ]) {
     test(
-      `fx models renders exact text for ${scenario.name}`,
+      `tetris models renders exact text for ${scenario.name}`,
       async () => {
         const home = createIsolatedTestHome();
         const gateway = startFakeGateway([], {
@@ -3916,7 +3916,7 @@ describe("cli: models", () => {
   }
 
   test(
-    "fx models retries a rejected API key exactly once without authentication",
+    "tetris models retries a rejected API key exactly once without authentication",
     async () => {
       for (const rejectedStatus of [401, 403]) {
         const home = createIsolatedTestHome();
@@ -3975,7 +3975,7 @@ describe("cli: models", () => {
   );
 
   test(
-    "fx models --json describes each Gateway model's name, efforts, and speed lanes",
+    "tetris models --json describes each Gateway model's name, efforts, and speed lanes",
     async () => {
       const home = createIsolatedTestHome();
       const gateway = startFakeGateway([], {
@@ -4022,7 +4022,7 @@ describe("cli: models", () => {
   );
 
   test(
-    "fx models preserves network and 5xx failures without anonymous retry",
+    "tetris models preserves network and 5xx failures without anonymous retry",
     async () => {
       const unavailableHome = createIsolatedTestHome();
       const gateway = startFakeGateway([], {
@@ -4069,18 +4069,18 @@ describe("cli: models", () => {
         const text = await runFx(["models"], { env });
         expect(text.code).not.toBe(0);
         expect(text.stderr).toBe(
-          "fx models: could not list models: couldn't connect to AI Gateway; check your network connection or firewall\n",
+          "tetris models: could not list models: couldn't connect to AI Gateway; check your network connection or firewall\n",
         );
 
         // Switching to the Gateway from another provider loads its catalog
         // the same way, and a failed switch keeps the saved provider.
-        const settingsPath = join(home, ".fx", "settings.json");
-        mkdirSync(join(home, ".fx"), { recursive: true });
+        const settingsPath = join(home, ".tetris", "settings.json");
+        mkdirSync(join(home, ".tetris"), { recursive: true });
         writeFileSync(settingsPath, JSON.stringify({ provider: "codex" }));
         const selection = await runFx(["provider", "gateway"], { env });
         expect(selection.code).not.toBe(0);
         expect(selection.stderr).toBe(
-          "fx provider: couldn't connect to AI Gateway to load the target model catalog; check your network connection or firewall\n",
+          "tetris provider: couldn't connect to AI Gateway to load the target model catalog; check your network connection or firewall\n",
         );
         expect(JSON.parse(readFileSync(settingsPath, "utf8")).provider).toBe("codex");
       } finally {
@@ -4121,7 +4121,7 @@ describe("cli: models", () => {
     },
   ]) {
     test(
-      `fx models preserves ${scenario.name} without anonymous retry`,
+      `tetris models preserves ${scenario.name} without anonymous retry`,
       async () => {
         const home = createIsolatedTestHome();
         const gateway = startFakeGateway([], { models: scenario.response });
@@ -4145,7 +4145,7 @@ describe("cli: models", () => {
   }
 
   test(
-    "cancelling fx models does not retry anonymously",
+    "cancelling tetris models does not retry anonymously",
     async () => {
       const home = createIsolatedTestHome();
       const gateway = startFakeGateway([], {
@@ -4185,7 +4185,7 @@ describe("cli: models", () => {
   );
 
   test(
-    "fx models rejects E2E gateway redirects without contacting the target",
+    "tetris models rejects E2E gateway redirects without contacting the target",
     async () => {
       const home = createIsolatedTestHome();
       const captureRequests: string[] = [];
@@ -4248,7 +4248,7 @@ describe("cli: models", () => {
         "requested_access=public_only credential_source=none effective_access=public_only public_only_reason=no_credential anonymous_fallback=false outcome=loaded failure_category=none http_status=none retryable=none",
     },
     {
-      name: "uses the selected fx login team catalog",
+      name: "uses the selected tetris login team catalog",
       seedFxLogin: true,
       expiredFxLogin: false,
       authEnv: {},
@@ -4259,7 +4259,7 @@ describe("cli: models", () => {
         "requested_access=authenticated credential_source=fx_login effective_access=authenticated public_only_reason=none anonymous_fallback=false outcome=loaded failure_category=none http_status=none retryable=none",
     },
     {
-      name: "refreshes an expired fx login before loading the selected team catalog",
+      name: "refreshes an expired tetris login before loading the selected team catalog",
       seedFxLogin: true,
       expiredFxLogin: true,
       authEnv: {},
@@ -4291,7 +4291,7 @@ describe("cli: models", () => {
     },
   ]) {
     test(
-      `fx models --json ${scenario.name}`,
+      `tetris models --json ${scenario.name}`,
       async () => {
         const root = mkdtempSync(join(tmpdir(), "fx-e2e-team-models-"));
         const requests: Array<{ headers: Headers; teamId: string | null }> = [];
@@ -4420,7 +4420,7 @@ describe("cli: models", () => {
   }
 
   test.skipIf(!HAS_API_KEY)(
-    "fx models --json returns valid models JSON",
+    "tetris models --json returns valid models JSON",
     async () => {
       const r = await runFx(["models", "--json"], { timeoutMs: 30_000 });
       expect(r.code).toBe(0);
@@ -4436,7 +4436,7 @@ describe("cli: models", () => {
 
 describe("cli: credits", () => {
   test(
-    "fx credits --json preserves Gateway HTTP denial details",
+    "tetris credits --json preserves Gateway HTTP denial details",
     async () => {
       const home = createIsolatedTestHome();
       const requests: Array<{
@@ -4495,7 +4495,7 @@ describe("cli: credits", () => {
   );
 
   test.skipIf(!HAS_API_KEY)(
-    "fx credits --json returns credits JSON or exits non-zero",
+    "tetris credits --json returns credits JSON or exits non-zero",
     async () => {
       const r = await runFx(["credits", "--json"], { timeoutMs: 30_000 });
       if (r.code === 0 && r.stdout.trim()) {
@@ -4511,7 +4511,7 @@ describe("cli: credits", () => {
 
 describe("cli: replay failures", () => {
   test(
-    "fx replay --json preserves structured failures for missing and malformed tapes",
+    "tetris replay --json preserves structured failures for missing and malformed tapes",
     async () => {
       const root = mkdtempSync(join(tmpdir(), "fx-e2e-replay-json-errors-"));
       try {
@@ -4541,7 +4541,7 @@ describe("cli: replay failures", () => {
 
 describe("cli: ask input validation", () => {
   test(
-    "fx ask rejects invalid UTF-8 stdin before Gateway or session effects",
+    "tetris ask rejects invalid UTF-8 stdin before Gateway or session effects",
     async () => {
       const root = mkdtempSync(join(tmpdir(), "fx-e2e-ask-invalid-utf8-"));
       const home = join(root, "home");
@@ -4579,7 +4579,7 @@ describe("cli: ask input validation", () => {
           error: "InvalidPromptText",
         });
         expect(requests).toEqual([]);
-        expect(existsSync(join(home, ".fx"))).toBe(false);
+        expect(existsSync(join(home, ".tetris"))).toBe(false);
       } finally {
         server.stop(true);
         rmSync(root, { recursive: true, force: true });
@@ -4591,7 +4591,7 @@ describe("cli: ask input validation", () => {
 
 describe("cli: session", () => {
   test(
-    "fx session with no id exits non-zero or shows usage",
+    "tetris session with no id exits non-zero or shows usage",
     async () => {
       const r = await runFx(["session"]);
       expect(r.code).not.toBe(0);
@@ -4600,13 +4600,13 @@ describe("cli: session", () => {
   );
 
   test(
-    "fx session exact id hides managed child detail",
+    "tetris session exact id hides managed child detail",
     async () => {
       const root = mkdtempSync(join(tmpdir(), "fx-e2e-private-child-detail-"));
       try {
         const home = join(root, "home");
         const workspace = join(root, "workspace");
-        mkdirSync(join(home, ".fx", "sessions"), {
+        mkdirSync(join(home, ".tetris", "sessions"), {
           recursive: true,
           mode: 0o700,
         });
@@ -4619,7 +4619,7 @@ describe("cli: session", () => {
         writeLegacySession(home, workspaceRoot, childId);
         const childControl = join(
           home,
-          ".fx",
+          ".tetris",
           "sessions",
           childId,
           "subagent",
@@ -4669,14 +4669,14 @@ describe("cli: session", () => {
 
 describe("cli: interactive startup", () => {
   test(
-    "fx explains a first argument it can't take as a command or a prompt",
+    "tetris explains a first argument it can't take as a command or a prompt",
     async () => {
       const cases: Array<[string[], string]> = [
-        [["fix", "the", "login", "bug"], 'fx: put the prompt in quotes: fx "fix the login bug"\n'],
-        [["stauts"], "fx: unknown command stauts (did you mean status?)\n"],
-        [["-p", "fix the bug"], 'fx: -p isn\'t an fx flag; to run one request and exit, use fx ask "fix the bug"\n'],
-        [["--print"], 'fx: --print isn\'t an fx flag; to run one request and exit, use fx ask "<prompt>"\n'],
-        [[""], "fx: the prompt is empty\n"],
+        [["fix", "the", "login", "bug"], 'tetris: put the prompt in quotes: tetris "fix the login bug"\n'],
+        [["stauts"], "tetris: unknown command stauts (did you mean status?)\n"],
+        [["-p", "fix the bug"], 'tetris: -p isn\'t a tetris flag; to run one request and exit, use tetris ask "fix the bug"\n'],
+        [["--print"], 'tetris: --print isn\'t a tetris flag; to run one request and exit, use tetris ask "<prompt>"\n'],
+        [[""], "tetris: the prompt is empty\n"],
       ];
       for (const [args, stderr] of cases) {
         const r = await runFx(args, { env: NO_GATEWAY_AUTH });
@@ -4687,7 +4687,7 @@ describe("cli: interactive startup", () => {
       for (const args of [["--modle", "x"], ["fix it", "--modle=x"]]) {
         const r = await runFx(args, { env: NO_GATEWAY_AUTH });
         expect(r.code, args.join(" ")).toBe(2);
-        expect(r.stderr.split("\n")[0]).toBe("fx: unknown flag --modle (did you mean --model?)");
+        expect(r.stderr.split("\n")[0]).toBe("tetris: unknown flag --modle (did you mean --model?)");
       }
     },
     TIMEOUT,
@@ -4713,7 +4713,7 @@ describe("cli: interactive startup", () => {
           const r = await runFx(args, { env: { HOME: home } });
           expect(r.code).toBe(1);
           expect(r.stdout).toBe("");
-          expect(r.stderr).toBe("fx requires an interactive terminal (TTY).\n");
+          expect(r.stderr).toBe("tetris requires an interactive terminal (TTY).\n");
           expect(readdirSync(home)).toEqual([]);
         } finally {
           rmSync(home, { recursive: true, force: true });
@@ -4727,10 +4727,10 @@ describe("cli: interactive startup", () => {
     "command flag errors name the flag and the last repeated flag wins",
     async () => {
       const failures: [string[], string][] = [
-        [["status", "--jsno"], "fx status: unknown flag --jsno (did you mean --json?)\nusage: fx status [--json]\n"],
-        [["sessions", "--limit"], "fx sessions: --limit needs a value\n"],
-        [["usage", "--perod", "7d"], "fx usage: unknown flag --perod (did you mean --period?)\n"],
-        [["workspace", "--json=1"], "fx workspace: --json doesn't take a value\n"],
+        [["status", "--jsno"], "tetris status: unknown flag --jsno (did you mean --json?)\nusage: tetris status [--json]\n"],
+        [["sessions", "--limit"], "tetris sessions: --limit needs a value\n"],
+        [["usage", "--perod", "7d"], "tetris usage: unknown flag --perod (did you mean --period?)\n"],
+        [["workspace", "--json=1"], "tetris workspace: --json doesn't take a value\n"],
       ];
       for (const [args, stderr] of failures) {
         const home = realpathSync(mkdtempSync(join(tmpdir(), "fx-e2e-flag-errors-")));
@@ -4760,11 +4760,11 @@ describe("cli: interactive startup", () => {
     "removed resume spellings exit two and name the replacement",
     async () => {
       const cases: [string[], string][] = [
-        [["--resume-last"], "fx: --resume-last was removed; use fx --resume last\n"],
-        [["--resume-session.v3"], "fx: --resume-<id> was removed; use fx --resume <id>\n"],
-        [["resume", "last"], "fx: fx resume was removed; use fx --resume [last|<id>] or fx session resume [last|<id>]\n"],
-        [["session", "resume", "--id", "session.v3"], "fx session resume: --id was removed; use fx session resume <id>\n"],
-        [["session", "resume", "--resume", "--last"], "fx session resume: --resume --last was removed; use fx session resume last\n"],
+        [["--resume-last"], "tetris: --resume-last was removed; use tetris --resume last\n"],
+        [["--resume-session.v3"], "tetris: --resume-<id> was removed; use tetris --resume <id>\n"],
+        [["resume", "last"], "tetris: tetris resume was removed; use tetris --resume [last|<id>] or tetris session resume [last|<id>]\n"],
+        [["session", "resume", "--id", "session.v3"], "tetris session resume: --id was removed; use tetris session resume <id>\n"],
+        [["session", "resume", "--resume", "--last"], "tetris session resume: --resume --last was removed; use tetris session resume last\n"],
       ];
 
       for (const [args, stderr] of cases) {
@@ -4786,7 +4786,7 @@ describe("cli: interactive startup", () => {
 
 describe("cli: pr", () => {
   test(
-    "fx pr without gateway auth exits non-zero",
+    "tetris pr without gateway auth exits non-zero",
     async () => {
       const home = mkdtempSync(join(tmpdir(), "fx-e2e-noauth-"));
       try {
@@ -4805,7 +4805,7 @@ describe("cli: pr", () => {
 
 describe("cli: issue", () => {
   test(
-    "fx issue without gateway auth exits non-zero",
+    "tetris issue without gateway auth exits non-zero",
     async () => {
       const home = mkdtempSync(join(tmpdir(), "fx-e2e-noauth-"));
       try {
@@ -4824,12 +4824,12 @@ describe("cli: issue", () => {
 
 describe("cli: ask success", () => {
   test(
-    "fx ask binds an explicitly invoked skill into the prompt",
+    "tetris ask binds an explicitly invoked skill into the prompt",
     async () => {
       const root = mkdtempSync(join(tmpdir(), "fx-e2e-ask-explicit-skill-"));
       const home = join(root, "home");
       const workspace = join(root, "workspace");
-      const skillDirectory = join(home, ".fx", "skills", "cli-explicit");
+      const skillDirectory = join(home, ".tetris", "skills", "cli-explicit");
       const skillBody = "CLI_EXPLICIT_SKILL_BODY";
       const gateway = startFakeGateway([
         fakeGatewayFinalText("explicit skill ask complete"),
@@ -4890,7 +4890,7 @@ describe("cli: ask success", () => {
   );
 
   test(
-    "fx ask stdin prompts above the old 1 MiB limit reach Gateway byte-for-byte",
+    "tetris ask stdin prompts above the old 1 MiB limit reach Gateway byte-for-byte",
     async () => {
       const root = mkdtempSync(join(tmpdir(), "fx-e2e-ask-large-stdin-"));
       const home = join(root, "home");
@@ -4908,9 +4908,9 @@ describe("cli: ask success", () => {
         }] },
       );
       try {
-        mkdirSync(join(home, ".fx"), { recursive: true, mode: 0o700 });
+        mkdirSync(join(home, ".tetris"), { recursive: true, mode: 0o700 });
         mkdirSync(workspace);
-        writeFileSync(join(home, ".fx", "settings.json"), "{}\n");
+        writeFileSync(join(home, ".tetris", "settings.json"), "{}\n");
 
         for (const [index, size] of sizes.entries()) {
           const prompt = `B${"x".repeat(size - 2)}E`;
@@ -4952,7 +4952,7 @@ describe("cli: ask success", () => {
   );
 
   test(
-    "fx ask stdin resource overflow has distinct text and JSON errors",
+    "tetris ask stdin resource overflow has distinct text and JSON errors",
     async () => {
       const oversized = Buffer.alloc(8 * 1024 * 1024 + 1, 0x78);
 
@@ -4964,7 +4964,7 @@ describe("cli: ask success", () => {
       expect(textResult.code).toBe(1);
       expect(textResult.stdout).toBe("");
       expect(textResult.stderr).toBe(
-        "fx ask: prompt exceeds the local input safety limit\n",
+        "tetris ask: prompt exceeds the local input safety limit\n",
       );
 
       const jsonResult = await runFx(["ask", "--json", "--auto", "--no-save"], {
@@ -4982,7 +4982,7 @@ describe("cli: ask success", () => {
   );
 
   test(
-    "fx ask sends catalog-backed portable reasoning",
+    "tetris ask sends catalog-backed portable reasoning",
     async () => {
       const root = mkdtempSync(join(tmpdir(), "fx-e2e-ask-portable-reasoning-"));
       const home = join(root, "home");
@@ -5002,10 +5002,10 @@ describe("cli: ask success", () => {
         },
       );
       try {
-        mkdirSync(join(home, ".fx"), { recursive: true, mode: 0o700 });
+        mkdirSync(join(home, ".tetris"), { recursive: true, mode: 0o700 });
         mkdirSync(workspace);
         writeFileSync(
-          join(home, ".fx", "settings.json"),
+          join(home, ".tetris", "settings.json"),
           `${JSON.stringify({ model, effort: "high" })}\n`,
         );
 
@@ -5029,7 +5029,7 @@ describe("cli: ask success", () => {
         expect(
           result.stderr
             .replace(
-              /fx ask: warning: skipped \d+ invalid or unreadable skill candidates?; relaunch with FX_TRACE=1 to write a trace log\n/g,
+              /tetris ask: warning: skipped \d+ invalid or unreadable skill candidates?; relaunch with FX_TRACE=1 to write a trace log\n/g,
               "",
             )
             .replace(
@@ -5067,10 +5067,10 @@ describe("cli: ask success", () => {
       const workspace = join(root, "workspace");
       const tracePath = join(root, "trace.log");
       try {
-        mkdirSync(join(home, ".fx"), { recursive: true, mode: 0o700 });
+        mkdirSync(join(home, ".tetris"), { recursive: true, mode: 0o700 });
         mkdirSync(workspace);
         writeFileSync(
-          join(home, ".fx", "settings.json"),
+          join(home, ".tetris", "settings.json"),
           `${JSON.stringify({
             model: "openai/gpt-5.6-sol",
             effort: "high",
@@ -5145,7 +5145,7 @@ describe("cli: ask success", () => {
       json: false,
     },
   ])(
-    "fx ask usage $name",
+    "tetris ask usage $name",
     async ({ reportedUsage, expectedUsage, toolLoop, json }) => {
       const root = mkdtempSync(join(tmpdir(), "fx-e2e-ask-usage-"));
       const answer = "Usage fixture complete.\n";
@@ -5224,7 +5224,7 @@ describe("cli: ask success", () => {
         }
         expect(gateway.requests).toHaveLength(toolLoop ? 2 : 1);
         expect(gateway.classifierRequests).toHaveLength(0);
-        expect(existsSync(join(home, ".fx"))).toBe(false);
+        expect(existsSync(join(home, ".tetris"))).toBe(false);
       } finally {
         gateway.stop();
         rmSync(root, { recursive: true, force: true });
@@ -5355,7 +5355,7 @@ describe("cli: ask success", () => {
         expect(noSaveJson.usage).toEqual({ input_tokens: 3, output_tokens: 5 });
         expect(gateway.requests[2]?.headers.get("x-session-id")).toBeNull();
         expect(gateway.requests[2]?.headers.get("x-session-affinity")).toBeNull();
-        expect(existsSync(join(noSaveHome, ".fx"))).toBe(false);
+        expect(existsSync(join(noSaveHome, ".tetris"))).toBe(false);
         expect(gateway.requests).toHaveLength(3);
       } finally {
         gateway.stop();
@@ -5381,7 +5381,7 @@ describe("cli: ask success", () => {
         const workspaceRoot = realpathSync(workspace);
         const sessionId = "legacy-ask-convert";
         writeLegacySession(home, workspaceRoot, sessionId);
-        const legacyDir = join(home, ".fx", "sessions", sessionId);
+        const legacyDir = join(home, ".tetris", "sessions", sessionId);
         const legacyPath = join(legacyDir, "session.json");
         const legacy = JSON.parse(readFileSync(legacyPath, "utf8"));
         const legacyOutput = "LEGACY_AVAILABLE_RESULT_BYTES";
@@ -5530,7 +5530,7 @@ describe("cli: ask success", () => {
         expect(first.code).toBe(0);
         expect(first.stderr).toBe("");
         const sessionId = JSON.parse(first.stdout).session_id as string;
-        const sessionsDir = join(home, ".fx", "sessions");
+        const sessionsDir = join(home, ".tetris", "sessions");
         expect(existsSync(join(sessionsDir, "index.json"))).toBe(false);
         expect(existsSync(join(sessionsDir, "latest"))).toBe(false);
         expect(existsSync(join(sessionsDir, "latest.lock"))).toBe(false);
@@ -5657,7 +5657,7 @@ describe("cli: ask success", () => {
   );
 
   test.skipIf(!HAS_API_KEY)(
-    "fx ask --json --no-save --auto returns valid JSON with output",
+    "tetris ask --json --no-save --auto returns valid JSON with output",
     async () => {
       const r = await runFx(
         ["ask", "--json", "--no-save", "--auto", "Say exactly: hello world"],
@@ -5679,7 +5679,7 @@ describe("cli: ask success", () => {
 
 describe("cli: error handling", () => {
   test(
-    "fx ask rejects unknown options before a model turn and -- preserves literal prompt text",
+    "tetris ask rejects unknown options before a model turn and -- preserves literal prompt text",
     async () => {
       const root = mkdtempSync(join(tmpdir(), "fx-e2e-ask-options-"));
       const home = join(root, "home");
@@ -5706,7 +5706,7 @@ describe("cli: error handling", () => {
           timeoutMs: TIMEOUT,
         });
         expect(rejected.code).toBe(2);
-        expect(rejected.stderr).toContain("usage: fx ask");
+        expect(rejected.stderr).toContain("usage: tetris ask");
         expect(gateway.requests).toHaveLength(0);
 
         const literal = await runFx(
@@ -5741,7 +5741,7 @@ describe("cli: error handling", () => {
   );
 
   test(
-    "fx ask with no prompt exits 2",
+    "tetris ask with no prompt exits 2",
     async () => {
       const r = await runFx(["ask"]);
       expect(r.code).toBe(2);
@@ -5751,18 +5751,18 @@ describe("cli: error handling", () => {
   );
 
   test(
-    "fx with a mistyped command exits 2",
+    "tetris with a mistyped command exits 2",
     async () => {
       // A word that isn't close to a command is a first prompt instead.
       const r = await runFx(["statsu"]);
       expect(r.code).toBe(2);
-      expect(r.stderr).toBe("fx: unknown command statsu (did you mean status?)\n");
+      expect(r.stderr).toBe("tetris: unknown command statsu (did you mean status?)\n");
     },
     TIMEOUT,
   );
 
   test(
-    "fx ask explains no-save resume conflicts before a model turn",
+    "tetris ask explains no-save resume conflicts before a model turn",
     async () => {
       const root = mkdtempSync(join(tmpdir(), "fx-e2e-ask-resume-no-save-"));
       const home = join(root, "home");
@@ -5793,10 +5793,10 @@ describe("cli: error handling", () => {
           expect(rejected.code).toBe(2);
           expect(rejected.stdout).toBe("");
           expect(rejected.stderr).toContain(
-            "fx ask: --no-save cannot be used with --resume",
+            "tetris ask: --no-save cannot be used with --resume",
           );
           expect(rejected.stderr).toContain(
-            "usage: fx ask [--permission-mode <mode>|--ask|--auto|--full-access] [--provider <name>] [--model <id>] [--effort <level>] [--fast|--no-fast] [--ultrafast|--no-ultrafast] [--provider-order <a,b,...>] [--provider-strict|--no-provider-strict] [--image PATH] [--system TEXT] [--json] [--quiet] [--prompt-permissions] [--timeout <seconds>] [--config <key=value>] [--no-save]",
+            "usage: tetris ask [--permission-mode <mode>|--ask|--auto|--full-access] [--provider <name>] [--model <id>] [--effort <level>] [--fast|--no-fast] [--ultrafast|--no-ultrafast] [--provider-order <a,b,...>] [--provider-strict|--no-provider-strict] [--image PATH] [--system TEXT] [--json] [--quiet] [--prompt-permissions] [--timeout <seconds>] [--config <key=value>] [--no-save]",
           );
         }
         expect(gateway.requests).toHaveLength(0);
@@ -5822,12 +5822,12 @@ describe("cli: workspace access", () => {
         { env: enabled },
       );
       expect(help.code).toBe(0);
-      expect(help.stdout.startsWith("fx ask\n\n")).toBe(true);
+      expect(help.stdout.startsWith("tetris ask\n\n")).toBe(true);
       expect(help.stderr).toBe("");
 
       const missing = await runFx(["--add-dir"], { env: enabled });
       expect(missing.code).toBe(2);
-      expect(missing.stderr).toContain("fx: --add-dir needs a value\n");
+      expect(missing.stderr).toContain("tetris: --add-dir needs a value\n");
       expect(missing.stderr).not.toContain("InvalidFlag");
 
       // A repeated flag is not an error: the launch gets past parsing and
@@ -5837,15 +5837,15 @@ describe("cli: workspace access", () => {
         { env: enabled },
       );
       expect(duplicate.code).toBe(1);
-      expect(duplicate.stderr).toBe("fx requires an interactive terminal (TTY).\n");
+      expect(duplicate.stderr).toBe("tetris requires an interactive terminal (TTY).\n");
 
       const badMode = await runFx(["--permission-mode", "never"], { env: enabled });
       expect(badMode.code).toBe(2);
-      expect(badMode.stderr).toContain("fx: --permission-mode accepts ask, auto, or full-access\n");
+      expect(badMode.stderr).toContain("tetris: --permission-mode accepts ask, auto, or full-access\n");
 
       const beforeCommand = await runFx(["--auto", "status"], { env: enabled });
       expect(beforeCommand.code).toBe(2);
-      expect(beforeCommand.stderr).toBe("fx: agent-run flags such as --permission-mode apply to a session and to fx ask, fx pr, fx issue, and fx acp\n");
+      expect(beforeCommand.stderr).toBe("tetris: agent-run flags such as --permission-mode apply to a session and to tetris ask, tetris pr, tetris issue, and tetris acp\n");
     },
     TIMEOUT,
   );
@@ -5860,8 +5860,8 @@ describe("cli: workspace access", () => {
         const shared = join(root, "shared");
         const unknown = join(root, "unknown");
         const missing = join(root, "missing");
-        mkdirSync(join(home, ".fx"), { recursive: true, mode: 0o700 });
-        chmodSync(join(home, ".fx"), 0o700);
+        mkdirSync(join(home, ".tetris"), { recursive: true, mode: 0o700 });
+        chmodSync(join(home, ".tetris"), 0o700);
         mkdirSync(workspace);
         mkdirSync(shared);
         mkdirSync(unknown);
@@ -5897,7 +5897,7 @@ describe("cli: workspace access", () => {
         ]);
 
         const stored = JSON.parse(
-          readFileSync(join(home, ".fx", "settings.json"), "utf8"),
+          readFileSync(join(home, ".tetris", "settings.json"), "utf8"),
         );
         expect(stored.workspaces[workspaceRoot].additional_directories).toEqual([
           sharedRoot,
@@ -5976,7 +5976,7 @@ describe("cli: workspace access", () => {
           additional_directories: [],
         });
         const removedSettings = JSON.parse(
-          readFileSync(join(home, ".fx", "settings.json"), "utf8"),
+          readFileSync(join(home, ".tetris", "settings.json"), "utf8"),
         );
         expect(
           removedSettings.workspaces?.[workspaceRoot]?.additional_directories,
@@ -6018,8 +6018,8 @@ describe("cli: workspace access", () => {
         const missing = join(root, "missing");
         const realParent = join(root, "real-parent");
         const parentLink = join(root, "parent-link");
-        mkdirSync(join(home, ".fx"), { recursive: true, mode: 0o700 });
-        chmodSync(join(home, ".fx"), 0o700);
+        mkdirSync(join(home, ".tetris"), { recursive: true, mode: 0o700 });
+        chmodSync(join(home, ".tetris"), 0o700);
         mkdirSync(workspace);
         mkdirSync(shared);
         mkdirSync(realParent);
@@ -6027,7 +6027,7 @@ describe("cli: workspace access", () => {
         symlinkSync(realParent, parentLink, "dir");
         const workspaceRoot = realpathSync(workspace);
         const sharedRoot = realpathSync(shared);
-        const settingsPath = join(home, ".fx", "settings.json");
+        const settingsPath = join(home, ".tetris", "settings.json");
         const baseEnv = {
           ...NO_GATEWAY_AUTH,
           HOME: realpathSync(home),
@@ -6145,11 +6145,11 @@ describe("cli: MCP profile", () => {
     const home = join(root, "home");
     const workspace = join(root, "workspace");
     const pidPath = join(root, "mcp.pid");
-    mkdirSync(join(home, ".fx"), { recursive: true, mode: 0o700 });
+    mkdirSync(join(home, ".tetris"), { recursive: true, mode: 0o700 });
     mkdirSync(workspace);
-    writeFileSync(join(home, ".fx", "settings.json"), "{}\n", { mode: 0o600 });
+    writeFileSync(join(home, ".tetris", "settings.json"), "{}\n", { mode: 0o600 });
     writeFileSync(
-      join(home, ".fx", "mcp.json"),
+      join(home, ".tetris", "mcp.json"),
       JSON.stringify({
         mcp: {
           fixture: {
@@ -6185,7 +6185,7 @@ describe("cli: MCP profile", () => {
 
       const listed = await runFx(["mcp", "list"], { cwd: workspace, env });
       expect(listed.code).toBe(0);
-      expect(listed.stdout).toMatch(/fixture +~\/\.fx\/mcp\.json +stdio +not started/);
+      expect(listed.stdout).toMatch(/fixture +~\/\.tetris\/mcp\.json +stdio +not started/);
       expect(existsSync(pidPath)).toBe(false);
 
       const shown = await runFx(
@@ -6204,8 +6204,8 @@ describe("cli: MCP profile", () => {
   test("add refuses a profile with both mcp and mcpServers and leaves it as it was", async () => {
     const root = realpathSync(mkdtempSync(join(tmpdir(), "fx-cli-mcp-keys-")));
     const home = join(root, "home");
-    const profilePath = join(home, ".fx", "mcp.json");
-    mkdirSync(join(home, ".fx"), { recursive: true, mode: 0o700 });
+    const profilePath = join(home, ".tetris", "mcp.json");
+    mkdirSync(join(home, ".tetris"), { recursive: true, mode: 0o700 });
     const both = JSON.stringify({
       mcp: { alpha: { command: "alpha-server" } },
       mcpServers: { beta: { command: "beta-server" } },
@@ -6218,7 +6218,7 @@ describe("cli: MCP profile", () => {
       );
       expect(refused.code).toBe(1);
       expect(refused.stderr).toBe(
-          "Couldn't add gamma to ~/.fx/mcp.json: the file has both \"mcp\" and \"mcpServers\"; merge them into one.\n",
+          "Couldn't add gamma to ~/.tetris/mcp.json: the file has both \"mcp\" and \"mcpServers\"; merge them into one.\n",
       );
       expect(readFileSync(profilePath, "utf8")).toBe(both);
     } finally {
@@ -6226,11 +6226,11 @@ describe("cli: MCP profile", () => {
     }
   });
 
-  test.skipIf(platform() === "win32")("status, list, and add finish when ~/.fx/mcp.json is a fifo", async () => {
+  test.skipIf(platform() === "win32")("status, list, and add finish when ~/.tetris/mcp.json is a fifo", async () => {
     const root = realpathSync(mkdtempSync(join(tmpdir(), "fx-cli-mcp-fifo-")));
     const home = join(root, "home");
-    const profilePath = join(home, ".fx", "mcp.json");
-    mkdirSync(join(home, ".fx"), { recursive: true, mode: 0o700 });
+    const profilePath = join(home, ".tetris", "mcp.json");
+    mkdirSync(join(home, ".tetris"), { recursive: true, mode: 0o700 });
     // Opening a fifo for reading waits for a writer, and nothing writes here.
     expect(spawnSync("mkfifo", [profilePath]).status).toBe(0);
     const env = { HOME: home, ...NO_GATEWAY_AUTH };
@@ -6241,12 +6241,12 @@ describe("cli: MCP profile", () => {
 
       const list = await runFx(["mcp", "list"], { cwd: root, env });
       expect(list.code).toBe(1);
-      expect(list.stderr).toBe("fx mcp: ~/.fx/mcp.json isn't a plain file; replace it with one\n");
+      expect(list.stderr).toBe("tetris mcp: ~/.tetris/mcp.json isn't a plain file; replace it with one\n");
 
       const add = await runFx(["mcp", "add", "probe", "--", "/bin/echo", "hi"], { cwd: root, env });
       expect(add.code).toBe(1);
       expect(add.stderr).toBe(
-        "Couldn't add probe to ~/.fx/mcp.json: it isn't a plain file; replace it with one.\n",
+        "Couldn't add probe to ~/.tetris/mcp.json: it isn't a plain file; replace it with one.\n",
       );
       expect(lstatSync(profilePath).isFIFO()).toBe(true);
     } finally {
@@ -6254,37 +6254,37 @@ describe("cli: MCP profile", () => {
     }
   });
 
-  test.skipIf(platform() === "win32")("list, add, and ask say what's wrong with an ~/.fx/mcp.json fx can't read", async () => {
-    const linkLoop = "~/.fx/mcp.json is a link that loops or passes through too many links; replace it with a plain file";
-    const tooLarge = "~/.fx/mcp.json is over 1 MB, the most fx reads; make it smaller";
+  test.skipIf(platform() === "win32")("list, add, and ask say what's wrong with an ~/.tetris/mcp.json tetris can't read", async () => {
+    const linkLoop = "~/.tetris/mcp.json is a link that loops or passes through too many links; replace it with a plain file";
+    const tooLarge = "~/.tetris/mcp.json is over 1 MB, the most Tetris reads; make it smaller";
     const cases = [
       {
         label: "link loop",
         make: (path: string) => symlinkSync("mcp.json", path),
-        list: `fx mcp: ${linkLoop}\n`,
-        add: "Couldn't add probe to ~/.fx/mcp.json: it is a link that loops or passes through too many links; replace it with a plain file.\n",
-        ask: `fx ask: ${linkLoop}\n`,
+        list: `tetris mcp: ${linkLoop}\n`,
+        add: "Couldn't add probe to ~/.tetris/mcp.json: it is a link that loops or passes through too many links; replace it with a plain file.\n",
+        ask: `tetris ask: ${linkLoop}\n`,
       },
       {
         label: "over 1 MB",
         make: (path: string) =>
           writeFileSync(path, JSON.stringify({ mcpServers: {}, pad: "x".repeat(1024 * 1024) }), { mode: 0o600 }),
-        list: `fx mcp: ${tooLarge}\n`,
-        add: "Couldn't add probe to ~/.fx/mcp.json: it is over 1 MB, the most fx reads; make it smaller.\n",
-        ask: `fx ask: ${tooLarge}\n`,
+        list: `tetris mcp: ${tooLarge}\n`,
+        add: "Couldn't add probe to ~/.tetris/mcp.json: it is over 1 MB, the most Tetris reads; make it smaller.\n",
+        ask: `tetris ask: ${tooLarge}\n`,
       },
       {
         label: "fifo",
         // Opening a fifo for reading waits for a writer, and nothing writes here.
         make: (path: string) => expect(spawnSync("mkfifo", [path]).status).toBe(0),
-        ask: "fx ask: ~/.fx/mcp.json isn't a plain file; replace it with one\n",
+        ask: "tetris ask: ~/.tetris/mcp.json isn't a plain file; replace it with one\n",
       },
     ];
     for (const item of cases) {
       const root = realpathSync(mkdtempSync(join(tmpdir(), "fx-cli-mcp-unreadable-")));
       const home = join(root, "home");
-      const profilePath = join(home, ".fx", "mcp.json");
-      mkdirSync(join(home, ".fx"), { recursive: true, mode: 0o700 });
+      const profilePath = join(home, ".tetris", "mcp.json");
+      mkdirSync(join(home, ".tetris"), { recursive: true, mode: 0o700 });
       item.make(profilePath);
       const gateway = startFakeGateway([]);
       try {
@@ -6333,7 +6333,7 @@ describe("cli: MCP profile", () => {
       expect(first.code).toBe(0);
       expect(second.code).toBe(0);
       const profile = JSON.parse(
-        readFileSync(join(home, ".fx", "mcp.json"), "utf8"),
+        readFileSync(join(home, ".tetris", "mcp.json"), "utf8"),
       );
       expect(Object.keys(profile.mcpServers).sort()).toEqual(["first", "second"]);
     } finally {
@@ -6346,7 +6346,7 @@ describe("cli: MCP profile", () => {
       env: { HOME: undefined, ...NO_GATEWAY_AUTH },
     });
     expect(missingHome.code).toBe(1);
-    expect(missingHome.stderr).toBe("fx mcp: HOME is not set to an absolute path\n");
+    expect(missingHome.stderr).toBe("tetris mcp: HOME is not set to an absolute path\n");
 
     // A relative HOME counts as unset: fx fails the same way and saves
     // nothing under the folder it runs in.
@@ -6357,7 +6357,7 @@ describe("cli: MCP profile", () => {
         env: { HOME: "relative/home", ...NO_GATEWAY_AUTH },
       });
       expect(relativeHome.code).toBe(1);
-      expect(relativeHome.stderr).toBe("fx mcp: HOME is not set to an absolute path\n");
+      expect(relativeHome.stderr).toBe("tetris mcp: HOME is not set to an absolute path\n");
       expect(readdirSync(cwd)).toEqual([]);
     } finally {
       rmSync(cwd, { recursive: true, force: true });
@@ -6368,7 +6368,7 @@ describe("cli: MCP profile", () => {
       { env: { HOME: tmpdir(), ...NO_GATEWAY_AUTH } },
     );
     expect(flagged.code).toBe(2);
-    expect(flagged.stderr).toStartWith("fx mcp add: unknown flag --transport\nusage: fx mcp add");
+    expect(flagged.stderr).toStartWith("tetris mcp add: unknown flag --transport\nusage: tetris mcp add");
   });
 });
 
@@ -6380,19 +6380,19 @@ describe("cli: completion", () => {
   // The words on the command line, the last one under the cursor, and what
   // Tab offers there.
   const cases: [string[], string][] = [
-    [["fx", "con"], "config"],
-    [["fx", "config", ""], "list get set unset schema"],
-    [["fx", "config", "schema", "--p"], "--project"],
-    [["fx", "config", "get", "status_line.c"], "status_line.context"],
-    [["fx", "config", "get", "theme", ""], ""],
-    [["fx", "ask", "--permission-mode", ""], "ask auto full-access"],
-    [["fx", "--model", "gpt-5", "ask", "--permission-m"], "--permission-mode"],
-    [["fx", "mcp", ""], "list show add remove login logout approve reject call"],
-    [["fx", "mcp", "add", "--g"], "--global"],
-    [["fx", "usage", "--period", ""], "today 7d month"],
-    [["fx", "login", ""], "vercel codex grok"],
-    [["fx", "completion", ""], "bash zsh fish"],
-    [["fx", "-r", ""], "last"],
+    [["tetris", "con"], "config"],
+    [["tetris", "config", ""], "list get set unset schema"],
+    [["tetris", "config", "schema", "--p"], "--project"],
+    [["tetris", "config", "get", "status_line.c"], "status_line.context"],
+    [["tetris", "config", "get", "theme", ""], ""],
+    [["tetris", "ask", "--permission-mode", ""], "ask auto full-access"],
+    [["tetris", "--model", "gpt-5", "ask", "--permission-m"], "--permission-mode"],
+    [["tetris", "mcp", ""], "list show add remove login logout approve reject call"],
+    [["tetris", "mcp", "add", "--g"], "--global"],
+    [["tetris", "usage", "--period", ""], "today 7d month"],
+    [["tetris", "login", ""], "vercel codex grok"],
+    [["tetris", "completion", ""], "bash zsh fish"],
+    [["tetris", "-r", ""], "last"],
   ];
 
   async function writeScript(shell: string, dir: string): Promise<string> {
@@ -6408,25 +6408,25 @@ describe("cli: completion", () => {
     return words.map((word) => `'${word}'`).join(" ");
   }
 
-  test("fx completion takes one shell name", async () => {
+  test("tetris completion takes one shell name", async () => {
     const home = mkdtempSync(join(tmpdir(), "fx-completion-usage-"));
     try {
       const unknown = await runFx(["completion", "tcsh"], { env: { HOME: home } });
       expect(unknown.code).toBe(2);
       expect(unknown.stdout).toBe("");
-      expect(unknown.stderr).toBe("fx completion: unknown shell tcsh; choose bash, zsh, or fish\nusage: fx completion bash|zsh|fish\n");
+      expect(unknown.stderr).toBe("tetris completion: unknown shell tcsh; choose bash, zsh, or fish\nusage: tetris completion bash|zsh|fish\n");
       const none = await runFx(["completion"], { env: { HOME: home } });
       expect(none.code).toBe(2);
-      expect(none.stderr).toBe("usage: fx completion bash|zsh|fish\n");
+      expect(none.stderr).toBe("usage: tetris completion bash|zsh|fish\n");
       const help = await runFx(["completion", "--help"], { env: { HOME: home } });
       expect(help.code).toBe(0);
-      expect(help.stdout).toContain('Commands:\n  bash  Load it with: eval "$(fx completion bash)"\n');
+      expect(help.stdout).toContain('Commands:\n  bash  Load it with: eval "$(tetris completion bash)"\n');
     } finally {
       rmSync(home, { recursive: true, force: true });
     }
   }, TIMEOUT);
 
-  test("fx completion bash completes words, flags, values, and setting keys", async () => {
+  test("tetris completion bash preserves Fx completion and offers words, flags, values, and setting keys", async () => {
     const home = realpathSync(mkdtempSync(join(tmpdir(), "fx-completion-bash-")));
     try {
       const script = await writeScript("bash", home);
@@ -6435,53 +6435,69 @@ describe("cli: completion", () => {
         // The way help says to load it. bash 3.2 loads nothing through
         // source <(...), so eval is the line that works everywhere.
         `eval "$(cat '${script}')"`,
-        'comp() { COMP_WORDS=("$@"); COMP_CWORD=$(( ${#COMP_WORDS[@]} - 1 )); COMPREPLY=(); _fx; echo "${COMPREPLY[*]}"; }',
+        '_fx() { COMPREPLY=("fx-existing"); }',
+        'complete -o default -F _fx fx',
+        'comp_fx() { COMP_WORDS=(fx ""); COMP_CWORD=1; COMPREPLY=(); _fx; echo "${COMPREPLY[*]}"; }',
+        'comp_fx',
+        'comp() { COMP_WORDS=("$@"); COMP_CWORD=$(( ${#COMP_WORDS[@]} - 1 )); COMPREPLY=(); _tetris; echo "${COMPREPLY[*]}"; }',
         ...cases.map(([words]) => `comp ${quoted(words)}`),
         "",
       ].join("\n"));
       const run = spawnSync("bash", [harness], { cwd: home, encoding: "utf8" });
       expect(run.stderr).toBe("");
-      expect(run.stdout.split("\n").slice(0, cases.length)).toEqual(cases.map(([, want]) => want));
+      expect(run.stdout.split("\n").slice(0, cases.length + 1)).toEqual(["fx-existing", ...cases.map(([, want]) => want)]);
     } finally {
       rmSync(home, { recursive: true, force: true });
     }
   }, TIMEOUT);
 
-  test.skipIf(!shellAvailable("zsh"))("fx completion zsh offers the same candidates", async () => {
+  test.skipIf(!shellAvailable("zsh"))("tetris completion zsh preserves Fx completion and offers the same candidates", async () => {
     const home = realpathSync(mkdtempSync(join(tmpdir(), "fx-completion-zsh-")));
     try {
       const script = await writeScript("zsh", home);
       const harness = join(home, "harness.zsh");
       // compsys filters by the typed prefix itself, so the stubs do too.
       writeFileSync(harness, [
-        "compdef() { :; }",
+        "typeset -ga registrations=()",
+        'compdef() { registrations+=("$1:$2"); }',
+        "_fx() { print -r -- fx-existing; }",
+        "compdef _fx fx",
         `source '${script}'`,
-        '_fx_test_print() { local prefix=${words[CURRENT]}; local -a out; out=(${(M)@:#${prefix}*}); print -r -- "${out[*]}"; }',
-        '_describe() { local -a items; items=("${(@P)4}"); _fx_test_print "${(@)items%%:*}"; }',
-        'compadd() { if [[ $1 == -a ]]; then _fx_test_print "${(@P)2}"; else _fx_test_print "$@"; fi; }',
+        'print -r -- "${registrations[*]}"',
+        'print -r -- "fx=$(_fx)"',
+        '_tetris_test_print() { local prefix=${words[CURRENT]}; local -a out; out=(${(M)@:#${prefix}*}); print -r -- "${out[*]}"; }',
+        '_describe() { local -a items; items=("${(@P)4}"); _tetris_test_print "${(@)items%%:*}"; }',
+        'compadd() { if [[ $1 == -a ]]; then _tetris_test_print "${(@P)2}"; else _tetris_test_print "$@"; fi; }',
         '_files() { print -r -- ""; }',
-        'comp() { words=("$@"); CURRENT=${#words}; _fx; }',
+        'comp() { words=("$@"); CURRENT=${#words}; _tetris; }',
         ...cases.map(([words]) => `comp ${quoted(words)}`),
         "",
       ].join("\n"));
       const run = spawnSync("zsh", ["-f", harness], { cwd: home, encoding: "utf8" });
       expect(run.stderr).toBe("");
-      expect(run.stdout.split("\n").slice(0, cases.length)).toEqual(cases.map(([, want]) => want));
+      expect(run.stdout.split("\n").slice(0, cases.length + 2)).toEqual(["_fx:fx _tetris:tetris", "fx=fx-existing", ...cases.map(([, want]) => want)]);
     } finally {
       rmSync(home, { recursive: true, force: true });
     }
   }, TIMEOUT);
 
-  test.skipIf(!shellAvailable("fish"))("fx completion fish offers the same candidates", async () => {
+  test.skipIf(!shellAvailable("fish"))("tetris completion fish preserves Fx completion and offers the same candidates", async () => {
     const home = realpathSync(mkdtempSync(join(tmpdir(), "fx-completion-fish-")));
     try {
       const script = await writeScript("fish", home);
+      const stubFiles = "function __fish_complete_path; end; function __fx_complete; echo fx-existing; end; complete -c fx -f -a '(__fx_complete)'";
+      const fxRun = spawnSync("fish", ["--no-config", "-c", `${stubFiles}; source '${script}'; complete -C 'fx '`], {
+        cwd: home,
+        encoding: "utf8",
+      });
+      expect(fxRun.stderr).toBe("");
+      const fxGot = fxRun.stdout.split("\n").filter(Boolean).map((row) => row.split("\t")[0]).sort();
+      expect(fxGot).toEqual(["fx-existing"]);
       for (const [words, want] of cases) {
         const line = words.join(" ");
         // As in the bash and zsh harnesses, file completion offers nothing,
-        // so only the words fx itself offers are compared.
-        const stubFiles = "function __fish_complete_path; end";
-        const run = spawnSync("fish", ["--no-config", "-c", `source '${script}'; ${stubFiles}; complete -C '${line}'`], {
+        // so only the words Tetris itself offers are compared.
+        const run = spawnSync("fish", ["--no-config", "-c", `${stubFiles}; source '${script}'; complete -C '${line}'`], {
           cwd: home,
           encoding: "utf8",
         });

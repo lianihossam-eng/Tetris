@@ -1,7 +1,7 @@
 // `/effort` opens a footer menu of the current model's reasoning effort
 // levels, like the `/model` menu, and `/effort <level>` applies one directly.
 // Every view of the menu is read back from the recorded tape through
-// `fx replay`, and the highlight from the bytes fx wrote for it, so these
+// `tetris replay`, and the highlight from the bytes fx wrote for it, so these
 // tests check what the terminal showed, not the live pane alone.
 import { afterEach, expect, test } from "bun:test";
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
@@ -215,7 +215,7 @@ function columnViews(current: Shell, label: string): { composer: string; levels:
 }
 
 function savedEffort(current: Shell): string | undefined {
-  const path = join(current.home, ".fx", "settings.json");
+  const path = join(current.home, ".tetris", "settings.json");
   if (!existsSync(path)) return undefined;
   return (JSON.parse(readFileSync(path, "utf8")) as { effort?: string }).effort;
 }

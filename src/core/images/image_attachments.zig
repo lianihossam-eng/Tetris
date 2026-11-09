@@ -929,7 +929,7 @@ pub fn withholdEarlierImages(
 ) ![]const types.ChatMessage {
     const reason: []const u8 = switch (held) {
         .none, .attached, .withheld_fallback => return messages,
-        .withheld_unknown => "fx could not confirm image input support for this model (the model is not listed in the model catalog, or the catalog is unavailable). It stays in this session and can be sent again once support is confirmed; until then, ask the user to describe it if you need it.",
+        .withheld_unknown => "Tetris could not confirm image input support for this model (the model is not listed in the model catalog, or the catalog is unavailable). It stays in this session and can be sent again once support is confirmed; until then, ask the user to describe it if you need it.",
         .withheld_dead_end => "this model does not accept inline images and no vision fallback is available. Ask the user to describe it or switch to a vision-capable model if you need it.",
     };
     var result: ?[]types.ChatMessage = null;
@@ -3301,7 +3301,7 @@ test "requests leave out earlier images the route cannot carry, each with a note
     // withholdDroppedImages.
     try std.testing.expectEqual(@as(usize, 1), unknown[0].images.len);
     try std.testing.expectEqual(@as(usize, 2), unknown[0].images[0].id);
-    try std.testing.expect(std.mem.startsWith(u8, unknown[0].content.?, "[Image #1 was not sent with this request: fx could not confirm image input support for this model"));
+    try std.testing.expect(std.mem.startsWith(u8, unknown[0].content.?, "[Image #1 was not sent with this request: Tetris could not confirm image input support for this model"));
     try std.testing.expect(std.mem.endsWith(u8, unknown[0].content.?, "]\nLook at [Image #1] [Image #2]"));
     try std.testing.expect(unknown[2].content.?.ptr == messages[2].content.?.ptr);
     try std.testing.expectEqual(@as(usize, 2), messages[0].images.len);
@@ -3459,7 +3459,7 @@ test "requests name the saved file of each attached image, never its source" {
     // (D89); the note names the blob, never the temporary snapshot.
     var in_blob = inline_bytes;
     in_blob.id = 7;
-    in_blob.blob_path = @constCast("/Users/example/.fx/sessions/v2/s/blobs/0123abcd");
+    in_blob.blob_path = @constCast("/Users/example/.tetris/sessions/v2/s/blobs/0123abcd");
 
     const images = [_]types.ImageAttachment{ attached, pasted, recalled_file, recalled_paste, inline_bytes, in_memory, in_blob };
     const prompt = "[Image #1] [Image #2] [Image #3] [Image #4] [Image #5] [Image #6] [Image #7]";
@@ -3651,12 +3651,12 @@ test "a withheld prompt image's notice names the blob the note names (D89)" {
     const wide = image_data.testPngHeader(9000, 10);
     var saved = try captureInlineImageBytesInMemory(arena, 1, "image/png", &wide);
     saved.snapshot_path = @constCast("/tmp/fx-image-snapshots-0123456789abcdef/image-1.bin");
-    saved.blob_path = @constCast("/Users/example/.fx/sessions/v2/s/blobs/0123abcd");
+    saved.blob_path = @constCast("/Users/example/.tetris/sessions/v2/s/blobs/0123abcd");
     var cache: AttachmentDimensionCache = .empty;
     const in_blob = [_]types.ChatMessage{.{ .role = .user, .content = "look", .images = &.{saved} }};
     const named = try withholdOversizedAttachments(arena, arena, &cache, &in_blob, 8000);
     try std.testing.expectEqual(@as(usize, 0), named.messages[0].images.len);
-    try std.testing.expect(std.mem.find(u8, named.messages[0].content.?, "The original is saved at /Users/example/.fx/sessions/v2/s/blobs/0123abcd. ") != null);
+    try std.testing.expect(std.mem.find(u8, named.messages[0].content.?, "The original is saved at /Users/example/.tetris/sessions/v2/s/blobs/0123abcd. ") != null);
     // Inline bytes without a blob have no saved file, and the temporary
     // snapshot beside them is never named.
     var unsaved = saved;

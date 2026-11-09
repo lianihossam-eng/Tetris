@@ -26,7 +26,7 @@ const clock_file_env = "FX_TEST_USAGE_CLOCK_FILE";
 /// the home is known.
 pub const unset: usage.Host = .{ .fetch_fn = fetch, .now_fn = now, .io_fn = io, .home = "" };
 
-/// `home` is the user's home directory; the cache follows `$FX_HOME`.
+/// `home` is the user's home directory; the cache follows `$TETRIS_HOME`.
 pub fn host(home: []const u8) usage.Host {
     return .{
         .fetch_fn = fetch,
@@ -112,7 +112,7 @@ fn fromParts(
             .bearer = bearer,
             .team = team,
             .subject = account orelse team orelse "",
-            .label = std.mem.print(label_buf, "{s} (fx login)", .{team_slug orelse team orelse "no team"}) catch "fx login",
+            .label = std.mem.print(label_buf, "{s} (tetris login)", .{team_slug orelse team orelse "no team"}) catch "tetris login",
         },
         .stored_key, .ai_gateway_api_key => .{
             .scope = .api_key,

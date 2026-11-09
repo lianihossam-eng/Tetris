@@ -1,4 +1,4 @@
-// Runtime driver: drives the real `fx acp` binary from a worktree through
+// Runtime driver: drives the real `tetris acp` binary from a worktree through
 // directed and seeded-random speed scenarios, records what a client observes
 // (configOptions projections, JSON-RPC errors, and the lane each prompt sends
 // to a local fake Gateway), and asks TLC whether each observed run is a
@@ -123,14 +123,14 @@ type Helpers = {
 async function runPlan(plan: Plan, worktree: string, helpers: Helpers, dir: string) {
   mkdirSync(dir, { recursive: true });
   writeJson(join(dir, "plan.json"), plan);
-  const fxBin = join(worktree, "zig-out", "bin", "fx");
+  const fxBin = join(worktree, "zig-out", "bin", "tetris");
   const root = realpathSync(mkdtempSync(join(tmpdir(), "fx-acp-speed-")));
   const home = join(root, "home");
   const workspace = join(root, "workspace");
-  mkdirSync(join(home, ".fx"), { recursive: true, mode: 0o700 });
+  mkdirSync(join(home, ".tetris"), { recursive: true, mode: 0o700 });
   mkdirSync(workspace, { recursive: true, mode: 0o700 });
   writeFileSync(
-    join(home, ".fx", "settings.json"),
+    join(home, ".tetris", "settings.json"),
     `${JSON.stringify({ session_titles: false, fast_mode: plan.defaultFast, models: { gateway: plan.initialModel } })}\n`,
     { mode: 0o600 },
   );
@@ -162,10 +162,11 @@ async function runPlan(plan: Plan, worktree: string, helpers: Helpers, dir: stri
     FX_TRACE_SCOPES: "acp,catalog",
   })) {
     if (value === undefined) continue;
-    // FX_PROVIDER and FX_MODEL are process overrides: fx then resumes every
+    // FX_PROVIDER and FX_MODEL are process overrides: Tetris then resumes every
     // chat on the process's model instead of the chat's saved one, which no
     // real ACP host (fx-plus included) does. The Gateway is already the default.
-    if (["VERCEL_OIDC_TOKEN", "FX_PROVIDER", "FX_MODEL", "FX_FAST", "FX_ULTRAFAST", "FX_PERMISSION_MODE", "FX_DEBUG_RECORD"].includes(key)) continue;
+    // TETRIS_HOME would move the profile away from the fixture's HOME.
+    if (["VERCEL_OIDC_TOKEN", "FX_PROVIDER", "FX_MODEL", "FX_FAST", "FX_ULTRAFAST", "FX_PERMISSION_MODE", "FX_DEBUG_RECORD", "TETRIS_HOME"].includes(key)) continue;
     env[key] = value;
   }
 
@@ -292,7 +293,7 @@ function git(worktree: string, ...args: string[]): string {
 
 async function main() {
   const worktree = resolve(argValue("--worktree") ?? REPO_ROOT);
-  const fxBin = join(worktree, "zig-out", "bin", "fx");
+  const fxBin = join(worktree, "zig-out", "bin", "tetris");
   if (!existsSync(fxBin)) throw new Error(`missing ${fxBin}; run zig build first`);
   const label = argValue("--label") ?? "run";
   const seed = Number(argValue("--seed") ?? "20261006");

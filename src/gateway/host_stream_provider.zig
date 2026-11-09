@@ -152,8 +152,8 @@ fn stream(raw: ?*anyopaque, alloc: Allocator, request: stream_provider.ModelRequ
     defer headers.deinit(alloc);
     try headers.appendSlice(alloc, &.{
         .{ .name = "content-type", .value = "application/json" },
-        .{ .name = "HTTP-Referer", .value = "https://github.com/vercel-labs/fx" },
-        .{ .name = "X-Title", .value = "fx" },
+        .{ .name = "HTTP-Referer", .value = "https://github.com/lianihossam-eng/Tetris" },
+        .{ .name = "X-Title", .value = "Tetris" },
         .{ .name = "ai-gateway-protocol-version", .value = "0.0.1" },
         .{ .name = "ai-language-model-specification-version", .value = "4" },
         .{ .name = "ai-language-model-id", .value = request.model },
@@ -361,7 +361,7 @@ test "host statuses outside 100 to 599 are not HTTP statuses" {
     try std.testing.expectEqual(@as(u16, 599), @backingInt(httpStatus(599).?));
 }
 
-test "host provider signals logical consumption only after valid uncancelled completion" {
+test "host provider sends Tetris attribution and signals logical consumption only after valid uncancelled completion" {
     const FakeTransport = struct {
         body: []const u8,
         status_code: u16 = 200,
@@ -376,11 +376,14 @@ test "host provider signals logical consumption only after valid uncancelled com
         close_calls: usize = 0,
         content_calls: usize = 0,
         content_calls_at_consumption: usize = 0,
+        captured_headers: ?[]u8 = null,
 
         fn build(_: Allocator, _: stream_provider.RequestData) ![]u8 {
             return error.UnexpectedRequest;
         }
-        fn open(_: ?*anyopaque, _: []const u8, _: []const u8, _: []const u8, _: []const u8) !i32 {
+        fn open(raw: ?*anyopaque, _: []const u8, _: []const u8, headers: []const u8, _: []const u8) !i32 {
+            const self: *@This() = @ptrCast(@alignCast(raw.?));
+            self.captured_headers = try std.testing.allocator.dupe(u8, headers);
             return 7;
         }
         fn status(raw: ?*anyopaque, _: i32, status_out: *u16) i32 {
@@ -460,6 +463,7 @@ test "host provider signals logical consumption only after valid uncancelled com
             .read_error = case.read_error,
             .cancel_on_content = case.cancel_on_content,
         };
+        defer if (fake.captured_headers) |headers| std.testing.allocator.free(headers);
         errdefer std.debug.print("host consumption case={d} consumed={d} eof={d} closed={d}\n", .{ index, fake.consumed_calls, fake.eof_calls, fake.close_calls });
         var context = initContext(FakeTransport.build, .{ .fixed = "https://example.invalid" }, .{
             .context = &fake,
@@ -493,6 +497,10 @@ test "host provider signals logical consumption only after valid uncancelled com
             var owned = try result;
             defer owned.deinit(std.testing.allocator);
         }
+        const captured_headers = fake.captured_headers orelse return error.TestUnexpectedResult;
+        try std.testing.expect(std.mem.find(u8, captured_headers, "https://github.com/lianihossam-eng/Tetris") != null);
+        try std.testing.expect(std.mem.find(u8, captured_headers, "\"X-Title\"") != null);
+        try std.testing.expect(std.mem.find(u8, captured_headers, "\"Tetris\"") != null);
         try std.testing.expectEqual(@as(usize, @intFromBool(case.expected_consumed)), fake.consumed_calls);
         try std.testing.expectEqual(if (case.expected_consumed) @as(?i32, 7) else null, fake.consumed_handle);
         try std.testing.expect(!fake.consumed_after_close);

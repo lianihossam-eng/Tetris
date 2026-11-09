@@ -1,4 +1,4 @@
-// HostLifecycle: the real fx shell in tmux with fixture stdio servers. The
+// HostLifecycle: the real Tetris shell in tmux with fixture stdio servers. The
 // trace is the fixtures' own log (start, listed, eof, sigterm: one process
 // each, by pid) merged in time order with what the harness did (`/mcp`
 // verbs, Ctrl+C) and the status line once it stopped changing. Checked
@@ -150,7 +150,7 @@ test("a removed server added back runs one process at a time: the new one starts
   } finally { await shell.stop(); }
 }, 150_000);
 
-test("a change fx mcp makes outside the session waits for the next check: a removed server runs until /mcp, and added back starts there (trace ACCEPTED)", async () => {
+test("a change tetris mcp makes outside the session waits for the next check: a removed server runs until /mcp, and added back starts there (trace ACCEPTED)", async () => {
   const shell = new Shell(setup("hl-outside", ["a", "s"], []));
   const outside = async (change: string, args: string[]) => {
     // Recorded first: the file changes before anything the fixture logs.

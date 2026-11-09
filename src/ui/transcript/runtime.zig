@@ -839,7 +839,7 @@ fn lifecycleTerminalLine(
     const cancelled = kind == .cancelled;
     const text_style = if (cancelled) ui_render.hint_style else "";
     const text_reset = if (cancelled) ui_render.reset_style else "";
-    const follow_up = if (cancelled) " · What can fx do differently?" else "";
+    const follow_up = if (cancelled) " · What can Tetris do differently?" else "";
     const normalized = if (has_marker)
         try alloc.print(
             "{s}{s}{s}{s}{s}{s}{s}{s}",
@@ -13138,13 +13138,13 @@ test "resume view snapshot omits a visible leading welcome entry" {
     try runtime.writeTranscriptClassified(
         alloc,
         &metrics,
-        "fx · Run /help for commands\n\n",
+        "tetris · Run /help for commands\n\n",
         true,
         .welcome,
     );
     try runtime.enableShadowVt(alloc);
     try runtime.shadow_vt.?.feed(
-        "\x1b[1;1Hfx · Run /help for commands" ++
+        "\x1b[1;1Htetris · Run /help for commands" ++
             "\x1b[3;1Hvisible one\x1b[4;1Hvisible two",
     );
     runtime.has_painted_transcript = true;

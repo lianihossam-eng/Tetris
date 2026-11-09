@@ -7,7 +7,7 @@ const profile_paths = @import("core/shared/profile_paths.zig");
 const terminal_env = @import("core/shared/terminal_env.zig");
 const env_settings = @import("core/config/env_settings.zig");
 
-pub const version = "0.0.16";
+pub const version = "0.1.0";
 
 const app_lifecycle = @import("core/app/app_lifecycle.zig");
 const provider_runtime = @import("core/app/provider_runtime.zig");
@@ -3770,7 +3770,7 @@ pub fn main(c_argc: c_int, c_argv: [*][*:0]c_char, c_envp: [*:null]?[*:0]c_char)
 fn mainC(c_argc: c_int, c_argv: [*][*:0]c_char, c_envp: [*:null]?[*:0]c_char) !void {
     const raw_args = rawArgs(c_argc, c_argv);
     const raw_env: RawEnviron = @ptrCast(c_envp);
-    // Before any mode runs, since terminal helpers write under fx's folder too.
+    // Before any mode runs, since terminal helpers write under Tetris's folder too.
     try useFxHomeFromEnv(raw_env);
 
     if (comptime terminal_native_session.isSupported()) {
@@ -3819,24 +3819,24 @@ fn mainC(c_argc: c_int, c_argv: [*][*:0]c_char, c_envp: [*:null]?[*:0]c_char) !v
     try runNonBenchmark(raw_args, raw_env, cli_args);
 }
 
-/// `FX_HOME` replaces `~/.fx` for the whole process. A bad value stops
-/// fx before it reads or writes anything there.
+/// `TETRIS_HOME` replaces `~/.tetris` for the whole process. A bad value stops
+/// Tetris before it reads or writes anything there.
 fn useFxHomeFromEnv(raw_env: RawEnviron) !void {
-    const value = rawEnvValue(raw_env, "FX_HOME") orelse return;
+    const value = rawEnvValue(raw_env, "TETRIS_HOME") orelse return;
     profile_paths.useFxHome(value, rawEnvValue(raw_env, "HOME")) catch |err| {
         try writeStderrFast(switch (err) {
-            error.FxHomeNotAbsolute => "fx: FX_HOME must be an absolute path\n",
-            error.FxHomeIsRoot => "fx: FX_HOME can't be the root folder\n",
-            error.FxHomeIsHome => "fx: FX_HOME can't be your home folder; fx keeps its folder private\n",
+            error.FxHomeNotAbsolute => "tetris: TETRIS_HOME must be an absolute path\n",
+            error.FxHomeIsRoot => "tetris: TETRIS_HOME can't be the root folder\n",
+            error.FxHomeIsHome => "tetris: TETRIS_HOME can't be your home folder; Tetris keeps its folder private\n",
         });
         exitFast(1);
     };
     if (namesNonFolderRaw(value)) {
-        try writeStderrFast("fx: FX_HOME must name a folder, but it or a folder above it is a file\n");
+        try writeStderrFast("tetris: TETRIS_HOME must name a folder, but it or a folder above it is a file\n");
         exitFast(1);
     }
-    // fx creates its own folder on first use, but opens the folder that holds
-    // it directly, so that one has to exist.
+    // Tetris creates its own folder on first use, but opens the folder that
+    // holds it directly, so that one has to exist.
     if (profile_paths.fxHomeParent()) |parent| createFolderPathRaw(parent);
 }
 
@@ -3854,7 +3854,7 @@ fn namesNonFolderRaw(path: []const u8) bool {
     return rc != 0 and std.posix.errno(rc) == .NOTDIR;
 }
 
-test "FX_HOME is refused only when it is a file or a path through one" {
+test "TETRIS_HOME is refused only when it is a file or a path through one" {
     var tmp = std.testing.tmpDir(.{});
     defer tmp.cleanup();
     try tmp.dir.writeFile(io_mod.getIo(), .{ .sub_path = "file", .data = "" });
@@ -3878,8 +3878,8 @@ test "FX_HOME is refused only when it is a file or a path through one" {
 }
 
 /// Creates `path` and every folder above it that is missing. This runs before
-/// fx's I/O is set up, so it calls libc; a folder that already exists, or
-/// one fx can't create, is left for the first use to report.
+/// Tetris's I/O is set up, so it calls libc; a folder that already exists, or
+/// one Tetris can't create, is left for the first use to report.
 fn createFolderPathRaw(path: []const u8) void {
     var buffer: [std.Io.Dir.max_path_bytes + 1]u8 = undefined;
     if (path.len == 0 or path.len >= buffer.len) return;
@@ -3912,7 +3912,7 @@ fn runNonBenchmark(raw_args: []const [*:0]const u8, raw_env: RawEnviron, cli_arg
 
     const alloc = processAllocator();
     const auth_mode = credentials.parseAuthMode(rawEnvValue(raw_env, "FX_AUTH_MODE")) catch {
-        try writeStderrFast("fx: FX_AUTH_MODE must be local or host-managed\n");
+        try writeStderrFast("Tetris: FX_AUTH_MODE must be local or host-managed\n");
         exitFast(1);
     };
     const cfg = if (cli_args.len == 0)

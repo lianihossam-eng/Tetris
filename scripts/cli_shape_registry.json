@@ -1,5 +1,5 @@
 {
-  "_about": "Registry for scripts/check_cli_shape.py. env lists every FX_* environment variable fx reads, with its job and stability (Env vars in .fx/skills/fx-cli-shape/references/rules.md). external_env lists the non-fx variables fx reads by name. not_env lists FX_* string literals that are not environment variables. exceptions maps known shape violations to the reason and the finding that removes them; delete an entry when its finding lands. hand_parsed_flags and hand_parsed_files list the flag comparisons that stay hand-written, by flag and by file, with the reason.",
+  "_about": "Registry for scripts/check_cli_shape.py. env lists every FX_* and TETRIS_* environment variable the Tetris executable reads, with its job and stability (Env vars in .fx/skills/fx-cli-shape/references/rules.md). external_env lists the non-Tetris variables it reads by name. not_env lists FX_* and TETRIS_* string literals that are not environment variables. exceptions maps known shape violations to the reason and the finding that removes them; delete an entry when its finding lands. hand_parsed_flags and hand_parsed_files list the flag comparisons that stay hand-written, by flag and by file, with the reason.",
   "env": {
     "FX_AUTH_MODE": {
       "job": "internal",
@@ -53,7 +53,7 @@
       "job": "integration",
       "stability": "stable"
     },
-    "FX_HOME": {
+    "TETRIS_HOME": {
       "job": "location",
       "stability": "stable"
     },
@@ -289,7 +289,7 @@
       "job": "test",
       "stability": "internal"
     },
-    "FX_TEST_UPGRADE_BASE_URL": {
+    "TETRIS_TEST_UPGRADE_BASE_URL": {
       "job": "test",
       "stability": "internal"
     },
@@ -394,12 +394,12 @@
     "--resume=": "The fixed resume grammar: --resume with its operand inline.",
     "--resume-last": "Removed resume spelling, matched only to name its replacement.",
     "--resume-": "Removed --resume-<id> spellings, matched only to name the replacement.",
-    "--upgrade-relaunch": "The internal word fx upgrade passes when it restarts fx into the new version.",
-    "--id": "Removed fx session resume --id spelling, matched only to name its replacement.",
-    "--golden": "Maps a missing-value failure onto fx replay's own error.",
-    "-p": "Other agents' one-shot flag. fx doesn't accept it; it is matched only to point to fx ask.",
-    "--print": "Long form of -p, matched only to point to fx ask.",
-    "--print=": "Inline form of --print, matched only to point to fx ask.",
+    "--upgrade-relaunch": "The internal word tetris upgrade passes when it restarts Tetris into the new version.",
+    "--id": "Removed tetris session resume --id spelling, matched only to name its replacement.",
+    "--golden": "Maps a missing-value failure onto Tetris replay's own error.",
+    "-p": "Other agents' one-shot flag. Tetris doesn't accept it; it is matched only to point to tetris ask.",
+    "--print": "Long form of -p, matched only to point to tetris ask.",
+    "--print=": "Inline form of --print, matched only to point to tetris ask.",
     "--no-": "Pairs each --x with --no-x at compile time to build the launch usage line from launch_options; no argument is read."
   },
   "run_options": {

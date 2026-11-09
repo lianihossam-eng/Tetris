@@ -41,7 +41,7 @@ class TransformedUnitTestsTests(unittest.TestCase):
         return path
 
     def test_the_unit_test_artifact_has_its_own_layout(self) -> None:
-        self.assertEqual("fx-test", self.paths.control_binary.name)
+        self.assertEqual("tetris-test", self.paths.control_binary.name)
         self.assertEqual("unit-tests.bc", self.paths.bitcode.name)
         self.assertEqual(("aarch64-linux", "x86_64-linux"), unit_tests.TARGETS)
 
@@ -140,7 +140,7 @@ class TransformedUnitTestsTests(unittest.TestCase):
         repo = self.root / "repo"
         repo.mkdir()
         binary = self.write_executable(
-            "fx-test",
+            "tetris-test",
             "import os, select, stat, sys\n"
             f"assert os.getcwd() == {str(repo.resolve())!r}\n"
             "assert stat.S_ISFIFO(os.fstat(0).st_mode)\n"
@@ -168,7 +168,7 @@ class TransformedUnitTestsTests(unittest.TestCase):
     def test_a_run_that_passes_only_on_retry_keeps_the_first_failure(self) -> None:
         marker = self.root / "first-run-done"
         binary = self.write_executable(
-            "fx-test",
+            "tetris-test",
             "import os, pathlib, sys\n"
             f"marker = pathlib.Path({str(marker)!r})\n"
             "if not marker.exists():\n"
@@ -192,7 +192,7 @@ class TransformedUnitTestsTests(unittest.TestCase):
     def test_the_first_run_log_keeps_every_test_of_a_long_run(self) -> None:
         marker = self.root / "first-run-done"
         binary = self.write_executable(
-            "fx-test",
+            "tetris-test",
             "import pathlib, sys\n"
             f"marker = pathlib.Path({str(marker)!r})\n"
             "lines = [f'{i}/16000 test number {i} with a long enough name to fill the log...OK' for i in range(1, 16001)]\n"

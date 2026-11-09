@@ -97,7 +97,7 @@ jobs:
       - name: Build
         run: zig build -Doptimize=${{ matrix.optimize }}
 
-      - name: Walk fx ask turns along the empty-reply model
+      - name: Walk Tetris ask turns along the empty-reply model
         run: TLA2TOOLS_JAR="$RUNNER_TEMP/tla2tools.jar" bun tests/tla/drivers/agent_runtime/driver.ts --self-check
 
       # The zsh user profile tests in src/core/execution/command_runner.zig
@@ -144,7 +144,7 @@ jobs:
           jq -e 'length == 8 and all(.[]; . == "success")' <<<"$RESULTS"
 
   build:
-    name: Build fx (ReleaseSafe)
+    name: Build tetris (ReleaseSafe)
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     env:
@@ -167,13 +167,13 @@ jobs:
         run: zig build -Doptimize=ReleaseSafe -Dcpu=baseline
 
       - name: Smoke test fresh binary
-        run: scripts/smoke-binary.sh zig-out/bin/fx
+        run: scripts/smoke-binary.sh zig-out/bin/tetris
 
       - name: Share the binary with E2E jobs
         uses: actions/upload-artifact@v4
         with:
-          name: fx-linux-x86_64
-          path: zig-out/bin/fx
+          name: tetris-linux-x86_64
+          path: zig-out/bin/tetris
           if-no-files-found: error
           retention-days: 1
 
@@ -680,13 +680,13 @@ jobs:
       VERCEL_OIDC_TOKEN: ""
     steps:
       - uses: actions/checkout@v4
-      - name: Download fx
+      - name: Download tetris
         uses: actions/download-artifact@v4
         with:
-          name: fx-linux-x86_64
+          name: tetris-linux-x86_64
           path: zig-out/bin
       - name: Restore executable mode
-        run: chmod +x zig-out/bin/fx
+        run: chmod +x zig-out/bin/tetris
       # The MCP driver builds its labs against src/mcp/.
       - name: Setup Zig
         uses: ./.github/actions/setup-zig
@@ -780,14 +780,14 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Download fx
+      - name: Download tetris
         uses: actions/download-artifact@v4
         with:
-          name: fx-linux-x86_64
+          name: tetris-linux-x86_64
           path: zig-out/bin
 
       - name: Restore executable mode
-        run: chmod +x zig-out/bin/fx
+        run: chmod +x zig-out/bin/tetris
 
       # Some E2E files build their own Zig fixtures.
       - name: Setup Zig
@@ -886,14 +886,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Download fx
+      - name: Download tetris
         uses: actions/download-artifact@v4
         with:
-          name: fx-linux-x86_64
+          name: tetris-linux-x86_64
           path: zig-out/bin
 
       - name: Restore executable mode
-        run: chmod +x zig-out/bin/fx
+        run: chmod +x zig-out/bin/tetris
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
@@ -943,7 +943,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Shellcheck Fx scripts
+      - name: Shellcheck Tetris scripts
         run: |
           scripts=(
             benchmarks/startup.sh
@@ -955,6 +955,7 @@ jobs:
             scripts/detect-ci-need.sh
             scripts/detect-macos-need.sh
             scripts/smoke-binary.sh
+            scripts/install.sh
             tests/e2e/ci-run-files.sh
           )
           # bash -n parses only its first argument, so check each script.

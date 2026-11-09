@@ -1,14 +1,14 @@
-// Runs the real fx binary along tests/tla/session/SessionWrite.tla: main's
-// turn grows until fx compacts it, and its subagents finish before the
-// compaction, while fx waits for the compaction's notes (the compactor has
+// Runs the real tetris binary along tests/tla/session/SessionWrite.tla: main's
+// turn grows until Tetris compacts it, and its subagents finish before the
+// compaction, while Tetris waits for the compaction's notes (the compactor has
 // kept its records by then, so a subagent's finish line takes them), during
 // the compaction's write of main's session, or after it. The session's write
 // control (src/core/session/write_test_controls.zig) holds every write that
 // took due compactor records, so the driver lets the held writes go one at a
 // time, in the order a walk names, and waits for each one's batch to land
-// before the next. It records what fx did, from fx's own files only: each
+// before the next. It records what Tetris did, from Tetris's own files only: each
 // hold marker and the records count it holds, each batch in main's log that
-// lists records and whose line it carries, and whether fx died. TLC then
+// lists records and whose line it carries, and whether Tetris died. TLC then
 // replays the walk through the model with one write at a time
 // (SessionWriteTrace.tla). Planted changes to a kept walk must be rejected.
 //
@@ -33,7 +33,7 @@ type Writer = "main" | "child" | "any";
 type Observation = { op: "take" | "land" | "crash"; writer: Writer; count: number };
 type Verdict = "ACCEPTED" | "REJECTED" | "TOOL_ERROR";
 
-/// When the subagents finish: before main's compaction, while fx waits for
+/// When the subagents finish: before main's compaction, while Tetris waits for
 /// the compaction's notes, while the compaction's write holds the records,
 /// or once that write has landed.
 type When = "before" | "compacting" | "during" | "after";
@@ -132,7 +132,7 @@ function recordBatches(log: string): Array<{ writer: Writer; count: number }> {
 }
 
 function mainLog(home: string): string {
-  const root = join(home, ".fx", "sessions", "v2");
+  const root = join(home, ".tetris", "sessions", "v2");
   if (!existsSync(root)) return "";
   for (const id of readdirSync(root)) {
     const path = join(root, id, "log.jsonl");
@@ -150,14 +150,14 @@ async function until(done: () => boolean, ms: number) {
   return done();
 }
 
-/// Runs one walk of real fx and records what it did.
+/// Runs one walk of real Tetris and records what it did.
 async function runWalk(walk: Walk, dir: string) {
   const root = realpathSync(mkdtempSync(join(tmpdir(), `fx-tla-session-write-${walk.label}-`)));
   const home = join(root, "home");
   const workspace = join(root, "workspace");
-  mkdirSync(join(home, ".fx"), { recursive: true });
+  mkdirSync(join(home, ".tetris"), { recursive: true });
   mkdirSync(workspace, { recursive: true });
-  writeFileSync(join(home, ".fx", "settings.json"), "{}");
+  writeFileSync(join(home, ".tetris", "settings.json"), "{}");
   writeFileSync(join(workspace, "notes.txt"), "WRITE_WALK_SENTINEL\n");
   const heldMarker = join(root, "write-held");
   const release = join(root, "write-release");

@@ -59,10 +59,10 @@ pub const Host = struct {
     /// The I/O implementation for files, locks and the worker.
     io_fn: *const fn (ctx: ?*anyopaque) Io,
     /// The folder that holds fx's folder: the user's home directory, or the
-    /// parent of `$FX_HOME`. The cache lives in `<home>/<fx_dir_name>`.
+    /// parent of `$TETRIS_HOME`. The cache lives in `<home>/<fx_dir_name>`.
     home: []const u8,
     /// The name of fx's folder inside `home`.
-    fx_dir_name: []const u8 = ".fx",
+    fx_dir_name: []const u8 = ".tetris",
 };
 
 /// The sign-in `/usage` reads with. The bearer is borrowed only for the call
@@ -537,7 +537,7 @@ pub const Dashboard = struct {
         return home.openDir(self.io(), self.host.fx_dir_name, .{}) catch null;
     }
 
-    /// `~/.fx`, created private when missing: `fx usage` with only an API
+    /// `~/.tetris`, created private when missing: `fx usage` with only an API
     /// key may run before anything else made it.
     fn openOrCreateFxDir(self: *Dashboard) ?Io.Dir {
         var home = self.openHome() orelse return null;
@@ -714,7 +714,7 @@ fn fetchAll(dashboard: *Dashboard, job: *const Job) Outcome {
 }
 
 /// What a fetch shows when the cache cannot be written (a read-only or
-/// misplaced `~/.fx/usage-cache`): the fetch merged with whatever can still
+/// misplaced `~/.tetris/usage-cache`): the fetch merged with whatever can still
 /// be read, or else with what the dashboard holds, kept in memory only.
 fn unsaved(dashboard: *Dashboard, job: *const Job, fetched: cache.Entry, now: i64, held: ?cache.Entry) Outcome {
     var on_disk = dashboard.readCache(job.identity);
@@ -1003,11 +1003,11 @@ const FakeGateway = struct {
     }
 };
 
-const member: Credential = .{ .scope = .member, .bearer = "vca_token", .team = "team_1", .subject = "acct_1", .label = "team-one (fx login)" };
+const member: Credential = .{ .scope = .member, .bearer = "vca_token", .team = "team_1", .subject = "acct_1", .label = "team-one (tetris login)" };
 const api_key: Credential = .{ .scope = .api_key, .bearer = "vck_key", .team = null, .subject = "vck_key" };
 
 fn testHome(tmp: *std.testing.TmpDir) ![:0]u8 {
-    try tmp.dir.createDir(testing.io, ".fx", .fromMode(0o700));
+    try tmp.dir.createDir(testing.io, ".tetris", .fromMode(0o700));
     return tmp.dir.realPathFileAlloc(testing.io, ".", testing.allocator);
 }
 
@@ -1031,7 +1031,7 @@ test "opening shows the cache at once and fills it from AI Gateway in the backgr
     var snap = try dashboard.snapshot(testing.allocator);
     defer snap.deinit();
     try testing.expect(snap.status == .ready);
-    try testing.expectEqualStrings("team-one (fx login)", snap.label);
+    try testing.expectEqualStrings("team-one (tetris login)", snap.label);
     try testing.expectApproxEqAbs(@as(f64, 2.5), snap.of(.today).totals.total_cost, 1e-9);
     try testing.expectApproxEqAbs(@as(f64, 43), snap.of(.days_7).totals.total_cost, 1e-9);
     try testing.expectApproxEqAbs(@as(f64, 43), snap.of(.month).totals.total_cost, 1e-9);
@@ -1165,7 +1165,7 @@ test "a dashboard reads what another fx process stored since" {
     try testing.expectEqual(@as(usize, 5), first_gateway.count);
 }
 
-test "a first fetch creates a private ~/.fx for its cache" {
+test "a first fetch creates a private ~/.tetris for its cache" {
     var tmp = testing.tmpDir(.{});
     defer tmp.cleanup();
     const home = try tmp.dir.realPathFileAlloc(testing.io, ".", testing.allocator);
@@ -1179,7 +1179,7 @@ test "a first fetch creates a private ~/.fx for its cache" {
     var snap = try dashboard.snapshot(testing.allocator);
     defer snap.deinit();
     try testing.expect(snap.status == .ready);
-    const stat = try tmp.dir.statFile(testing.io, ".fx", .{});
+    const stat = try tmp.dir.statFile(testing.io, ".tetris", .{});
     try testing.expectEqual(std.Io.File.Kind.directory, stat.kind);
     try testing.expectEqual(@as(u32, 0o700), @as(u32, @intCast(stat.permissions.toMode() & 0o777)));
 }
@@ -1490,7 +1490,7 @@ test "an unreadable cache file keeps the finished days on screen and in the file
     // Something else (garbage, or another fx version's schema) replaces the file.
     const identity = cache.identityOf(.api_key, api_key.subject, "");
     var name_buf: [128]u8 = undefined;
-    const name = try std.mem.print(&name_buf, ".fx/{s}/{s}.json", .{ cache.dir_name, &identity });
+    const name = try std.mem.print(&name_buf, ".tetris/{s}/{s}.json", .{ cache.dir_name, &identity });
     try tmp.dir.writeFile(testing.io, .{ .sub_path = name, .data = "{\"schema_version\":3}" });
 
     gateway.now_ms += 2 * std.time.ms_per_min;
@@ -1520,7 +1520,7 @@ test "a cache that cannot be written still shows what was fetched" {
     const home = try testHome(&tmp);
     defer testing.allocator.free(home);
     // `usage-cache` is a file, so nothing can be stored.
-    try tmp.dir.writeFile(testing.io, .{ .sub_path = ".fx/" ++ cache.dir_name, .data = "not a directory" });
+    try tmp.dir.writeFile(testing.io, .{ .sub_path = ".tetris/" ++ cache.dir_name, .data = "not a directory" });
     var gateway: FakeGateway = .{};
     var dashboard = Dashboard.init(testing.allocator, gateway.host(home));
     defer dashboard.deinit();
@@ -1552,7 +1552,7 @@ test "a dashboard never shows less than it had when the file goes back" {
     });
     defer testing.allocator.free(older);
     var name_buf: [128]u8 = undefined;
-    const name = try std.mem.print(&name_buf, ".fx/{s}/{s}.json", .{ cache.dir_name, &identity });
+    const name = try std.mem.print(&name_buf, ".tetris/{s}/{s}.json", .{ cache.dir_name, &identity });
     try tmp.dir.writeFile(testing.io, .{ .sub_path = name, .data = older });
 
     var shown = try dashboard.snapshot(testing.allocator);

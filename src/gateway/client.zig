@@ -246,9 +246,9 @@ const default_gateway_base_url = "https://ai-gateway.vercel.sh";
 pub const vercel_ai_gateway_team_header = "x-vercel-ai-gateway-team";
 pub const vercel_gateway_extended_time_header = "x-vercel-gateway-extended-time";
 pub const vercel_gateway_extended_time_value = "true";
-/// Identifies fx on every AI Gateway request; the zig std.http default
+/// Identifies Tetris on every AI Gateway request; the zig std.http default
 /// (`zig/<version> (std.http)`) is never sent to the gateway.
-pub const user_agent = "fx/" ++ build_options.app_version;
+pub const user_agent = "tetris/" ++ build_options.app_version;
 var resolved_model_trace_emitted = std.atomic.Value(bool).init(false);
 var test_cancel_watcher_spawn_error: ?anyerror = null;
 
@@ -731,8 +731,8 @@ pub fn postGatewayCompletion(
         defer secret.zeroAndFree(alloc, auth_header);
 
         const extra_headers = [_]std.http.Header{
-            .{ .name = "HTTP-Referer", .value = "https://github.com/vercel-labs/fx" },
-            .{ .name = "X-Title", .value = "fx" },
+            .{ .name = "HTTP-Referer", .value = "https://github.com/lianihossam-eng/Tetris" },
+            .{ .name = "X-Title", .value = "Tetris" },
             .{ .name = "Accept", .value = "application/json" },
             .{ .name = vercel_gateway_extended_time_header, .value = vercel_gateway_extended_time_value },
             .{ .name = "ai-gateway-protocol-version", .value = "0.0.1" },
@@ -2322,9 +2322,9 @@ fn gatewayExtraHeaders(
 ) []const std.http.Header {
     std.debug.assert(buf.len >= 10);
     var len: usize = 0;
-    buf[len] = .{ .name = "HTTP-Referer", .value = "https://github.com/vercel-labs/fx" };
+    buf[len] = .{ .name = "HTTP-Referer", .value = "https://github.com/lianihossam-eng/Tetris" };
     len += 1;
-    buf[len] = .{ .name = "X-Title", .value = "fx" };
+    buf[len] = .{ .name = "X-Title", .value = "Tetris" };
     len += 1;
     buf[len] = .{ .name = vercel_gateway_extended_time_header, .value = vercel_gateway_extended_time_value };
     len += 1;
@@ -11257,8 +11257,8 @@ test "gateway chat request sends extended time and attribution headers" {
 
     if (fixture.failure) |err| return err;
     try std.testing.expectEqualStrings(user_agent, fixture.capturedHeaderValue("user-agent").?);
-    try std.testing.expectEqualStrings("https://github.com/vercel-labs/fx", fixture.capturedHeaderValue("http-referer").?);
-    try std.testing.expectEqualStrings("fx", fixture.capturedHeaderValue("x-title").?);
+    try std.testing.expectEqualStrings("https://github.com/lianihossam-eng/Tetris", fixture.capturedHeaderValue("http-referer").?);
+    try std.testing.expectEqualStrings("Tetris", fixture.capturedHeaderValue("x-title").?);
     try std.testing.expectEqualStrings(
         vercel_gateway_extended_time_value,
         fixture.capturedHeaderValue(vercel_gateway_extended_time_header).?,

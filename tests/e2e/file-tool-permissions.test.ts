@@ -32,7 +32,7 @@ function createIsolatedRoot(prefix: string) {
   const home = join(root, "home");
   const workspace = join(root, "workspace");
   const external = join(root, "external");
-  mkdirSync(join(home, ".fx"), { recursive: true });
+  mkdirSync(join(home, ".tetris"), { recursive: true });
   mkdirSync(workspace, { recursive: true });
   mkdirSync(external, { recursive: true });
   return {
@@ -45,7 +45,7 @@ function createIsolatedRoot(prefix: string) {
 
 function parseFxJson(result: { stdout: string; stderr: string; code: number | null }): FxJson {
   if (result.code !== 0) {
-    throw new Error(`fx exited ${result.code}\nstdout: ${result.stdout}\nstderr: ${result.stderr}`);
+    throw new Error(`tetris exited ${result.code}\nstdout: ${result.stdout}\nstderr: ${result.stderr}`);
   }
   return JSON.parse(result.stdout.trim()) as FxJson;
 }
@@ -83,13 +83,13 @@ async function runWithFakeGateway(
 
 describe("external file permissions", () => {
   test(
-    "fx ask --yolo bypasses a configured write denial without a classifier request",
+    "tetris ask --yolo bypasses a configured write denial without a classifier request",
     async () => {
       const root = createIsolatedRoot("fx-yolo-permissions-");
       try {
         const target = join(root.external, "yolo-write.txt");
         const tracePath = join(root.root, "permission-trace.log");
-        const settingsPath = join(root.home, ".fx", "settings.json");
+        const settingsPath = join(root.home, ".tetris", "settings.json");
         writeFileSync(
           settingsPath,
           JSON.stringify({
@@ -123,7 +123,7 @@ describe("external file permissions", () => {
         );
 
         expect(result.stderr).toContain(
-          "Full access enabled: fx permission checks disabled",
+          "Full access enabled: Tetris permission checks disabled",
         );
         const output = parseFxJson(result);
         expect(
@@ -148,7 +148,7 @@ describe("external file permissions", () => {
   );
 
   test(
-    "fx ask reads external paths and exercises classifier and rule-gated writes",
+    "tetris ask reads external paths and exercises classifier and rule-gated writes",
     async () => {
       const root = createIsolatedRoot("fx-file-permissions-");
       try {
@@ -158,7 +158,7 @@ describe("external file permissions", () => {
         const tracePath = join(root.root, "permission-trace.log");
         writeFileSync(readTarget, "FX_E2E_EXTERNAL_READ\n");
         writeFileSync(classifiedTarget, "before");
-        writeFileSync(join(root.home, ".fx", "settings.json"), "{}");
+        writeFileSync(join(root.home, ".tetris", "settings.json"), "{}");
 
         const { result: readResult } = await runWithFakeGateway(
           root,
@@ -210,7 +210,7 @@ describe("external file permissions", () => {
         expect(readFileSync(classifiedTarget, "utf-8")).toBe("FX_E2E_EXTERNAL_CLASSIFIED");
 
         writeFileSync(
-          join(root.home, ".fx", "settings.json"),
+          join(root.home, ".tetris", "settings.json"),
           JSON.stringify({
             permission: {
               edit: {
@@ -260,7 +260,7 @@ describe("failed edit hints", () => {
       const target = join(root.external, "credentials");
       writeFileSync(target, CONTENT);
       writeFileSync(
-        join(root.home, ".fx", "settings.json"),
+        join(root.home, ".tetris", "settings.json"),
         JSON.stringify({ permission: permission(root.external) }),
       );
       const { gateway, result } = await runWithFakeGateway(

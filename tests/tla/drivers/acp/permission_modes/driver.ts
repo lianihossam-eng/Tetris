@@ -1,4 +1,4 @@
-// Runtime driver: runs the real `fx acp` binary from a worktree through
+// Runtime driver: runs the real `tetris acp` binary from a worktree through
 // directed and seeded-random permission-mode plans, records what a client
 // observes (mode option and older modes field, JSON-RPC errors, the
 // profile's saved mode, and how each prompt's shell call was enforced), and
@@ -56,7 +56,7 @@ const DIRECTED: Plan[] = [
   // mode another process has since replaced.
   { name: "d6-other-process", profile: "full-access",
     ops: [P, other("ask"), P, N, P, other("full-access"), P, R, P, set("auto"), N, P] },
-  // fx status reports the next session's mode, which an open session may not share.
+  // tetris status reports the next session's mode, which an open session may not share.
   { name: "d7-status", profile: "unset",
     ops: [S, set("full-access"), S, other("ask"), S, P, N, S, legacy("auto"), F, S] },
 ];
@@ -81,7 +81,7 @@ function randomPlans(count: number, steps: number, seed: number): Plan[] {
     () => other(pick(MODES)), () => N, () => S,
     () => P, () => P, () => P, () => R, () => F,
   ];
-  // fx saves a chat at its first turn, so resume only follows a prompt in
+  // Tetris saves a chat at its first turn, so resume only follows a prompt in
   // the current session (an explicit assumption in the spec).
   return Array.from({ length: count }, (_, index) => {
     const name = `r${String(index + 1).padStart(2, "0")}-seed${seed}`;
@@ -255,7 +255,7 @@ function git(worktree: string, ...args: string[]): string {
 
 async function main() {
   const worktree = resolve(argValue("--worktree") ?? REPO_ROOT);
-  const fxBin = join(worktree, "zig-out", "bin", "fx");
+  const fxBin = join(worktree, "zig-out", "bin", "tetris");
   if (!existsSync(fxBin)) throw new Error(`missing ${fxBin}; run zig build first`);
   const label = argValue("--label") ?? "run";
   const seed = Number(argValue("--seed") ?? "20261007");

@@ -119,7 +119,7 @@ test "loadSkills loads managed skills under HOME" {
     var tmp = std.testing.tmpDir(.{});
     defer tmp.cleanup();
 
-    try writeTempFile(&tmp, "home/.fx/skills/demo/SKILL.md",
+    try writeTempFile(&tmp, "home/.tetris/skills/demo/SKILL.md",
         \\---
         \\name: demo
         \\description: Demo skill

@@ -137,13 +137,13 @@ function gatewayEnv(home: string, gateway: ReturnType<typeof startFakeGateway>) 
 }
 
 function prepareFilesystem(paths: Paths, config: Config): void {
-  mkdirSync(join(paths.home, ".fx"), { recursive: true });
+  mkdirSync(join(paths.home, ".tetris"), { recursive: true });
   mkdirSync(paths.workspace);
   mkdirSync(paths.foreignWorkspace);
   writeFileSync(paths.stderr, "");
   writeFileSync(paths.trace, "");
   writeFileSync(
-    join(paths.home, ".fx", "settings.json"),
+    join(paths.home, ".tetris", "settings.json"),
     JSON.stringify({
       sandbox: "none",
       permission_mode: "auto",
@@ -290,7 +290,7 @@ function installLargeCatalog(
   config: Config,
   real: IndexedSummary,
 ): void {
-  const sessionsRoot = join(paths.home, ".fx", "sessions");
+  const sessionsRoot = join(paths.home, ".tetris", "sessions");
   const base = Math.max(Date.now(), real.updated_at_ms + config.catalogEntries + 10);
   const entries: IndexedSummary[] = [{
     id: "resume-foreign-newest",
@@ -515,7 +515,7 @@ async function runStress(config: Config): Promise<Paths> {
   try {
     // v1's listing cache: without it the listing reads every v1 session,
     // and fx lists them without writing it back.
-    const cachePath = join(paths.home, ".fx", "sessions", ".resume-catalog");
+    const cachePath = join(paths.home, ".tetris", "sessions", ".resume-catalog");
     rmSync(cachePath, { force: true });
     const buildStarted = performance.now();
     session = await TmuxSession.create({
@@ -599,7 +599,7 @@ async function runStress(config: Config): Promise<Paths> {
 
     const report = {
       config,
-      catalogEntries: readdirSync(join(paths.home, ".fx", "sessions"), {
+      catalogEntries: readdirSync(join(paths.home, ".tetris", "sessions"), {
         withFileTypes: true,
       }).filter((entry) => entry.isDirectory()).length,
       transitions: {

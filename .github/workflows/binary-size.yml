@@ -82,14 +82,14 @@ jobs:
             -Dtarget=${{ matrix.target }} \
             -Doptimize=ReleaseSafe \
             --cache-dir "$RUNNER_TEMP/fx-head-cache"
-          cp zig-out/bin/fx "$evidence_dir/head-fx"
-          file "$evidence_dir/head-fx" > "$evidence_dir/head-file.txt"
+          cp zig-out/bin/tetris "$evidence_dir/head-tetris"
+          file "$evidence_dir/head-tetris" > "$evidence_dir/head-file.txt"
           cat "$evidence_dir/head-file.txt"
           grep -Eq "$EXPECTED_FILE" "$evidence_dir/head-file.txt"
           if [ "$SECTION_FORMAT" = "macho" ]; then
-            size -m "$evidence_dir/head-fx" > "$evidence_dir/head-sections.txt"
+            size -m "$evidence_dir/head-tetris" > "$evidence_dir/head-sections.txt"
           else
-            size -A -d "$evidence_dir/head-fx" > "$evidence_dir/head-sections.txt"
+            size -A -d "$evidence_dir/head-tetris" > "$evidence_dir/head-sections.txt"
           fi
           cat "$evidence_dir/head-sections.txt"
 
@@ -100,7 +100,7 @@ jobs:
         env:
           AI_GATEWAY_API_KEY: ""
           VERCEL_OIDC_TOKEN: ""
-        run: scripts/smoke-binary.sh "$RUNNER_TEMP/fx-binary-size-evidence/head-fx"
+        run: scripts/smoke-binary.sh "$RUNNER_TEMP/fx-binary-size-evidence/head-tetris"
 
       # The base commit builds with the Zig version it pins, which differs
       # from this pull request's when the pull request changes the toolchain.
@@ -147,7 +147,16 @@ jobs:
               --cache-dir "$RUNNER_TEMP/fx-base-cache"
           )
           mkdir -p "$RUNNER_TEMP/fx-binary-size-base-bin"
-          cp "$base_worktree/zig-out/bin/fx" "$RUNNER_TEMP/fx-binary-size-base-bin/fx"
+          base_binary=""
+          if [[ -f "$base_worktree/zig-out/bin/tetris" ]]; then
+            base_binary="$base_worktree/zig-out/bin/tetris"
+          elif [[ -f "$base_worktree/zig-out/bin/fx" ]]; then
+            base_binary="$base_worktree/zig-out/bin/fx"
+          else
+            echo "base build produced neither zig-out/bin/tetris nor zig-out/bin/fx" >&2
+            exit 1
+          fi
+          cp "$base_binary" "$RUNNER_TEMP/fx-binary-size-base-bin/tetris"
 
       - name: Save base binary
         if: github.event_name == 'push' && steps.base-cache.outputs.cache-hit != 'true'
@@ -162,14 +171,14 @@ jobs:
         run: |
           set -euo pipefail
           evidence_dir="$RUNNER_TEMP/fx-binary-size-evidence"
-          cp "$RUNNER_TEMP/fx-binary-size-base-bin/fx" "$evidence_dir/base-fx"
-          file "$evidence_dir/base-fx" > "$evidence_dir/base-file.txt"
+          cp "$RUNNER_TEMP/fx-binary-size-base-bin/tetris" "$evidence_dir/base-tetris"
+          file "$evidence_dir/base-tetris" > "$evidence_dir/base-file.txt"
           cat "$evidence_dir/base-file.txt"
           grep -Eq "$EXPECTED_FILE" "$evidence_dir/base-file.txt"
           if [ "$SECTION_FORMAT" = "macho" ]; then
-            size -m "$evidence_dir/base-fx" > "$evidence_dir/base-sections.txt"
+            size -m "$evidence_dir/base-tetris" > "$evidence_dir/base-sections.txt"
           else
-            size -A -d "$evidence_dir/base-fx" > "$evidence_dir/base-sections.txt"
+            size -A -d "$evidence_dir/base-tetris" > "$evidence_dir/base-sections.txt"
           fi
           cat "$evidence_dir/base-sections.txt"
 
@@ -181,8 +190,8 @@ jobs:
           set -euo pipefail
           evidence_dir="$RUNNER_TEMP/fx-binary-size-evidence"
           python3 -m scripts.binary_size \
-            --base-binary "$evidence_dir/base-fx" \
-            --head-binary "$evidence_dir/head-fx" \
+            --base-binary "$evidence_dir/base-tetris" \
+            --head-binary "$evidence_dir/head-tetris" \
             --base-sections "$evidence_dir/base-sections.txt" \
             --head-sections "$evidence_dir/head-sections.txt" \
             --base-sha "$BASE_SHA" \
@@ -223,7 +232,7 @@ jobs:
         with:
           name: binary-size-binaries-${{ matrix.name }}-${{ github.event.pull_request.number }}
           path: |
-            ${{ runner.temp }}/fx-binary-size-evidence/base-fx
-            ${{ runner.temp }}/fx-binary-size-evidence/head-fx
+            ${{ runner.temp }}/fx-binary-size-evidence/base-tetris
+            ${{ runner.temp }}/fx-binary-size-evidence/head-tetris
           compression-level: 0
           retention-days: 7

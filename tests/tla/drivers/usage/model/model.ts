@@ -83,7 +83,7 @@ export function checks(): Check[] {
       label: "bug-view-ignores-day", expect: "CAUGHT", names: "TodayIsToday", config: target(ideal, "TodayIsToday"),
       mutant: { find: "today |-> IF r.todayDay = Day(w) THEN r.todayAt ELSE None", replace: "today |-> r.todayAt" },
     },
-    // Two bugs an earlier fx had, planted back.
+    // Two bugs an earlier Tetris had, planted back.
     {
       label: "bug-future-stamp-wins", expect: "CAUGHT", names: "SuccessShowsToday", config: target(hostile, "SuccessShowsToday"),
       mutant: { find: "    LET xToday == x.todayAt # None /\\ x.todayAt <= w", replace: "    LET xToday == x.todayAt # None" },

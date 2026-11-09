@@ -164,7 +164,7 @@ fn appendUnknownSettingChecks(
     alloc: Allocator,
     paths: config_runtime.Paths,
 ) !void {
-    if (paths.user_settings) |path| try appendUnknownSettingChecksFor(checks, alloc, path, profile_paths.displayText("~/.fx/settings.json"), .profile);
+    if (paths.user_settings) |path| try appendUnknownSettingChecksFor(checks, alloc, path, profile_paths.displayText("~/.tetris/settings.json"), .profile);
     try appendUnknownSettingChecksFor(checks, alloc, paths.workspace_settings, ".fx.json", .project);
 }
 
@@ -327,12 +327,12 @@ fn appendStateChecks(checks: *std.ArrayList(Check), alloc: Allocator) !void {
     defer report.deinit(alloc);
     try appendCheck(checks, alloc, "state", .ok, "sessions ready");
     for (report.damaged.items) |id| {
-        const detail = try alloc.print("session {s} has a damaged log; `fx session recover {s}` copies its good turns", .{ id, id });
+        const detail = try alloc.print("session {s} has a damaged log; `tetris session recover {s}` copies its good turns", .{ id, id });
         try appendCheckOwned(checks, alloc, "session", .warn, detail);
     }
     for (report.stuck.items) |stuck| try appendStuckCheck(checks, alloc, stuck);
     for (report.kept_children) |kept| {
-        const detail = try alloc.print("session {s}, a subagent an older fx saved, is kept as it is: {s}", .{ kept.id, kept.reason });
+        const detail = try alloc.print("session {s}, a subagent an older Tetris saved, is kept as it is: {s}", .{ kept.id, kept.reason });
         try appendCheckOwned(checks, alloc, "session", .ok, detail);
     }
     // The limit covers v1's unconverted sessions too (D73).
@@ -346,31 +346,31 @@ fn appendStateChecks(checks: *std.ArrayList(Check), alloc: Allocator) !void {
         try appendCheckOwned(checks, alloc, "session", .warn, detail);
     }
     if (report.keeps_left_out > 0) {
-        const detail = try alloc.print("{d} earlier session folder(s) under ~/.fx/sessions keep files their conversion left out", .{report.keeps_left_out});
+        const detail = try alloc.print("{d} earlier session folder(s) under ~/.tetris/sessions keep files their conversion left out", .{report.keeps_left_out});
         try appendCheckOwned(checks, alloc, "sessions", .ok, detail);
     }
     const convertible = report.unconverted - report.stuck.items.len;
     if (convertible > 0) {
-        const detail = try alloc.print("{d} session(s) saved by an older fx will be converted when first opened", .{convertible});
+        const detail = try alloc.print("{d} session(s) saved by an older Tetris will be converted when first opened", .{convertible});
         try appendCheckOwned(checks, alloc, "sessions", .ok, detail);
     }
     try appendSessionsCountCheck(checks, alloc, report.sessions, report.latest orelse "", report.unconverted > 0);
 }
 
-/// A session an older fx saved that can't be converted, with what
-/// `fx session recover` copies of it (D73). Its v1 folder is kept.
+/// A session an older Tetris saved that can't be converted, with what
+/// `tetris session recover` copies of it (D73). Its v1 folder is kept.
 fn appendStuckCheck(checks: *std.ArrayList(Check), alloc: Allocator, stuck: session_adapter.Doctor.Stuck) !void {
     const detail = switch (stuck.recover) {
         .without_rules => try alloc.print(
-            "session {s} saved by an older fx can't be converted: {s}; `fx session recover {s}` copies its conversation without its saved permission rules",
+            "session {s} saved by an older Tetris can't be converted: {s}; `tetris session recover {s}` copies its conversation without its saved permission rules",
             .{ stuck.id, stuck.reason, stuck.id },
         ),
         .good_turns => try alloc.print(
-            "session {s} saved by an older fx can't be converted: {s}; `fx session recover {s}` copies its good turns",
+            "session {s} saved by an older Tetris can't be converted: {s}; `tetris session recover {s}` copies its good turns",
             .{ stuck.id, stuck.reason, stuck.id },
         ),
         .nothing => try alloc.print(
-            "session {s} saved by an older fx can't be converted: {s}; nothing in it can be copied, so it is kept as it is",
+            "session {s} saved by an older Tetris can't be converted: {s}; nothing in it can be copied, so it is kept as it is",
             .{ stuck.id, stuck.reason },
         ),
     };
@@ -397,7 +397,7 @@ fn appendSessionsCountCheck(
     older_saved: bool,
 ) !void {
     if (count == 0) {
-        // Sessions only an older fx saved are not "no sessions" (D73).
+        // Sessions only an older Tetris saved are not "no sessions" (D73).
         if (!older_saved) try appendCheck(checks, alloc, "sessions", .warn, "no saved sessions yet");
         return;
     }
@@ -502,7 +502,7 @@ fn formatConfigPresence(alloc: Allocator, user_exists: bool, repo_exists: bool) 
     if (user_exists) {
         if (!first) try out.writer.writeAll(", ");
         first = false;
-        try out.writer.writeAll(profile_paths.displayText("~/.fx/settings.json"));
+        try out.writer.writeAll(profile_paths.displayText("~/.tetris/settings.json"));
     }
     if (repo_exists) {
         if (!first) try out.writer.writeAll(", ");
@@ -597,7 +597,7 @@ test "format config presence names existing layers" {
     const detail = try formatConfigPresence(std.testing.allocator, true, false);
     defer std.testing.allocator.free(detail);
 
-    try std.testing.expectEqualStrings("loaded config from ~/.fx/settings.json", detail);
+    try std.testing.expectEqualStrings("loaded config from ~/.tetris/settings.json", detail);
 }
 
 test "MCP config diagnostic maps only failures to one doctor check" {
@@ -620,7 +620,7 @@ test "MCP config diagnostic maps only failures to one doctor check" {
     try std.testing.expectEqualStrings("mcp_config", checks.items[0].name);
     try std.testing.expectEqual(CheckStatus.fail, checks.items[0].status);
     try std.testing.expectEqualStrings(
-        "failed to load ~/.fx/mcp.json: McpConfigInvalidJson",
+        "failed to load ~/.tetris/mcp.json: McpConfigInvalidJson",
         checks.items[0].detail,
     );
 }
@@ -629,9 +629,9 @@ test "config check handles user and workspace config files together" {
     var tmp = std.testing.tmpDir(.{});
     defer tmp.cleanup();
 
-    try tmp.dir.createDirPath(io_mod.getIo(), "home/.fx");
+    try tmp.dir.createDirPath(io_mod.getIo(), "home/.tetris");
     try tmp.dir.createDirPath(io_mod.getIo(), "workspace");
-    try writeDoctorFixtureFile(tmp.dir, "home/.fx/settings.json", "{\"permission_mode\":\"ask\"}");
+    try writeDoctorFixtureFile(tmp.dir, "home/.tetris/settings.json", "{\"permission_mode\":\"ask\"}");
     try writeDoctorFixtureFile(tmp.dir, "workspace/.fx.json", "{\"permission_mode\":\"auto\"}");
 
     const home_root = try io_mod.dirRealpathAlloc(std.testing.allocator, tmp.dir, "home");
@@ -652,7 +652,7 @@ test "config check handles user and workspace config files together" {
 
     try std.testing.expectEqual(@as(usize, 1), checks.items.len);
     try std.testing.expectEqual(CheckStatus.ok, checks.items[0].status);
-    try std.testing.expect(std.mem.find(u8, checks.items[0].detail, "~/.fx/settings.json") != null);
+    try std.testing.expect(std.mem.find(u8, checks.items[0].detail, "~/.tetris/settings.json") != null);
     try std.testing.expect(std.mem.find(u8, checks.items[0].detail, ".fx.json") != null);
 }
 
@@ -660,9 +660,9 @@ test "config check does not claim rejected user settings loaded" {
     var tmp = std.testing.tmpDir(.{});
     defer tmp.cleanup();
 
-    try tmp.dir.createDirPath(io_mod.getIo(), "home/.fx");
+    try tmp.dir.createDirPath(io_mod.getIo(), "home/.tetris");
     try tmp.dir.createDirPath(io_mod.getIo(), "workspace");
-    try writeDoctorFixtureFile(tmp.dir, "home/.fx/settings.json", "{\"permission_mode\":\"ask\"}");
+    try writeDoctorFixtureFile(tmp.dir, "home/.tetris/settings.json", "{\"permission_mode\":\"ask\"}");
     try writeDoctorFixtureFile(tmp.dir, "workspace/.fx.json", "{\"permission_mode\":\"auto\"}");
 
     const home_root = try io_mod.dirRealpathAlloc(std.testing.allocator, tmp.dir, "home");
@@ -689,7 +689,7 @@ test "config check does not claim rejected user settings loaded" {
 
     try std.testing.expectEqual(@as(usize, 1), checks.items.len);
     try std.testing.expectEqual(CheckStatus.ok, checks.items[0].status);
-    try std.testing.expect(std.mem.find(u8, checks.items[0].detail, "~/.fx/settings.json") == null);
+    try std.testing.expect(std.mem.find(u8, checks.items[0].detail, "~/.tetris/settings.json") == null);
     try std.testing.expect(std.mem.find(u8, checks.items[0].detail, ".fx.json") != null);
 }
 
@@ -703,7 +703,7 @@ test "session count check preserves empty and latest details" {
 
     try appendSessionsCountCheck(&checks, alloc, 0, "", false);
     try appendSessionsCountCheck(&checks, alloc, 2, "session-2", false);
-    // Sessions only an older fx saved are not "no sessions" (D73).
+    // Sessions only an older Tetris saved are not "no sessions" (D73).
     try appendSessionsCountCheck(&checks, alloc, 0, "", true);
 
     try std.testing.expectEqual(@as(usize, 2), checks.items.len);

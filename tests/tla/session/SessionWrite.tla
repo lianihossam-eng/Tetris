@@ -15,7 +15,7 @@
 (* in flight while it does.                                                *)
 (*                                                                         *)
 (* With Locked, a write holds one lock of the session from before it takes *)
-(* the due records until after it clears them. Without it, as fx was       *)
+(* the due records until after it clears them. Without it, as Tetris was       *)
 (* before, two writes can take the same records: both list them, and the   *)
 (* second clear removes more than the list holds, the panic "start index N *)
 (* is larger than end index 0" (NoStaleRemoval).                           *)

@@ -369,7 +369,7 @@ function longTranscript(): string {
     if (index === 0) rows.push("PERF_TRANSCRIPT_HEAD");
     else if (index === 1_050) rows.push("PERF_TRANSCRIPT_MIDDLE");
     else if (index === 2_099) rows.push("PERF_TRANSCRIPT_TAIL");
-    else if (index % 17 === 0) rows.push(`| ${index} | wide unicode 𝒇x 漢字 | wrapped ${"x".repeat(96)} |`);
+    else if (index % 17 === 0) rows.push(`| ${index} | wide unicode tetris 漢字 | wrapped ${"x".repeat(96)} |`);
     else if (index % 11 === 0) rows.push("");
     else rows.push(`transcript row ${String(index).padStart(4, "0")}`);
   }
@@ -381,7 +381,7 @@ function createFixture() {
   const home = join(root, "home");
   const workspace = join(root, "workspace");
   const skillsRoot = join(workspace, ".agents", "skills");
-  mkdirSync(join(home, ".fx"), { recursive: true });
+  mkdirSync(join(home, ".tetris"), { recursive: true });
   mkdirSync(skillsRoot, { recursive: true });
   const hash = createHash("sha256");
   let generationSkillPath = "";

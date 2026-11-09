@@ -16,15 +16,11 @@ Before reporting the work as ready:
 
 If you cannot run the binary in your environment, say so explicitly and ask the user to verify. Do not silently skip this step and declare the work ready. "The tests pass" is not a substitute for running the app.
 
-### Always use the built binary in this repo
+### Always use the built Tetris binary in this repo
 
-When running fx for verification, **always use the freshly-built binary at** **`./zig-out/bin/fx`** from this checkout. Never run `fx` from `PATH`, never rely on the installed copy at `~/.local/bin/fx`, and never assume an installed copy reflects your change.
+When running Tetris for verification, use the freshly built binary at `./zig-out/bin/tetris` from this checkout. Never run `tetris` from `PATH`, rely on an installed copy at `~/.local/bin/tetris`, or assume an installed copy includes your change.
 
-* The user may have an older `fx` on their PATH (e.g. installed via `fx upgrade` or the install script). Running that one will not exercise your edits.
-
-* When a user reports "still not working" after you believe you fixed something, do not assume they are running the wrong binary. Assume your fix is incomplete and investigate further. If you genuinely suspect a PATH mismatch, ask — do not silently copy binaries onto their `PATH`.
-
-* In any shell invocation — tmux, direct run, scripts — reference fx as `/Users/<you>/path/to/repo/zig-out/bin/fx` (absolute) or `./zig-out/bin/fx` (when cwd is the repo root). Bare `fx` is always wrong for dev verification.
+Use the built path in tmux, direct runs, and scripts. Use an absolute path when a command runs outside the repository root.
 
 ## Language and Toolchain
 
@@ -72,13 +68,13 @@ Key rules:
 
 * `src/core/indexer/` is the native workspace indexer. It reads git's ignore rules, repository layout, and git config as data and never starts a process, so a repository's configuration cannot make it run a program. Outside code imports only its front door, `indexer.zig`, and the indexer imports only the standard library, its own files, `io.zig`, and `debug_trace.zig`. `@`-completion, `glob_files`, and `grep_files` list files only through it and never start a process. `scripts/check-indexer-boundary.sh` enforces this in CI.
 
-* `src/core/recovery/` decides how one model request recovers: when to retry, how long to wait, when to try another way, what the status line says, and what to save so the request survives a closed window or a crash. fx reports events to `step` and carries out the plan it returns. The module performs no I/O, reads no clock, and never allocates. Outside code imports only its front door, `recovery.zig`, and the module imports only the standard library. `tests/tla/recovery/Recovery.tla` models it, and `scripts/check-recovery-boundary.sh` enforces the boundary in CI.
+* `src/core/recovery/` decides how one model request recovers: when to retry, how long to wait, when to try another way, what the status line says, and what to save so the request survives a closed window or a crash. Tetris reports events to `step` and carries out the plan it returns. The module performs no I/O, reads no clock, and never allocates. Outside code imports only its front door, `recovery.zig`, and the module imports only the standard library. `tests/tla/recovery/Recovery.tla` models it, and `scripts/check-recovery-boundary.sh` enforces the boundary in CI.
 
 * `src/core/agents/` owns `Agent`, one conversation's own state: its session, worker, stream, prompts, submission, title, totals, attachments, diffs, and undo stack. `App.main_agent` holds the main conversation's. Outside code imports only its front door, `agents.zig`, and the folder never imports `src/ui/`, the terminal runtime, or `main.zig`, nor a file that imports `src/ui/` or `main.zig` itself, because the app that shows an agent owns the screen. Generic helpers probe these fields with `agents.hasAgentField`, not `@hasField`, and test apps nest them under `main_agent` the same way. `scripts/check-agents-boundary.sh` enforces the imports in CI.
 
-* `src/core/shell_command/safe_git.zig` runs git for the `fx pr` and `fx issue` snapshot and for the agent's direct read-only `git status`, `git diff`, and `git log` when the command does not use the user's own shell environment. It turns off every program a repository's own config can name and refuses to run when git would use a different repository than the one fx read. In `auto` mode a git command it refuses is returned to the agent without running. Commands that run in a shell use git with the repository's full config: git in the shell tool's default `user` environment, and the routine commands `auto` mode runs without review, such as `git status` with other flags, `git fetch`, or `npm test`.
+* `src/core/shell_command/safe_git.zig` runs git for the `tetris pr` and `tetris issue` snapshots and for the agent's direct read-only `git status`, `git diff`, and `git log` when the command does not use the user's own shell environment. It turns off every program a repository's own config can name and refuses to run when git would use a different repository than the one Tetris read. In `auto` mode a git command it refuses is returned to the agent without running. Commands that run in a shell use git with the user's full config.
 
-* `src/mcp/` is the MCP engine. Its files import only `std` and each other, and the host passes in `std.Io` and every other service through `src/mcp/host.zig`. fx connects to it through `src/core/mcp_host/`. `src/core/mcp/` holds the MCP types, config parsing, schema checks, search, and tool naming that the host, the tools, ACP, and the UI share.
+* `src/mcp/` is the MCP engine. Its files import only `std` and each other, and the host passes in `std.Io` and every other service through `src/mcp/host.zig`. Tetris connects to it through `src/core/mcp_host/`. `src/core/mcp/` holds the MCP types, config parsing, schema checks, search, and tool naming that the host, the tools, ACP, and the UI share.
 
 * `src/tools/` owns built-in tool implementations. Generic tool contracts and dispatch live in `src/core/tooling/`. Default tool specs are centralized in `src/core/tooling/tool_specs.zig` or `src/builtins/tools.zig`, not in individual tool files.
 
@@ -140,26 +136,26 @@ Use the `fx-cli-shape` skill (`.fx/skills/fx-cli-shape/SKILL.md`) when you add, 
 
 ## Configuration and State
 
-Profile configuration and runtime state lives under `~/.fx/`. Project `.fx.json` contains committed project defaults only.
+Profile configuration and runtime state lives under `~/.tetris/` by default. `TETRIS_HOME` overrides the profile root. Project `.fx.json` contains committed project defaults only.
 
 Config precedence (highest wins):
 
 1. Command-line flags, where a command supports them
-2. Environment variables such as `FX_PROVIDER`, `FX_MODEL`, `FX_PERMISSION_MODE`, and `FX_MAX_AGENT_STEPS`
-3. `~/.fx/settings.json` → `workspaces["<workspace_path>"]` (profile workspace overrides)
-4. `~/.fx/settings.json` top-level (profile global settings)
+2. Environment variables such as `FX_PROVIDER`, `FX_MODEL`, `FX_PERMISSION_MODE`, `FX_MAX_AGENT_STEPS`, and `TETRIS_HOME`
+3. `~/.tetris/settings.json` → `workspaces["<workspace_path>"]` (profile workspace overrides)
+4. `~/.tetris/settings.json` top-level (profile global settings)
 5. `<workspace>/.fx.json` (committed project defaults)
 6. Built-in defaults
 
 Project `.fx.json` accepts only repo-safe defaults: `max_agent_steps`, `max_tool_result_bytes`, `context`, `provider_order`, and `provider_strict`, parsed by `parseProjectSafeFields` in `src/core/config/config_runtime.zig`. The project layer never parses profile-owned keys, such as provider and model selection, permissions, and interface preferences.
 
-Runtime state lives under `~/.fx/sessions/<session-id>/` (`session.json`, `background/`, `subagent/`, `logs/`). Sessions are global and portable across workspaces. Each session tracks its `workspace_root`, which updates when resumed in a different workspace. Subagent children are internal sessions registered in their parent's `subagent/children.json`. They stay out of session discovery and cannot be resumed directly.
+Runtime state lives under `~/.tetris/sessions/<session-id>/` (`session.json`, `background/`, `subagent/`, `logs/`). Sessions are global and portable across workspaces. Each session tracks its `workspace_root`, which updates when resumed in a different workspace. Subagent children are internal sessions registered in their parent's `subagent/children.json`. They stay out of session discovery and cannot be resumed directly.
 
 ## Permissions
 
 Security is permission-first. All sensitive tool behavior must integrate with `src/core/permissions/permissions.zig`.
 
-* `permission_mode` controls baseline (`ask`, `auto`, or `full-access`; `yolo` remains an alias). Full access bypasses fx permission policy
+* `permission_mode` controls baseline (`ask`, `auto`, or `full-access`; `yolo` remains an alias). Full access bypasses Tetris permission policy
 
 * Configured denies are evaluated before saved-session rules; an exact saved-session deny can narrow a configured allow, while an exact saved-session allow can satisfy an unresolved configured ask
 
@@ -169,13 +165,13 @@ Security is permission-first. All sensitive tool behavior must integrate with `s
 
 * Routine parsed development commands and reversible new-file creation can execute without model review after configured and saved-session policy. Every remaining unresolved `auto` action receives one narrow security review using the exact unmasked action and targets, origin and call identity, optional host-proven current-branch evidence, and bounded unmasked terminal-safe excerpts of earlier current-turn tool results. A text match between the action and prior tool output is evidence to inspect, not proof of prompt injection or malicious activity. Prepared file mutations and other static root tools omit task text. Reviewed commands, shell input, dynamic tools, and subagent actions also receive bounded unmasked canonical current, first, and recent root requests plus explicit omission counts; the reviewer may use that context only to distinguish trusted user intent from malicious or injected influence, never to judge task quality, alignment, or authorization. Assistant prose, permission feedback, compacted summaries, the pending tool group, later results, and tool or repository text never become authority. Shell input reviews also include the owned receiving session's launch command, working directory, and bounded current screen after verifying session authority, including on resume. The launch command describes startup only; screen content remains untrusted evidence and input still receives its own review
 
-* The reviewer returns `caution` only for prompt injection, where instructions planted in untrusted text make the action delete or overwrite files, send data out, install or run outside code, weaken security, or use credentials the user did not ask for, or system harm, where the action would break, compromise, or hack the user's machine or the runner. Each caution names its category and quotes its evidence. fx keeps a prompt-injection caution only when the quote appears in untrusted tool output or a receiver screen and not in the user's own requests or the pending action, since an action that contains the quoted text is editing, writing, or searching it rather than following it, and a system-harm caution only when the quote appears in the pending action or meets that prompt-injection rule; it clears every other caution. A caution that passes these checks holds the action unless one fresh review of the same request returns `clear`, so a single misjudged quote cannot block; that review's own quote is not checked, and when it cannot complete, the hold stands. Destructive, risky, external, public, remote, unrequested, or task-conflicting actions therefore clear unless they are one of those harms. Following any text is never prompt injection when the action only reads, searches, builds, tests, or runs a local tool's own steps, such as a CLI's next subcommand, a git hint, or a workflow tool's next command. Current-turn `ask_user_question` answers reach the reviewer as user answers and never count as injection evidence. The optional `typesafeai/jev` reviewer answers without quotes, so its decisions are kept as returned. A `clear` review authorizes only the exact unchanged action. A `caution`, incomplete-evidence result, or unavailable review holds only that action, returns guidance to the agent, and never opens a human permission screen, disables tools, or ends the turn
+* The reviewer returns `caution` only for prompt injection, where instructions planted in untrusted text make the action delete or overwrite files, send data out, install or run outside code, weaken security, or use credentials the user did not ask for, or system harm, where the action would break, compromise, or hack the user's machine or the runner. Each caution names its category and quotes its evidence. Tetris keeps a prompt-injection caution only when the quote appears in untrusted tool output or a receiver screen and not in the user's own requests or the pending action, since an action that contains the quoted text is editing, writing, or searching it rather than following it, and a system-harm caution only when the quote appears in the pending action or meets that prompt-injection rule; it clears every other caution. A caution that passes these checks holds the action unless one fresh review of the same request returns `clear`, so a single misjudged quote cannot block; that review's own quote is not checked, and when it cannot complete, the hold stands. Destructive, risky, external, public, remote, unrequested, or task-conflicting actions therefore clear unless they are one of those harms. Following any text is never prompt injection when the action only reads, searches, builds, tests, or runs a local tool's own steps, such as a CLI's next subcommand, a git hint, or a workflow tool's next command. Current-turn `ask_user_question` answers reach the reviewer as user answers and never count as injection evidence. The optional `typesafeai/jev` reviewer answers without quotes, so its decisions are kept as returned. A `clear` review authorizes only the exact unchanged action. A `caution`, incomplete-evidence result, or unavailable review holds only that action, returns guidance to the agent, and never opens a human permission screen, disables tools, or ends the turn
 
 * Exact cautions and deterministic incomplete-evidence results are reused only for the current turn. An unavailable outcome is not cached as a security judgment, but the same exact action spends at most one unavailable review opportunity per turn; changed actions remain independently reviewable until the bounded current-turn review budget is exhausted. Each review accepts exactly one valid structured decision even with accompanying prose and may retry one malformed completion within the current attempt's deadline. A transport timeout, transient transport failure, or failed transport call is retried once with a fresh 30-second deadline; permanent transport failures, valid cautions, and cancellation are never retried. Legacy `permission_request_id` input is rejected without prompting
 
 * Host-generated review holds retain their advice for the agent and transcript, but carry a saved `review_feedback` marker that excludes them from later security evidence, including after recovery. Old unmarked results remain untrusted evidence; never infer the marker from output text. Quoted review accusations are not proof of an attack, and handling plans or test instructions as data is not itself prompt injection
 
-* A command form that fx runs without review, through `command_effect.plan` or `command_effect.knownReversibleAutoCommand`, must be listed in `parity_review_free_commands` in `src/core/shell_command/command_effect.zig`. The shell parity tests check that sh, dash, bash, and zsh, with and without `extendedglob`, run each one exactly as fx parsed it, and the nightly `shell_parity` fuzz target checks generated commands the same way
+* A command form that Tetris runs without review, through `command_effect.plan` or `command_effect.knownReversibleAutoCommand`, must be listed in `parity_review_free_commands` in `src/core/shell_command/command_effect.zig`. The shell parity tests check that sh, dash, bash, and zsh, with and without `extendedglob`, run each one exactly as Tetris parsed it, and the nightly `shell_parity` fuzz target checks generated commands the same way
 
 Do not bypass the permission system for new tools.
 
@@ -231,7 +227,7 @@ Do not bypass the permission system for new tools.
 
 ### Zig 0.17 Standard Library
 
-fx does not use declarations that Zig 0.17 deprecates. They still compile, so check new code against this list:
+Tetris does not use declarations that Zig 0.17 deprecates. They still compile, so check new code against this list:
 
 * Format with `alloc.print(fmt, args)` and `std.mem.print(buf, fmt, args)`, not `std.fmt.allocPrint` or `std.fmt.bufPrint`.
 
@@ -269,11 +265,11 @@ fx does not use declarations that Zig 0.17 deprecates. They still compile, so ch
 
 Two test suites live under `tests/`, both using Bun. `tests/AGENTS.md` says where each kind of test belongs, how to wire a new E2E file into CI, and how code comments cite tests and specs.
 
-Set `FX_SOUND=0` when you run either suite locally, for example `cd tests/e2e && FX_SOUND=0 bun test cli.test.ts`. On macOS, sound playback during a test run can overload the machine and crash it. The variable doesn't cover `notifications.test.ts`, which clears it, or the "TUI user-profile output preserves compact scrollback across slash commands" test in `tui-command-permissions.test.ts`, which sends `/sound on`. Leave those to CI. On Linux, fx rings the terminal bell instead of playing a sound, so they run safely there. The full `bun test` run below includes both, and `bun test tui-*.test.ts` includes the `/sound on` test, so on macOS pass test files by name.
+Set `FX_SOUND=0` when you run either suite locally, for example `cd tests/e2e && FX_SOUND=0 bun test cli.test.ts`. On macOS, sound playback during a test run can overload the machine and crash it. The variable doesn't cover `notifications.test.ts`, which clears it, or the "TUI user-profile output preserves compact scrollback across slash commands" test in `tui-command-permissions.test.ts`, which sends `/sound on`. Leave those to CI. On Linux, Tetris rings the terminal bell instead of playing a sound, so they run safely there. The full `bun test` run below includes both, and `bun test tui-*.test.ts` includes the `/sound on` test, so on macOS pass test files by name.
 
 ### `tests/evals/` — LLM Evals
 
-Eval scenarios that exercise the agent through `fx ask --json`. Require `AI_GATEWAY_API_KEY`.
+Eval scenarios that exercise the agent through `tetris ask --json`. Require `AI_GATEWAY_API_KEY`.
 
 ```bash
 cd tests/evals && bun install && bun test           # run all evals
@@ -299,35 +295,19 @@ Every TLA+ spec, its TLC checker, the Bun drivers that walk real code along a sp
 
 Code comments cite a spec by its repository-relative path and the property it checks, such as `tests/tla/session_manager/Wiring.tla` `ParentOutlivesChildren`, and never cite a file outside the repository. When a change alters behavior that a spec models, update the spec in the same change and run its checker.
 
-## Pull Request Classification
+## Pull request labels
 
-Every pull request must have exactly one `type:` label before it merges, chosen by its primary intent:
+Use labels from the Tetris repository's current label list when relevant. Do not assume upstream Fx labels or permissions apply.
 
-* `type: bug`: fixes incorrect behavior
-
-* `type: feature`: adds a new user-facing capability
-
-* `type: improvement`: improves existing user-facing behavior
-
-* `type: docs`: changes documentation only
-
-* `type: maintenance`: changes internal tooling, dependencies, CI, or implementation structure without a user-facing behavior change
-
-* `type: release`: prepares or repairs a release
-
-* `type: security`: fixes or hardens a security boundary
-
-If the authenticated contributor can manage labels on `vercel-labs/fx`, which takes triage access or higher, assign the label when the PR is opened and keep it accurate when the PR changes. For a mixed PR, choose the label that describes the primary reason the PR exists. If that is ambiguous, ask before applying or changing the label. Outside contributors cannot manage labels, so their pull requests do not need one when opened: a maintainer applies it during review. Do not hold an outside contributor's PR in draft for a missing label.
-
-Keep PR titles as clean imperative sentences, such as `Restore feedback report file clipboard`. Do not add bracketed prefixes such as `[bug]`, `[feature]`, or `[improvement]`. Type belongs in the label, not the title.
+Keep PR titles as clean imperative sentences. Do not add bracketed type prefixes such as `[bug]`, `[feature]`, or `[improvement]`.
 
 ## CI on Pull Requests
 
-Do not run the complete deterministic test suite locally as the default development loop. Run the focused test for the changed path, build the binary, and exercise that path with `./zig-out/bin/fx`.
+Do not run the complete deterministic test suite locally as the default development loop. Run the focused test for the changed path, build Tetris, and exercise that path with `./zig-out/bin/tetris`.
 
-After the focused checks pass, create a clean checkpoint commit, push the non-`main` feature branch, and open a draft PR immediately. Linux is the gate for every change because most fx behavior is identical on every platform:
+After focused checks pass, create a clean checkpoint commit, push a non-`main` branch to `lianihossam-eng/Tetris`, and open a draft PR targeting `main`. Never push to upstream Fx. Linux x86_64 is the shared-behavior gate:
 
-* `.github/workflows/ci.yml` runs on Linux x86_64. It checks formatting, the PGSO corpus, the public surface, and the agents, compactor, indexer, and recovery boundaries, model-checks request recovery and the empty-reply nudge, runs the ReleaseSafe unit tests, runs the E2E files in four weighted shards plus the MCP conformance baseline, and qualifies the SDK packages. A failed E2E file is retried once. A file that passes only on retry gets a warning annotation; investigate it as a possible race. `Build & Test` fails when any SDK job fails.
+* `.github/workflows/ci.yml` checks formatting, the PGSO corpus, public surface, module boundaries, model checks, ReleaseSafe unit tests, end-to-end shards, MCP conformance, and SDK package jobs. A failed E2E file is retried once. A file that passes only on retry gets a warning annotation; investigate it as a possible race. The `Build & Test` aggregate fails when any SDK job fails.
 * `.github/workflows/binary-size.yml` builds each release target on its native runner, reports the size change, and smoke-tests every target's binary. See **Binary Size Observability**.
 * `.github/workflows/bench.yml` enforces the startup latency budget. See **Benchmarks**.
 
@@ -339,9 +319,9 @@ The durable-session model check in the `SDK (Bun + N-API/WASM)` job takes about 
 
 The `TLA+ MCP models and drivers` job takes about 20 minutes, so a pull request runs its model checks and drivers only when the same detector finds a change to `src/mcp/`, `src/core/mcp_host/`, `src/core/mcp/`, the models in `tests/tla/mcp/` and `tests/tla/mcp_host/`, their drivers in `tests/tla/drivers/mcp/`, `tests/tla/drivers/mcp_host/`, and `tests/tla/drivers/lib/`, the `tests/e2e/fixtures/mcp-*` servers, the helpers those drivers load (`tests/e2e/tmux-helpers.ts`, `tests/evals/eval-helpers.ts`, and `tests/e2e/render-lab/tape.ts`), `build.zig`, `build.zig.zon`, or `.github/workflows/ci.yml`. Every push to `main` runs them, and the same `gh workflow run ci.yml --ref <branch>` runs them for any other change.
 
-The `TLA+ transcript window model` job takes about 4 minutes, so a pull request runs it only when the same detector finds a change to `src/ui/transcript/transcript_window*`, the model in `tests/tla/transcript_window/`, its drivers in `tests/tla/drivers/transcript_window/`, the driver code they share (`tests/tla/drivers/lib/` and `tests/tla/drivers/graph.mjs`), `build.zig`, `build.zig.zon`, or `.github/workflows/ci.yml`. It runs `tests/tla/transcript_window/check.sh --ci`, which leaves out the planted bugs and the run of a built fx along the model; run `tests/tla/transcript_window/check.sh` without `--ci` before you change the window.
+The `TLA+ transcript window model` job takes about 4 minutes, so a pull request runs it only when the same detector finds a change to `src/ui/transcript/transcript_window*`, the model in `tests/tla/transcript_window/`, its drivers in `tests/tla/drivers/transcript_window/`, the driver code they share (`tests/tla/drivers/lib/` and `tests/tla/drivers/graph.mjs`), `build.zig`, `build.zig.zon`, or `.github/workflows/ci.yml`. It runs `tests/tla/transcript_window/check.sh --ci`, which leaves out the planted bugs and the run of a built Tetris along the model; run `tests/tla/transcript_window/check.sh` without `--ci` before you change the window.
 
-The `fx mcp call` model check, `.github/workflows/tla-mcp-call.yml`, runs `tests/tla/mcp_call/check.sh`: TLC on the bridge model, the core's tests, both drivers against the real core, and every planted bug. Every push to `main` runs it. A pull request runs it only with the `ci:tla-mcp-call` label, and `gh workflow run tla-mcp-call.yml --ref <branch>` runs it on any branch. Like `ci:macos`, the label needs triage access.
+The `tetris mcp call` model check, `.github/workflows/tla-mcp-call.yml`, runs `tests/tla/mcp_call/check.sh`: TLC on the bridge model, the core's tests, both drivers against the real core, and every planted bug. Every push to `main` runs it. A pull request runs it only with the `ci:tla-mcp-call` label, and `gh workflow run tla-mcp-call.yml --ref <branch>` runs it on any branch. Like `ci:macos`, the label needs triage access.
 
 The macOS arm64 PGSO workflow runs on a pull request only when the PGSO pipeline changes: `scripts/pgso/` other than `corpus.json`, the `setup-pgso` action, or `.github/workflows/pgso-macos-arm64.yml`. To qualify any other change, run `gh workflow run pgso-macos-arm64.yml --ref <branch>`. The stable release always runs it.
 
@@ -353,7 +333,7 @@ A CI result is valid only when it belongs to the exact current commit and `Build
 
 ## Reproducing Render Bugs
 
-fx's rendering is inline by default and deliberately emits a small ANSI subset. Three owner classes are the narrow exceptions, and each takes the alternate buffer exclusively through `AlternateScreenOwner` in `src/ui/shell_runtime.zig`: interactive file-approval review, the full-transcript screen, and catalog menus. Only one class may own the buffer at a time, and each must leave it and restore the main grid, composer, cursor, paste, mouse, focus, and keyboard modes when it closes. Transcript rendering, question prompts, command-output expansion, and subagent delegation remain inline. Three tools exist for reproducing and regression-proofing render bugs:
+Tetris's rendering is inline by default and deliberately emits a small ANSI subset. Three owner classes are the narrow exceptions, and each takes the alternate buffer exclusively through `AlternateScreenOwner` in `src/ui/shell_runtime.zig`: interactive file-approval review, the full-transcript screen, and catalog menus. Only one class may own the buffer at a time, and each must leave it and restore the main grid, composer, cursor, paste, mouse, focus, and keyboard modes when it closes. Transcript rendering, question prompts, command-output expansion, and subagent delegation remain inline. Three tools exist for reproducing and regression-proofing render bugs:
 
 ### tmux (live TTY repros)
 
@@ -366,20 +346,20 @@ cd tests/e2e && bun test tui-resize.test.ts
 ### Debug terminal recording and replay
 
 Set `FX_DEBUG_RECORD=1` to create an automatic private tape under
-`~/.fx/recordings/`. Set `FX_DEBUG_RECORD_SILENT_BANNER=1` as well when the
+`~/.tetris/recordings/`. Set `FX_DEBUG_RECORD_SILENT_BANNER=1` as well when the
 developer-only recording notice must stay out of the inline transcript during
 a screen share. The notice remains available in the Ctrl+O full transcript.
 Use `FX_RECORD=<path>` when a test or investigation needs an exact destination.
-Recording dumps every byte fx writes and every resize into a framed binary tape.
+Recording dumps every byte Tetris writes and every resize into a framed binary tape.
 Replay the tape through the built-in virtual terminal:
 
 ```bash
-FX_DEBUG_RECORD=1 ./zig-out/bin/fx
-FX_RECORD=/tmp/bug.fxtape ./zig-out/bin/fx
-./zig-out/bin/fx replay /tmp/bug.fxtape
-./zig-out/bin/fx replay /tmp/bug.fxtape --frames
-./zig-out/bin/fx replay /tmp/bug.fxtape --json
-./zig-out/bin/fx replay /tmp/bug.fxtape --golden out.txt
+FX_DEBUG_RECORD=1 ./zig-out/bin/tetris
+FX_RECORD=/tmp/bug.fxtape ./zig-out/bin/tetris
+./zig-out/bin/tetris replay /tmp/bug.fxtape
+./zig-out/bin/tetris replay /tmp/bug.fxtape --frames
+./zig-out/bin/tetris replay /tmp/bug.fxtape --json
+./zig-out/bin/tetris replay /tmp/bug.fxtape --golden out.txt
 ```
 
 The tape is deterministic — any reviewer can replay it without a TTY, and a golden file can be checked in as a regression test.
@@ -409,11 +389,11 @@ The long-turn memory and libfx runtime benchmarks run only on request. Start the
 
 The startup benchmark uses `FX_BENCH=1`, an environment variable that runs through arg parsing and CLI dispatch, then exits before TTY initialization. This lives in `src/core/app/app_entry_runtime.zig`.
 
-To measure the interactive launch up to the first frame, use `benchmarks/first_frame.py`. It drives fx on a pseudo-terminal and interleaves several `--binary` arguments for before-and-after comparisons.
+To measure the interactive launch up to the first frame, use `benchmarks/first_frame.py`. It drives Tetris on a pseudo-terminal and interleaves several `--binary` arguments for before-and-after comparisons.
 
-The budget is 2ms of raw wall-clock time for every command on the Linux CI runner, which is the authoritative product budget. Local macOS runs report raw means only, because process and dynamic-loader overhead there can exceed 2ms independently of fx. The process baseline is diagnostic only and is never subtracted.
+The budget is 2ms of raw wall-clock time for every command on the Linux CI runner, which is the authoritative Tetris budget. Local macOS runs report raw means only, because process and dynamic-loader overhead there can exceed 2ms independently of Tetris. The process baseline is diagnostic only and is never subtracted.
 
-When adding features, consider their impact on startup latency. The `fx help` path is the baseline cold-start benchmark.
+When adding features, consider their impact on startup latency. The `tetris help` path is the baseline cold-start benchmark.
 
 ## Binary Size Observability
 
@@ -440,15 +420,9 @@ When adding or changing user-facing behavior, update the documentation this repo
 2. `sdk/README.md` if libfx's supported public behavior or setup changes, as `sdk/AGENTS.md` describes
 3. `CONTRIBUTING.md` if build steps, development setup, or collaboration rules change
 
-The user manual at fx.sh/docs is built from a private repository. When a change makes a page wrong or incomplete, updating the manual is part of the change:
+The [Fx manual](https://fx.sh/docs) documents inherited agent features and uses Fx's executable and profile defaults. Keep Tetris-specific controls and paths in this repository. Do not direct contributors to edit the private upstream documentation repository.
 
-* If you are a member of the `vercel-labs` organization on GitHub, you can fetch the private repository behind fx.sh. When you can push to it, update the page there in a companion pull request and link it from this one. A page's source is `apps/marketing/app/(site)/(docs)/docs/<path>/page.mdx`, where `<path>` is the part of its URL after `fx.sh/docs/`.
-
-* If you can't push to that repository, add a `## Docs` section to the PR description with the exact change each affected page needs, as `CONTRIBUTING.md` describes, so a maintainer can make it.
-
-Do not move feature descriptions, option lists, or usage examples into `README.md` in place of the manual.
-
-`README.md` is a short introduction that links to fx.sh/docs. Change it only when one of its statements becomes false, such as a command, flag, path, or link it names, or when a change adds a capability as broad as the ones in its feature list. A single new option, command, or environment variable belongs in `--help` and the manual, not in `README.md`.
+`README.md` is the Tetris overview. Keep its install command, executable name, release source, and profile paths accurate. Do not move detailed options or usage examples into it.
 
 Do not document intended behavior as if it already exists.
 
@@ -461,11 +435,11 @@ Releases are prepared by hand in a release PR. The maintainer controls the chang
 To prepare a release:
 
 1. Create a branch (e.g. `prepare-v0.3.0`)
-2. Bump `pub const version` in `src/main.zig`
+2. Bump `pub const version` in `src/main.zig` and `.version` in `build.zig.zon` to the same SemVer value.
 3. Write the changelog entry in `CHANGELOG.md` at the top, under a new `## <version>` heading, wrapped in `<!-- release:start -->` and `<!-- release:end -->` markers. Remove the markers from the previous release entry so only the new release has them.
-4. Open a PR and merge to `main`
+4. Open a PR and merge it to Tetris `main`.
 
-When the PR merges, CI compares the version tag to what exists in git. If the tag is missing, it builds all platform binaries, creates the git tag, and publishes a GitHub Release with the binaries attached. The release body is extracted from the content between the `<!-- release:start -->` and `<!-- release:end -->` markers in `CHANGELOG.md`.
+When the PR merges, CI checks whether the matching tag exists. If it does not, the release workflow builds Tetris binaries, creates the tag, and publishes a GitHub Release in `lianihossam-eng/Tetris`. The release body is extracted from the current changelog markers.
 
 ### Writing the changelog
 
@@ -473,7 +447,7 @@ The changelog is public product copy. Describe observable user behavior, not the
 
 Public changelog entries must:
 
-* Spell the product name `fx`. Preserve different casing only when it is part of an exact code identifier such as `FX_MODEL`.
+* Spell the product name `Tetris`. Preserve `Fx` only when referring to upstream Fx or an exact shared identifier such as `FX_MODEL`.
 * Open with a short bold summary of the release.
 * Use only relevant sections from `### Breaking Changes`, `### New Features`, `### Improvements`, `### Bug Fixes`, and `### Security`. Omit empty sections.
 * Write each bullet as one or two plain sentences on a single line. Lead with the concrete change, then say what happens now. Do not add a bold `**Label:**` prefix.
@@ -488,11 +462,11 @@ Only the current release should have markers; remove `<!-- release:start -->` an
 
 <!-- release:start -->
 
-**`fx sessions` can now list saved sessions from every workspace.**
+**`tetris sessions` can now list saved sessions from every workspace.**
 
 ### New Features
 
-- `fx sessions --all` lists saved sessions across every workspace in the profile.
+- `tetris sessions --all` lists saved sessions across every workspace in the profile.
 <!-- release:end -->
 
 ## 0.2.5
@@ -506,11 +480,11 @@ Only the current release should have markers; remove `<!-- release:start -->` an
 
 Do not add a `### Contributors` section or tracker references.
 
-Do not create version tags manually. Do not change `build.zig.zon` version (it is a placeholder).
+Do not create version tags manually. Keep `src/main.zig` and `build.zig.zon` versions aligned.
 
 ## Repository and License
 
-The canonical repository is `vercel-labs/fx` on GitHub. All URLs, links, and references to the repo must use `vercel-labs/fx` (not `vercel/fx`, `user/fx`, or any other org/owner). Licensed under Apache-2.0.
+The canonical Tetris repository is `lianihossam-eng/Tetris`. Use its URLs for Tetris product docs, releases, and pull requests. `vercel-labs/fx` is the upstream project; do not push Tetris changes there. Licensed under Apache-2.0.
 
 ## What Not To Do
 
@@ -518,6 +492,6 @@ The canonical repository is `vercel-labs/fx` on GitHub. All URLs, links, and ref
 
 * Do not add a second execution path for the same feature without a clear reason
 
-* Do not commit generated state from `.fx/`, `.zig-cache/`, or `zig-out/`
+* Do not commit generated state from `.tetris/`, `.zig-cache/`, or `zig-out/`
 
 * Do not add dependencies outside the Zig standard library without discussion

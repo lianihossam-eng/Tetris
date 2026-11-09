@@ -1,4 +1,4 @@
-// Loopback fakes for /usage and `fx usage`. One handler answers every usage
+// Loopback fakes for /usage and `tetris usage`. One handler answers every usage
 // read fx makes, so a single fake gateway serves chat, models, and usage:
 // AI Gateway's /v1/report, the Vercel usage-report budget, ChatGPT's Codex
 // usage, and the Grok CLI proxy. Every name and token here is synthetic.
@@ -109,7 +109,7 @@ export function utcDate(ms: number): string {
 }
 
 function writePrivate(home: string, name: string, value: object): void {
-  const fxDir = join(home, ".fx");
+  const fxDir = join(home, ".tetris");
   mkdirSync(fxDir, { recursive: true, mode: 0o700 });
   chmodSync(fxDir, 0o700);
   const path = join(fxDir, name);

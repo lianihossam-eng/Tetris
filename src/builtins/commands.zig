@@ -18,7 +18,7 @@ pub const SlashRegistry = command_specs.SlashRegistry;
 
 const json_option = command_specs.OptionDoc{ .flag = "--json", .description = "Emit machine-readable JSON instead of text" };
 
-/// Options for `fx ask`. `cli_ask` parses against this list and its help is
+/// Options for `tetris ask`. `cli_ask` parses against this list and its help is
 /// rendered from it, so the two can't disagree.
 /// Options for local commands that only take `--json`.
 pub const json_only_options = [_]command_specs.OptionDoc{json_option};
@@ -63,17 +63,17 @@ const workspace_subcommands = [_]command_specs.SubcommandDoc{
 
 const config_subcommands = [_]command_specs.SubcommandDoc{
     .{ .usage = "list", .description = "List the values set in each settings file (default)", .options = &config_options },
-    .{ .usage = "get <key>", .description = "Print the value fx uses for a setting", .options = &config_options },
-    .{ .usage = "set <key> <value>", .description = "Save a preference in ~/.fx/settings.json", .settable_key = true },
-    .{ .usage = "unset <key>", .description = "Remove a preference from ~/.fx/settings.json", .settable_key = true },
-    .{ .usage = "schema", .description = "Print the JSON Schema for ~/.fx/settings.json", .options = &config_schema_options },
+    .{ .usage = "get <key>", .description = "Print the value Tetris uses for a setting", .options = &config_options },
+    .{ .usage = "set <key> <value>", .description = "Save a preference in ~/.tetris/settings.json", .settable_key = true },
+    .{ .usage = "unset <key>", .description = "Remove a preference from ~/.tetris/settings.json", .settable_key = true },
+    .{ .usage = "schema", .description = "Print the JSON Schema for ~/.tetris/settings.json", .options = &config_schema_options },
 };
 
 const config_schema_options = [_]command_specs.OptionDoc{
     .{ .flag = "--project", .description = "Print the schema for a project .fx.json instead" },
 };
 
-/// Every flag `fx config` parses: its own and `schema --project`.
+/// Every flag `tetris config` parses: its own and `schema --project`.
 pub const config_parse_options = config_options ++ config_schema_options;
 
 const config_options = [_]command_specs.OptionDoc{
@@ -115,7 +115,7 @@ pub const replay_options = [_]command_specs.OptionDoc{
     json_option,
 };
 
-/// `fx mcp list` options; `fx mcp --help` shows them in its usage line.
+/// `tetris mcp list` options; `tetris mcp --help` shows them in its usage line.
 const mcp_subcommands = [_]command_specs.SubcommandDoc{
     .{ .usage = "list", .description = "List configured servers; never connects", .options = &mcp_list_options },
     .{ .usage = "show NAME", .description = "Connect to a server: status, version, and tools", .options = &mcp_show_options },
@@ -132,7 +132,7 @@ const mcp_subcommands = [_]command_specs.SubcommandDoc{
     .{ .usage = "reject NAME", .description = "Reject a project server" },
     .{
         .usage = "call TOOL [JSON | -]",
-        .description = "Run an MCP tool from a command fx's shell tool runs",
+        .description = "Run an MCP tool from a command Tetris's shell tool runs",
         .subcommands = &.{
             .{ .usage = "list SERVER", .description = "List a server's tools" },
             .{ .usage = "search QUERY...", .description = "Find the tools that match QUERY" },
@@ -141,13 +141,13 @@ const mcp_subcommands = [_]command_specs.SubcommandDoc{
     },
 };
 
-// The flags of the `fx mcp` and `/mcp` verbs, which `src/core/mcp_host/verbs.zig`
+// The flags of the `tetris mcp` and `/mcp` verbs, which `src/core/mcp_host/verbs.zig`
 // parses and completion offers.
 
-/// `--global` names ~/.fx/mcp.json, the default, and `--project` the
+/// `--global` names ~/.tetris/mcp.json, the default, and `--project` the
 /// project's .mcp.json. `--profile` is the older name for `--global`.
 pub const mcp_scope_options = [_]command_specs.OptionDoc{
-    .{ .flag = "--global", .description = "Use ~/.fx/mcp.json, the default" },
+    .{ .flag = "--global", .description = "Use ~/.tetris/mcp.json, the default" },
     .{ .flag = "--profile", .description = "Older name for --global", .hidden = true },
     .{ .flag = "--project", .description = "Use the project's .mcp.json" },
 };
@@ -177,16 +177,16 @@ const builtin_providers = [_][]const u8{ "gateway", "codex", "grok" };
 const ProviderOrder = enum { with_provider_order, without_provider_order };
 
 /// The flags that shape an agent run, the same on every command that runs the
-/// agent: `fx ask`, `fx pr`, `fx issue`, and `fx acp`. `scope` names what they
+/// agent: `tetris ask`, `tetris pr`, `tetris issue`, and `tetris acp`. `scope` names what they
 /// shape, such as "this request". `src/core/cli/agent_run_flags.zig` parses
-/// them. `fx acp` leaves out the provider-order flags, because ACP sessions
+/// them. `tetris acp` leaves out the provider-order flags, because ACP sessions
 /// don't apply gateway provider routing.
 fn agentRunOptions(comptime scope: []const u8, comptime provider_order: ProviderOrder) [if (provider_order == .with_provider_order) 15 else 12]command_specs.OptionDoc {
     const all = [_]command_specs.OptionDoc{
         .{ .flag = "--permission-mode <mode>", .description = "Set the permission mode for " ++ scope ++ ": ask, auto, or full-access", .values = &permission_modes },
         .{ .flag = "--ask", .description = "Ask before each action that needs permission" },
         .{ .flag = "--auto", .description = "Automatically review unresolved permission requests" },
-        .{ .flag = "--full-access", .description = "Disable fx permission checks" },
+        .{ .flag = "--full-access", .description = "Disable Tetris permission checks" },
         .{ .flag = "--yolo", .description = "Alias for --full-access" },
         .{ .flag = "--provider <name>", .description = "Override the model provider for " ++ scope ++ " (gateway, codex, grok, or a configured name)", .values = &builtin_providers },
         .{ .flag = "--model <id>", .description = "Override the model for " ++ scope },
@@ -213,7 +213,7 @@ pub const ask_options = agentRunOptions("this request", .with_provider_order) ++
     .{ .flag = "--quiet", .description = "Suppress assistant output" },
     .{ .flag = "--prompt-permissions", .description = "Prompt for Y/N permission approval when stdin is a TTY" },
     .{ .flag = "--timeout <seconds>", .description = "Time limit for each shell command the agent runs" },
-    .{ .flag = "--config <key=value>", .description = "Override a setting for this request, with the keys fx config set takes; repeatable" },
+    .{ .flag = "--config <key=value>", .description = "Override a setting for this request, with the keys tetris config set takes; repeatable" },
     .{ .flag = "--no-save", .description = "Do not save the session; incompatible with --resume" },
     .{ .flag = "--no-color", .description = "Render TTY output without colors or hyperlinks; NO_COLOR or TERM=dumb also turns color off" },
     .{ .flag = "--resume <last|<id>>", .description = "Continue the last session or a session by id" },
@@ -288,9 +288,9 @@ pub const top_level_specs = [_]TopLevelSpec{
         .token = "setup",
         // Warns until it is removed.
         .hidden_from_top_level_help = true,
-        .replaced_by = "fx login vercel --api-key",
+        .replaced_by = "tetris login vercel --api-key",
         .usage = "setup",
-        .summary = "Paste an AI Gateway API key (deprecated: use fx login vercel --api-key)",
+        .summary = "Paste an AI Gateway API key (deprecated: use tetris login vercel --api-key)",
     },
     .{
         .kind = .status,
@@ -309,7 +309,7 @@ pub const top_level_specs = [_]TopLevelSpec{
             "Modes:",
             "  ask          Prompt before sensitive tool calls",
             "  auto         Apply rules, then review unresolved sensitive tool calls (default)",
-            "  full-access  Disable fx permission checks",
+            "  full-access  Disable Tetris permission checks",
             "",
             "Change the mode from the interactive shell with `/permissions [ask|auto|full-access|reset]`,",
             "and manage persistent allow rules with `/allowlist`.",
@@ -319,7 +319,7 @@ pub const top_level_specs = [_]TopLevelSpec{
         .kind = .mcp,
         .token = "mcp",
         .usage = "mcp <command> ...",
-        // `fx mcp -h` is the verbs' own help (`mcp_host/verbs.zig` writeUsage).
+        // `tetris mcp -h` is the verbs' own help (`mcp_host/verbs.zig` writeUsage).
         .summary = "Manage MCP servers without opening the interactive shell",
         .subcommands = &mcp_subcommands,
     },
@@ -334,7 +334,7 @@ pub const top_level_specs = [_]TopLevelSpec{
         .kind = .provider,
         .token = "provider",
         .usage = "provider <name>",
-        .summary = "Choose the model provider used by fx",
+        .summary = "Choose the model provider used by Tetris",
     },
     .{
         .kind = .doctor,
@@ -394,9 +394,9 @@ pub const top_level_specs = [_]TopLevelSpec{
         .summary = "Show your provider's usage and spend",
         .options = &usage_options,
         .details = &.{
-            "With AI Gateway, reads its usage reports: with fx login, your spend on the team and your budget; with an API key, that key's spend.",
+            "With AI Gateway, reads its usage reports: with tetris login, your spend on the team and your budget; with an API key, that key's spend.",
             "With Codex, reads your ChatGPT plan's limits and activity; with Grok, your plan's allowance and credits.",
-            "Finished days are cached under ~/.fx and fetched at most once a day.",
+            "Finished days are cached under ~/.tetris and fetched at most once a day.",
         },
     },
     .{
@@ -404,7 +404,7 @@ pub const top_level_specs = [_]TopLevelSpec{
         .token = "upgrade",
         .aliases = &.{"update"},
         .usage = "upgrade [--channel <stable|dev>] [--json]",
-        .summary = "Upgrade 𝒇x on the selected release channel",
+        .summary = "Upgrade Tetris on the selected release channel",
         .options = &upgrade_options,
     },
     .{
@@ -415,7 +415,7 @@ pub const top_level_specs = [_]TopLevelSpec{
         .hidden_from_top_level_help = true,
         .options = &replay_options,
         .details = &.{
-            "Developer tool for reproducing terminal rendering bugs from FX_RECORD and FX_DEBUG_RECORD tapes. It is not listed in `fx help`.",
+            "Developer tool for reproducing terminal rendering bugs from FX_RECORD and FX_DEBUG_RECORD tapes. It is not listed in `tetris help`.",
         },
     },
     .{
@@ -435,27 +435,27 @@ pub const top_level_specs = [_]TopLevelSpec{
         .usage = "completion bash|zsh|fish",
         .summary = "Print a shell completion script",
         .subcommands = &.{
-            .{ .usage = "bash", .description = "Load it with: eval \"$(fx completion bash)\"" },
-            .{ .usage = "zsh", .description = "Load it after compinit with: source <(fx completion zsh)" },
-            .{ .usage = "fish", .description = "Load it with: fx completion fish | source" },
+            .{ .usage = "bash", .description = "Load it with: eval \"$(tetris completion bash)\"" },
+            .{ .usage = "zsh", .description = "Load it after compinit with: source <(tetris completion zsh)" },
+            .{ .usage = "fish", .description = "Load it with: tetris completion fish | source" },
         },
         .details = &.{
             "Add the load line to ~/.bashrc, ~/.zshrc, or ~/.config/fish/config.fish to keep it in new shells.",
-            "Tab completes commands, flags, setting keys after fx config get, set, and unset, and fixed flag values.",
+            "Tab completes commands, flags, setting keys after tetris config get, set, and unset, and fixed flag values.",
         },
     },
     .{
         .kind = .config,
         .token = "config",
         .usage = "config [list|get <key>|set <key> <value>|unset <key>|schema [--project]] [--global|--workspace] [--show-origin] [--json]",
-        .summary = "Show and change fx settings",
+        .summary = "Show and change Tetris settings",
         .subcommands = &config_subcommands,
         .options = &config_options,
         .details = &.{
-            "Values come from .fx.json, ~/.fx/settings.json, and this workspace's override in it. When a key repeats, the last line is the one fx uses.",
-            "Keys are dotted, such as status_line.context. A flag or an FX_* variable can override a value for one run; fx status shows what a run uses.",
+            "Values come from .fx.json, ~/.tetris/settings.json, and this workspace's override in it. When a key repeats, the last line is the one Tetris uses.",
+            "Keys are dotted, such as status_line.context. A flag or an FX_* variable can override a value for one run; tetris status shows what a run uses.",
             "set and unset change plain preferences for every workspace, such as fast_mode, effort, theme, and status_line.context. Switches take true or false. Permission, model, provider, and account settings keep their own commands.",
-            "schema prints a JSON Schema that editors use to complete and check ~/.fx/settings.json, and --project prints the one for .fx.json. A file whose \"$schema\" names https://fx.sh/schemas/settings.json or https://fx.sh/schemas/fx.json gets the same check.",
+            "schema prints a JSON Schema that editors use to complete and check ~/.tetris/settings.json, and --project prints the one for .fx.json. A file whose \"$schema\" names https://fx.sh/schemas/settings.json or https://fx.sh/schemas/fx.json gets the same check.",
         },
     },
     command_specs.slack_install_spec,
@@ -499,7 +499,7 @@ pub const top_level_help_groups = [_]TopLevelHelpGroup{
         .{ .kind = .permissions, .usage = "permissions" },
         .{ .kind = .workspace, .usage = "workspace" },
         .{ .kind = .config, .usage = "config" },
-        .{ .kind = .upgrade, .usage = "upgrade|update", .summary = "Upgrade fx on the selected release channel" },
+        .{ .kind = .upgrade, .usage = "upgrade|update", .summary = "Upgrade Tetris on the selected release channel" },
         .{ .kind = .acp, .usage = "acp" },
         .{ .kind = .completion, .usage = "completion <shell>" },
         .{ .kind = .help, .usage = "help" },
@@ -514,9 +514,9 @@ pub const launch_wide_options = [_]command_specs.OptionDoc{
     .{ .flag = "--no-additional-dirs", .description = "" },
 };
 
-/// The flags `fx` reads before a command or an interactive launch, in the
+/// The flags Tetris reads before a command or an interactive launch, in the
 /// form the shared flag parser reads. `top_level_flags` documents them in
-/// `fx --help`, and a test checks that the two lists match. The usage line
+/// `tetris --help`, and a test checks that the two lists match. The usage line
 /// after a launch-flag mistake is built from this list.
 pub const launch_options = launch_wide_options ++ [_]command_specs.OptionDoc{
     .{ .flag = "--provider <name>", .description = "", .values = &builtin_providers },
@@ -538,11 +538,11 @@ pub const launch_options = launch_wide_options ++ [_]command_specs.OptionDoc{
     .{ .flag = "--instances <n>", .description = "" },
 };
 
-/// `usage: fx [--context-limit <spec>] ... <command>`, from `launch_options`,
+/// `usage: tetris [--context-limit <spec>] ... <command>`, from `launch_options`,
 /// with each `--x` and `--no-x` pair written as `[--x|--no-x]`.
 pub const launch_usage: []const u8 = blk: {
     @setEvalBranchQuota(20_000);
-    var out: []const u8 = "usage: fx";
+    var out: []const u8 = "usage: tetris";
     var i: usize = 0;
     while (i < launch_options.len) : (i += 1) {
         const doc = launch_options[i];
@@ -593,11 +593,11 @@ pub const top_level_flags = [_]TopLevelFlag{
     },
     .{
         .usage = "--profile <name>",
-        .description = "Run an interactive session in an agent profile from ~/.fx/agents or the repository's .fx/agents",
+        .description = "Run an interactive session in an agent profile from ~/.tetris/agents or the repository's .tetris/agents",
     },
     .{
         .usage = "--instances <n>",
-        .description = "Start n fx instances in one interactive session, each with its own conversation; Down on an empty composer, Ctrl+X, or /agents lists them to switch",
+        .description = "Start n Tetris instances in one interactive session, each with its own conversation; Down on an empty composer, Ctrl+X, or /agents lists them to switch",
     },
     .{
         .usage = "--fast, --no-fast",
@@ -629,32 +629,32 @@ pub const top_level_flags = [_]TopLevelFlag{
     },
     .{
         .usage = "-v, --version",
-        .description = "Print the fx version and exit",
+        .description = "Print the Tetris version and exit",
     },
 };
 
 pub const top_level_examples = [_]TopLevelExample{
-    .{ .command = "fx", .description = "Start a fresh interactive session" },
-    .{ .command = "fx \"Fix the failing login test\"", .description = "Start a session with a first prompt" },
-    .{ .command = "fx ask \"Explain the changes in this repository\"", .description = "Run one request and exit" },
-    .{ .command = "fx session resume last", .description = "Continue the latest session for this workspace" },
-    .{ .command = "fx status --json", .description = "Inspect the current configuration as JSON" },
+    .{ .command = "tetris", .description = "Start a fresh interactive session" },
+    .{ .command = "tetris \"Fix the failing login test\"", .description = "Start a session with a first prompt" },
+    .{ .command = "tetris ask \"Explain the changes in this repository\"", .description = "Run one request and exit" },
+    .{ .command = "tetris session resume last", .description = "Continue the latest session for this workspace" },
+    .{ .command = "tetris status --json", .description = "Inspect the current configuration as JSON" },
 };
 
 pub const top_level_notes = [_][]const u8{
-    "Run `fx <command> --help` for command-specific usage and options.",
+    "Run `tetris <command> --help` for command-specific usage and options.",
     "Run `/help` inside an interactive session for slash commands.",
 };
 
 pub const top_level_resources = [_]TopLevelResource{
-    .{ .label = "Learn more about fx:", .value = "https://fx.sh/docs", .link = true },
-    .{ .label = "Report a problem:", .value = "run `/feedback` inside fx" },
+    .{ .label = "Learn more:", .value = "https://github.com/lianihossam-eng/Tetris", .link = true },
+    .{ .label = "Report a problem:", .value = "run `/feedback` inside Tetris" },
 };
 
 pub const top_level_registry = TopLevelRegistry{
     .specs = top_level_specs[0..],
     .description = "Fast, native coding agent for the terminal.",
-    .interactive_hint = "fx starts an interactive session by default. Use `fx ask` to run one noninteractive request.",
+    .interactive_hint = "Tetris starts an interactive session by default. Use `tetris ask` to run one noninteractive request.",
     .help_groups = top_level_help_groups[0..],
     .flags = top_level_flags[0..],
     .examples = top_level_examples[0..],
@@ -693,8 +693,8 @@ pub const slash_specs = [_]SlashSpec{
     .{ .kind = .reset_session, .command = "/reset", .help_entry = "/reset", .completion_description = "reset the current session context", .presentation_category = .session },
     .{ .kind = .resume_session, .command = "/resume", .help_entry = "/resume", .completion_description = "resume a saved session", .presentation_category = .session },
 
-    .{ .kind = .launch_instance, .command = "/launch", .help_entry = "/launch [profile]", .completion_description = "start another fx instance on this host", .presentation_category = .session, .has_args = true, .accepts_payload = true },
-    .{ .kind = .close_instance, .command = "/close", .help_entry = "/close", .completion_description = "close the fx instance on screen", .presentation_category = .session },
+    .{ .kind = .launch_instance, .command = "/launch", .help_entry = "/launch [profile]", .completion_description = "start another Tetris instance on this host", .presentation_category = .session, .has_args = true, .accepts_payload = true },
+    .{ .kind = .close_instance, .command = "/close", .help_entry = "/close", .completion_description = "close the Tetris instance on screen", .presentation_category = .session },
     .{ .kind = .show_agents, .command = "/agents", .help_entry = "/agents", .completion_description = "list the open agents and switch to one", .presentation_category = .session },
     .{ .kind = .rename_session, .command = "/rename", .help_entry = "/rename <title>", .completion_description = "rename the current session", .presentation_category = .session, .has_args = true, .requires_args = true, .accepts_payload = true },
     .{ .kind = .fork_session, .command = "/fork", .help_entry = "/fork", .completion_description = "fork the session before a prompt", .presentation_category = .session },
@@ -708,13 +708,13 @@ pub const slash_specs = [_]SlashSpec{
     .{ .kind = .images, .command = "/images", .help_entry = "/images [clear]", .completion_description = "manage pending image attachments", .presentation_category = .media, .has_args = true, .accepts_payload = true },
     .{ .kind = .model, .command = "/model", .help_entry = "/model <id-or-query>", .completion_description = "choose what model and reasoning effort to use", .presentation_category = .model, .has_args = true, .accepts_payload = true },
     .{ .kind = .effort, .command = "/effort", .help_entry = "/effort [level]", .completion_description = "choose the reasoning effort for the current model", .presentation_category = .model, .has_args = true, .accepts_payload = true },
-    .{ .kind = .permissions, .command = "/permissions", .help_entry = "/permissions [ask|auto|full-access|reset]", .completion_description = "choose what fx is allowed to do", .presentation_category = .security, .show_in_welcome = true, .has_args = true, .accepts_payload = true },
+    .{ .kind = .permissions, .command = "/permissions", .help_entry = "/permissions [ask|auto|full-access|reset]", .completion_description = "choose what Tetris is allowed to do", .presentation_category = .security, .show_in_welcome = true, .has_args = true, .accepts_payload = true },
     .{ .kind = .allowlist, .command = "/allowlist", .help_entry = "/allowlist [view [effective|workspace|global]|[workspace|global] add|remove|reset ...]", .completion_description = "manage trusted commands, tools, and URLs", .presentation_category = .security, .show_in_welcome = true, .has_args = true, .accepts_payload = true },
     .{ .kind = .undo, .command = "/undo", .help_entry = "/undo", .completion_description = "undo the latest tracked file operation", .presentation_category = .session },
     .{ .kind = .mcp, .command = "/mcp", .help_entry = "/mcp [list|show|add|remove|login|logout|approve|reject]", .completion_description = "manage MCP servers and their logins", .presentation_category = .extensions, .has_args = true, .accepts_payload = true },
     .{ .kind = .skills, .command = "/skills", .help_entry = "/skills [list|add|install|show|create|remove|path] [name|url|path] ($ opens skill search)", .completion_description = "browse and manage skills", .presentation_category = .extensions, .has_args = true, .accepts_payload = true },
     .{ .kind = .copy, .command = "/copy", .help_entry = "/copy", .completion_description = "copy the last assistant response", .presentation_category = .session },
-    .{ .kind = .feedback, .command = "/feedback", .help_entry = "/feedback", .completion_description = "open the fx feedback form", .presentation_category = .product, .show_in_welcome = true },
+    .{ .kind = .feedback, .command = "/feedback", .help_entry = "/feedback", .completion_description = "open the Tetris feedback form", .presentation_category = .product, .show_in_welcome = true },
     .{ .kind = .trace, .command = "/trace", .help_entry = "/trace", .completion_description = "copy a private diagnostic trace", .presentation_category = .product },
     .{ .kind = .compact, .command = "/compact", .help_entry = "/compact", .completion_description = "summarize context into a fresh window", .presentation_category = .session },
     .{ .kind = .settings, .command = "/settings", .help_entry = "/settings [startup-scrollback [on|off]]", .completion_description = "browse and update settings", .presentation_category = .appearance, .has_args = true, .accepts_payload = true },
@@ -726,7 +726,7 @@ pub const slash_specs = [_]SlashSpec{
     .{ .kind = .notifications, .command = "/sound", .help_entry = "/sound [on|off|max]", .completion_description = "toggle sounds and terminal bells", .presentation_category = .appearance, .has_args = true, .accepts_payload = true },
     .{ .kind = .workspace, .command = "/workspace", .help_entry = "/workspace [list|add PATH|remove PATH|clear]", .completion_description = "manage additional workspace directories", .presentation_category = .workspace, .show_in_welcome = true, .has_args = true, .accepts_payload = true },
     .{ .kind = .shell, .command = "/shell", .help_entry = "/shell reload", .completion_description = "reload shell startup files for commands", .presentation_category = .workspace, .has_args = true, .requires_args = true, .accepts_payload = true },
-    .{ .kind = .version, .command = "/version", .help_entry = "/version", .completion_description = "show the fx version", .presentation_category = .general },
+    .{ .kind = .version, .command = "/version", .help_entry = "/version", .completion_description = "show the Tetris version", .presentation_category = .general },
     .{ .kind = .quit, .command = "/quit", .aliases = &.{"/exit"}, .help_entry = "/quit", .completion_description = "exit the interactive shell", .presentation_category = .general, .show_in_welcome = true },
 };
 
@@ -778,7 +778,7 @@ pub fn slashCompletionHasArgs(command: []const u8) bool {
 
 pub const argCompletionAnchor = command_specs.argCompletionAnchor;
 
-test "fx config help names settings by their current keys" {
+test "tetris config help names settings by their current keys" {
     const settings_keys = @import("../core/config/settings_keys.zig");
     const spec = for (top_level_specs) |spec| {
         if (spec.kind == .config) break spec;
@@ -903,7 +903,7 @@ test "built-in statusline help and completion include workspace" {
     );
 }
 
-test "every launch flag appears in fx --help" {
+test "every launch flag appears in tetris --help" {
     const cli_flags = @import("../core/cli/cli_flags.zig");
     outer: for (launch_options) |doc| {
         const name = cli_flags.flagName(doc);
@@ -919,7 +919,7 @@ test "every launch flag appears in fx --help" {
         return error.TestExpectedEqual;
     }
     // And the other way: help shows no launch flag the parser doesn't read,
-    // apart from the resume words, help, and version, which fx reads first.
+    // apart from the resume words, help, and version, which Tetris reads first.
     for (top_level_flags) |flag| {
         var parts = std.mem.splitSequence(u8, flag.usage, ", ");
         part: while (parts.next()) |part| {
@@ -937,7 +937,7 @@ test "every launch flag appears in fx --help" {
 }
 
 test "the launch usage line pairs each --no- spelling with its flag" {
-    try std.testing.expect(std.mem.startsWith(u8, launch_usage, "usage: fx [--context-limit <spec>] [--add-dir <path>] [--no-additional-dirs] "));
+    try std.testing.expect(std.mem.startsWith(u8, launch_usage, "usage: tetris [--context-limit <spec>] [--add-dir <path>] [--no-additional-dirs] "));
     try std.testing.expect(std.mem.find(u8, launch_usage, " [--fast|--no-fast] ") != null);
     try std.testing.expect(std.mem.endsWith(u8, launch_usage, " <command>\n"));
 }

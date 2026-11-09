@@ -1,10 +1,10 @@
-// Replays LeanUsageDrive behaviors from TLC against the real fx binary.
+// Replays LeanUsageDrive behaviors from TLC against the real tetris binary.
 //
 //   bun tests/tla/drivers/usage/lean/drive.ts [--traces N] [--depth D] [--seed S] [file...]
 //
 // TLC simulates N random behaviors of tests/tla/usage/LeanUsageDrive.tla (or the given
-// trace files are replayed). Each behavior runs two fx TUIs (p1, p2) in tmux
-// that share one HOME, so one ~/.fx/usage-cache. Identity a and b are two
+// trace files are replayed). Each behavior runs two Tetris TUIs (p1, p2) in tmux
+// that share one HOME, so one ~/.tetris/usage-cache. Identity a and b are two
 // AI Gateway API keys; each process has its own fake gateway that holds every
 // /v1/report request until the behavior says the fetch completes or fails.
 // The usage clock seam (FX_TEST_USAGE_CLOCK_FILE) maps model time to real time:
@@ -110,7 +110,7 @@ function actionBetween(s: State, t: State): Action {
 
 function cachePath(home: string, ident: string): string {
   const hash = createHash("sha256").update(`fx-usage-cache-v1\0api_key\0${KEYS[ident]}\0`).digest("hex");
-  return join(home, ".fx", "usage-cache", `${hash}.json`);
+  return join(home, ".tetris", "usage-cache", `${hash}.json`);
 }
 
 type CacheRec = { todayDay: number | null; todayAt: number | null; finDay: number | null };
@@ -187,7 +187,7 @@ class Process {
   /** Claims the first request of a fetch the model started. */
   async claimStart(f: Fetch): Promise<void> {
     const got = await until(() => this.held.length > 0);
-    if (!got) throw new Divergence(`${this.name}: the model starts a fetch, fx sent no request`, { fetch: f });
+    if (!got) throw new Divergence(`${this.name}: the model starts a fetch, Tetris sent no request`, { fetch: f });
     const today = this.held.shift()!;
     const day = utcDate(tickMs(f.at));
     const range = `${today.url.searchParams.get("start_date")}..${today.url.searchParams.get("end_date")}`;
@@ -199,7 +199,7 @@ class Process {
 
   async answerNext(label: string, start: string, end: string, cost: number): Promise<void> {
     const got = await until(() => this.held.length > 0);
-    if (!got) throw new Divergence(`${this.name}: fetch reads finished days in the model, fx sent no ${label} request`);
+    if (!got) throw new Divergence(`${this.name}: fetch reads finished days in the model, Tetris sent no ${label} request`);
     const h = this.held.shift()!;
     const range = `${h.url.searchParams.get("start_date")}..${h.url.searchParams.get("end_date")}`;
     if (range !== `${start}..${end}`) {
@@ -278,7 +278,7 @@ async function perform(action: Action, s: State, t: State, procs: Record<Proc, P
       await proc.claimStart(fetchOf(t, action.p)!);
       return;
     case "Timer":
-      // fx starts it on its own once the clock moved; the request may already be held.
+      // Tetris starts it on its own once the clock moved; the request may already be held.
       await proc.claimStart(fetchOf(t, action.p)!);
       return;
     case "Complete": {
@@ -314,14 +314,14 @@ const sameCache = (real: CacheRec, want: CacheRec) =>
 
 async function settleAndCheck(t: State, procs: Record<Proc, Process>, home: string): Promise<void> {
   await sleep(SETTLE_MS);
-  // No fetch the model does not start. fx fires every due timer at once,
+  // No fetch the model does not start. Tetris fires every due timer at once,
   // while the model takes them one step at a time: a process whose timer is
   // due may already have sent its first request.
   for (const p of PROCS) {
     const allowed = timerDue(t, p) ? 1 : 0;
     if (procs[p].held.length > allowed) {
       const ranges = procs[p].held.map((h) => `${h.url.searchParams.get("start_date")}..${h.url.searchParams.get("end_date")}`);
-      throw new Divergence(`${p}: fx sent a request the model does not make`, { ranges });
+      throw new Divergence(`${p}: Tetris sent a request the model does not make`, { ranges });
     }
   }
   // The shared cache file, per identity.

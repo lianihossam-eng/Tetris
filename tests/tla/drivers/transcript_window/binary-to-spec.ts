@@ -1,4 +1,4 @@
-// Binary to spec: drives the built fx binary through three compaction cycles
+// Binary to spec: drives the built tetris binary through three compaction cycles
 // (the transcript window is always on), resizes the terminal, walks Ctrl+O
 // over every cycle, quits, resumes in a new process, and walks Ctrl+O again. It reads the steps the binary traced (the `transcript_window` scope),
 // replays each window's events through the harness around the core, checks
@@ -341,7 +341,7 @@ export async function binaryToSpec(options: { bin: string; dir: string }): Promi
 if (import.meta.main) {
   const args = process.argv.slice(2);
   const binIndex = args.indexOf("--bin");
-  const bin = binIndex >= 0 ? args[binIndex + 1]! : join(REPO_ROOT, "zig-out", "bin", "fx");
+  const bin = binIndex >= 0 ? args[binIndex + 1]! : join(REPO_ROOT, "zig-out", "bin", "tetris");
   const dir = join(outDir("transcript_window"), "binary-to-spec");
   const result = await binaryToSpec({ bin, dir });
   writeJson(join(dir, "result.json"), result);

@@ -5,7 +5,7 @@ import { join } from "node:path";
 import { runFx } from "../evals/eval-helpers";
 import { fakeGatewayFinalText, heldFakeGatewayFinalText, startFakeGateway, TmuxSession, tmuxAvailable } from "./tmux-helpers";
 
-// `fx mcp`. Sign-in is covered in mcp-auth.test.ts.
+// `tetris mcp`. Sign-in is covered in mcp-auth.test.ts.
 
 const MODERN_FIXTURE = join(import.meta.dirname, "fixtures", "mcp-modern-stdio.mjs");
 
@@ -36,15 +36,15 @@ function createRoot(profile?: unknown, project?: unknown) {
   cleanup = root;
   const home = join(root, "home");
   const workspace = join(root, "workspace");
-  mkdirSync(join(home, ".fx"), { recursive: true, mode: 0o700 });
+  mkdirSync(join(home, ".tetris"), { recursive: true, mode: 0o700 });
   mkdirSync(workspace, { recursive: true });
-  writeFileSync(join(home, ".fx", "settings.json"), "{}");
-  if (profile !== undefined) writeFileSync(join(home, ".fx", "mcp.json"), typeof profile === "string" ? profile : JSON.stringify(profile));
+  writeFileSync(join(home, ".tetris", "settings.json"), "{}");
+  if (profile !== undefined) writeFileSync(join(home, ".tetris", "mcp.json"), typeof profile === "string" ? profile : JSON.stringify(profile));
   if (project !== undefined) writeFileSync(join(workspace, ".mcp.json"), JSON.stringify(project));
   return {
     home,
     workspace,
-    profilePath: join(home, ".fx", "mcp.json"),
+    profilePath: join(home, ".tetris", "mcp.json"),
     projectPath: join(workspace, ".mcp.json"),
     env: {
       HOME: home,
@@ -68,7 +68,7 @@ const fixtureServer = (extra: Record<string, unknown> = {}) => ({
   ...extra,
 });
 
-describe("fx mcp", () => {
+describe("tetris mcp", () => {
   test("add writes each file and keeps every key it doesn't know", async () => {
     // Raw text, so the number's spelling reaches fx as written.
     const root = createRoot('{"theme":"dark","mcp":{"old":{"command":"true","environment":{"A":"1"},"startup_timeout_ms":1.50}}}');
@@ -78,7 +78,7 @@ describe("fx mcp", () => {
     const http = await mcp(root, "add", "web", "https://mcp.example/mcp", "--header", "X-Key=${KEY}");
     expect(http.stderr).toBe("");
     expect(http.code).toBe(0);
-    expect(http.stdout).toBe("Added web to ~/.fx/mcp.json.\n");
+    expect(http.stdout).toBe("Added web to ~/.tetris/mcp.json.\n");
     const stdio = await mcp(root, "add", "--project", "--env", "TOKEN=x", "local", "--", "node", "server.js", "-h");
     expect(stdio.code).toBe(0);
     expect(stdio.stdout).toBe("Added local to .mcp.json.\n");
@@ -105,7 +105,7 @@ describe("fx mcp", () => {
     const before = readFileSync(root.profilePath, "utf8");
     const taken = await mcp(root, "add", "web", "https://b/mcp");
     expect(taken.code).toBe(1);
-    expect(taken.stderr).toBe("Couldn't add web to ~/.fx/mcp.json: that name is already in the file; remove it first.\n");
+    expect(taken.stderr).toBe("Couldn't add web to ~/.tetris/mcp.json: that name is already in the file; remove it first.\n");
     expect(readFileSync(root.profilePath, "utf8")).toBe(before);
 
     writeFileSync(root.profilePath, '{"mcpServers":{},"mcpServers":{}}');
@@ -116,7 +116,7 @@ describe("fx mcp", () => {
 
     const bad = await mcp(root, "add", "bad name", "https://b/mcp");
     expect(bad.code).toBe(2);
-    expect(bad.stderr).toStartWith("'bad name' can't be a server name: use letters, digits, '-' and '_'.\nusage: fx mcp add ");
+    expect(bad.stderr).toStartWith("'bad name' can't be a server name: use letters, digits, '-' and '_'.\nusage: tetris mcp add ");
     const notUrl = await mcp(root, "add", "web2", "mcp.example");
     expect(notUrl.code).toBe(2);
     expect(notUrl.stderr).toStartWith("'mcp.example' isn't a URL. A stdio server's command goes after --.\n");
@@ -132,7 +132,7 @@ describe("fx mcp", () => {
     const text = JSON.stringify({ mcpServers: { one: { command: "true" } } });
     writeFileSync(target, text);
     symlinkSync(target, root.projectPath);
-    const why = `it's a link to ${target}, and fx edits only a plain file; edit ${target} by hand.\n`;
+    const why = `it's a link to ${target}, and Tetris edits only a plain file; edit ${target} by hand.\n`;
     const added = await mcp(root, "add", "--project", "two", "--", "true");
     expect(added.code).toBe(1);
     expect(added.stderr).toBe(`Couldn't add two to .mcp.json: ${why}`);
@@ -147,7 +147,7 @@ describe("fx mcp", () => {
     linkSync(target, root.projectPath);
     const hard = await mcp(root, "add", "--project", "two", "--", "true");
     expect(hard.code).toBe(1);
-    expect(hard.stderr).toBe("Couldn't add two to .mcp.json: it has another hard link, and fx edits only a plain file; edit it by hand.\n");
+    expect(hard.stderr).toBe("Couldn't add two to .mcp.json: it has another hard link, and Tetris edits only a plain file; edit it by hand.\n");
     expect(readFileSync(target, "utf8")).toBe(text);
 
     // The profile's own replace refuses a link too, and says so the same way.
@@ -156,7 +156,7 @@ describe("fx mcp", () => {
     symlinkSync(profileTarget, root.profilePath);
     const profile = await mcp(root, "add", "three", "--", "true");
     expect(profile.code).toBe(1);
-    expect(profile.stderr).toBe(`Couldn't add three to ~/.fx/mcp.json: it's a link to ${profileTarget}, and fx edits only a plain file; edit ${profileTarget} by hand.\n`);
+    expect(profile.stderr).toBe(`Couldn't add three to ~/.tetris/mcp.json: it's a link to ${profileTarget}, and Tetris edits only a plain file; edit ${profileTarget} by hand.\n`);
     expect(lstatSync(root.profilePath).isSymbolicLink()).toBe(true);
     expect(readFileSync(profileTarget, "utf8")).toBe("{}");
   });
@@ -178,12 +178,12 @@ describe("fx mcp", () => {
     expect(text.code).toBe(0);
     expect(text.stdout).toBe(
       [
-        "NAME   SOURCE          TRANSPORT  STATUS",
-        "ctx    ~/.fx/mcp.json  http       not started",
-        "off    ~/.fx/mcp.json  stdio      disabled",
-        "sse    ~/.fx/mcp.json  sse        not supported",
-        "keyed  ~/.fx/mcp.json  http       needs $MISSING_TOKEN",
-        "docs   .mcp.json       stdio      waiting for approval",
+        "NAME   SOURCE              TRANSPORT  STATUS",
+        "ctx    ~/.tetris/mcp.json  http       not started",
+        "off    ~/.tetris/mcp.json  stdio      disabled",
+        "sse    ~/.tetris/mcp.json  sse        not supported",
+        "keyed  ~/.tetris/mcp.json  http       needs $MISSING_TOKEN",
+        "docs   .mcp.json           stdio      waiting for approval",
         "",
       ].join("\n"),
     );
@@ -213,13 +213,13 @@ describe("fx mcp", () => {
     const refused = await mcp(root, "list");
     expect(refused.code).toBe(0);
     expect(refused.stderr).toContain(
-      "note: ~/.fx/mcp.json server 'bad' was skipped: fx won't send its Authorization header; put the token in \"bearer_token_env\", or sign in with login.\n",
+      "note: ~/.tetris/mcp.json server 'bad' was skipped: Tetris won't send its Authorization header; put the token in \"bearer_token_env\", or sign in with login.\n",
     );
     expect(refused.stdout).not.toContain("bad");
 
     const empty = await mcp(createRoot(), "list");
     expect(empty.code).toBe(0);
-    expect(empty.stdout).toBe("No MCP servers configured. Add one with: fx mcp add NAME URL\n");
+    expect(empty.stdout).toBe("No MCP servers configured. Add one with: tetris mcp add NAME URL\n");
   });
 
   test("show connects to a server and lists its tools; a broken one exits 1", async () => {
@@ -243,10 +243,10 @@ describe("fx mcp", () => {
 
     const unknown = await mcp(root, "show", "nope");
     expect(unknown.code).toBe(1);
-    expect(unknown.stderr).toBe("No MCP server named nope. fx mcp list shows them.\n");
+    expect(unknown.stderr).toBe("No MCP server named nope. tetris mcp list shows them.\n");
   });
 
-  test("a variable a header can't carry holds its server back instead of aborting fx", async () => {
+  test("a variable a header can't carry holds its server back instead of aborting tetris", async () => {
     // Nothing listens on port 1, and nothing should be sent there.
     const root = createRoot({
       mcp: {
@@ -283,7 +283,7 @@ describe("fx mcp", () => {
     );
     const both = await mcp(root, "remove", "twin");
     expect(both.code).toBe(2);
-    expect(both.stderr).toBe("twin is in both ~/.fx/mcp.json and .mcp.json. Add --global or --project.\n");
+    expect(both.stderr).toBe("twin is in both ~/.tetris/mcp.json and .mcp.json. Add --global or --project.\n");
 
     const project = await mcp(root, "remove", "--project", "twin");
     expect(project.code).toBe(0);
@@ -296,9 +296,9 @@ describe("fx mcp", () => {
 
     const gone = await mcp(root, "remove", "solo");
     expect(gone.code).toBe(1);
-    expect(gone.stderr).toBe("No MCP server named solo in ~/.fx/mcp.json or .mcp.json.\n");
+    expect(gone.stderr).toBe("No MCP server named solo in ~/.tetris/mcp.json or .mcp.json.\n");
 
-    // `--global` names ~/.fx/mcp.json; the older `--profile` still works.
+    // `--global` names ~/.tetris/mcp.json; the older `--profile` still works.
     const global = await mcp(root, "remove", "--global", "twin");
     expect(global.code).toBe(0);
     expect(JSON.parse(readFileSync(root.profilePath, "utf8"))).toEqual({ mcpServers: {}, other: 1 });
@@ -306,7 +306,7 @@ describe("fx mcp", () => {
     expect(profile.code).toBe(1);
     // The older --profile still names the profile file, with a warning.
     expect(profile.stderr).toBe(
-      "fx mcp remove: --profile is deprecated and stops working in fx 0.0.18; use --global\nNo MCP server named twin in ~/.fx/mcp.json.\n",
+      "tetris mcp remove: --profile is deprecated and stops working in Tetris 0.0.18; use --global\nNo MCP server named twin in ~/.tetris/mcp.json.\n",
     );
   });
 
@@ -322,13 +322,13 @@ describe("fx mcp", () => {
 
     const rejected = await mcp(root, "reject", "web");
     expect(rejected.code).toBe(0);
-    expect(rejected.stdout).toBe("Rejected web. fx won't start it in this project.\n");
+    expect(rejected.stdout).toBe("Rejected web. tetris won't start it in this project.\n");
 
     const all = await mcp(root, "approve", "--all");
     expect(all.code).toBe(0);
     expect(all.stdout).toBe("Approved docs, which runs: node 'docs server.js'\n");
     // `--all` approves the servers it shows, not a server added later.
-    const settings = JSON.parse(readFileSync(join(root.home, ".fx", "settings.json"), "utf8"));
+    const settings = JSON.parse(readFileSync(join(root.home, ".tetris", "settings.json"), "utf8"));
     expect(settings.workspaces[root.workspace]).toEqual({ enabledMcpjsonServers: ["docs"], disabledMcpjsonServers: ["web"] });
 
     const list = JSON.parse((await mcp(root, "list", "--json")).stdout).servers;
@@ -353,7 +353,7 @@ describe("fx mcp", () => {
     const all = await mcp(root, "approve", "--all");
     expect(all.code).toBe(0);
     expect(all.stdout).toBe("Approved a, which runs: node a.js\nApproved b, which connects to: https://b.example/mcp\n");
-    const settings = JSON.parse(readFileSync(join(root.home, ".fx", "settings.json"), "utf8"));
+    const settings = JSON.parse(readFileSync(join(root.home, ".tetris", "settings.json"), "utf8"));
     expect(settings.workspaces[root.workspace]).toEqual({ enabledMcpjsonServers: ["a", "b"] });
     writeFileSync(root.projectPath, JSON.stringify({ mcpServers: { a: { command: "node", args: ["a.js"] }, b: { type: "http", url: "https://b.example/mcp" }, c: { command: "node", args: ["c.js"] } } }));
     const list = JSON.parse((await mcp(root, "list", "--json")).stdout).servers;
@@ -368,23 +368,23 @@ describe("fx mcp", () => {
     const root = createRoot();
     const overview = await mcp(root);
     expect(overview.code).toBe(0);
-    expect(overview.stdout).toStartWith("usage: fx mcp COMMAND\n\n  list [--json]               configured servers; never connects\n");
+    expect(overview.stdout).toStartWith("usage: tetris mcp COMMAND\n\n  list [--json]               configured servers; never connects\n");
     const verbHelp = await mcp(root, "remove", "-h");
     expect(verbHelp.code).toBe(0);
-    expect(verbHelp.stdout).toBe("usage: fx mcp remove [--global | --project] NAME\n");
+    expect(verbHelp.stdout).toBe("usage: tetris mcp remove [--global | --project] NAME\n");
 
     const unknownVerb = await mcp(root, "nope");
     expect(unknownVerb.code).toBe(2);
-    expect(unknownVerb.stderr).toStartWith("'nope' isn't an fx mcp command.\nusage: fx mcp COMMAND\n");
+    expect(unknownVerb.stderr).toStartWith("'nope' isn't a tetris mcp command.\nusage: tetris mcp COMMAND\n");
     const badFlag = await mcp(root, "logout", "--json", "x");
     expect(badFlag.code).toBe(2);
-    expect(badFlag.stderr).toBe("fx mcp logout: unknown flag --json\nusage: fx mcp logout NAME\n");
+    expect(badFlag.stderr).toBe("tetris mcp logout: unknown flag --json\nusage: tetris mcp logout NAME\n");
 
     for (const [args, message] of [
-      [["auth", "x"], "fx mcp auth is now fx mcp login NAME.\n"],
-      [["trust", "approve", "x"], "fx mcp trust is now fx mcp approve NAME and fx mcp reject NAME.\n"],
-      [["path"], "fx mcp path is gone: fx mcp list shows each server's file.\n"],
-      [["list", "--connect"], "fx mcp list --connect is now fx mcp show NAME.\n"],
+      [["auth", "x"], "tetris mcp auth is now tetris mcp login NAME.\n"],
+      [["trust", "approve", "x"], "tetris mcp trust is now tetris mcp approve NAME and tetris mcp reject NAME.\n"],
+      [["path"], "tetris mcp path is gone: tetris mcp list shows each server's file.\n"],
+      [["list", "--connect"], "tetris mcp list --connect is now tetris mcp show NAME.\n"],
     ] as const) {
       const old = await mcp(root, ...args);
       expect(old.code).toBe(2);
@@ -394,7 +394,7 @@ describe("fx mcp", () => {
     expect(existsSync(root.profilePath)).toBe(false);
   });
 
-  test("fx mcp commands keep a trace when FX_TRACE_LOG asks for one", async () => {
+  test("tetris mcp commands keep a trace when FX_TRACE_LOG asks for one", async () => {
     const root = createRoot({ mcp: { noisy: { command: "sh", args: ["-c", "echo trace-me >&2; exit 3"], startup_timeout_ms: 2_000 } } });
     const trace = join(root.home, "trace.log");
     const show = await runFx(["mcp", "show", "noisy"], { cwd: root.workspace, env: { ...root.env, FX_TRACE_LOG: trace, FX_TRACE_SCOPES: "mcp" }, timeoutMs: 20_000 });
@@ -421,7 +421,7 @@ describe("/mcp in the shell", () => {
     // Servers start on their own once the first frame is up. `/mcp list`
     // says what each is doing now, so ask until it's ready. Nothing is wrong,
     // so the status line says nothing about MCP.
-    const listed = "fixture  ~/.fx/mcp.json  stdio      ready, 1 tool";
+    const listed = "fixture  ~/.tetris/mcp.json  stdio      ready, 1 tool";
     for (let i = 0; i < 20 && !(await tui.capturePane()).includes(listed); i++) {
       await tui.sendText("/mcp list");
       await tui.waitForText(listed, 500).catch(() => {});
@@ -444,10 +444,10 @@ describe("/mcp in the shell", () => {
     await tui.sendKeys("C-u");
 
     await tui.sendText("/mcp add web https://w.example/mcp");
-    await tui.waitForText("Added web to ~/.fx/mcp.json.", 10_000);
+    await tui.waitForText("Added web to ~/.tetris/mcp.json.", 10_000);
     await tui.sendText("/mcp list");
     // Added, it starts too; this address never answers.
-    await tui.waitForText(/web +~\/\.fx\/mcp\.json +http +(connecting|retrying|failed)/, 10_000);
+    await tui.waitForText(/web +~\/\.tetris\/mcp\.json +http +(connecting|retrying|failed)/, 10_000);
     await tui.waitForText("ready, ", 5_000);
 
     await tui.sendText("/mcp nope");
@@ -474,7 +474,7 @@ describe("/mcp in the shell", () => {
     await tui.waitForComposer(15_000);
     await tui.pasteText('/mcp add probe -- /bin/echo "a\\\nb"');
     await tui.sendKeys("Enter");
-    await tui.waitForText("Added probe to ~/.fx/mcp.json.", 10_000);
+    await tui.waitForText("Added probe to ~/.tetris/mcp.json.", 10_000);
     expect(JSON.parse(readFileSync(root.profilePath, "utf8")).mcpServers.probe).toEqual({ command: "/bin/echo", args: ["ab"] });
   }, 60_000);
 
@@ -513,28 +513,28 @@ describe("/mcp in the shell", () => {
 
       // Adding a server, approving one, and removing one leave `s` as it was.
       await tui.sendText("/mcp add web https://w.example/mcp");
-      await tui.waitForText("Added web to ~/.fx/mcp.json.", 10_000);
+      await tui.waitForText("Added web to ~/.tetris/mcp.json.", 10_000);
       await tui.sendText("/mcp approve proj");
       await tui.waitForText("Approved proj", 10_000);
       const projBy = Date.now() + 10_000;
       while (pidIn(projPid) === 0 && Date.now() < projBy) await Bun.sleep(5);
       expect(pidIn(projPid)).not.toBe(0);
       await tui.sendText("/mcp remove web");
-      await tui.waitForText("Removed web from ~/.fx/mcp.json.", 10_000);
+      await tui.waitForText("Removed web from ~/.tetris/mcp.json.", 10_000);
       expect(pidIn(pidPath)).toBe(oldPid);
       expect(existsSync(eofPath)).toBe(false);
       expect(isRunning(oldPid)).toBe(true);
 
       // Removed, `s` stops; added back at once, the new copy waits for it.
       await tui.sendText("/mcp remove s");
-      await tui.waitForText("Removed s from ~/.fx/mcp.json.", 10_000);
+      await tui.waitForText("Removed s from ~/.tetris/mcp.json.", 10_000);
       const eofBy = Date.now() + 10_000;
       // The fixture creates the file, then writes its pid.
       while (!(existsSync(eofPath) && readFileSync(eofPath, "utf8").trim() !== "") && Date.now() < eofBy) await Bun.sleep(5);
       expect(readFileSync(eofPath, "utf8").trim()).toBe(String(oldPid));
       const flags = Object.entries(env).map(([k, v]) => `--env ${k}=${v}`).join(" ");
       await tui.sendText(`/mcp add ${flags} s -- ${process.execPath} ${MODERN_FIXTURE}`);
-      await tui.waitForText("Added s to ~/.fx/mcp.json.", 10_000);
+      await tui.waitForText("Added s to ~/.tetris/mcp.json.", 10_000);
       // The old copy is still stopping. Typing still shows at once.
       const typedAt = Date.now();
       await tui.sendLiteral("zq");
@@ -549,7 +549,7 @@ describe("/mcp in the shell", () => {
       expect(isRunning(oldPid)).toBe(false);
       await tui.sendKeys("C-u");
       await tui.sendText("/mcp list");
-      await tui.waitForText(/s +~\/\.fx\/mcp\.json +stdio +ready, 1 tool/, 15_000);
+      await tui.waitForText(/s +~\/\.tetris\/mcp\.json +stdio +ready, 1 tool/, 15_000);
     } finally {
       // fx first, so no new copy starts after this.
       await tui?.kill();
@@ -582,7 +582,7 @@ describe("/mcp in the shell", () => {
       await tui.sendText("/mcp show s");
       await Bun.sleep(300);
       await tui.sendText("/mcp add web https://w.example/mcp");
-      await tui.waitForText("Added web to ~/.fx/mcp.json.", 10_000);
+      await tui.waitForText("Added web to ~/.tetris/mcp.json.", 10_000);
       expect(await tui.capturePane()).not.toContain("Echo text through the modern MCP fixture");
 
       // The show answers from the copy it was waiting on, which keeps running.
@@ -597,7 +597,7 @@ describe("/mcp in the shell", () => {
     }
   }, 90_000);
 
-  test.skipIf(!tmuxAvailable())("a server added or removed by fx mcp outside the session reaches the next prompt and /mcp", async () => {
+  test.skipIf(!tmuxAvailable())("a server added or removed by tetris mcp outside the session reaches the next prompt and /mcp", async () => {
     const root = createRoot({ mcpServers: { fixture: fixtureServer() } });
     gateway = startFakeGateway([fakeGatewayFinalText("first done"), fakeGatewayFinalText("second done")], {
       models: [{ id: "openai/gpt-5", type: "language", tags: ["tool-use"] }],
@@ -622,7 +622,7 @@ describe("/mcp in the shell", () => {
     expect(servers(gateway.requests[0]!.body)).toContain("outside");
     // The session runs it, so `/mcp list` reports it.
     await tui.sendText("/mcp list");
-    await tui.waitForText(/outside +~\/\.fx\/mcp\.json +stdio/, 10_000);
+    await tui.waitForText(/outside +~\/\.tetris\/mcp\.json +stdio/, 10_000);
 
     // Removed the same way, it's gone by the next prompt.
     expect((await mcp(root, "remove", "outside")).code).toBe(0);
@@ -697,7 +697,7 @@ describe("/mcp in the shell", () => {
       // `/mcp list` checks the config files again before it answers.
       await tui.sendText("/mcp list");
       await tui.waitForText("No MCP servers configured", 10_000);
-      expect(await tui.captureFullScrollback()).toContain(".mcp.json server 'unknown' was skipped: fx can't read it.");
+      expect(await tui.captureFullScrollback()).toContain(".mcp.json server 'unknown' was skipped: Tetris can't read it.");
       await tui.kill();
       tui = null;
       gateway.stop();
@@ -858,7 +858,7 @@ describe("/mcp in the shell", () => {
     await tui.waitForText("› Remove        /mcp remove web", 5_000);
     await tui.sendKeys("Enter");
     // It asks on Remove's own row, with its answers; the hint line stays.
-    await tui.waitForText("› Remove web from ~/.fx/mcp.json?   yes  no", 5_000);
+    await tui.waitForText("› Remove web from ~/.tetris/mcp.json?   yes  no", 5_000);
     expect(await tui.capturePane()).toContain("↑↓ navigate     enter run     esc back");
     // → chooses no, and Enter on no keeps the server.
     await tui.sendKeys("Right Enter");
@@ -866,7 +866,7 @@ describe("/mcp in the shell", () => {
     await tui.waitForText("↑↓ navigate     enter run     esc back", 5_000);
     expect(JSON.parse(readFileSync(root.profilePath, "utf8")).mcpServers.web).toBeDefined();
     await tui.sendKeys("Enter");
-    await tui.waitForText("Remove web from ~/.fx/mcp.json?", 5_000);
+    await tui.waitForText("Remove web from ~/.tetris/mcp.json?", 5_000);
     await tui.sendKeys("Enter");
     // Its screen goes with it, back to the list, which no longer shows it.
     await tui.waitForText("MCP servers  2", 10_000);
@@ -876,7 +876,7 @@ describe("/mcp in the shell", () => {
 
   test.skipIf(!tmuxAvailable())("/mcp names HOME and writes nothing when HOME is not absolute", async () => {
     // fx treats a relative HOME as unset, and the shell's /mcp must not build
-    // `.fx/mcp.json` against the workspace instead.
+    // `.tetris/mcp.json` against the workspace instead.
     const root = createRoot();
     gateway = startFakeGateway([], { models: [{ id: "openai/gpt-5", type: "language", tags: ["tool-use"] }] });
     tui = await TmuxSession.create({
@@ -889,13 +889,13 @@ describe("/mcp in the shell", () => {
     await tui.waitForComposer(15_000);
     await tui.sendText("/mcp add web https://w.example/mcp");
     await tui.waitForText("/mcp: HOME is not set to an absolute path", 10_000);
-    expect(existsSync(join(root.workspace, ".fx"))).toBe(false);
+    expect(existsSync(join(root.workspace, ".tetris"))).toBe(false);
     expect(existsSync(join(root.workspace, "relative"))).toBe(false);
   }, 60_000);
 });
 
-describe("fx ask", () => {
-  test("fx ask names unapproved project servers and the command that approves them", async () => {
+describe("tetris ask", () => {
+  test("tetris ask names unapproved project servers and the command that approves them", async () => {
     const root = createRoot(undefined, { mcpServers: { proj: fixtureServer() } });
     gateway = startFakeGateway([fakeGatewayFinalText("done")], { models: [{ id: "openai/gpt-5", type: "language", tags: ["tool-use"] }] });
     const result = await runFx(["ask", "--no-save", "hello"], {
@@ -903,7 +903,7 @@ describe("fx ask", () => {
       env: { ...root.env, FX_GATEWAY_BASE_URL: gateway.baseUrl, FX_GATEWAY_CHAT_URL: gateway.chatUrl, FX_MODEL: "openai/gpt-5" },
       timeoutMs: 30_000,
     });
-    expect(result.stderr).toContain("fx ask: skipped unapproved project MCP servers: proj. Approve with fx mcp approve <name> before retrying.");
+    expect(result.stderr).toContain("tetris ask: skipped unapproved project MCP servers: proj. Approve with tetris mcp approve <name> before retrying.");
     expect(result.stderr).not.toContain("trust");
   }, 60_000);
 
@@ -911,7 +911,7 @@ describe("fx ask", () => {
     // An OSC sequence that would retitle the terminal if printed as is.
     const evil = "evil\u001b]0;pwned\u0007";
     const root = createRoot(undefined, { mcpServers: { proj: fixtureServer(), [evil]: fixtureServer() } });
-    const note = "note: .mcp.json server 'evil\\x1b]0;pwned\\x07' was skipped: its name has a character fx won't print.";
+    const note = "note: .mcp.json server 'evil\\x1b]0;pwned\\x07' was skipped: its name has a character Tetris won't print.";
 
     const list = await runFx(["mcp", "list"], { cwd: root.workspace, env: root.env, timeoutMs: 30_000 });
     expect(list.code).toBe(0);
@@ -927,13 +927,13 @@ describe("fx ask", () => {
       timeoutMs: 30_000,
     });
     expect(ask.stderr).toContain(note);
-    expect(ask.stderr).toContain("fx ask: skipped unapproved project MCP servers: proj. Approve");
+    expect(ask.stderr).toContain("tetris ask: skipped unapproved project MCP servers: proj. Approve");
     expect(ask.stdout + ask.stderr).not.toContain("\u001b");
   }, 60_000);
 
   test("a profile with both mcp and mcpServers names each server it leaves out", async () => {
     const root = createRoot({ mcp: { alpha: fixtureServer() }, mcpServers: { beta: fixtureServer() } });
-    const note = "note: ~/.fx/mcp.json server 'beta' was skipped: the file has both \"mcp\" and \"mcpServers\", and fx reads only \"mcp\"; merge them into one.";
+    const note = "note: ~/.tetris/mcp.json server 'beta' was skipped: the file has both \"mcp\" and \"mcpServers\", and Tetris reads only \"mcp\"; merge them into one.";
 
     const list = await runFx(["mcp", "list"], { cwd: root.workspace, env: root.env, timeoutMs: 30_000 });
     expect(list.code).toBe(0);

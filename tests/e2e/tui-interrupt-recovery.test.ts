@@ -151,9 +151,9 @@ describe.skipIf(SKIP)("tui: interrupt recovery", () => {
       const stderrPath = join(root, "stderr.log");
       const tracePath = join(root, "trace.log");
       const tapePath = join(root, "render.fxtape");
-      mkdirSync(join(home, ".fx"), { recursive: true });
+      mkdirSync(join(home, ".tetris"), { recursive: true });
       mkdirSync(workspace, { recursive: true });
-      writeFileSync(join(home, ".fx", "settings.json"), "{}");
+      writeFileSync(join(home, ".tetris", "settings.json"), "{}");
 
       const held: HoldState = { started: false, cancelled: false, cancelCount: 0, released: false };
       gateway = startFakeGateway([
@@ -187,7 +187,7 @@ describe.skipIf(SKIP)("tui: interrupt recovery", () => {
       await session.sendKeys("C-c");
       const cleared = (await session.capturePaneGrid()).join("\n");
       expect(cleared).not.toContain("DISCARD_THIS_DRAFT");
-      expect(cleared).not.toContain("What can fx do differently?");
+      expect(cleared).not.toContain("What can Tetris do differently?");
       expect(held.cancelCount).toBe(0);
       expect(readTrace(tracePath)).toContain("draft cleared reason=ctrl_c");
       expect(readTrace(tracePath)).not.toContain("event=cancel_requested");
@@ -195,20 +195,20 @@ describe.skipIf(SKIP)("tui: interrupt recovery", () => {
 
       await session.sendKeys("C-c");
       await waitForCondition(() => held.cancelled, "second Control-C cancellation");
-      await session.waitForText("What can fx do differently?", TIMEOUT);
+      await session.waitForText("What can Tetris do differently?", TIMEOUT);
       expect(held.cancelCount).toBe(1);
       expect(session.isPaneAlive()).toBe(true);
 
       await session.sendText("Continue after cancellation.");
       await session.waitForText("COMPOSER_INTERRUPT_RECOVERED", TIMEOUT);
       const scrollback = await session.captureFullScrollback();
-      expect(countOccurrences(scrollback, "What can fx do differently?")).toBe(1);
+      expect(countOccurrences(scrollback, "What can Tetris do differently?")).toBe(1);
       expect(scrollback).not.toContain("DISCARD_THIS_DRAFT");
       expect(gateway.requests).toHaveLength(2);
       expect(gateway.requests[1]!.body).not.toContain("DISCARD_THIS_DRAFT");
       expect(gateway.requests[1]!.body).toContain("<turn_aborted>");
       expect(readFileSync(stderrPath, "utf8")).toBe("");
-      const replay = Bun.spawnSync([join(import.meta.dir, "../../zig-out/bin/fx"), "replay", tapePath]);
+      const replay = Bun.spawnSync([join(import.meta.dir, "../../zig-out/bin/tetris"), "replay", tapePath]);
       expect(replay.exitCode).toBe(0);
       expect(replay.stdout.toString()).toContain("COMPOSER_INTERRUPT_RECOVERED");
     },
@@ -224,9 +224,9 @@ describe.skipIf(SKIP)("tui: interrupt recovery", () => {
       const stderrPath = join(root, "stderr.log");
       const tracePath = join(root, "trace.log");
       const tapePath = join(root, "render.fxtape");
-      mkdirSync(join(home, ".fx"), { recursive: true });
+      mkdirSync(join(home, ".tetris"), { recursive: true });
       mkdirSync(workspace, { recursive: true });
-      writeFileSync(join(home, ".fx", "settings.json"), "{}");
+      writeFileSync(join(home, ".tetris", "settings.json"), "{}");
       writeFileSync(join(workspace, "probe.txt"), "CANCEL_FOLLOW_UP_READ\n");
 
       const held: HoldState = { started: false, cancelled: false, cancelCount: 0, released: false };
@@ -290,14 +290,14 @@ describe.skipIf(SKIP)("tui: interrupt recovery", () => {
       );
       const scrollback = await session.captureFullScrollback();
       expect(scrollback).toContain("Read probe.txt");
-      expect(countOccurrences(scrollback, "What can fx do differently?")).toBe(2);
+      expect(countOccurrences(scrollback, "What can Tetris do differently?")).toBe(2);
       expect((await session.capturePaneGrid()).join("\n")).not.toContain("Thinking");
       expect(gateway.requests).toHaveLength(4);
       expect(held.cancelCount).toBe(1);
       expect(followUp.cancelCount).toBe(1);
       expect(readFileSync(stderrPath, "utf8")).toBe("");
       expect(session.isPaneAlive()).toBe(true);
-      const replay = Bun.spawnSync([join(import.meta.dir, "../../zig-out/bin/fx"), "replay", tapePath]);
+      const replay = Bun.spawnSync([join(import.meta.dir, "../../zig-out/bin/tetris"), "replay", tapePath]);
       expect(replay.exitCode).toBe(0);
       expect(replay.stdout.toString()).toContain("CANCEL_NEXT_PROMPT_COMPLETE");
       expect(replay.stdout.toString()).not.toContain("Thinking");
@@ -313,9 +313,9 @@ describe.skipIf(SKIP)("tui: interrupt recovery", () => {
       const workspace = join(root, "workspace");
       const stderrPath = join(root, "stderr.log");
       const tracePath = join(root, "trace.log");
-      mkdirSync(join(home, ".fx"), { recursive: true });
+      mkdirSync(join(home, ".tetris"), { recursive: true });
       mkdirSync(workspace, { recursive: true });
-      writeFileSync(join(home, ".fx", "settings.json"), "{}");
+      writeFileSync(join(home, ".tetris", "settings.json"), "{}");
 
       const held: HoldState = {
         started: false,
@@ -417,9 +417,9 @@ describe.skipIf(SKIP)("tui: interrupt recovery", () => {
       const startPath = join(workspace, "started");
       const releasePath = join(workspace, "release");
       const finishedPath = join(workspace, "finished");
-      mkdirSync(join(home, ".fx"), { recursive: true });
+      mkdirSync(join(home, ".tetris"), { recursive: true });
       mkdirSync(workspace, { recursive: true });
-      writeFileSync(join(home, ".fx", "settings.json"), "{}");
+      writeFileSync(join(home, ".tetris", "settings.json"), "{}");
       writeFileSync(
         join(workspace, "check.sh"),
         "printf started > started\nwhile [ ! -f release ]; do sleep 0.05; done\nprintf done > finished\n",
@@ -494,9 +494,9 @@ describe.skipIf(SKIP)("tui: interrupt recovery", () => {
       const workspace = join(root, "workspace");
       const stderrPath = join(root, "stderr.log");
       const tracePath = join(root, "trace.log");
-      mkdirSync(join(home, ".fx"), { recursive: true });
+      mkdirSync(join(home, ".tetris"), { recursive: true });
       mkdirSync(workspace, { recursive: true });
-      const settingsPath = join(home, ".fx", "settings.json");
+      const settingsPath = join(home, ".tetris", "settings.json");
       writeFileSync(
         settingsPath,
         JSON.stringify({ model: FAKE_GATEWAY_MODEL }) + "\n",
@@ -547,7 +547,7 @@ describe.skipIf(SKIP)("tui: interrupt recovery", () => {
       await session.sendKeys("Escape");
       await waitForCondition(() => held.cancelled, "gateway stream cancellation");
       await waitForTrace(tracePath, "event=interrupt_persisted", TIMEOUT);
-      await session.waitForText("What can fx do differently?", TIMEOUT);
+      await session.waitForText("What can Tetris do differently?", TIMEOUT);
       const cancelledGrid = await session.capturePaneGrid();
       const footer = findFooterBlocks(cancelledGrid).at(-1);
       const cancelledRow = cancelledGrid.findIndex((row) => row.includes("▪ Cancelled"));
@@ -570,7 +570,7 @@ describe.skipIf(SKIP)("tui: interrupt recovery", () => {
         expect(interruptedScrollback).toContain(chunk.trim());
       }
       expect(
-        countOccurrences(interruptedScrollback, "What can fx do differently?"),
+        countOccurrences(interruptedScrollback, "What can Tetris do differently?"),
       ).toBe(1);
       expect(interruptedScrollback).not.toContain("system: cancelled");
       expect(interruptedScrollback).not.toContain("Cancelling");
@@ -587,7 +587,7 @@ describe.skipIf(SKIP)("tui: interrupt recovery", () => {
       }
       expect(finalScrollback).toContain(FOLLOW_UP_RESPONSE);
       expect(
-        countOccurrences(finalScrollback, "What can fx do differently?"),
+        countOccurrences(finalScrollback, "What can Tetris do differently?"),
       ).toBe(1);
       expect(finalScrollback).not.toContain("system: cancelled");
       expect(finalScrollback).not.toContain("Cancelling");
@@ -660,7 +660,7 @@ describe.skipIf(SKIP)("tui: interrupt recovery", () => {
       const shared = join(root, "shared");
       const stderrPath = join(root, "stderr.log");
       const tracePath = join(root, "trace.log");
-      mkdirSync(join(home, ".fx"), { recursive: true });
+      mkdirSync(join(home, ".tetris"), { recursive: true });
       mkdirSync(workspace, { recursive: true });
       mkdirSync(observed, { recursive: true });
       mkdirSync(shared, { recursive: true });
@@ -668,7 +668,7 @@ describe.skipIf(SKIP)("tui: interrupt recovery", () => {
       const observedRoot = realpathSync(observed);
       const sharedRoot = realpathSync(shared);
       writeFileSync(
-        join(home, ".fx", "settings.json"),
+        join(home, ".tetris", "settings.json"),
         JSON.stringify({
           sandbox: "none",
           permission_mode: "auto",
@@ -739,7 +739,7 @@ while :; do sleep 1; done
       const cancelStartedAt = Date.now();
       await session.sendKeys("Escape");
       const immediateCancellation = await session.waitForText(
-        "What can fx do differently?",
+        "What can Tetris do differently?",
         TIMEOUT,
       );
       expect(Date.now() - cancelStartedAt).toBeLessThan(500);
@@ -759,7 +759,7 @@ while :; do sleep 1; done
         TIMEOUT,
       );
       const beforeRetry = JSON.parse(
-        readFileSync(join(home, ".fx", "settings.json"), "utf8"),
+        readFileSync(join(home, ".tetris", "settings.json"), "utf8"),
       );
       expect(beforeRetry.workspaces[workspaceRoot].additional_directories).toEqual([
         observedRoot,
@@ -767,7 +767,7 @@ while :; do sleep 1; done
 
       await waitForTrace(tracePath, "finish processing queued=0", TIMEOUT);
       await session.waitForText(
-        "Cancelled ./hold-workspace-cancel.sh · What can fx do differently?",
+        "Cancelled ./hold-workspace-cancel.sh · What can Tetris do differently?",
         TIMEOUT,
       );
       await session.sendText("/workspace list");
@@ -778,7 +778,7 @@ while :; do sleep 1; done
       await session.sendText(command);
       await session.waitForText("runtime_changed=true", TIMEOUT);
 
-      const stored = JSON.parse(readFileSync(join(home, ".fx", "settings.json"), "utf8"));
+      const stored = JSON.parse(readFileSync(join(home, ".tetris", "settings.json"), "utf8"));
       expect(stored.workspaces[workspaceRoot].additional_directories).toEqual([
         observedRoot,
         sharedRoot,
@@ -799,7 +799,7 @@ while :; do sleep 1; done
       const workspace = join(root, "workspace");
       const stderrPath = join(root, "stderr.log");
       const tracePath = join(root, "trace.log");
-      mkdirSync(join(home, ".fx"), { recursive: true });
+      mkdirSync(join(home, ".tetris"), { recursive: true });
       mkdirSync(workspace, { recursive: true });
       const workspaceRoot = realpathSync(workspace);
       const pidPath = join(workspaceRoot, "held-command.pid");
@@ -874,9 +874,9 @@ while :; do sleep 1; done
       const releasePath = join(root, "grep-release");
       const pattern = "LATE_SUCCESS_NEEDLE";
       const callId = "late_success_grep";
-      mkdirSync(join(home, ".fx"), { recursive: true });
+      mkdirSync(join(home, ".tetris"), { recursive: true });
       mkdirSync(corpus, { recursive: true });
-      writeFileSync(join(home, ".fx", "settings.json"), "{}");
+      writeFileSync(join(home, ".tetris", "settings.json"), "{}");
       for (let index = 0; index < 3; index += 1) {
         writeFileSync(join(corpus, `candidate-${index}.txt`), "ordinary corpus text\n");
       }
@@ -922,7 +922,7 @@ while :; do sleep 1; done
       await Bun.sleep(150);
       const cancelStartedAt = Date.now();
       await session.sendKeys("Escape");
-      await session.waitForText("What can fx do differently?", TIMEOUT);
+      await session.waitForText("What can Tetris do differently?", TIMEOUT);
       expect(Date.now() - cancelStartedAt).toBeLessThan(500);
       expect(readTrace(tracePath)).not.toContain(
         `event=after_tool_execution call_id=${callId}`,
@@ -946,7 +946,7 @@ while :; do sleep 1; done
       await session.waitForText(`Searched ${pattern}`, TIMEOUT);
       const scrollback = await session.captureFullScrollback();
       expect(scrollback).toContain(`Searched ${pattern}`);
-      expect(countOccurrences(scrollback, "What can fx do differently?")).toBe(1);
+      expect(countOccurrences(scrollback, "What can Tetris do differently?")).toBe(1);
       expect(scrollback).not.toContain("system: cancelled");
       expect(scrollback).not.toContain("Cancelling");
       expect(gateway.requests).toHaveLength(1);
@@ -964,9 +964,9 @@ while :; do sleep 1; done
       const workspace = join(root, "workspace");
       const stderrPath = join(root, "stderr.log");
       const tracePath = join(root, "trace.log");
-      mkdirSync(join(home, ".fx"), { recursive: true });
+      mkdirSync(join(home, ".tetris"), { recursive: true });
       mkdirSync(workspace, { recursive: true });
-      writeFileSync(join(home, ".fx", "settings.json"), "{}");
+      writeFileSync(join(home, ".tetris", "settings.json"), "{}");
 
       const held: HoldState = {
         started: false,

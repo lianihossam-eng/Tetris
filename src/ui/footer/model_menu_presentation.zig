@@ -430,7 +430,7 @@ fn loadedCatalogStatusText(state: model_cache_runtime.ModelMenuCatalogState) ?[]
     if (state.access_level == .authenticated) {
         const source = state.source orelse return "Using an authenticated AI Gateway catalog.";
         return switch (source) {
-            .fx_login => "Gateway catalog: authenticated with fx login.",
+            .fx_login => "Gateway catalog: authenticated with Tetris login.",
             .ai_gateway_api_key => "Note: Gateway catalog is authenticated with an API key",
             .vercel_oidc_token => "Gateway catalog: authenticated with the Vercel session.",
             .stored_key => "Gateway catalog: authenticated with the stored API key.",
@@ -447,9 +447,9 @@ fn retryableFailureText(failure: ?model_cache_runtime.ModelMenuCatalogState.Fail
     const value = failure orelse return null;
     if (!value.retryable) return null;
     return switch (value.category) {
-        .rate_limited => "AI Gateway rate limited model discovery; fx retries automatically.",
-        .transport, .gateway_unavailable => "Could not reach AI Gateway; fx retries automatically.",
-        else => "Could not refresh model catalog; fx retries automatically.",
+        .rate_limited => "AI Gateway rate limited model discovery; Tetris retries automatically.",
+        .transport, .gateway_unavailable => "Could not reach AI Gateway; Tetris retries automatically.",
+        else => "Could not refresh model catalog; Tetris retries automatically.",
     };
 }
 
@@ -596,7 +596,7 @@ test "model menu states and navigation budget stay bounded" {
     const failed: ModelMenuProjection = .{ .active = true, .load_state = .failed, .catalog_state = .{ .failure = .{ .category = .transport, .retryable = true } } };
     var failed_state = try composeModelMenuRow(alloc, failed, 2, 80, menuRowCount(failed, 80, 10));
     defer failed_state.deinit(alloc);
-    try std.testing.expect(std.mem.find(u8, failed_state.items, "Could not reach AI Gateway; fx retries automatically.") != null);
+    try std.testing.expect(std.mem.find(u8, failed_state.items, "Could not reach AI Gateway; Tetris retries automatically.") != null);
 
     const items = [_]model_cache_runtime.ModelMenuItem{
         .{ .id = @constCast("a/one"), .provider = "a", .capabilities = .{} },
@@ -724,7 +724,7 @@ test "configured model menu identifies profile settings without Gateway sign-in"
 
 test "model menu status follows provenance and retryable failure precedence" {
     try std.testing.expectEqualStrings(
-        "Gateway catalog: authenticated with fx login.",
+        "Gateway catalog: authenticated with Tetris login.",
         loadedCatalogStatusText(.{ .access_level = .authenticated, .source = .fx_login }).?,
     );
 
@@ -739,10 +739,10 @@ test "model menu status follows provenance and retryable failure precedence" {
         .{ .state = .{ .public_only_reason = .authenticated_credential_rejected, .private_models_hidden = true }, .expected = "Your Gateway credential was rejected; using the public model catalog." },
         .{ .state = .{ .public_only_reason = .chatgpt_subscription, .private_models_hidden = true }, .expected = "Codex models require an authenticated Codex catalog." },
         .{ .state = .{ .public_only_reason = .grok_subscription, .private_models_hidden = true }, .expected = "Grok models require an authenticated Grok catalog." },
-        .{ .state = .{ .failure = .{ .category = .transport, .retryable = true } }, .expected = "Could not reach AI Gateway; fx retries automatically." },
-        .{ .state = .{ .access_level = .public_only, .public_only_reason = .no_credential, .private_models_hidden = true, .failure = .{ .category = .rate_limited, .retryable = true } }, .expected = "AI Gateway rate limited model discovery; fx retries automatically." },
-        .{ .state = .{ .access_level = .authenticated, .failure = .{ .category = .rate_limited, .retryable = true } }, .expected = "AI Gateway rate limited model discovery; fx retries automatically." },
-        .{ .state = .{ .access_level = .authenticated, .failure = .{ .category = .runtime, .retryable = true } }, .expected = "Could not refresh model catalog; fx retries automatically." },
+        .{ .state = .{ .failure = .{ .category = .transport, .retryable = true } }, .expected = "Could not reach AI Gateway; Tetris retries automatically." },
+        .{ .state = .{ .access_level = .public_only, .public_only_reason = .no_credential, .private_models_hidden = true, .failure = .{ .category = .rate_limited, .retryable = true } }, .expected = "AI Gateway rate limited model discovery; Tetris retries automatically." },
+        .{ .state = .{ .access_level = .authenticated, .failure = .{ .category = .rate_limited, .retryable = true } }, .expected = "AI Gateway rate limited model discovery; Tetris retries automatically." },
+        .{ .state = .{ .access_level = .authenticated, .failure = .{ .category = .runtime, .retryable = true } }, .expected = "Could not refresh model catalog; Tetris retries automatically." },
     };
 
     for (cases) |case| {

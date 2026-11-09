@@ -2,7 +2,7 @@
 
 ## What the system is
 
-The transcript window is the policy that decides what fx keeps in memory for the
+The transcript window is the policy that decides what Tetris keeps in memory for the
 main screen, what it paints, what it reprints after a resize, what it drops, and
 what Ctrl+O reads. It is one pure function, `step(state, event)`, that returns
 the next state and a list of effects. A thin shell in the transcript runtime

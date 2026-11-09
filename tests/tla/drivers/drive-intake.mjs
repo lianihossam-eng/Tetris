@@ -10,7 +10,7 @@
 // whose write to the session's image store waits until the driver lets it
 // land or fail. Every log write
 // of a prompt, or of a prompt's cancel, waits until the driver lets it land
-// or fail. With the fx harness each turn runs on a real fx engine, whose
+// or fail. With the fx harness each turn runs on a real Tetris engine, whose
 // model request the driver holds until it ends the turn; with the scripted
 // harness a turn is a stand-in the driver ends. After each step the driver
 // waits until the code is quiet, reads back what it shows, and moves to the
@@ -45,7 +45,7 @@ const here = fileURLToPath(new URL(".", import.meta.url));
 const addon = resolve(here, "../../../zig-out/lib/libfx.node");
 const wasm = harnessKind === "fx" && backend === "wasm" ? await readFile(resolve(here, "../../../zig-out/bin/fx-core.wasm")) : undefined;
 const { appWorldAt, closeAppWorlds } = durabilityKind === "world" ? await import("../../../sdk/tests/app-world.mjs") : {};
-// How long the code must show nothing new before a step has settled. An fx
+// How long the code must show nothing new before a step has settled. A Tetris
 // engine takes a moment to open, and a World's stream a moment to read.
 const quietMs = (harnessKind === "fx" ? 200 : 60) + (durabilityKind === "world" ? 350 : 0);
 const stepTimeoutMs = 10_000;

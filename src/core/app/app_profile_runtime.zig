@@ -25,7 +25,7 @@ pub const ProfileTools = struct {
 pub fn launchFailure(alloc: std.mem.Allocator, name: []const u8) !?[]u8 {
     const reason = try failureReason(alloc, name) orelse return null;
     defer alloc.free(reason);
-    return try alloc.print("fx: {s}\n", .{reason});
+    return try alloc.print("tetris: {s}\n", .{reason});
 }
 
 /// Why profile `name` cannot be loaded, such as "no profile named 'x'.

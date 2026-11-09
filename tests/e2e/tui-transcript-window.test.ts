@@ -8,7 +8,7 @@ import { onlySessionId, sessionDir } from "./saved-sessions";
 process.env.FX_E2E_DISABLE_DOTENV = "1";
 const { FAKE_GATEWAY_MODEL, TmuxSession, fakeGatewayFinalText, startFakeGateway, tmuxAvailable } = await import("./tmux-helpers");
 
-const binary = resolve(import.meta.dir, "../../zig-out/bin/fx");
+const binary = resolve(import.meta.dir, "../../zig-out/bin/tetris");
 const TIMEOUT = 30_000;
 const NAVIGATION = "esc close · pgup/pgdn scroll";
 const marker = (n: number) => `WINDOW_C${String(n).padStart(2, "0")}`;
@@ -191,7 +191,7 @@ describe.skipIf(!tmuxAvailable())("tui: transcript window", () => {
         // The search for cycle 1's start stops at the damage, so Ctrl+O
         // goes from cycle 2 to the log's first cycle.
         expect(walk.seen).toEqual([marker(3), marker(2), marker(0)]);
-        expect(walk.top).toContain("part of older history couldn't be read · fx doctor");
+        expect(walk.top).toContain("part of older history couldn't be read · tetris doctor");
         expect(walk.top).not.toContain("couldn't load older history");
         // Reopened, Ctrl+O can show the page it built without reading the
         // log again; the damaged line is still there, so it still says so.

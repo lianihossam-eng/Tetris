@@ -1,6 +1,6 @@
 //! Program Status Protocol (OSC 7501) reports for the interactive shell.
 //!
-//! fx tells the terminal whether it is idle, working, waiting on the user,
+//! Tetris tells the terminal whether it is idle, working, waiting on the user,
 //! finished, or failed. Terminals that do not implement the protocol ignore
 //! the sequence, so reports need no feature detection. Specification:
 //! https://www.superlogical.com/rex/docs/build/program-status
@@ -12,14 +12,14 @@ const debug_trace = @import("../../core/shared/debug_trace.zig");
 const text_utils = @import("../../core/shared/text_utils.zig");
 const types = @import("../../core/shared/types.zig");
 
-/// Removes every record on the terminal, not only fx's. fx reports on the
+/// Removes every record on the terminal, not only Tetris's. Tetris reports on the
 /// root record while it owns the terminal, and writes this when it exits or
 /// suspends.
 pub const clear_sequence = prefix ++ "state=clear" ++ terminator;
 
 const prefix = "\x1b]7501;";
 const terminator = "\x1b\\";
-const app_name = "fx";
+const app_name = "tetris";
 /// Keeps `msg` to one short line. The protocol allows 2048 decoded bytes.
 const max_message_bytes = 256;
 const base64 = std.base64.standard.Encoder;
@@ -96,7 +96,7 @@ pub const Reporter = struct {
     }
 
     /// Sends the next report even when it matches the last one, for example
-    /// after the terminal dropped fx's record while fx was suspended. A
+    /// after the terminal dropped Tetris's record while Tetris was suspended. A
     /// result that was already reported comes back as idle.
     pub fn invalidate(self: *Reporter) void {
         self.last_len = 0;
@@ -219,40 +219,40 @@ fn decodedMessage(report: []const u8, buffer: []u8) ![]const u8 {
 
 test "program status follows a turn from idle to its outcome" {
     var reporter = Reporter{};
-    try expectReport(&reporter, .settled, "\x1b]7501;state=idle:app=fx\x1b\\");
+    try expectReport(&reporter, .settled, "\x1b]7501;state=idle:app=tetris\x1b\\");
     reporter.noteTurnStarted();
-    try expectReport(&reporter, .working, "\x1b]7501;state=working:app=fx\x1b\\");
+    try expectReport(&reporter, .working, "\x1b]7501;state=working:app=tetris\x1b\\");
     try expectReport(
         &reporter,
         .{ .blocked = .{ .kind = .permission, .message = "shell.run git push" } },
-        "\x1b]7501;state=blocked:kind=permission:app=fx:msg=c2hlbGwucnVuIGdpdCBwdXNo\x1b\\",
+        "\x1b]7501;state=blocked:kind=permission:app=tetris:msg=c2hlbGwucnVuIGdpdCBwdXNo\x1b\\",
     );
-    try expectReport(&reporter, .working, "\x1b]7501;state=working:app=fx\x1b\\");
+    try expectReport(&reporter, .working, "\x1b]7501;state=working:app=tetris\x1b\\");
     reporter.noteTurnFinished(.completed);
-    try expectReport(&reporter, .settled, "\x1b]7501;state=done:app=fx\x1b\\");
+    try expectReport(&reporter, .settled, "\x1b]7501;state=done:app=tetris\x1b\\");
 
     reporter.noteTurnStarted();
-    try expectReport(&reporter, .{ .blocked = .{ .kind = .question, .message = "" } }, "\x1b]7501;state=blocked:kind=question:app=fx\x1b\\");
+    try expectReport(&reporter, .{ .blocked = .{ .kind = .question, .message = "" } }, "\x1b]7501;state=blocked:kind=question:app=tetris\x1b\\");
     reporter.noteTurnFinished(.interrupted);
-    try expectReport(&reporter, .settled, "\x1b]7501;state=idle:app=fx\x1b\\");
+    try expectReport(&reporter, .settled, "\x1b]7501;state=idle:app=tetris\x1b\\");
 
     reporter.noteTurnStarted();
-    try expectReport(&reporter, .working, "\x1b]7501;state=working:app=fx\x1b\\");
+    try expectReport(&reporter, .working, "\x1b]7501;state=working:app=tetris\x1b\\");
     reporter.noteTurnFinished(.paused);
-    try expectReport(&reporter, .settled, "\x1b]7501;state=idle:app=fx\x1b\\");
+    try expectReport(&reporter, .settled, "\x1b]7501;state=idle:app=tetris\x1b\\");
 
     reporter.noteTurnStarted();
     reporter.noteTurnFinished(.failed);
-    try expectReport(&reporter, .settled, "\x1b]7501;state=error:app=fx\x1b\\");
+    try expectReport(&reporter, .settled, "\x1b]7501;state=error:app=tetris\x1b\\");
     // A second failure in a row is reported again.
     reporter.noteTurnStarted();
     reporter.noteTurnFinished(.failed);
-    try expectReport(&reporter, .settled, "\x1b]7501;state=error:app=fx\x1b\\");
+    try expectReport(&reporter, .settled, "\x1b]7501;state=error:app=tetris\x1b\\");
     try std.testing.expect(reporter.update(.settled) == null);
     reporter.noteTurnStarted();
-    try expectReport(&reporter, .settled, "\x1b]7501;state=idle:app=fx\x1b\\");
+    try expectReport(&reporter, .settled, "\x1b]7501;state=idle:app=tetris\x1b\\");
     reporter.noteFailure();
-    try expectReport(&reporter, .settled, "\x1b]7501;state=error:app=fx\x1b\\");
+    try expectReport(&reporter, .settled, "\x1b]7501;state=error:app=tetris\x1b\\");
 }
 
 test "program status writes only changed reports until invalidated" {
@@ -260,7 +260,7 @@ test "program status writes only changed reports until invalidated" {
     try std.testing.expect(reporter.update(.working) != null);
     try std.testing.expect(reporter.update(.working) == null);
     reporter.invalidate();
-    try expectReport(&reporter, .working, "\x1b]7501;state=working:app=fx\x1b\\");
+    try expectReport(&reporter, .working, "\x1b]7501;state=working:app=tetris\x1b\\");
 
     const question: Activity = .{ .blocked = .{ .kind = .question, .message = "First?" } };
     try std.testing.expect(reporter.update(question) != null);
@@ -269,14 +269,14 @@ test "program status writes only changed reports until invalidated" {
 }
 
 test "program status does not repeat a result the user already saw" {
-    const idle = "\x1b]7501;state=idle:app=fx\x1b\\";
-    const working = "\x1b]7501;state=working:app=fx\x1b\\";
-    const done = "\x1b]7501;state=done:app=fx\x1b\\";
+    const idle = "\x1b]7501;state=idle:app=tetris\x1b\\";
+    const working = "\x1b]7501;state=working:app=tetris\x1b\\";
+    const done = "\x1b]7501;state=done:app=tetris\x1b\\";
     var reporter = Reporter{};
 
     reporter.noteTurnStarted();
     reporter.noteTurnFinished(.failed);
-    try expectReport(&reporter, .settled, "\x1b]7501;state=error:app=fx\x1b\\");
+    try expectReport(&reporter, .settled, "\x1b]7501;state=error:app=tetris\x1b\\");
     // `/compact` runs without starting a turn.
     try expectReport(&reporter, .working, working);
     try expectReport(&reporter, .settled, idle);
@@ -285,7 +285,7 @@ test "program status does not repeat a result the user already saw" {
     reporter.noteTurnFinished(.completed);
     try expectReport(&reporter, .settled, done);
     // `/permissions remember` asks for confirmation outside a turn.
-    try expectReport(&reporter, .{ .blocked = .{ .kind = .permission, .message = "" } }, "\x1b]7501;state=blocked:kind=permission:app=fx\x1b\\");
+    try expectReport(&reporter, .{ .blocked = .{ .kind = .permission, .message = "" } }, "\x1b]7501;state=blocked:kind=permission:app=tetris\x1b\\");
     try expectReport(&reporter, .settled, idle);
 
     reporter.noteTurnStarted();
@@ -297,16 +297,16 @@ test "program status does not repeat a result the user already saw" {
 
 test "program status keeps an outcome noted before the turn was seen running" {
     var reporter = Reporter{};
-    try expectReport(&reporter, .settled, "\x1b]7501;state=idle:app=fx\x1b\\");
+    try expectReport(&reporter, .settled, "\x1b]7501;state=idle:app=tetris\x1b\\");
     // A turn can start and fail within one drain of worker events.
     reporter.noteTurnStarted();
     reporter.noteTurnFinished(.failed);
-    try expectReport(&reporter, .working, "\x1b]7501;state=working:app=fx\x1b\\");
-    try expectReport(&reporter, .settled, "\x1b]7501;state=error:app=fx\x1b\\");
+    try expectReport(&reporter, .working, "\x1b]7501;state=working:app=tetris\x1b\\");
+    try expectReport(&reporter, .settled, "\x1b]7501;state=error:app=tetris\x1b\\");
 }
 
 test "program status reports each manual compaction result once" {
-    const working = "\x1b]7501;state=working:app=fx\x1b\\";
+    const working = "\x1b]7501;state=working:app=tetris\x1b\\";
     var state = compaction_activity.State{};
     var reporter = Reporter{};
 
@@ -314,17 +314,17 @@ test "program status reports each manual compaction result once" {
     try expectReport(&reporter, .working, working);
     state.settle(failed, compaction_activity.failure(error.ConnectionRefused, .summary, false), 1);
     reporter.noteCompaction(state.snapshot);
-    try expectReport(&reporter, .settled, "\x1b]7501;state=error:app=fx\x1b\\");
+    try expectReport(&reporter, .settled, "\x1b]7501;state=error:app=tetris\x1b\\");
     // The snapshot keeps the failed operation after later work settles.
     try expectReport(&reporter, .working, working);
     reporter.noteCompaction(state.snapshot);
-    try expectReport(&reporter, .settled, "\x1b]7501;state=idle:app=fx\x1b\\");
+    try expectReport(&reporter, .settled, "\x1b]7501;state=idle:app=tetris\x1b\\");
 
     const succeeded = state.begin(.manual, null, 2);
     try expectReport(&reporter, .working, working);
     state.settle(succeeded, .{ .outcome = .succeeded }, 3);
     reporter.noteCompaction(state.snapshot);
-    try expectReport(&reporter, .settled, "\x1b]7501;state=done:app=fx\x1b\\");
+    try expectReport(&reporter, .settled, "\x1b]7501;state=done:app=tetris\x1b\\");
 
     // Compaction inside a turn belongs to that turn's outcome.
     reporter.noteTurnStarted();
@@ -333,7 +333,7 @@ test "program status reports each manual compaction result once" {
     reporter.noteCompaction(state.snapshot);
     reporter.noteTurnFinished(.completed);
     try expectReport(&reporter, .working, working);
-    try expectReport(&reporter, .settled, "\x1b]7501;state=done:app=fx\x1b\\");
+    try expectReport(&reporter, .settled, "\x1b]7501;state=done:app=tetris\x1b\\");
 }
 
 test "program status messages are one bounded line without control characters" {

@@ -12,7 +12,7 @@ const guidance =
     "When a task needs a capability not available locally, use capability_search with the task and an optional server name, then call the tools it returns. Use mcp_select_tool for a result that is not yet callable.\n";
 /// `fx mcp call` (`src/core/mcp_host/mcp_call_client.zig`), where it works.
 const file_guidance = if (mcp_call_capability.supported)
-    "For a large result or one you need to filter, run the tool in a shell instead: fx mcp call TOOL_NAME '<JSON arguments>' > FILE. Only what the command prints returns to you.\n"
+    "For a large result or one you need to filter, run the tool in a shell instead: tetris mcp call TOOL_NAME '<JSON arguments>' > FILE. Only what the command prints returns to you.\n"
 else
     "";
 const header = guidance ++ file_guidance ++ "<mcp_servers>\n";

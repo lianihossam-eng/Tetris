@@ -48,19 +48,20 @@ jobs:
 
       - name: Package
         run: |
-          package_dir="$RUNNER_TEMP/fx-package-${{ matrix.name }}"
+          package_dir="$RUNNER_TEMP/tetris-package-${{ matrix.name }}"
           mkdir -p "$package_dir"
-          cp zig-out/bin/fx LICENSE THIRD_PARTY_NOTICES.md "$package_dir/"
-          tar -czf fx-${{ matrix.name }}.tar.gz -C "$package_dir" fx LICENSE THIRD_PARTY_NOTICES.md
-          sha256sum fx-${{ matrix.name }}.tar.gz > fx-${{ matrix.name }}.tar.gz.sha256
+          cp zig-out/bin/tetris "$package_dir/tetris"
+          cp LICENSE THIRD_PARTY_NOTICES.md "$package_dir/"
+          tar -czf "tetris-${{ matrix.name }}.tar.gz" -C "$package_dir" tetris LICENSE THIRD_PARTY_NOTICES.md
+          sha256sum "tetris-${{ matrix.name }}.tar.gz" > "tetris-${{ matrix.name }}.tar.gz.sha256"
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: fx-${{ matrix.name }}
+          name: tetris-${{ matrix.name }}
           path: |
-            fx-${{ matrix.name }}.tar.gz
-            fx-${{ matrix.name }}.tar.gz.sha256
+            tetris-${{ matrix.name }}.tar.gz
+            tetris-${{ matrix.name }}.tar.gz.sha256
 
   web:
     if: >-
@@ -111,8 +112,70 @@ jobs:
             fx-term.wasm
             fx-term.wasm.sha256
 
+  # Tetris publishes immutable prereleases on GitHub. The tag is the full
+  # commit SHA, so a dev build never moves and every asset identifies the
+  # exact commit it was built from.
   publish:
+    needs: [build]
+    if: github.repository == 'lianihossam-eng/Tetris'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      RELEASE_SHA: ${{ github.event.workflow_run.head_sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: tetris-*
+          merge-multiple: true
+
+      - name: Verify platform archives
+        run: |
+          set -euo pipefail
+
+          for PLATFORM in linux-x86_64 linux-aarch64 macos-x86_64 macos-aarch64; do
+            ARCHIVE="tetris-${PLATFORM}.tar.gz"
+            CHECKSUM="${ARCHIVE}.sha256"
+            test -f "$ARCHIVE"
+            test -f "$CHECKSUM"
+            sha256sum --check "$CHECKSUM"
+            tar -tzf "$ARCHIVE" | grep -qx tetris
+          done
+
+      - name: Write dev.json
+        run: |
+          set -euo pipefail
+
+          VERSION=$(grep 'pub const version' src/main.zig | head -1 | sed 's/.*"\(.*\)".*/\1/')
+          [[ "$VERSION" =~ ^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]]
+          jq -n --arg version "$VERSION" --arg commit "$RELEASE_SHA" \
+            '{version: $version, commit: $commit}' > dev.json
+
+      - name: Publish GitHub prerelease
+        uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2
+        with:
+          tag_name: dev-${{ env.RELEASE_SHA }}
+          target_commitish: ${{ env.RELEASE_SHA }}
+          name: Dev build ${{ env.RELEASE_SHA }}
+          body: Development build for commit ${{ env.RELEASE_SHA }}.
+          prerelease: true
+          make_latest: false
+          fail_on_unmatched_files: true
+          files: |
+            tetris-*.tar.gz
+            tetris-*.tar.gz.sha256
+            dev.json
+
+  # Fx keeps publishing its dev builds to the Fx CDN. This job is inert in the
+  # Tetris fork so it cannot use Fx's blob token or web deploy hook.
+  publish-upstream:
     needs: [build, web]
+    if: github.repository == 'vercel-labs/fx'
     runs-on: ubuntu-latest
     env:
       RELEASE_SHA: ${{ github.event.workflow_run.head_sha }}
@@ -132,7 +195,7 @@ jobs:
         run: |
           set -euo pipefail
 
-          for FILE in fx-*.tar.gz fx-*.tar.gz.sha256; do
+          for FILE in tetris-*.tar.gz tetris-*.tar.gz.sha256; do
             [ -f "$FILE" ] || continue
             CONTENT_TYPE="application/octet-stream"
             [[ "$FILE" == *.sha256 ]] && CONTENT_TYPE="text/plain"

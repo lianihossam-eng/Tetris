@@ -1,4 +1,4 @@
-// Connects runs of the real fx binary to TLC. The observations of one
+// Connects runs of the real tetris binary to TLC. The observations of one
 // profile's run become ShellSessionObserved.tla, and
 // tests/tla/session/ShellSessionTrace.tla replays them through ShellSession's
 // own actions. ACCEPTED needs TLC's exit 12 on the NotAllMatched sentinel
@@ -13,8 +13,8 @@ export type Op =
   | "launch" | "launch_resume" | "launch_no_store" | "begin" | "end" | "status"
   | "new" | "clear" | "resume" | "fork" | "quit" | "crash";
 
-/// One step of a run, with what fx showed and saved after it. Every field
-/// comes from fx's own output and files; one the step does not show is
+/// One step of a run, with what Tetris showed and saved after it. Every field
+/// comes from Tetris's own output and files; one the step does not show is
 /// "none", 0 or false, as ShellSession's `Obs` leaves it.
 export interface Observation {
   op: Op;

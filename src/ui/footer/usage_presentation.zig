@@ -421,7 +421,7 @@ fn headingLeft(buf: []u8, p: Projection) []const u8 {
     const s = p.snapshot orelse return "AI Gateway";
     if (s.status == .unavailable) return switch (s.status.unavailable) {
         .no_gateway_sign_in => "not signed in to AI Gateway",
-        .no_team => "fx login has no team",
+        .no_team => "Tetris login has no team",
         .unsupported_provider => "this provider's usage isn't shown yet",
         .refresh_needed => "the sign-in needs a refresh",
     };
@@ -1691,7 +1691,7 @@ fn testSnapshot(status: usage.Status, budget: bool, month: []const ModelRow) !us
             try testView(.month, month, budget),
         },
         .status = status,
-        .label = "acme-design-tools-platform (fx login)",
+        .label = "acme-design-tools-platform (tetris login)",
         .now_ms = test_now,
     };
 }
@@ -1774,7 +1774,7 @@ test "the df view lines its numbers up under the headers at every width" {
         try testing.expect(std.mem.startsWith(u8, screen.row(0), "usage: acme-de"));
         try testing.expect(std.mem.endsWith(u8, screen.row(0), "updated 2m ago"));
         try testing.expectEqual(@as(usize, width), display_width.visibleWidth(screen.row(0)));
-        try testing.expectEqual(width >= 61, std.mem.find(u8, screen.row(0), "acme-design-tools-platform (fx login)") != null);
+        try testing.expectEqual(width >= 61, std.mem.find(u8, screen.row(0), "acme-design-tools-platform (tetris login)") != null);
 
         // Period table: numbers end where their headers end.
         try testing.expectEqualStrings("period        spent  requests  tokens", screen.row(2));
@@ -1922,7 +1922,7 @@ test "states without numbers say so in one line" {
     }
     var first = try draw(.{ .active = true, .snapshot = &fetching }, 80, 40);
     defer first.deinit();
-    try testing.expect(std.mem.startsWith(u8, first.row(0), "usage: acme-design-tools-platform (fx login)  "));
+    try testing.expect(std.mem.startsWith(u8, first.row(0), "usage: acme-design-tools-platform (tetris login)  "));
     try testing.expect(std.mem.endsWith(u8, first.row(0), "fetching…"));
     try testing.expectEqual(@as(usize, 80), display_width.visibleWidth(first.row(0)));
 

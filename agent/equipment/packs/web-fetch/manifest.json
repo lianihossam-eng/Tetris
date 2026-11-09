@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "id": "web-fetch",
+  "name": "Public web fetch",
+  "description": "Read public HTTPS text pages with redirect and response limits.",
+  "slot": "web",
+  "tools": ["web_fetch"],
+  "requires": [],
+  "conflicts": []
+}

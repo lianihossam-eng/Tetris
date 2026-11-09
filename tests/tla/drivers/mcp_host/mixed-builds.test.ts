@@ -1,5 +1,5 @@
-// MixedBuilds: real `fx mcp list --json`, `fx mcp login` (against the fake
-// HTTP server with fake OAuth) and `fx mcp logout` runs against a scratch
+// MixedBuilds: real `tetris mcp list --json`, `tetris mcp login` (against the fake
+// HTTP server with fake OAuth) and `tetris mcp logout` runs against a scratch
 // HOME (FX_DISABLE_KEYCHAIN=1, so the file backend), with an older build
 // beside it played by the harness: it writes credentials-v2.json as builds
 // from before version 2 of the document do, version 1 with only its own
@@ -46,7 +46,7 @@ test("an older build beside this one: its login isn't taken, its writes never re
     return o;
   };
   const run = async (cmd: "get" | "logout", args: string[]) => {
-    records.push({ event: "run", data: { cmd }, at: Date.now(), note: `fx ${args.join(" ")}` });
+    records.push({ event: "run", data: { cmd }, at: Date.now(), note: `tetris ${args.join(" ")}` });
     return runFx(binary, f, args, fxEnv(f), 30_000);
   };
   const older = (op: "save" | "remove", access: string | null) => {
@@ -70,7 +70,7 @@ test("an older build beside this one: its login isn't taken, its writes never re
     expect(look()).toEqual({ v2kind: "v1", v2: true, v3: false });
 
     // This build signs in: its login goes to its own store only.
-    records.push({ event: "run", data: { cmd: "signin" }, at: Date.now(), note: "fx mcp login --no-browser web" });
+    records.push({ event: "run", data: { cmd: "signin" }, at: Date.now(), note: "tetris mcp login --no-browser web" });
     const login = await cliLogin(binary, f);
     const url = await waitFor("the authorization URL", () => /\n\s+(http\S+)\n/.exec(login.out())?.[1], 30_000);
     const redirect = await fetch(url, { redirect: "manual" });

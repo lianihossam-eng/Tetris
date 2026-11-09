@@ -139,7 +139,7 @@ test("a session converts the same whatever its old replay cache holds", async ()
     const gateway = startFakeGateway([fakeGatewayFinalText("CACHE_CONTINUED_TURN")]);
     try {
       const [id] = copyV1Fixture(fixture.home, "cancelled");
-      fault(join(fixture.home, ".fx", "sessions", id!, "history-cache.bin"));
+      fault(join(fixture.home, ".tetris", "sessions", id!, "history-cache.bin"));
       const continued = await continueSession(fixture, gateway, id!);
       expect(continued.code).toBe(0);
       expect(withoutConversionNotice(continued.stderr)).toBe("");
@@ -160,7 +160,7 @@ test("latest resume converts the newest session and leaves an unrelated pending 
   const gateway = startFakeGateway([fakeGatewayFinalText("CONTINUED_PARENT_CONTEXT")]);
   try {
     const ids = copyV1Fixture(fixture.home, "plain", 3, fixture.workspace);
-    const orphan = join(fixture.home, ".fx", "sessions", "pending-authority");
+    const orphan = join(fixture.home, ".tetris", "sessions", "pending-authority");
     mkdirSync(orphan, { mode: 0o700 });
     writeFileSync(join(orphan, "authority.pending.json"), "pending", { mode: 0o600 });
     writeFileSync(join(orphan, "events.jsonl"), "unidentified saved data\n", { mode: 0o600 });
@@ -178,12 +178,12 @@ test("latest resume converts the newest session and leaves an unrelated pending 
   }
 }, TIMEOUT);
 
-test("a session converts past a damaged usage file left by an older fx", async () => {
+test("a session converts past a damaged usage file left by an older tetris", async () => {
   const fixture = createFixture("fx-accounting-resume-");
   const gateway = startFakeGateway([fakeGatewayFinalText("ACCOUNTING_RESUME_COMPLETED")]);
   try {
     const [id] = copyV1Fixture(fixture.home, "plain");
-    writeFileSync(join(fixture.home, ".fx", "sessions", id!, "usage-v2.json"), "{broken accounting", { mode: 0o600 });
+    writeFileSync(join(fixture.home, ".tetris", "sessions", id!, "usage-v2.json"), "{broken accounting", { mode: 0o600 });
     const resumed = await continueSession(fixture, gateway, id!);
     expect(resumed.code).toBe(0);
     expect(withoutConversionNotice(resumed.stderr)).toBe("");
@@ -237,7 +237,7 @@ const LEGACY_GATEWAY_OPTIONS = {
 // Entirely synthetic schema-v3 data: no copied sessions, credentials, or child markers.
 function createLegacySession(fixture: ReturnType<typeof createFixture>, version: 2 | 3 | 4) {
   const id = `synthetic-legacy-v${version}`;
-  const source = join(fixture.home, ".fx", "sessions", id);
+  const source = join(fixture.home, ".tetris", "sessions", id);
   mkdirSync(source, { recursive: true, mode: 0o700 });
   const generation = "01".repeat(16);
   const authority = "03".repeat(16);
@@ -323,7 +323,7 @@ function createLegacySession(fixture: ReturnType<typeof createFixture>, version:
   writeJson("display.json", {
     schema_version: 1, title: LEGACY_TITLE, preview: null, origin_workspace_root: fixture.workspace,
   });
-  writeFileSync(join(fixture.home, ".fx", "settings.json"), JSON.stringify({
+  writeFileSync(join(fixture.home, ".tetris", "settings.json"), JSON.stringify({
     model: "workspace/default", effort: "low", fast_mode: false, auto_upgrade: false,
   }), { mode: 0o600 });
   return { id, source, watermarkPath };
@@ -467,7 +467,7 @@ describe("session recovery", () => {
     const gateway = startFakeGateway([]);
     try {
       const [id] = copyV1Fixture(fixture.home, "rules");
-      const source = join(fixture.home, ".fx", "sessions", id!);
+      const source = join(fixture.home, ".tetris", "sessions", id!);
       const before = savedFileHashes(source);
       const result = await runFx(["session", "recover", id!, "--json"], {
         cwd: fixture.workspace, env: gatewayEnv(fixture, gateway), timeoutMs: TIMEOUT,
@@ -476,7 +476,7 @@ describe("session recovery", () => {
       expect(result.stderr).toBe("");
       expect(JSON.parse(result.stdout).code).toBe("SessionRecoveryNotNeeded");
       expect(savedFileHashes(source)).toEqual(before);
-      expect(readdirSync(join(fixture.home, ".fx", "sessions"))).toEqual([id!]);
+      expect(readdirSync(join(fixture.home, ".tetris", "sessions"))).toEqual([id!]);
       expect(gateway.requests).toHaveLength(0);
       // A conversation that only its saved rules keep from converting is
       // copied without them (D72), and v1's folder stays as it was.
@@ -519,7 +519,7 @@ describe("session recovery", () => {
       try {
         // One saved command result, under tool-results/ and logs/commands/.
         const [id] = copyV1Fixture(fixture.home, "side");
-        const source = join(fixture.home, ".fx", "sessions", id!);
+        const source = join(fixture.home, ".tetris", "sessions", id!);
         const eventPath = join(source, "events.jsonl");
         const metadataPath = join(source, "session.json");
         const metadata = JSON.parse(readFileSync(metadataPath, "utf8"));
@@ -612,7 +612,7 @@ describe("session recovery", () => {
       const gateway = startFakeGateway(responses);
       try {
         const [id] = copyV1Fixture(fixture.home, "side");
-        const source = join(fixture.home, ".fx", "sessions", id!);
+        const source = join(fixture.home, ".tetris", "sessions", id!);
         const eventPath = join(source, "events.jsonl");
         const prefix = readFileSync(eventPath, "utf8");
         const records = prefix.trimEnd().split("\n").map(JSON.parse);
@@ -674,7 +674,7 @@ describe("session recovery", () => {
       const gateway = startFakeGateway([fakeGatewayFinalText("UNVERIFIED_CONTINUED")]);
       try {
         const [id] = copyV1Fixture(fixture.home, "side");
-        const source = join(fixture.home, ".fx", "sessions", id!);
+        const source = join(fixture.home, ".tetris", "sessions", id!);
         appendFileSync(join(source, "events.jsonl"), "invalid tail\n");
         const [artifact] = readdirSync(join(source, "tool-results"));
         const artifactPath = join(source, "tool-results", artifact!);
@@ -714,7 +714,7 @@ describe("session recovery", () => {
       const gateway = startFakeGateway([]);
       try {
         const [id] = copyV1Fixture(fixture.home, "side");
-        const source = join(fixture.home, ".fx", "sessions", id!);
+        const source = join(fixture.home, ".tetris", "sessions", id!);
         const eventPath = join(source, "events.jsonl");
         const committed = readFileSync(eventPath, "utf8");
         if (damage === "metadata" || damage === "private-child") {
@@ -749,7 +749,7 @@ describe("session recovery", () => {
         expect(result.stderr).toBe("");
         expect(JSON.parse(result.stdout).code).toBe(damage === "private-child" || damage === "private-marker" ? "SessionNotFound" : "SessionRecoveryBoundaryInvalid");
         expect(savedFileHashes(source)).toEqual(before);
-        const sessionRoot = join(fixture.home, ".fx", "sessions");
+        const sessionRoot = join(fixture.home, ".tetris", "sessions");
         expect(readdirSync(sessionRoot).filter((name) => existsSync(join(sessionRoot, name, "session.json")))).toEqual([id!]);
         // No copy was published.
         expect(existsSync(storeRoot(fixture.home)) ? savedSessionIds(fixture.home) : []).toEqual([]);
@@ -767,7 +767,7 @@ describe("session recovery", () => {
     let tui: TmuxSession | null = null;
     try {
       const [sessionId] = copyV1Fixture(fixture.home, "plain", 1, fixture.workspace) as [string];
-      const eventsPath = join(fixture.home, ".fx", "sessions", sessionId, "events.jsonl");
+      const eventsPath = join(fixture.home, ".tetris", "sessions", sessionId, "events.jsonl");
       const checkpoint = [
         { user: { text: "unfinished first request", images: [], work_id: null } },
         { context_checkpoint: { covers_through_seq: 1, summary: "<context_handoff>FIRST_CHECKPOINT_FACT</context_handoff>" } },
@@ -816,7 +816,7 @@ describe("session recovery", () => {
     let tui: TmuxSession | null = null;
     try {
       const [id] = copyV1Fixture(fixture.home, "plain", 1, fixture.workspace) as [string];
-      const sessions = join(fixture.home, ".fx", "sessions");
+      const sessions = join(fixture.home, ".tetris", "sessions");
       const unpublished = join(sessions, "unpublished");
       mkdirSync(unpublished, { mode: 0o700 });
       writeFileSync(join(unpublished, "session.lock"), "", { mode: 0o600 });
@@ -887,7 +887,7 @@ describe("session recovery", () => {
         expect(savedFileHashes(legacy.source)).toEqual(before);
         expect(gateway.requests).toHaveLength(0);
 
-        const sessionsRoot = join(fixture.home, ".fx", "sessions");
+        const sessionsRoot = join(fixture.home, ".tetris", "sessions");
         expect(readdirSync(sessionsRoot)).toEqual([legacy.id]);
         // The new store's sessions: none until the legacy one converts, then
         // only it, as no blank session is ever kept.
@@ -975,7 +975,7 @@ describe("session recovery", () => {
       expect(gateway.requests).toHaveLength(0);
       expect(gateway.classifierRequests).toHaveLength(0);
       expect(savedFileHashes(legacy.source)).toEqual(before);
-      expect(readdirSync(join(fixture.home, ".fx", "sessions"))).toEqual([legacy.id]);
+      expect(readdirSync(join(fixture.home, ".tetris", "sessions"))).toEqual([legacy.id]);
       writeFileSync(legacy.watermarkPath, watermark);
 
       for (const [index, args] of [["--resume", legacy.id], ["--resume", "last"]].entries()) {
@@ -1079,7 +1079,7 @@ describe("session recovery", () => {
       const gateway = startFakeGateway([]);
       try {
         const id = fenced ? "fenced-legacy-fifo" : copyV1Fixture(fixture.home, "plain", 1, fixture.workspace)[0]!;
-        const source = join(fixture.home, ".fx", "sessions", id);
+        const source = join(fixture.home, ".tetris", "sessions", id);
         if (fenced) {
           mkdirSync(source, { recursive: true, mode: 0o700 });
           const snapshot = JSON.stringify({
@@ -1106,7 +1106,7 @@ describe("session recovery", () => {
         expect(result.code).toBe(1);
         expect(result.elapsedMs).toBeLessThan(5_000);
         // The unreadable session is skipped exactly as every listing skips it,
-        // and the error says unreadable sessions exist, as `fx session last` does.
+        // and the error says unreadable sessions exist, as `tetris session last` does.
         expect(result.stdout + result.stderr).toContain("NoReadableSessions");
         expect(gateway.requests).toHaveLength(0);
         expect(gateway.classifierRequests).toHaveLength(0);
@@ -1121,7 +1121,7 @@ describe("session recovery", () => {
         }
         // Only the new store's folder may appear beside the untouched session,
         // and it holds no session.
-        expect(readdirSync(join(fixture.home, ".fx", "sessions")).filter((name) => name !== "v2"))
+        expect(readdirSync(join(fixture.home, ".tetris", "sessions")).filter((name) => name !== "v2"))
           .toEqual([id]);
         expect(existsSync(storeRoot(fixture.home)) ? savedSessionIds(fixture.home) : []).toEqual([]);
       } finally {
@@ -1136,7 +1136,7 @@ describe("session recovery", () => {
     const gateway = startFakeGateway([fakeGatewayFinalText("PARTIAL_RECORD_RECOVERED")]);
     try {
       const [sessionId] = copyV1Fixture(fixture.home, "plain", 1, fixture.workspace) as [string];
-      const eventsPath = join(fixture.home, ".fx", "sessions", sessionId, "events.jsonl");
+      const eventsPath = join(fixture.home, ".tetris", "sessions", sessionId, "events.jsonl");
       const committed = readFileSync(eventsPath, "utf8");
       appendFileSync(eventsPath, '{"schema_version":1,"partial-tail"');
 
@@ -1176,7 +1176,7 @@ describe("session recovery", () => {
         const [sessionId] = copyV1Fixture(fixture.home, "plain") as [string];
         const eventsPath = join(
           fixture.home,
-          ".fx",
+          ".tetris",
           "sessions",
           sessionId,
           "events.jsonl",
@@ -1224,7 +1224,7 @@ describe("session recovery", () => {
       const [sessionId] = copyV1Fixture(fixture.home, "plain") as [string];
       const eventsPath = join(
         fixture.home,
-        ".fx",
+        ".tetris",
         "sessions",
         sessionId,
         "events.jsonl",
@@ -1250,7 +1250,7 @@ describe("session recovery", () => {
       const failure = JSON.parse(detail.stdout);
       expect(failure.code).toBe("InvalidSessionFormat");
       expect(failure.error).toContain(`session ${sessionId} can't be read: `);
-      expect(failure.error).toContain("run `fx doctor`");
+      expect(failure.error).toContain("run `tetris doctor`");
       if (fault === "unreadable") chmodSync(eventsPath, 0o600);
       expect(readFileSync(eventsPath, "utf8")).toBe(corrupted);
       expect(gateway.requests).toHaveLength(0);

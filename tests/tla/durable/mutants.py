@@ -106,7 +106,7 @@ MUTANTS = [
      "PlacedOnce"),
 
     # Resumption.tla
-    ("Resumption", "fx -c asks the user after an unclean exit",
+    ("Resumption", "tetris -c asks the user after an unclean exit",
      [("THEN /\\ autoResumes' = autoResumes + 1\n"
        "            /\\ IF reply = \"saved\"\n"
        "               THEN /\\ delivered' = delivered + 1\n"

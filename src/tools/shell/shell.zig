@@ -1493,7 +1493,7 @@ fn terminalEndedWithOwner(
         .tool = "shell",
         .code = tool_result_errors.terminal_ended_error_code,
         .session_id = session_id,
-        .message = "This terminal ended when the fx process that started it exited. It cannot be resumed. Start a new terminal with shell action run and tty true.",
+        .message = "This terminal ended when the Tetris process that started it exited. It cannot be resumed. Start a new terminal with shell action run and tty true.",
         .retryable = false,
     } }, .{}, &out.writer) catch return error.OutOfMemory;
     return .{ .failure = try out.toOwnedSlice() };

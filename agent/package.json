@@ -1,0 +1,25 @@
+{
+  "name": "tetris-agent",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Lean, equipment-driven coding agent built on Fx (libfx).",
+  "bin": {
+    "tetris-agent": "./bin/tetris.js"
+  },
+  "scripts": {
+    "start": "node src/cli.js",
+    "ask": "node src/cli.js ask",
+    "chat": "node src/cli.js chat",
+    "doctor": "node src/cli.js doctor",
+    "test": "node --test tests/*.test.js",
+    "smoke": "node scripts/smoke.mjs",
+    "verify": "bash scripts/verify-agent.sh"
+  },
+  "dependencies": {
+    "libfx": "0.0.16"
+  },
+  "engines": {
+    "node": ">=24"
+  }
+}

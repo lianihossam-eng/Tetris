@@ -1,10 +1,10 @@
 // Shared helpers for the Bun drivers under tests/tla/drivers/: find TLC and
 // Java the same way tests/tla/lib/tlc.sh does, run TLC on a model in a
-// scratch folder, and locate the fx binary under test.
+// scratch folder, and locate the tetris binary under test.
 //
 // TLC comes from TLA2TOOLS_JAR or ~/.local/share/tla/tla2tools.jar. Java comes
 // from JAVA_HOME, Homebrew's OpenJDK, or PATH. The binary is FX_BIN, or
-// zig-out/bin/fx in this checkout. Output goes to FX_TLA_OUT, or a fresh folder
+// zig-out/bin/tetris in this checkout. Output goes to FX_TLA_OUT, or a fresh folder
 // under the system temp directory.
 import { createHash } from "node:crypto";
 import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
@@ -22,9 +22,9 @@ export function sha256Text(text: string): string {
   return createHash("sha256").update(text).digest("hex");
 }
 
-/// The fx binary under test. Throws when it has not been built.
+/// The tetris binary under test. Throws when it has not been built.
 export function fxBin(): string {
-  const bin = process.env.FX_BIN ?? join(REPO_ROOT, "zig-out", "bin", "fx");
+  const bin = process.env.FX_BIN ?? join(REPO_ROOT, "zig-out", "bin", "tetris");
   if (!existsSync(bin)) throw new Error(`missing ${bin}; run zig build first or set FX_BIN`);
   return bin;
 }

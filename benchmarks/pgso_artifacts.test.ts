@@ -175,8 +175,8 @@ async function runCohort(inputs: Inputs, cohort: Cohort): Promise<Record<Scenari
           const order = Boolean(pair % 2) !== cohort.reverse ? ["candidate", "control"] as const : ["control", "candidate"] as const;
           for (const lane of order) {
             const home = join(fixture, lane === "control" ? "home-0" : "home-1");
-            mkdirSync(join(home, ".fx"), { recursive: true });
-            writeFileSync(join(home, ".fx/settings.json"), "{}");
+            mkdirSync(join(home, ".tetris"), { recursive: true });
+            writeFileSync(join(home, ".tetris/settings.json"), "{}");
             requireValue(replies.length === 0 && gateway.requests.length === 0 && gateway.modelRequests.length === 0 && gateway.classifierRequests.length === 0 && gateway.titleRequests.length === 0, "Gateway state leaked between children");
             if (scenario === "recovered") replies.push(fakeGatewaySse([
               { type: "tool-input-start", id: "read_1", toolName: "read_file" },

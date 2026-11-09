@@ -18,7 +18,7 @@
 (* keeps entries only for its current work's own messages.                 *)
 (*                                                                         *)
 (* Bug plants one defect; check.sh names the rule that must catch each.    *)
-(* "today" is fx before this design: one list for every subagent, settled  *)
+(* "today" is Tetris before this design: one list for every subagent, settled  *)
 (* entries counted, nothing dropped until the same subagent starts again.  *)
 (***************************************************************************)
 EXTENDS Naturals, FiniteSets

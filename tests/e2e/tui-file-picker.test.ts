@@ -177,7 +177,7 @@ function createFixture(prefix: string): Fixture {
   const root = realpathSync(mkdtempSync(join(tmpdir(), prefix)));
   const home = join(root, "home");
   const workspace = join(root, "workspace");
-  mkdirSync(join(home, ".fx"), { recursive: true });
+  mkdirSync(join(home, ".tetris"), { recursive: true });
   mkdirSync(workspace, { recursive: true });
   const created = {
     root,
@@ -2021,7 +2021,7 @@ describe("@ file picker", () => {
       await clearComposer(active);
       await active.sendLiteral("@~");
       await active.waitForText("~/home-target.txt", TIMEOUT);
-      // Rows: the home folder itself, ~/.fx/, then ~/home-target.txt.
+      // Rows: the home folder itself, ~/.tetris/, then ~/home-target.txt.
       await active.sendKeys("Down Down Enter");
       expect(await composerPlainText(active)).toBe("@~/home-target.txt");
       expect(gateway?.requests).toHaveLength(0);

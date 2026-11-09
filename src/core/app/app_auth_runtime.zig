@@ -108,7 +108,7 @@ pub fn Runtime(comptime App: type) type {
                     try writeAuthNotice(app, .{
                         .topic = "auth",
                         .tone = .@"error",
-                        .body = "Repair profile settings and restart fx before sending a message.",
+                        .body = "Repair profile settings and restart Tetris before sending a message.",
                     });
                     return false;
                 }
@@ -370,7 +370,7 @@ pub fn Runtime(comptime App: type) type {
                     try writeAuthNotice(app, .{
                         .topic = "auth",
                         .tone = .@"error",
-                        .body = "Could not complete fx logout. The current source is unchanged.",
+                        .body = "Could not complete Tetris logout. The current source is unchanged.",
                     });
                     return;
                 },
@@ -682,19 +682,19 @@ pub fn Runtime(comptime App: type) type {
                 .{
                     .topic = "auth",
                     .tone = .warning,
-                    .body = "Could not confirm durable fx logout. The active source was recalculated.",
+                    .body = "Could not confirm durable Tetris logout. The active source was recalculated.",
                 }
             else if (result.session_deleted)
                 .{
                     .topic = "auth",
                     .tone = .neutral,
-                    .body = "Signed out of fx.",
+                    .body = "Signed out of Tetris.",
                 }
             else
                 .{
                     .topic = "auth",
                     .tone = .neutral,
-                    .body = "No fx login session found.",
+                    .body = "No Tetris login session found.",
                 });
             if (result.remote_revocation_failed) {
                 try writeAuthNotice(app, .{
@@ -1392,7 +1392,7 @@ pub fn Runtime(comptime App: type) type {
                     try app.writeDomainNotice(.{
                         .topic = "provider",
                         .tone = .warning,
-                        .body = if (intent == .post_oauth) "Subscription sign-in completed, but its saved credential is unavailable. The current provider is unchanged." else if (target == .codex) "Run fx login codex, then try switching again." else if (target == .grok) "Run fx login grok, then try switching again." else credentials.missing_interactive_credential_message,
+                        .body = if (intent == .post_oauth) "Subscription sign-in completed, but its saved credential is unavailable. The current provider is unchanged." else if (target == .codex) "Run tetris login codex, then try switching again." else if (target == .grok) "Run tetris login grok, then try switching again." else credentials.missing_interactive_credential_message,
                     }, true);
                 }
                 return false;
@@ -1405,7 +1405,7 @@ pub fn Runtime(comptime App: type) type {
                     debug_trace.logf("provider", "catalog rejected provider={t} category={t}", .{ target, failure.category });
                     // A connection fx could not make is named as one.
                     const unreachable_body = if (failure.category == .transport)
-                        try app.alloc.print("{s}fx couldn't connect to {s} to load {s}. Check your network connection or firewall. The current provider is unchanged.", .{
+                        try app.alloc.print("{s}Tetris couldn't connect to {s} to load {s}. Check your network connection or firewall. The current provider is unchanged.", .{
                             if (intent == .post_oauth) "Subscription sign-in completed, but " else "",
                             model_catalog.serviceName(target),
                             if (intent == .post_oauth) "its model catalog" else "the target provider catalog",
@@ -1625,7 +1625,7 @@ pub fn Runtime(comptime App: type) type {
                     .topic = "auth",
                     .tone = .@"error",
                     .body = switch (err) {
-                        error.NoSession => "The fx login session is no longer available. Sign in to change teams.",
+                        error.NoSession => "The Tetris login session is no longer available. Sign in to change teams.",
                         error.NoTeams => "No Vercel teams are available for this account.",
                         else => "Could not load Vercel teams. The current team is unchanged.",
                     },
@@ -1715,7 +1715,7 @@ pub fn Runtime(comptime App: type) type {
                     .topic = "auth",
                     .tone = .@"error",
                     .body = if (validation == .catalog_unreachable)
-                        "fx couldn't connect to AI Gateway to validate the selected Vercel team. Check your network connection or firewall. The current team is unchanged."
+                        "Tetris couldn't connect to AI Gateway to validate the selected Vercel team. Check your network connection or firewall. The current team is unchanged."
                     else
                         "The selected Vercel team could not be validated for AI Gateway. The current team is unchanged.",
                 }, true);
@@ -1730,7 +1730,7 @@ pub fn Runtime(comptime App: type) type {
                     .topic = "auth",
                     .tone = .@"error",
                     .body = switch (err) {
-                        error.SessionChanged, error.NoSession => "The fx login session changed before the team could be saved.",
+                        error.SessionChanged, error.NoSession => "The Tetris login session changed before the team could be saved.",
                         else => "Could not change the Vercel team. The current team is unchanged.",
                     },
                 }, true);
@@ -1780,7 +1780,7 @@ pub fn Runtime(comptime App: type) type {
                 try app.writeDomainNotice(.{
                     .topic = "auth",
                     .tone = .@"error",
-                    .body = "Changed the Vercel team, but the fx login credential could not be loaded.",
+                    .body = "Changed the Vercel team, but the Tetris login credential could not be loaded.",
                 }, true);
                 return false;
             }
@@ -2256,7 +2256,7 @@ pub fn Runtime(comptime App: type) type {
                     else => .{ .topic = "auth", .tone = .@"error", .body = "Grok sign-in failed. The current credential is unchanged." },
                 }
             else switch (err) {
-                error.ClientIdMissing => .{ .topic = "auth", .tone = .@"error", .body = "fx login is not configured yet. The current credential is unchanged." },
+                error.ClientIdMissing => .{ .topic = "auth", .tone = .@"error", .body = "Tetris login is not configured yet. The current credential is unchanged." },
                 error.AccessDenied => .{ .topic = "auth", .tone = .@"error", .body = "Vercel sign-in was denied. The current credential is unchanged." },
                 error.ExpiredToken, error.LoginTimedOut => .{ .topic = "auth", .tone = .warning, .body = "The Vercel sign-in code expired. The current credential is unchanged; run /login to try again." },
                 else => .{ .topic = "auth", .tone = .@"error", .body = "Vercel sign-in failed. The current credential is unchanged." },
@@ -3514,7 +3514,7 @@ test "logout result reconciles live auth and renders only sanitized notices" {
     try std.testing.expectEqual(@as(usize, 1), app.auth.logout_reconcile_count);
     try std.testing.expectEqual(@as(usize, 1), app.model_cache.reset_count);
     try std.testing.expectEqual(@as(usize, 1), app.model_cache_warmup_count);
-    try std.testing.expect(std.mem.find(u8, app.transcript.items, "Signed out of fx.") != null);
+    try std.testing.expect(std.mem.find(u8, app.transcript.items, "Signed out of Tetris.") != null);
     try std.testing.expect(std.mem.find(u8, app.transcript.items, login_flow.remote_revocation_warning) != null);
     for ([_][]const u8{ "access-secret", "refresh-secret", "RemoteRevokeFailed", "https://issuer.example" }) |detail| {
         try std.testing.expect(std.mem.find(u8, app.transcript.items, detail) == null);
@@ -3534,7 +3534,7 @@ test "logout durability failure still reconciles live auth" {
 
     try std.testing.expectEqual(@as(usize, 1), app.auth.logout_reconcile_count);
     try std.testing.expectEqual(@as(usize, 1), app.model_cache.reset_count);
-    try std.testing.expect(std.mem.find(u8, app.transcript.items, "Could not confirm durable fx logout.") != null);
+    try std.testing.expect(std.mem.find(u8, app.transcript.items, "Could not confirm durable Tetris logout.") != null);
     try std.testing.expect(std.mem.find(u8, app.transcript.items, login_flow.remote_revocation_warning) != null);
     try std.testing.expect(std.mem.find(u8, app.transcript.items, "current source is unchanged") == null);
 }
@@ -3545,7 +3545,7 @@ test "prompt credential refresh failure is recoverable and detail-free" {
     app.auth.refresh_error = error.OAuthRequestFailed;
 
     try std.testing.expect(!try Runtime(TestApp).preparePromptCredential(&app, (&app).agent()));
-    try std.testing.expect(std.mem.find(u8, app.transcript.items, "fx login credential refresh failed.") != null);
+    try std.testing.expect(std.mem.find(u8, app.transcript.items, "tetris login credential refresh failed.") != null);
     try std.testing.expect(std.mem.find(u8, app.transcript.items, "press enter to retry.") != null);
     try std.testing.expect(std.mem.find(u8, app.transcript.items, "Your prompt is saved.") != null);
     try std.testing.expect(std.mem.find(u8, app.transcript.items, "Choose another source") == null);
@@ -3575,7 +3575,7 @@ test "permanent prompt credential failure is one repair episode" {
     );
     try std.testing.expectEqual(
         @as(usize, 1),
-        std.mem.count(u8, app.transcript.items, "fx login sign-in expired."),
+        std.mem.count(u8, app.transcript.items, "tetris login sign-in expired."),
     );
     try std.testing.expect(std.mem.find(u8, app.transcript.items, "Your prompt is saved.") != null);
 }
@@ -3599,7 +3599,7 @@ test "prompt credential admission rejects a credential that remains unavailable"
 
     try std.testing.expect(!try Runtime(TestApp).preparePromptCredential(&app, (&app).agent()));
     try std.testing.expectEqual(@as(usize, 2), app.auth.refresh_count);
-    try std.testing.expect(std.mem.find(u8, app.transcript.items, "fx login sign-in expired.") != null);
+    try std.testing.expect(std.mem.find(u8, app.transcript.items, "tetris login sign-in expired.") != null);
     try std.testing.expect(std.mem.find(u8, app.transcript.items, "press enter to sign in again.") != null);
     try std.testing.expect(std.mem.find(u8, app.transcript.items, "Your prompt is saved.") != null);
     try std.testing.expect(!app.auth.picker_opened);
@@ -3650,7 +3650,7 @@ test "queued prompt admission rejects a missing credential without refreshing" {
 
     try std.testing.expect(!try Runtime(TestApp).admitQueuedPromptCredential(&app, (&app).agent()));
     try std.testing.expectEqual(@as(usize, 0), app.auth.refresh_count);
-    try std.testing.expect(std.mem.find(u8, app.transcript.items, "fx login sign-in expired.") != null);
+    try std.testing.expect(std.mem.find(u8, app.transcript.items, "tetris login sign-in expired.") != null);
     try std.testing.expect(std.mem.find(u8, app.transcript.items, "Your prompt is saved.") != null);
 }
 
@@ -3752,7 +3752,7 @@ test "compaction credential failure preserves the first ordinary recovery notice
     try std.testing.expect(!try runtime.recoverCredentialFailure(&app, (&app).agent(), .fx_login, error.OAuthRequestFailed));
     try std.testing.expectEqual(@as(usize, 1), app.notice_write_count);
     try std.testing.expectEqualStrings(
-        "fx login credential refresh failed.\npress enter to retry. Your prompt is saved.",
+        "tetris login credential refresh failed.\npress enter to retry. Your prompt is saved.",
         app.transcript.items,
     );
     try std.testing.expectEqualStrings("keep this ordinary prompt", app.agent().submission.pending.?.draft.prompt);

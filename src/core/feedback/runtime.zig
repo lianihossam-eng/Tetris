@@ -1,7 +1,7 @@
 const std = @import("std");
 
-pub const url = "https://fx.sh/feedback";
+pub const url = "https://github.com/lianihossam-eng/Tetris/issues/new/choose";
 
-test "feedback URL stays on the fx.sh domain" {
-    try std.testing.expectEqualStrings("https://fx.sh/feedback", url);
+test "feedback opens the Tetris issue picker" {
+    try std.testing.expectEqualStrings("https://github.com/lianihossam-eng/Tetris/issues/new/choose", url);
 }

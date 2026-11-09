@@ -1,4 +1,4 @@
-//! The shared usage cache: one file per identity under `~/.fx/usage-cache/`.
+//! The shared usage cache: one file per identity under `~/.tetris/usage-cache/`.
 //! Every fx process reads it without a lock (writes land by rename) and
 //! writes it under an exclusive lock as read, merge, write, rename, so a
 //! newer answer is never replaced by an older one (`CacheNeverRegresses`).
@@ -240,7 +240,7 @@ fn fileName(buf: *[80]u8, identity: Identity, suffix: []const u8) []const u8 {
     return std.mem.print(buf, "{s}{s}", .{ &identity, suffix }) catch unreachable;
 }
 
-/// Reads the stored entry for `identity` from `fx_dir` (`~/.fx`), or null.
+/// Reads the stored entry for `identity` from `fx_dir` (`~/.tetris`), or null.
 pub fn read(gpa: Allocator, io: Io, fx_dir: Io.Dir, identity: Identity) ?Owned {
     var dir = fx_dir.openDir(io, dir_name, .{}) catch return null;
     defer dir.close(io);

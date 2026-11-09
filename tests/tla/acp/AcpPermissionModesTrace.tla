@@ -1,6 +1,6 @@
 --------------------- MODULE AcpPermissionModesTrace ---------------------
 (***************************************************************************)
-(* Trace validation: replays one observed run of the real `fx acp` binary *)
+(* Trace validation: replays one observed run of the real `tetris acp` binary *)
 (* against AcpPermissionModes. TraceLog comes from the generated           *)
 (* AcpPermissionModesObs module; each element has the fields of Obs.       *)
 (*                                                                         *)

@@ -35,7 +35,7 @@ async function switchAgent(session: TmuxSession, target: "next" | "previous" | n
   const to = typeof target === "number"
     ? rows.findIndex((row) => new RegExp(`\\bfx ${target}(?: \\(on screen\\))? ·`).test(row))
     : target === "next" ? (from + 1) % rows.length : (from + rows.length - 1) % rows.length;
-  if (to < 0) throw new Error(`no fx ${target} row in:\n${pane}`);
+  if (to < 0) throw new Error(`no tetris ${target} row in:\n${pane}`);
   for (let step = 0; step < Math.abs(to - from); step += 1) await session.sendKeys(to > from ? "Down" : "Up");
   await session.sendKeys("Enter");
   await session.waitForPane((value) => !value.includes(LIST_HINT), 10_000);
@@ -103,8 +103,8 @@ async function withHost(
   const gateway = startDynamicFakeGateway(respond, options.models ? { models: options.models as never } : {});
   const home = options.reuse?.home ?? createIsolatedTestHome();
   const workspace = options.reuse?.workspace ?? realpathSync(mkdtempSync(join(tmpdir(), "fx-host-instances-")));
-  mkdirSync(join(home, ".fx"), { recursive: true });
-  writeFileSync(join(home, ".fx", "settings.json"), JSON.stringify({ sandbox: "none" }));
+  mkdirSync(join(home, ".tetris"), { recursive: true });
+  writeFileSync(join(home, ".tetris", "settings.json"), JSON.stringify({ sandbox: "none" }));
   let session: TmuxSession | null = null;
   try {
     session = await TmuxSession.create({
@@ -199,9 +199,9 @@ function preferencesOf(requests: Array<{ body: string; headers: Headers }>, mark
   };
 }
 
-// Saves agent profile `name` under the test home's `~/.fx/agents`.
+// Saves agent profile `name` under the test home's `~/.tetris/agents`.
 function writeProfile(home: string, name: string, profile: object) {
-  const dir = join(home, ".fx", "agents", name);
+  const dir = join(home, ".tetris", "agents", name);
   mkdirSync(dir, { recursive: true });
   writeFileSync(join(dir, "profile.json"), JSON.stringify(profile));
 }
@@ -214,7 +214,7 @@ function sessionHolding(home: string, marker: string): string | null {
     const full = join(path, entry);
     return statSync(full).isDirectory() ? holds(full) : readFileSync(full, "latin1").includes(marker);
   });
-  const dir = join(home, ".fx", "sessions", "v2");
+  const dir = join(home, ".tetris", "sessions", "v2");
   if (!existsSync(dir)) return null;
   const ids = readdirSync(dir).filter((id) => !id.startsWith(".") && statSync(join(dir, id)).isDirectory());
   return ids.find((id) => holds(join(dir, id))) ?? null;
@@ -222,7 +222,7 @@ function sessionHolding(home: string, marker: string): string | null {
 
 // The host records in `home`, each as its file's session ids.
 function hostRecords(home: string): string[][] {
-  const dir = join(home, ".fx", "hosts");
+  const dir = join(home, ".tetris", "hosts");
   if (!existsSync(dir)) return [];
   return readdirSync(dir)
     .filter((name) => name.endsWith(".json"))
@@ -231,7 +231,7 @@ function hostRecords(home: string): string[][] {
 
 // The host records in `home`, each as the profile of each listed session.
 function hostProfiles(home: string): Array<Array<string | null>> {
-  const dir = join(home, ".fx", "hosts");
+  const dir = join(home, ".tetris", "hosts");
   if (!existsSync(dir)) return [];
   return readdirSync(dir)
     .filter((name) => name.endsWith(".json"))
@@ -245,7 +245,7 @@ async function saveGroup(home: string, workspace: string): Promise<string[]> {
     for (const [index, letter] of ["A", "B", "C"].entries()) {
       if (index > 0) {
         await switchAgent(session, index + 1);
-        await session.waitForPane((pane) => pane.includes(`fx ${index + 1}/3`), 15_000);
+        await session.waitForPane((pane) => pane.includes(`tetris ${index + 1}/3`), 15_000);
         await session.waitForComposer(15_000);
       }
       await session.sendText(`HOST_${letter} first run`);
@@ -261,7 +261,7 @@ async function quitWith(session: TmuxSession, command: string): Promise<string> 
   await session.sendText(command);
   const deadline = Date.now() + 15_000;
   while (!session.paneStatus().dead) {
-    if (Date.now() > deadline) throw new Error(`fx did not exit after ${command}`);
+    if (Date.now() > deadline) throw new Error(`tetris did not exit after ${command}`);
     await Bun.sleep(50);
   }
   return (await session.captureFullScrollback()).replace(/\x1b\[[0-9;?]*[A-Za-z]/g, "");
@@ -314,9 +314,9 @@ describe.skipIf(!tmuxAvailable())("TUI host instances", () => {
         for (const [index, letter] of ["A", "B", "C"].entries()) {
           if (index > 0) {
             await switchAgent(session, index + 1);
-            await session.waitForPane((pane) => pane.includes(`fx ${index + 1}/3`), 15_000);
+            await session.waitForPane((pane) => pane.includes(`tetris ${index + 1}/3`), 15_000);
           } else {
-            await session.waitForPane((pane) => pane.includes("fx 1/3"), 15_000);
+            await session.waitForPane((pane) => pane.includes("tetris 1/3"), 15_000);
           }
           await session.waitForComposer(15_000);
           await session.sendText(`HOST_${letter} hello`);
@@ -325,16 +325,16 @@ describe.skipIf(!tmuxAvailable())("TUI host instances", () => {
           // chose, and shows only its own turn.
           expect(pane).toContain("Run /help for commands");
           expect(pane).toContain("auto · gpt-5");
-          expect(pane).toContain(`fx ${index + 1}/3 \u2193`);
+          expect(pane).toContain(`tetris ${index + 1}/3 \u2193`);
           expect(shownAnswers(pane)).toEqual([`HOST_ANSWER_${letter}`]);
         }
         // The first instance is still as it was.
         await switchAgent(session, 1);
-        const first = await session.waitForPane((pane) => pane.includes("fx 1/3"), 15_000);
+        const first = await session.waitForPane((pane) => pane.includes("tetris 1/3"), 15_000);
         expect(shownAnswers(first)).toEqual(["HOST_ANSWER_A"]);
         // The last instance still has its own conversation.
         await switchAgent(session, 3);
-        const last = await session.waitForPane((pane) => pane.includes("fx 3/3"), 15_000);
+        const last = await session.waitForPane((pane) => pane.includes("tetris 3/3"), 15_000);
         expect(shownAnswers(last)).toEqual(["HOST_ANSWER_C"]);
       });
       // Every request carries one instance's conversation and nothing else.
@@ -352,12 +352,12 @@ describe.skipIf(!tmuxAvailable())("TUI host instances", () => {
     "--instances starts several, /launch adds one and shows it, /close closes it",
     async () => {
       await withHost(answerByLetter, { args: "--instances 2" }, async ({ session }) => {
-        await session.waitForPane((pane) => pane.includes("fx 1/2"), 15_000);
+        await session.waitForPane((pane) => pane.includes("tetris 1/2"), 15_000);
         await session.sendText("HOST_A first");
         await session.waitForText("HOST_ANSWER_A", 30_000);
 
         await session.sendText("/launch");
-        const launched = await session.waitForPane((pane) => pane.includes("fx 3/3"), 15_000);
+        const launched = await session.waitForPane((pane) => pane.includes("tetris 3/3"), 15_000);
         expect(launched).toContain("Run /help for commands");
         expect(shownAnswers(launched)).toEqual([]);
         await session.waitForComposer(15_000);
@@ -366,18 +366,18 @@ describe.skipIf(!tmuxAvailable())("TUI host instances", () => {
 
         // Closing it leaves the others running; the first comes back.
         await session.sendText("/close");
-        const after = await session.waitForPane((pane) => pane.includes("fx 1/2"), 15_000);
+        const after = await session.waitForPane((pane) => pane.includes("tetris 1/2"), 15_000);
         expect(shownAnswers(after)).toEqual(["HOST_ANSWER_A"]);
         await switchAgent(session, "next");
-        const second = await session.waitForPane((pane) => pane.includes("fx 2/2"), 15_000);
+        const second = await session.waitForPane((pane) => pane.includes("tetris 2/2"), 15_000);
         expect(shownAnswers(second)).toEqual([]);
 
         // A profile that won't load says why and opens nothing.
         await session.sendText("/launch nosuch");
         const refused = await session.waitForPane((pane) => pane.includes("no profile named 'nosuch'"), 15_000);
-        expect(refused).toContain("Couldn't start another fx instance: no profile named 'nosuch'. Profiles:");
+        expect(refused).toContain("Couldn't start another Tetris instance: no profile named 'nosuch'. Profiles:");
         expect(refused).not.toContain("ProfileNotFound");
-        expect(refused).toContain("fx 2/2");
+        expect(refused).toContain("tetris 2/2");
       });
     },
     TIMEOUT,
@@ -390,21 +390,21 @@ describe.skipIf(!tmuxAvailable())("TUI host instances", () => {
         await session.sendText("HOST_A first");
         await session.waitForText("HOST_ANSWER_A", 30_000);
         await switchAgent(session, "next");
-        await session.waitForPane((pane) => pane.includes("fx 2/2"), 15_000);
+        await session.waitForPane((pane) => pane.includes("tetris 2/2"), 15_000);
         await session.waitForComposer(15_000);
         await session.sendText("HOST_B before new");
         await session.waitForText("HOST_ANSWER_B", 30_000);
 
         // A session command runs on any instance, as on the first.
         await session.sendText("/new");
-        await session.waitForPane((pane) => !pane.includes("HOST_ANSWER_B") && pane.includes("fx 2/2"), 15_000);
+        await session.waitForPane((pane) => !pane.includes("HOST_ANSWER_B") && pane.includes("tetris 2/2"), 15_000);
         expect(await session.capturePane()).not.toContain("works on main's screen");
         await session.waitForComposer(15_000);
         await session.sendText("HOST_C after new");
         await session.waitForText("HOST_ANSWER_C", 30_000);
 
         await switchAgent(session, "previous");
-        const first = await session.waitForPane((pane) => pane.includes("fx 1/2"), 15_000);
+        const first = await session.waitForPane((pane) => pane.includes("tetris 1/2"), 15_000);
         expect(shownAnswers(first)).toEqual(["HOST_ANSWER_A"]);
       });
       // The turn after /new starts a new conversation: it carries only itself.
@@ -432,7 +432,7 @@ describe.skipIf(!tmuxAvailable())("TUI host instances", () => {
         await session.sendText("HOST_A slow");
         // Switch while the first instance's answer is still outstanding.
         await switchAgent(session, "next");
-        await session.waitForPane((pane) => pane.includes("fx 2/2"), 15_000);
+        await session.waitForPane((pane) => pane.includes("tetris 2/2"), 15_000);
         await session.waitForComposer(15_000);
         await session.sendText("HOST_B fast");
         await session.waitForText("HOST_ANSWER_B", 30_000);
@@ -454,7 +454,7 @@ describe.skipIf(!tmuxAvailable())("TUI host instances", () => {
       await withHost(runThenAnswer, { instances: 2, env: { FX_PERMISSION_MODE: "ask" } }, async ({ workspace, session }) => {
         // Full access on the second instance only.
         await switchAgent(session, "next");
-        await session.waitForPane((pane) => pane.includes("fx 2/2"), 15_000);
+        await session.waitForPane((pane) => pane.includes("tetris 2/2"), 15_000);
         await session.waitForComposer(15_000);
         await session.sendText("/permissions full-access");
         await session.waitForText("mode set to full access", 15_000);
@@ -463,7 +463,7 @@ describe.skipIf(!tmuxAvailable())("TUI host instances", () => {
 
         // The first is still in ask: the same kind of command asks first.
         await switchAgent(session, "previous");
-        await session.waitForPane((pane) => pane.includes("fx 1/2"), 15_000);
+        await session.waitForPane((pane) => pane.includes("tetris 1/2"), 15_000);
         expect(await runTurn(session, 2, "touch first-ran")).toBe("asked");
         expect(existsSync(join(workspace, "first-ran"))).toBe(false);
         await approve(session, 2, "1");
@@ -489,7 +489,7 @@ describe.skipIf(!tmuxAvailable())("TUI host instances", () => {
 
         // The second instance never approved it, so it asks.
         await switchAgent(session, "next");
-        await session.waitForPane((pane) => pane.includes("fx 2/2"), 15_000);
+        await session.waitForPane((pane) => pane.includes("tetris 2/2"), 15_000);
         expect(await runTurn(session, 3, "touch shared-marker")).toBe("asked");
         await approve(session, 3, "1");
         rmSync(marker);
@@ -497,9 +497,9 @@ describe.skipIf(!tmuxAvailable())("TUI host instances", () => {
         // A new session on the second ends only its own approvals.
         await session.waitForComposer(15_000);
         await session.sendText("/new");
-        await session.waitForPane((pane) => !pane.includes("PERM_DONE_3") && pane.includes("fx 2/2"), 15_000);
+        await session.waitForPane((pane) => !pane.includes("PERM_DONE_3") && pane.includes("tetris 2/2"), 15_000);
         await switchAgent(session, "previous");
-        await session.waitForPane((pane) => pane.includes("fx 1/2"), 15_000);
+        await session.waitForPane((pane) => pane.includes("tetris 1/2"), 15_000);
         expect(await runTurn(session, 4, "touch shared-marker")).toBe("done");
         expect(existsSync(marker)).toBe(true);
       });
@@ -511,34 +511,34 @@ describe.skipIf(!tmuxAvailable())("TUI host instances", () => {
     "/close on the first instance hands over to the next, and the host keeps running",
     async () => {
       await withHost(answerByLetter, { instances: 3 }, async ({ home, session }) => {
-        await session.waitForPane((pane) => pane.includes("fx 1/3"), 15_000);
+        await session.waitForPane((pane) => pane.includes("tetris 1/3"), 15_000);
         await session.sendText("HOST_A first");
         await session.waitForText("HOST_ANSWER_A", 30_000);
         await switchAgent(session, "next");
-        await session.waitForPane((pane) => pane.includes("fx 2/3"), 15_000);
+        await session.waitForPane((pane) => pane.includes("tetris 2/3"), 15_000);
         await session.waitForComposer(15_000);
         await session.sendText("HOST_B second");
         await session.waitForText("HOST_ANSWER_B", 30_000);
 
         // Close the first: the second takes over as fx 1, as it was.
         await switchAgent(session, 1);
-        await session.waitForPane((pane) => pane.includes("fx 1/3"), 15_000);
+        await session.waitForPane((pane) => pane.includes("tetris 1/3"), 15_000);
         await session.waitForComposer(15_000);
         await session.sendText("/close");
-        const after = await session.waitForPane((pane) => pane.includes("fx 1/2"), 15_000);
+        const after = await session.waitForPane((pane) => pane.includes("tetris 1/2"), 15_000);
         expect(shownAnswers(after)).toEqual(["HOST_ANSWER_B"]);
         // The closed one is gone from the switch list.
         await switchAgent(session, "next");
-        const third = await session.waitForPane((pane) => pane.includes("fx 2/2"), 15_000);
+        const third = await session.waitForPane((pane) => pane.includes("tetris 2/2"), 15_000);
         expect(shownAnswers(third)).toEqual([]);
         await switchAgent(session, "next");
-        const wrapped = await session.waitForPane((pane) => pane.includes("fx 1/2"), 15_000);
+        const wrapped = await session.waitForPane((pane) => pane.includes("tetris 1/2"), 15_000);
         expect(shownAnswers(wrapped)).toEqual(["HOST_ANSWER_B"]);
 
         // Launching still works, from the settings the host started with.
         await session.waitForComposer(15_000);
         await session.sendText("/launch");
-        await session.waitForPane((pane) => pane.includes("fx 3/3"), 15_000);
+        await session.waitForPane((pane) => pane.includes("tetris 3/3"), 15_000);
         await session.waitForComposer(15_000);
         await session.sendText("HOST_C launched");
         await session.waitForText("HOST_ANSWER_C", 30_000);
@@ -558,15 +558,15 @@ describe.skipIf(!tmuxAvailable())("TUI host instances", () => {
         await session.sendText("HOST_A first");
         await session.waitForText("HOST_ANSWER_A", 30_000);
         await switchAgent(session, "next");
-        await session.waitForPane((pane) => pane.includes("fx 2/2"), 15_000);
+        await session.waitForPane((pane) => pane.includes("tetris 2/2"), 15_000);
         await session.waitForComposer(15_000);
         await session.sendText("HOST_B second");
         await session.waitForText("HOST_ANSWER_B", 30_000);
         const printed = await quitWith(session, "/exit");
         const second = sessionHolding(home, "HOST_ANSWER_B");
         expect(second).not.toBeNull();
-        expect(printed).toContain(`Resume this session with:\nfx --resume ${second}\n`);
-        expect(printed).not.toContain(`fx --resume ${sessionHolding(home, "HOST_ANSWER_A")}`);
+        expect(printed).toContain(`Resume this session with:\ntetris --resume ${second}\n`);
+        expect(printed).not.toContain(`tetris --resume ${sessionHolding(home, "HOST_ANSWER_A")}`);
       });
     },
     TIMEOUT,
@@ -587,17 +587,17 @@ describe.skipIf(!tmuxAvailable())("TUI host instances", () => {
           // Only fx 1 saved a session, so there is no group to record.
           expect(hostRecords(home)).toEqual([]);
           await switchAgent(session, "next");
-          await session.waitForPane((pane) => pane.includes("fx 2/3"), 15_000);
+          await session.waitForPane((pane) => pane.includes("tetris 2/3"), 15_000);
           await session.waitForComposer(15_000);
           printed = await quitWith(session, "/exit");
         });
         const saved = sessionHolding(home, "HOST_ANSWER_A");
         expect(saved).not.toBeNull();
-        expect(printed).toContain(`Resume this session with:\nfx --resume ${saved}\n`);
+        expect(printed).toContain(`Resume this session with:\ntetris --resume ${saved}\n`);
         // Resuming it brings back fx 1 alone, with no notice about the others.
         await withHost(answerByLetter, { args: `--resume ${saved}`, reuse: { home, workspace } }, async ({ session }) => {
           const pane = await session.waitForPane((value) => value.includes("HOST_ANSWER_A"), 30_000);
-          expect(pane).not.toMatch(/fx \d+\/\d+/);
+          expect(pane).not.toMatch(/tetris \d+\/\d+/);
           expect(pane).not.toContain("Couldn't bring back");
         });
       } finally {
@@ -609,18 +609,18 @@ describe.skipIf(!tmuxAvailable())("TUI host instances", () => {
   );
 
   test(
-    "/close on the only open instance ends fx with its resume command",
+    "/close on the only open instance ends tetris with its resume command",
     async () => {
       await withHost(answerByLetter, { instances: 2, remainOnExit: true }, async ({ home, session }) => {
         await session.sendText("/close");
-        await session.waitForPane((pane) => !/fx \d+\/\d+/.test(pane) && pane.includes("Run /help for commands"), 15_000);
+        await session.waitForPane((pane) => !/tetris \d+\/\d+/.test(pane) && pane.includes("Run /help for commands"), 15_000);
         await session.waitForComposer(15_000);
         await session.sendText("HOST_B last one");
         await session.waitForText("HOST_ANSWER_B", 30_000);
         const printed = await quitWith(session, "/close");
         const last = sessionHolding(home, "HOST_ANSWER_B");
         expect(last).not.toBeNull();
-        expect(printed).toContain(`Resume this session with:\nfx --resume ${last}\n`);
+        expect(printed).toContain(`Resume this session with:\ntetris --resume ${last}\n`);
       });
     },
     TIMEOUT,
@@ -636,7 +636,7 @@ describe.skipIf(!tmuxAvailable())("TUI host instances", () => {
           for (const [index, letter] of ["A", "B", "C"].entries()) {
             if (index > 0) {
               await switchAgent(session, index + 1);
-              await session.waitForPane((pane) => pane.includes(`fx ${index + 1}/3`), 15_000);
+              await session.waitForPane((pane) => pane.includes(`tetris ${index + 1}/3`), 15_000);
               await session.waitForComposer(15_000);
             }
             await session.sendText(`HOST_${letter} first run`);
@@ -650,17 +650,17 @@ describe.skipIf(!tmuxAvailable())("TUI host instances", () => {
         // Resume the second: it comes back first and on screen, the others
         // after it in their saved order, each with its own conversation.
         const bodies = await withHost(answerByLetter, { args: `--resume ${b}`, reuse: { home, workspace } }, async ({ session }) => {
-          const first = await session.waitForPane((pane) => pane.includes("fx 1/3") && pane.includes("HOST_ANSWER_B"), 30_000);
+          const first = await session.waitForPane((pane) => pane.includes("tetris 1/3") && pane.includes("HOST_ANSWER_B"), 30_000);
           expect(shownAnswers(first)).toEqual(["HOST_ANSWER_B"]);
           await switchAgent(session, 2);
-          const second = await session.waitForPane((pane) => pane.includes("fx 2/3") && pane.includes("HOST_ANSWER_A"), 15_000);
+          const second = await session.waitForPane((pane) => pane.includes("tetris 2/3") && pane.includes("HOST_ANSWER_A"), 15_000);
           expect(shownAnswers(second)).toEqual(["HOST_ANSWER_A"]);
           await switchAgent(session, 3);
-          const third = await session.waitForPane((pane) => pane.includes("fx 3/3") && pane.includes("HOST_ANSWER_C"), 15_000);
+          const third = await session.waitForPane((pane) => pane.includes("tetris 3/3") && pane.includes("HOST_ANSWER_C"), 15_000);
           expect(shownAnswers(third)).toEqual(["HOST_ANSWER_C"]);
           // A restored instance carries on its own conversation.
           await switchAgent(session, 2);
-          await session.waitForPane((pane) => pane.includes("fx 2/3"), 15_000);
+          await session.waitForPane((pane) => pane.includes("tetris 2/3"), 15_000);
           await session.waitForComposer(15_000);
           await session.sendText("HOST_D carries on A");
           await session.waitForText("HOST_ANSWER_D", 30_000);
@@ -689,7 +689,7 @@ describe.skipIf(!tmuxAvailable())("TUI host instances", () => {
           await session.waitForText("HOST_ANSWER_A", 30_000);
           expect(hostRecords(home)).toEqual([]);
           await session.sendText("/launch");
-          await session.waitForPane((pane) => pane.includes("fx 2/2"), 15_000);
+          await session.waitForPane((pane) => pane.includes("tetris 2/2"), 15_000);
           await session.waitForComposer(15_000);
           // fx 2 joins the record once its first turn saves its session.
           await Bun.sleep(500);
@@ -699,14 +699,14 @@ describe.skipIf(!tmuxAvailable())("TUI host instances", () => {
           await session.waitForPane(() => hostRecords(home).length === 1 && hostRecords(home)[0]!.length === 2, 15_000);
           await session.waitForComposer(15_000);
           await session.sendText("/close");
-          await session.waitForPane((pane) => !/fx \d+\/\d+/.test(pane), 15_000);
+          await session.waitForPane((pane) => !/tetris \d+\/\d+/.test(pane), 15_000);
           await session.waitForPane(() => hostRecords(home).length === 0, 15_000);
           await quitWith(session, "/exit");
         });
         const alone = sessionHolding(home, "HOST_ANSWER_A")!;
         await withHost(answerByLetter, { args: `--resume ${alone}`, reuse: { home, workspace } }, async ({ session }) => {
           const pane = await session.waitForPane((value) => value.includes("HOST_ANSWER_A"), 30_000);
-          expect(pane).not.toMatch(/fx \d+\/\d+/);
+          expect(pane).not.toMatch(/tetris \d+\/\d+/);
         });
       } finally {
         cleanupIsolatedTestHome(home);
@@ -731,10 +731,10 @@ describe.skipIf(!tmuxAvailable())("TUI host instances", () => {
           await session.sendLiteralText("HOST_B");
           await session.waitForPane((pane) => pane.includes("Sessions 1"), 15_000);
           await session.sendKeys("Enter");
-          const first = await session.waitForPane((pane) => pane.includes("fx 1/3") && pane.includes("HOST_ANSWER_B"), 30_000);
+          const first = await session.waitForPane((pane) => pane.includes("tetris 1/3") && pane.includes("HOST_ANSWER_B"), 30_000);
           expect(shownAnswers(first)).toEqual(["HOST_ANSWER_B"]);
           await switchAgent(session, 2);
-          await session.waitForPane((pane) => pane.includes("fx 2/3") && pane.includes("HOST_ANSWER_A"), 15_000);
+          await session.waitForPane((pane) => pane.includes("tetris 2/3") && pane.includes("HOST_ANSWER_A"), 15_000);
           await quitWith(session, "/exit").catch(() => "");
         });
 
@@ -747,19 +747,19 @@ describe.skipIf(!tmuxAvailable())("TUI host instances", () => {
           await session.waitForPane((pane) => pane.includes("Sessions 1"), 15_000);
           await session.sendKeys("Enter");
           const pane = await session.waitForPane((value) => value.includes("HOST_ANSWER_C"), 30_000);
-          expect(pane).not.toMatch(/fx \d+\/\d+/);
+          expect(pane).not.toMatch(/tetris \d+\/\d+/);
           await Bun.sleep(500);
-          expect(await session.capturePane()).not.toMatch(/fx \d+\/\d+/);
+          expect(await session.capturePane()).not.toMatch(/tetris \d+\/\d+/);
         });
 
         // A member whose session is gone is left out without a notice, the
         // rest come back, and the record follows.
-        rmSync(join(home, ".fx", "sessions", "v2", a), { recursive: true, force: true });
+        rmSync(join(home, ".tetris", "sessions", "v2", a), { recursive: true, force: true });
         await withHost(answerByLetter, { args: `--resume ${b}`, reuse: { home, workspace } }, async ({ session }) => {
-          const pane = await session.waitForPane((value) => value.includes("fx 1/2") && value.includes("HOST_ANSWER_B"), 30_000);
+          const pane = await session.waitForPane((value) => value.includes("tetris 1/2") && value.includes("HOST_ANSWER_B"), 30_000);
           expect(pane).not.toContain("Couldn't bring back");
           await switchAgent(session, "next");
-          await session.waitForPane((value) => value.includes("fx 2/2") && value.includes("HOST_ANSWER_C"), 15_000);
+          await session.waitForPane((value) => value.includes("tetris 2/2") && value.includes("HOST_ANSWER_C"), 15_000);
           await session.waitForPane(() => hostRecords(home).some((ids) => ids.length === 2 && !ids.includes(a!)), 15_000);
         });
         expect(c).not.toBeNull();
@@ -778,7 +778,7 @@ describe.skipIf(!tmuxAvailable())("TUI host instances", () => {
         for (const [index, letter] of ["A", "B", "C"].entries()) {
           if (index > 0) {
             await switchAgent(session, index + 1);
-            await session.waitForPane((pane) => pane.includes(`fx ${index + 1}/3`), 15_000);
+            await session.waitForPane((pane) => pane.includes(`tetris ${index + 1}/3`), 15_000);
             await session.waitForComposer(15_000);
           }
           await session.sendText(`HOST_${letter} saved`);
@@ -786,7 +786,7 @@ describe.skipIf(!tmuxAvailable())("TUI host instances", () => {
         }
         await session.sendText("/exit");
         await session.waitForSessionEnd(15_000);
-        const sessions = join(home, ".fx", "sessions", "v2");
+        const sessions = join(home, ".tetris", "sessions", "v2");
         expect(existsSync(sessions)).toBe(true);
         expect(readdirSync(sessions).filter((id) => !id.startsWith(".") && statSync(join(sessions, id)).isDirectory()).length).toBe(3);
       });
@@ -814,13 +814,13 @@ describe.skipIf(!tmuxAvailable())("TUI host instances", () => {
         }
         return answerByLetter(body);
       }, { instances: 2, env: { FX_PERMISSION_MODE: "full-access" } }, async ({ workspace, session }) => {
-        await session.waitForPane((pane) => pane.includes("fx 1/2"), 15_000);
+        await session.waitForPane((pane) => pane.includes("tetris 1/2"), 15_000);
         await switchAgent(session, "next");
-        await session.waitForPane((pane) => pane.includes("fx 2/2"), 15_000);
+        await session.waitForPane((pane) => pane.includes("tetris 2/2"), 15_000);
         await session.waitForComposer(15_000);
         await session.sendText("TREE_USER start a helper");
         await session.waitForText("TREE_MAIN_FINAL", 45_000);
-        // The report comes once the subagent's command ran, under fx 2's
+        // The report comes once the subagent's command ran, under tetris 2's
         // authority rather than none.
         await session.waitForText("TREE_MAIN_REPORTED", 45_000);
         expect(existsSync(join(workspace, "tree-marker"))).toBe(true);
@@ -858,12 +858,12 @@ describe.skipIf(!tmuxAvailable())("TUI host instances", () => {
       try {
         let closedId = "";
         await withHost(respond, { instances: 2, env: { FX_PERMISSION_MODE: "full-access" }, reuse: { home, workspace } }, async ({ session }) => {
-          await session.waitForPane((pane) => pane.includes("fx 1/2"), 15_000);
+          await session.waitForPane((pane) => pane.includes("tetris 1/2"), 15_000);
           await session.waitForComposer(15_000);
           await session.sendText("HOST_A saved");
           await session.waitForText("HOST_ANSWER_A", 30_000);
           await switchAgent(session, "next");
-          await session.waitForPane((pane) => pane.includes("fx 2/2"), 15_000);
+          await session.waitForPane((pane) => pane.includes("tetris 2/2"), 15_000);
           await session.waitForComposer(15_000);
           await session.sendText("CLOSE_USER start a slow helper");
           await session.waitForText("CLOSE_MAIN_FINAL", 45_000);
@@ -879,7 +879,7 @@ describe.skipIf(!tmuxAvailable())("TUI host instances", () => {
         });
         expect(reportTurns).toBe(0);
         // slowpoke's work ended cancelled, and owes the closed tree nothing.
-        const log = readFileSync(join(home, ".fx", "sessions", "v2", closedId, "log.jsonl"), "utf8");
+        const log = readFileSync(join(home, ".tetris", "sessions", "v2", closedId, "log.jsonl"), "utf8");
         const finishes = log.split("\n").filter((line) => line.includes("child_finished"));
         expect(finishes.length).toBe(1);
         expect(finishes[0]).toContain("cancelled");
@@ -922,12 +922,12 @@ describe.skipIf(!tmuxAvailable())("TUI host instances", () => {
       };
       try {
         await withHost(respond, { instances: 2, env: { FX_PERMISSION_MODE: "full-access" }, reuse: { home, workspace } }, async ({ session }) => {
-          await session.waitForPane((pane) => pane.includes("fx 1/2"), 15_000);
+          await session.waitForPane((pane) => pane.includes("tetris 1/2"), 15_000);
           await session.waitForComposer(15_000);
           await session.sendText("HOST_A saved");
           await session.waitForText("HOST_ANSWER_A", 30_000);
           await switchAgent(session, "next");
-          await session.waitForPane((pane) => pane.includes("fx 2/2"), 15_000);
+          await session.waitForPane((pane) => pane.includes("tetris 2/2"), 15_000);
           await session.waitForComposer(15_000);
           await session.sendText("KEEP_USER start a keeper");
           await session.waitForText("KEEP_MAIN_REPORTED", 45_000);
@@ -940,11 +940,11 @@ describe.skipIf(!tmuxAvailable())("TUI host instances", () => {
         // Resuming the first instance's session brings back fx 2 as a later
         // instance, and keeper comes back under it, idle, with its turn.
         await withHost(respond, { args: `--resume ${group![0]}`, reuse: { home, workspace } }, async ({ session }) => {
-          await session.waitForPane((pane) => pane.includes("fx 1/2") && pane.includes("HOST_ANSWER_A"), 30_000);
+          await session.waitForPane((pane) => pane.includes("tetris 1/2") && pane.includes("HOST_ANSWER_A"), 30_000);
           await switchAgent(session, "next");
-          await session.waitForPane((pane) => pane.includes("fx 2/2") && pane.includes("KEEP_MAIN_REPORTED"), 15_000);
+          await session.waitForPane((pane) => pane.includes("tetris 2/2") && pane.includes("KEEP_MAIN_REPORTED"), 15_000);
           await switchAgent(session, "next");
-          const keeper = await session.waitForPane((pane) => pane.includes("KEEP_CHILD_DONE") && !pane.includes("fx 1/2"), 15_000);
+          const keeper = await session.waitForPane((pane) => pane.includes("KEEP_CHILD_DONE") && !pane.includes("tetris 1/2"), 15_000);
           expect(keeper).toContain("KEEP_TASK");
         });
       } finally {
@@ -982,7 +982,7 @@ describe.skipIf(!tmuxAvailable())("TUI host instances", () => {
         writeProfile(home, "noshell", { description: "Everything but the shell", tools: ["*", "!shell"] });
         writeProfile(home, "builder", { description: "Builds things with every tool", tools: ["*"] });
         await session.sendText("/launch noshell");
-        await session.waitForPane((pane) => pane.includes("fx 2/2"), 15_000);
+        await session.waitForPane((pane) => pane.includes("tetris 2/2"), 15_000);
         await session.waitForComposer(15_000);
         await session.sendText("TREE_USER_PLAIN start a plain helper");
         await session.waitForText("TREE_PLAIN_FINAL", 45_000);
@@ -1029,9 +1029,9 @@ describe.skipIf(!tmuxAvailable())("TUI host instances", () => {
         return answerByLetter(body);
       }, { instances: 2 }, async ({ home, workspace, session }) => {
         writeProfile(home, "writer", { description: "Writes one file", tools: ["read_file", "write_file"], permission_mode: "ask" });
-        await session.waitForPane((pane) => pane.includes("fx 1/2"), 15_000);
+        await session.waitForPane((pane) => pane.includes("tetris 1/2"), 15_000);
         await switchAgent(session, "next");
-        await session.waitForPane((pane) => pane.includes("fx 2/2"), 15_000);
+        await session.waitForPane((pane) => pane.includes("tetris 2/2"), 15_000);
         await session.waitForComposer(15_000);
         await session.sendText("TREE_LEND_USER write the file");
         // fx 2's own screen, shown by its conversation, holds its subagent's
@@ -1040,7 +1040,7 @@ describe.skipIf(!tmuxAvailable())("TUI host instances", () => {
 
         // The first instance shows only the note that it waits.
         await switchAgent(session, 1);
-        const first = await session.waitForPane((pane) => pane.includes("fx 1/2") && pane.includes("writer needs approval"), 15_000);
+        const first = await session.waitForPane((pane) => pane.includes("tetris 1/2") && pane.includes("writer needs approval"), 15_000);
         expect(first).not.toContain("Subagent writer needs permission");
 
         // Back on fx 2, the answer there reaches the subagent.
@@ -1078,8 +1078,8 @@ describe.skipIf(!tmuxAvailable())("TUI host instances", () => {
         const home = createIsolatedTestHome();
         const workspace = realpathSync(mkdtempSync(join(tmpdir(), "fx-host-mcp-")));
         try {
-          mkdirSync(join(home, ".fx"), { recursive: true });
-          writeFileSync(join(home, ".fx", "mcp.json"), JSON.stringify({
+          mkdirSync(join(home, ".tetris"), { recursive: true });
+          writeFileSync(join(home, ".tetris", "mcp.json"), JSON.stringify({
             // The shell can ask a server for input, and the fixture checks it says so.
             mcp: { fixture: { type: "local", command: [process.execPath, fixture], enabled: true, environment: { FX_MCP_EXPECT_ELICITATION: "both" } } },
           }));
@@ -1122,14 +1122,14 @@ describe.skipIf(!tmuxAvailable())("TUI host instances", () => {
           } else {
             await session.sendText("/launch");
           }
-          await session.waitForPane((pane) => pane.includes("fx 2/2"), 15_000);
+          await session.waitForPane((pane) => pane.includes("tetris 2/2"), 15_000);
           await session.waitForComposer(15_000);
           await session.sendText("/model other/model low normal");
           await session.waitForText("Switched to other/model", 15_000);
           await session.waitForComposer(15_000);
           await promptMarker(session, "SECOND_AFTER");
           await switchAgent(session, "previous");
-          await session.waitForPane((pane) => pane.includes("fx 1/2"), 15_000);
+          await session.waitForPane((pane) => pane.includes("tetris 1/2"), 15_000);
           await session.waitForComposer(15_000);
           await promptMarker(session, "FIRST_AFTER");
         });
@@ -1151,14 +1151,14 @@ describe.skipIf(!tmuxAvailable())("TUI host instances", () => {
         requests,
       }, async ({ session }) => {
         await switchAgent(session, "next");
-        await session.waitForPane((pane) => pane.includes("fx 2/2"), 15_000);
+        await session.waitForPane((pane) => pane.includes("tetris 2/2"), 15_000);
         await session.waitForComposer(15_000);
         await session.sendText("/effort low");
         await session.waitForText("Reasoning effort set to", 15_000);
         await session.waitForComposer(15_000);
         await promptMarker(session, "EFFORT_SECOND");
         await switchAgent(session, "previous");
-        await session.waitForPane((pane) => pane.includes("fx 1/2"), 15_000);
+        await session.waitForPane((pane) => pane.includes("tetris 1/2"), 15_000);
         await session.waitForComposer(15_000);
         await promptMarker(session, "EFFORT_FIRST");
       });
@@ -1176,7 +1176,7 @@ describe.skipIf(!tmuxAvailable())("TUI host instances", () => {
         await withHost(echoMarker, { env: { FX_MODEL: fxModel }, models: PREFERENCE_MODELS, requests }, async ({ home, session }) => {
           writeProfile(home, "chooser", { description: "Chooses a model", model: "profile/model", effort: "high" });
           await session.sendText("/launch chooser");
-          await session.waitForPane((pane) => pane.includes("fx 2/2"), 15_000);
+          await session.waitForPane((pane) => pane.includes("tetris 2/2"), 15_000);
           await session.waitForComposer(15_000);
           await promptMarker(session, "PROFILE_LAUNCH");
         });
@@ -1189,7 +1189,7 @@ describe.skipIf(!tmuxAvailable())("TUI host instances", () => {
   );
 
   test(
-    "/launch <profile> under fx --profile starts in the launched profile's model and effort",
+    "/launch <profile> under tetris --profile starts in the launched profile's model and effort",
     async () => {
       const home = createIsolatedTestHome();
       const workspace = realpathSync(mkdtempSync(join(tmpdir(), "fx-host-launch-in-profile-")));
@@ -1206,7 +1206,7 @@ describe.skipIf(!tmuxAvailable())("TUI host instances", () => {
             ["/launch", 4, "SAME_LAUNCH"],
           ] as const) {
             await session.sendText(command);
-            await session.waitForPane((pane) => pane.includes(`fx ${count}/${count}`), 15_000);
+            await session.waitForPane((pane) => pane.includes(`tetris ${count}/${count}`), 15_000);
             await session.waitForComposer(15_000);
             await promptMarker(session, marker);
           }
@@ -1240,7 +1240,7 @@ describe.skipIf(!tmuxAvailable())("TUI host instances", () => {
         await withHost(echoMarker, { args: "--profile first --effort medium", env: { FX_MODEL: undefined }, models: PREFERENCE_MODELS, requests: before, remainOnExit: true, reuse: { home, workspace } }, async ({ session }) => {
           await promptMarker(session, "SAVED_FIRST");
           await session.sendText("/launch chooser");
-          await session.waitForPane((pane) => pane.includes("fx 2/2"), 15_000);
+          await session.waitForPane((pane) => pane.includes("tetris 2/2"), 15_000);
           await session.waitForComposer(15_000);
           await promptMarker(session, "SAVED_CHOOSER");
           await quitWith(session, "/exit");
@@ -1271,7 +1271,7 @@ describe.skipIf(!tmuxAvailable())("TUI host instances", () => {
   );
 
   test(
-    "/new under fx --profile keeps a /model choice, and its session resumes in it",
+    "/new under tetris --profile keeps a /model choice, and its session resumes in it",
     async () => {
       const home = createIsolatedTestHome();
       const workspace = realpathSync(mkdtempSync(join(tmpdir(), "fx-host-new-in-profile-")));
@@ -1319,11 +1319,11 @@ describe.skipIf(!tmuxAvailable())("TUI host instances", () => {
         const before: Array<{ body: string; headers: Headers }> = [];
         await withHost(echoMarker, { env: { FX_MODEL: undefined }, models: PREFERENCE_MODELS, requests: before, remainOnExit: true, reuse: { home, workspace } }, async ({ session }) => {
           await session.sendText("/launch chooser");
-          await session.waitForPane((pane) => pane.includes("fx 2/2"), 15_000);
+          await session.waitForPane((pane) => pane.includes("tetris 2/2"), 15_000);
           await session.waitForComposer(15_000);
           await promptMarker(session, "LAUNCHED_TURN");
           await session.sendText("/new");
-          await session.waitForPane((pane) => !pane.includes("DONE_LAUNCHED_TURN") && pane.includes("fx 2/2"), 15_000);
+          await session.waitForPane((pane) => !pane.includes("DONE_LAUNCHED_TURN") && pane.includes("tetris 2/2"), 15_000);
           await session.waitForComposer(15_000);
           await promptMarker(session, "NEW_TURN");
           await quitWith(session, "/exit");
@@ -1355,11 +1355,11 @@ describe.skipIf(!tmuxAvailable())("TUI host instances", () => {
         const before: Array<{ body: string; headers: Headers }> = [];
         await withHost(echoMarker, { env: { FX_MODEL: "other/model" }, models: PREFERENCE_MODELS, requests: before, remainOnExit: true, reuse: { home, workspace } }, async ({ session }) => {
           await session.sendText("/launch");
-          await session.waitForPane((pane) => pane.includes("fx 2/2"), 15_000);
+          await session.waitForPane((pane) => pane.includes("tetris 2/2"), 15_000);
           await session.waitForComposer(15_000);
           await promptMarker(session, "LAUNCHED_TURN");
           await session.sendText("/new");
-          await session.waitForPane((pane) => !pane.includes("DONE_LAUNCHED_TURN") && pane.includes("fx 2/2"), 15_000);
+          await session.waitForPane((pane) => !pane.includes("DONE_LAUNCHED_TURN") && pane.includes("tetris 2/2"), 15_000);
           await session.waitForComposer(15_000);
           await promptMarker(session, "NEW_TURN");
           await quitWith(session, "/exit");
@@ -1384,7 +1384,7 @@ describe.skipIf(!tmuxAvailable())("TUI host instances", () => {
   );
 
   test(
-    "fx --profile <name> uses the profile's model unless the process chose one",
+    "tetris --profile <name> uses the profile's model unless the process chose one",
     async () => {
       for (const [args, fxModel, expected] of [
         ["--profile chooser", undefined, "profile/model"],
@@ -1419,8 +1419,8 @@ describe.skipIf(!tmuxAvailable())("TUI host instances", () => {
       const home = createIsolatedTestHome();
       const workspace = realpathSync(mkdtempSync(join(tmpdir(), "fx-host-mcp-child-")));
       try {
-        mkdirSync(join(home, ".fx"), { recursive: true });
-        writeFileSync(join(home, ".fx", "mcp.json"), JSON.stringify({
+        mkdirSync(join(home, ".tetris"), { recursive: true });
+        writeFileSync(join(home, ".tetris", "mcp.json"), JSON.stringify({
           mcp: { fixture: { type: "local", command: [process.execPath, fixture], enabled: true, environment: { FX_MCP_EXPECT_ELICITATION: "both" } } },
         }));
         writeProfile(home, "mcp-child", { description: "Uses the fixture", tools: ["read_file", "mcp_select_tool"], mcp_servers: ["fixture"] });
@@ -1467,7 +1467,7 @@ describe.skipIf(!tmuxAvailable())("TUI host instances", () => {
           await session.waitForText("HOST_ANSWER_A", 30_000);
           await session.waitForComposer(15_000);
           await session.sendText("/launch limited");
-          await session.waitForPane((pane) => pane.includes("fx 2/2"), 15_000);
+          await session.waitForPane((pane) => pane.includes("tetris 2/2"), 15_000);
           await session.waitForComposer(15_000);
           await session.sendText("HOST_B first run");
           await session.waitForText("HOST_ANSWER_B", 30_000);
@@ -1480,13 +1480,13 @@ describe.skipIf(!tmuxAvailable())("TUI host instances", () => {
         // Resuming the limited one brings it back first and still limited,
         // and the other in main.
         const bodies = await withHost(answerByLetter, { args: `--resume ${b}`, reuse: { home, workspace } }, async ({ session }) => {
-          await session.waitForPane((pane) => pane.includes("fx 1/2") && pane.includes("HOST_ANSWER_B"), 30_000);
+          await session.waitForPane((pane) => pane.includes("tetris 1/2") && pane.includes("HOST_ANSWER_B"), 30_000);
           await session.waitForComposer(15_000);
           await session.sendText("HOST_C on the limited one");
           await session.waitForText("HOST_ANSWER_C", 30_000);
           await session.waitForComposer(15_000);
           await switchAgent(session, "next");
-          await session.waitForPane((pane) => pane.includes("fx 2/2") && pane.includes("HOST_ANSWER_A"), 15_000);
+          await session.waitForPane((pane) => pane.includes("tetris 2/2") && pane.includes("HOST_ANSWER_A"), 15_000);
           await session.waitForComposer(15_000);
           await session.sendText("HOST_D on the main one");
           await session.waitForText("HOST_ANSWER_D", 30_000);
@@ -1545,22 +1545,22 @@ describe.skipIf(!tmuxAvailable())("TUI host instances", () => {
         if (answered(body)) return text("note_done", "NOTE_DONE");
         return call("note_shell", "shell", { request: { action: "run", command: "rm -rf ./nothing-here" } });
       }, { instances: 3, env: { FX_PERMISSION_MODE: "ask" } }, async ({ session }) => {
-        await session.waitForPane((pane) => pane.includes("fx 1/3"), 15_000);
+        await session.waitForPane((pane) => pane.includes("tetris 1/3"), 15_000);
         await switchAgent(session, "previous");
-        await session.waitForPane((pane) => pane.includes("fx 3/3"), 15_000);
+        await session.waitForPane((pane) => pane.includes("tetris 3/3"), 15_000);
         await session.waitForComposer(15_000);
         await session.sendText("NOTE_THREE go");
         await session.waitForPane((pane) => pane.includes("rm -rf"), 15_000);
         // fx 3 waits; on fx 1 the note names it, then the indicator.
         await switchAgent(session, "next");
-        await session.waitForPane((pane) => pane.includes("fx 3 needs approval · fx 1/3 \u2193"), 15_000);
+        await session.waitForPane((pane) => pane.includes("tetris 3 needs approval · tetris 1/3 \u2193"), 15_000);
         await session.waitForComposer(15_000);
         await session.sendText("NOTE_ONE go");
         await session.waitForPane((pane) => pane.includes("rm -rf"), 15_000);
         // From fx 2, fx 1 comes first.
         await switchAgent(session, "next");
-        const pane = await session.waitForPane((value) => value.includes("fx 2/3") && value.includes("need you"), 15_000);
-        expect(pane).toContain("fx 1 and 1 more need you · fx 2/3 \u2193");
+        const pane = await session.waitForPane((value) => value.includes("tetris 2/3") && value.includes("need you"), 15_000);
+        expect(pane).toContain("tetris 1 and 1 more need you · tetris 2/3 \u2193");
         expect(pane).not.toContain("main");
       });
     },
@@ -1572,28 +1572,28 @@ describe.skipIf(!tmuxAvailable())("TUI host instances", () => {
     "/agents lists the open agents, and Enter keeps the one shown",
     async () => {
       await withHost(answerByLetter, { instances: 3 }, async ({ session }) => {
-        await session.waitForPane((pane) => pane.includes("fx 1/3"), 15_000);
+        await session.waitForPane((pane) => pane.includes("tetris 1/3"), 15_000);
         // Ctrl+X opens the list in place of an open panel, which holds
         // typed keys.
         await session.sendText("/status");
         await session.waitForPane((pane) => pane.includes("Step limit"), 15_000);
         await session.sendKeys("C-x");
-        const list = await session.waitForPane((pane) => pane.includes("fx 3 ·"), 15_000);
+        const list = await session.waitForPane((pane) => pane.includes("tetris 3 ·"), 15_000);
         expect(list).not.toContain("Step limit");
-        expect(list).toContain("fx 1 (on screen) ·");
-        expect(list).toContain("fx 2 · new session · main · idle");
-        expect(list).toContain("fx 3 · new session · main · idle");
+        expect(list).toContain("tetris 1 (on screen) ·");
+        expect(list).toContain("tetris 2 · new session · main · idle");
+        expect(list).toContain("tetris 3 · new session · main · idle");
         expect(list).toContain(LIST_HINT);
         // Esc closes it.
         await session.sendKeys("Escape");
-        await session.waitForPane((pane) => !pane.includes("fx 3 ·"), 15_000);
+        await session.waitForPane((pane) => !pane.includes("tetris 3 ·"), 15_000);
         // ↓↓ previews fx 3, and Enter keeps it.
         await session.sendText("/agents");
-        await session.waitForPane((pane) => pane.includes("fx 3 ·"), 15_000);
+        await session.waitForPane((pane) => pane.includes("tetris 3 ·"), 15_000);
         await session.sendKeys("Down");
         await session.sendKeys("Down");
         await session.sendKeys("Enter");
-        await session.waitForPane((pane) => pane.includes("fx 3/3") && !pane.includes("fx 3 ·"), 15_000);
+        await session.waitForPane((pane) => pane.includes("tetris 3/3") && !pane.includes("tetris 3 ·"), 15_000);
         await session.waitForComposer(15_000);
       });
     },
@@ -1606,22 +1606,22 @@ describe.skipIf(!tmuxAvailable())("TUI host instances", () => {
       await withHost(answerByLetter, {}, async ({ session }) => {
         await session.sendKeys("Down");
         await Bun.sleep(500);
-        expect(await session.capturePane()).not.toContain("fx 1 (on screen)");
+        expect(await session.capturePane()).not.toContain("tetris 1 (on screen)");
         await session.sendText("/launch");
-        await session.waitForPane((pane) => pane.includes("fx 2/2 \u2193"), 15_000);
+        await session.waitForPane((pane) => pane.includes("tetris 2/2 \u2193"), 15_000);
         await session.waitForComposer(15_000);
         await session.sendKeys("Down");
-        const list = await session.waitForPane((pane) => pane.includes("fx 2 (on screen) ·"), 15_000);
-        expect(list).toContain("fx 1 ·");
+        const list = await session.waitForPane((pane) => pane.includes("tetris 2 (on screen) ·"), 15_000);
+        expect(list).toContain("tetris 1 ·");
         await session.sendKeys("Escape");
-        await session.waitForPane((pane) => !pane.includes("fx 2 (on screen) ·"), 15_000);
+        await session.waitForPane((pane) => !pane.includes("tetris 2 (on screen) ·"), 15_000);
 
         // In a draft of several lines, down stays in the draft and Option+Up
         // moves up a paragraph.
         await session.sendLiteral("first");
         await session.sendKeys("M-Enter");
         await session.sendLiteral("second");
-        await session.waitForPane((pane) => pane.includes("second") && pane.includes("fx 2/2 · ctrl+x"), 10_000);
+        await session.waitForPane((pane) => pane.includes("second") && pane.includes("tetris 2/2 · ctrl+x"), 10_000);
         await session.sendKeys("Down");
         await session.sendKeys("M-Up");
         await session.sendLiteral("Z");
@@ -1645,7 +1645,7 @@ describe.skipIf(!tmuxAvailable())("TUI host instances", () => {
         }
         return answerByLetter(body);
       }, { instances: 2, env: { FX_PERMISSION_MODE: "full-access" } }, async ({ session }) => {
-        await session.waitForPane((pane) => pane.includes("fx 1/2"), 15_000);
+        await session.waitForPane((pane) => pane.includes("tetris 1/2"), 15_000);
         await session.waitForComposer(15_000);
         await session.sendText("LIST_USER start a helper");
         await session.waitForText("LIST_MAIN_FINAL", 30_000);
@@ -1656,9 +1656,9 @@ describe.skipIf(!tmuxAvailable())("TUI host instances", () => {
         await session.sendKeys("C-x");
         const list = await session.waitForPane((pane) => pane.includes("helper (on screen) ·"), 15_000);
         const rows = list.split("\n");
-        const first = rows.findIndex((row) => row.includes("fx 1 ·"));
+        const first = rows.findIndex((row) => row.includes("tetris 1 ·"));
         const helper = rows.findIndex((row) => row.includes("    helper (on screen) ·"));
-        const second = rows.findIndex((row) => row.includes("fx 2 ·"));
+        const second = rows.findIndex((row) => row.includes("tetris 2 ·"));
         expect(first).toBeGreaterThanOrEqual(0);
         expect(helper).toBe(first + 1);
         expect(second).toBe(helper + 1);
@@ -1676,23 +1676,23 @@ describe.skipIf(!tmuxAvailable())("TUI host instances", () => {
         if (userTexts(body).join("\n").includes("HOST_S")) await Bun.sleep(1500);
         return answerByLetter(body);
       }, { instances: 2 }, async ({ session }) => {
-        await session.waitForPane((pane) => pane.includes("fx 1/2"), 15_000);
+        await session.waitForPane((pane) => pane.includes("tetris 1/2"), 15_000);
         await switchAgent(session, "next");
-        await session.waitForPane((pane) => pane.includes("fx 2/2"), 15_000);
+        await session.waitForPane((pane) => pane.includes("tetris 2/2"), 15_000);
         await session.waitForComposer(15_000);
         await session.sendText("HOST_S slow work");
         await switchAgent(session, "previous");
-        await session.waitForPane((pane) => pane.includes("fx 1/2"), 15_000);
-        await session.waitForPane((pane) => pane.includes("fx 2 finished · fx 1/2 \u2193"), 15_000);
+        await session.waitForPane((pane) => pane.includes("tetris 1/2"), 15_000);
+        await session.waitForPane((pane) => pane.includes("tetris 2 finished · tetris 1/2 \u2193"), 15_000);
         await session.sendText("/agents");
-        const list = await session.waitForPane((pane) => pane.includes("fx 2 ·"), 15_000);
-        expect(list).toMatch(/fx 2 · .* · main · finished/);
+        const list = await session.waitForPane((pane) => pane.includes("tetris 2 ·"), 15_000);
+        expect(list).toMatch(/tetris 2 · .* · main · finished/);
         await session.sendKeys("Escape");
         // Showing it clears the note.
         await switchAgent(session, "next");
-        await session.waitForPane((pane) => pane.includes("fx 2/2") && pane.includes("HOST_ANSWER_S"), 15_000);
+        await session.waitForPane((pane) => pane.includes("tetris 2/2") && pane.includes("HOST_ANSWER_S"), 15_000);
         await switchAgent(session, "previous");
-        await session.waitForPane((pane) => pane.includes("fx 1/2"), 15_000);
+        await session.waitForPane((pane) => pane.includes("tetris 1/2"), 15_000);
         await Bun.sleep(300);
         expect(await session.capturePane()).not.toContain("finished ·");
       });
@@ -1707,26 +1707,26 @@ describe.skipIf(!tmuxAvailable())("TUI host instances", () => {
         if (userTexts(body).join("\n").includes("HOST_R")) return rejected();
         return answerByLetter(body);
       }, { instances: 2 }, async ({ session }) => {
-        await session.waitForPane((pane) => pane.includes("fx 1/2"), 15_000);
+        await session.waitForPane((pane) => pane.includes("tetris 1/2"), 15_000);
         await switchAgent(session, "next");
-        await session.waitForPane((pane) => pane.includes("fx 2/2"), 15_000);
+        await session.waitForPane((pane) => pane.includes("tetris 2/2"), 15_000);
         await session.waitForComposer(15_000);
         await session.sendText("HOST_R refused");
         // The provider refuses it, so it waits on fx 2's screen for Esc.
         await session.waitForText("The provider rejected this request · press Esc", 30_000);
         await switchAgent(session, "previous");
-        await session.waitForPane((pane) => pane.includes("fx 1/2") && pane.includes("fx 2 needs you · fx 1/2 \u2193"), 15_000);
+        await session.waitForPane((pane) => pane.includes("tetris 1/2") && pane.includes("tetris 2 needs you · tetris 1/2 \u2193"), 15_000);
         await session.sendText("/agents");
-        const list = await session.waitForPane((pane) => pane.includes("fx 2 ·"), 15_000);
-        expect(list).toMatch(/fx 2 · .* · main · needs you/);
+        const list = await session.waitForPane((pane) => pane.includes("tetris 2 ·"), 15_000);
+        expect(list).toMatch(/tetris 2 · .* · main · needs you/);
         await session.sendKeys("Escape");
         // Esc on its own screen ends the request, and the note goes.
         await switchAgent(session, "next");
-        await session.waitForPane((pane) => pane.includes("fx 2/2") && pane.includes("press Esc"), 15_000);
+        await session.waitForPane((pane) => pane.includes("tetris 2/2") && pane.includes("press Esc"), 15_000);
         await session.sendKeys("Escape");
         await session.waitForPane((pane) => !pane.includes("The provider rejected this request"), 15_000);
         await switchAgent(session, "previous");
-        await session.waitForPane((pane) => pane.includes("fx 1/2"), 15_000);
+        await session.waitForPane((pane) => pane.includes("tetris 1/2"), 15_000);
         await Bun.sleep(300);
         expect(await session.capturePane()).not.toContain("needs you");
       });

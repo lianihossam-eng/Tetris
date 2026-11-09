@@ -1,7 +1,7 @@
 ---- MODULE RefreshLeaseTrace ----
 \* Real runs of a login's refresh lock checked against RefreshLease.tla's
 \* rules, on the real clock. trace.ts generates TraceObs.tla from what
-\* tests/tla/drivers/mcp_host/refresh-lease.test.ts saw of real fx processes
+\* tests/tla/drivers/mcp_host/refresh-lease.test.ts saw of real Tetris processes
 \* on the file store, whose lock writes no stamps: their "MCP refresh lock"
 \* and "MCP refresh went ahead" trace lines (src/core/mcp_host/credentials.zig,
 \* src/core/mcp_host/runtime.zig) and the harness's own steps. Times are

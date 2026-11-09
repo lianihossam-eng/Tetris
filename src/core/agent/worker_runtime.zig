@@ -8137,7 +8137,7 @@ test "question resume observer runs only for accepted answers before releasing t
 test "question batch source distinguishes route recovery from agent questions" {
     const alloc = std.testing.allocator;
     const options = [_]types.QuestionOption{.{ .label = "Try again later", .description = null }};
-    const entries = [_]types.QuestionBatchEntry{.{ .question = "Route failed. What should fx do?", .options = &options }};
+    const entries = [_]types.QuestionBatchEntry{.{ .question = "Route failed. What should Tetris do?", .options = &options }};
 
     var route_runtime = WorkerRuntime{};
     defer route_runtime.deinit(alloc);

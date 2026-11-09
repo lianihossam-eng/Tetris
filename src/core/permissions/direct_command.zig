@@ -426,7 +426,7 @@ fn environmentForProfile(
     }
 }
 
-test "direct commands receive fx agent environment" {
+test "direct commands receive tetris agent environment" {
     if (builtin.target.os.tag != .macos and builtin.target.os.tag != .linux) return;
 
     const stages = [_]command_effect.DirectStage{.{
@@ -443,7 +443,7 @@ test "direct commands receive fx agent environment" {
     });
     defer std.testing.allocator.free(result.output);
 
-    try std.testing.expect(std.mem.find(u8, result.output, "AI_AGENT=fx") != null);
+    try std.testing.expect(std.mem.find(u8, result.output, "AI_AGENT=tetris") != null);
 }
 
 const DirectTerminationCause = enum {

@@ -73,7 +73,7 @@ pub const Projection = struct {
     }
 
     fn fileOf(p: Projection, r: menu.Row) []const u8 {
-        return if (r.status.source == .workspace) p.project_file else profile_paths.displayText("~/.fx/mcp.json");
+        return if (r.status.source == .workspace) p.project_file else profile_paths.displayText("~/.tetris/mcp.json");
     }
 };
 
@@ -449,7 +449,7 @@ fn confirmLines(p: Projection, r: menu.Row, width: u16, out: *Confirm) []const C
     const q = switch (c) {
         .remove => std.mem.print(&out.question, "Remove {s} from {s}?", .{ name, p.fileOf(r) }),
         .approve => std.mem.print(&out.question, "Approve {s} for this project? It {s}:", .{ name, if (r.status.transport == .stdio) "runs" else "connects to" }),
-        .reject => std.mem.print(&out.question, "Reject {s}? fx won't start it in this project.", .{name}),
+        .reject => std.mem.print(&out.question, "Reject {s}? Tetris won't start it in this project.", .{name}),
         .login, .logout => std.mem.print(&out.question, "{s} {s}?", .{ c.label(), name }),
     } catch "Are you sure?";
     out.lines[n] = .{ .text = q, .style = .question };
@@ -531,7 +531,7 @@ fn question(arena: Allocator, p: Projection, r: menu.Row, c: menu.Choice) ![]con
             arena.print("Remove {s} and its login from {s}?", .{ name, p.fileOf(r) })
         else
             arena.print("Remove {s} from {s}?", .{ name, p.fileOf(r) }),
-        else => arena.print("Reject {s}? fx won't start it in this project.", .{name}),
+        else => arena.print("Reject {s}? Tetris won't start it in this project.", .{name}),
     };
 }
 
@@ -689,7 +689,7 @@ test "a server's screen: facts, choices with their commands, then tools" {
     try testing.expectEqualStrings(
         \\  github
         \\  http      https://api.githubcopilot.com/mcp/
-        \\  file      ~/.fx/mcp.json
+        \\  file      ~/.tetris/mcp.json
         \\  status    ready
         \\  protocol  2025-11-25
         \\
@@ -766,7 +766,7 @@ test "Remove asks on its own row, at the same size" {
     // the server screen's.
     const text = try render(p, 88);
     defer testing.allocator.free(text);
-    try testing.expect(std.mem.find(u8, text, "› Remove github and its login from ~/.fx/mcp.json?   yes  no\n") != null);
+    try testing.expect(std.mem.find(u8, text, "› Remove github and its login from ~/.tetris/mcp.json?   yes  no\n") != null);
     try testing.expect(std.mem.find(u8, text, "  Log out       /mcp logout github\n") != null);
     try testing.expectEqualStrings("↑↓ navigate     enter run     esc back", hintVariants(p)[0]);
     var asked = try composeRow(testing.allocator, p, 6, 88, menuRowCount(p, 88, 40));
@@ -917,7 +917,7 @@ test "a login under way says so until its address comes" {
     try testing.expectEqualStrings(
         \\  linear
         \\  http      https://mcp.linear.app/mcp
-        \\  file      ~/.fx/mcp.json
+        \\  file      ~/.tetris/mcp.json
         \\  status    needs login
         \\
         \\› Log in        /mcp login linear
@@ -989,7 +989,7 @@ test "a server that needs a login says so, once" {
     try testing.expectEqualStrings(
         \\  linear
         \\  http      https://mcp.linear.app/mcp
-        \\  file      ~/.fx/mcp.json
+        \\  file      ~/.tetris/mcp.json
         \\  status    needs login
         \\
         \\› Log in        /mcp login linear

@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "id": "planning",
+  "name": "Session todo list",
+  "description": "Track persistent, session-scoped tasks without duplicate active entries.",
+  "slot": "planning",
+  "tools": ["todo"],
+  "requires": [],
+  "conflicts": []
+}

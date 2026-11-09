@@ -349,8 +349,8 @@ fn prioritizedRowIndex(
     return source_row_count -| 1;
 }
 
-const onboarding_note = "   ⚠︎ Note: fx is experimental and defaults to auto mode.";
-const onboarding_note_link = onboarding_note ++ " \x1b]8;id=fx-onboarding;https://fx.sh/docs/stability\x1b\\\x1b[4mLearn more\x1b[24m\x1b]8;;\x1b\\";
+const onboarding_note = "   ⚠︎ Note: Tetris is experimental and defaults to auto mode.";
+const onboarding_note_link = onboarding_note ++ " \x1b]8;id=tetris-onboarding;https://github.com/lianihossam-eng/Tetris\x1b\\\x1b[4mLearn more\x1b[24m\x1b]8;;\x1b\\";
 
 fn onboardingProjectedRowIndex(view: auth_runtime.PickerView, row_index: u16, row_count: u16) u16 {
     if (row_count >= 18) return row_index;
@@ -406,9 +406,9 @@ fn composeOnboardingPickerRow(
 
     try row.appendSlice(alloc, ui_render.hint_style);
     const label = switch (source_row_index) {
-        0 => "   Welcome to fx",
+        0 => "   Welcome to Tetris",
         1 => "",
-        2 => "   fx can access AI models with an account, subscription, or API key.",
+        2 => "   Tetris can access AI models with an account, subscription, or API key.",
         3 => "   Choose a sign-in option below, or add your own API key.",
         4 => "",
         5 => "   You can change this anytime with /provider.",
@@ -944,7 +944,7 @@ pub fn composePickerStatusRowWithProvider(
         .settings => "no matching settings",
         .sessions => "no matching sessions",
         .fork => "nothing to fork yet",
-        .agents => "no fx instances open",
+        .agents => "no Tetris instances open",
         .mcp => "no MCP items available",
         .auth => "authentication actions unavailable",
     };
@@ -1554,7 +1554,7 @@ const picker_test_slash_specs = [_]command_specs.SlashSpec{
     .{ .kind = .mcp, .command = "/mcp", .help_entry = "/mcp [list|resource|prompt|add|remove]", .completion_description = "manage MCP servers, resources, and prompts", .presentation_category = .extensions, .has_args = true },
     .{ .kind = .permissions, .command = "/permissions", .help_entry = "/permissions [ask|auto|remember|revoke|full-access|reset]", .completion_description = "choose permission behavior", .presentation_category = .security, .has_args = true },
     .{ .kind = .credits, .command = "/credits", .aliases = &.{"/balance"}, .help_entry = "/credits (/balance)", .completion_description = "show gateway credits balance", .presentation_category = .account },
-    .{ .kind = .settings, .command = "/settings", .help_entry = "/settings", .completion_description = "configure fx", .presentation_category = .general },
+    .{ .kind = .settings, .command = "/settings", .help_entry = "/settings", .completion_description = "configure Tetris", .presentation_category = .general },
 };
 const picker_test_slash_registry = command_specs.SlashRegistry{ .commands = picker_test_slash_specs[0..] };
 
@@ -1767,7 +1767,7 @@ test "mixed slash completion uses skill relevance order" {
         .{
             .name = "metadata-first",
             .description = "zig workflow",
-            .path = "/tmp/.fx/skills/metadata-first",
+            .path = "/tmp/.tetris/skills/metadata-first",
             .source = .global_fx,
         },
         .{
@@ -2197,10 +2197,10 @@ test "auth onboarding composes the welcome copy and setup choices" {
         try screen.append(alloc, '\n');
     }
 
-    try std.testing.expect(std.mem.find(u8, screen.items, "Welcome to fx") != null);
-    try std.testing.expect(std.mem.find(u8, screen.items, "fx can access AI models with an account, subscription, or API key") != null);
+    try std.testing.expect(std.mem.find(u8, screen.items, "Welcome to Tetris") != null);
+    try std.testing.expect(std.mem.find(u8, screen.items, "Tetris can access AI models with an account, subscription, or API key") != null);
     try std.testing.expect(std.mem.find(u8, screen.items, "You can change this anytime with /provider.") != null);
-    try std.testing.expect(std.mem.find(u8, screen.items, "⚠︎ Note: fx is experimental and defaults to auto mode. \x1b]8;id=fx-onboarding;https://fx.sh/docs/stability\x1b\\\x1b[4mLearn more\x1b[24m\x1b]8;;\x1b\\") != null);
+    try std.testing.expect(std.mem.find(u8, screen.items, "⚠︎ Note: Tetris is experimental and defaults to auto mode. \x1b]8;id=tetris-onboarding;https://github.com/lianihossam-eng/Tetris\x1b\\\x1b[4mLearn more\x1b[24m\x1b]8;;\x1b\\") != null);
     try std.testing.expect(std.mem.find(u8, screen.items, "Learn more: https://") == null);
     try std.testing.expect(std.mem.find(u8, screen.items, "Sign in with Vercel") != null);
     try std.testing.expect(std.mem.find(u8, screen.items, "Add an API key") != null);
@@ -2208,7 +2208,7 @@ test "auth onboarding composes the welcome copy and setup choices" {
 
     var body_row = try composeAuthPickerRow(alloc, view, 2, authPickerRowCount(view), 100);
     defer body_row.deinit(alloc);
-    try std.testing.expect(std.mem.find(u8, body_row.items, "fx can access AI models") != null);
+    try std.testing.expect(std.mem.find(u8, body_row.items, "Tetris can access AI models") != null);
 
     var spacer_row = try composeAuthPickerRow(alloc, view, 6, authPickerRowCount(view), 100);
     defer spacer_row.deinit(alloc);
@@ -2232,7 +2232,7 @@ test "auth onboarding composes the welcome copy and setup choices" {
 
     var narrow_note = try composeAuthPickerRow(alloc, view, 12, authPickerRowCount(view), 58);
     defer narrow_note.deinit(alloc);
-    try std.testing.expect(std.mem.find(u8, narrow_note.items, "https://fx.sh/docs/stability") == null);
+    try std.testing.expect(std.mem.find(u8, narrow_note.items, "https://github.com/lianihossam-eng/Tetris") == null);
 
     var compact_screen: std.ArrayList(u8) = .empty;
     defer compact_screen.deinit(alloc);
@@ -2820,17 +2820,17 @@ test "partially visible auth picker shows a source window without duplicates" {
     var first_source = try composeAuthPickerRow(alloc, view, 2, 4, 80);
     defer first_source.deinit(alloc);
     try std.testing.expect(std.mem.find(u8, first_source.items, "AI_GATEWAY_API_KEY") != null);
-    try std.testing.expect(std.mem.find(u8, first_source.items, "fx login") == null);
+    try std.testing.expect(std.mem.find(u8, first_source.items, "tetris login") == null);
 
     var selected_source = try composeAuthPickerRow(alloc, view, 3, 4, 80);
     defer selected_source.deinit(alloc);
-    try std.testing.expect(std.mem.find(u8, selected_source.items, "fx login") != null);
+    try std.testing.expect(std.mem.find(u8, selected_source.items, "tetris login") != null);
 
     var scrolled_view = view;
     scrolled_view.selected_choice = .{ .source = .stored_key };
     var scrolled_first = try composeAuthPickerRow(alloc, scrolled_view, 2, 4, 80);
     defer scrolled_first.deinit(alloc);
-    try std.testing.expect(std.mem.find(u8, scrolled_first.items, "fx login") != null);
+    try std.testing.expect(std.mem.find(u8, scrolled_first.items, "tetris login") != null);
 
     var scrolled_selected = try composeAuthPickerRow(alloc, scrolled_view, 3, 4, 80);
     defer scrolled_selected.deinit(alloc);

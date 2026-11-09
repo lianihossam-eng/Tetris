@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Check what real fx runs did against V1Conversion.tla, with TLC.
+"""Check what real Tetris runs did against V1Conversion.tla, with TLC.
 
     check_conversion.py --request REQUEST.json --report DIR
     check_conversion.py --selftest

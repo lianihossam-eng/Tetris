@@ -2,8 +2,8 @@
 
 `src/ui/transcript/transcript_window.zig` is the core. With
 `FX_TLA_NEXT_TRANSCRIPT_WINDOW=1` the transcript runtime drives it through
-`src/ui/transcript/transcript_window_shell.zig`; "In fx" below says which of
-its effects fx runs.
+`src/ui/transcript/transcript_window_shell.zig`; "In Tetris" below says which of
+its effects Tetris runs.
 
 The architect questionnaire was skipped at the user's request: the design was
 worked out with the user directly and is recorded below as decisions D1 to D10.
@@ -38,7 +38,7 @@ current code.
   memory like any finished block. Checked before the window was wired in: the
   log holds everything else the main screen and Ctrl+O show.
 
-## In fx
+## In Tetris
 
 - One transcript entry is one block, keyed by its entry id. The shell walks
   the entries it has not reported at sync points (a turn summary or
@@ -47,7 +47,7 @@ current code.
   live block, a summary or cancellation ends the turn, anything else arrives
   final. A turn summary confirms the save: the app commits the turn to the
   log before it appends the summary.
-- fx runs `drop` through `dropEntriesAtomic`, the commit and rebase the
+- Tetris runs `drop` through `dropEntriesAtomic`, the commit and rebase the
   byte cap used before the window replaced it; it never removes a pinned
   entry. An entry with a row still on screen is held
   (`applyTranscriptWindowDrops`) until it scrolls into terminal history or a

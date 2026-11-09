@@ -1,6 +1,6 @@
 //! The host record: which sessions ran together in one fx
 //! process, so resuming one of them brings the others back. One JSON file
-//! per host in `~/.fx/hosts/`, named by the host's group id, listing the
+//! per host in `~/.tetris/hosts/`, named by the host's group id, listing the
 //! open instances' session ids in launch order, each with the agent profile
 //! its instance runs in. Session files never change.
 //!

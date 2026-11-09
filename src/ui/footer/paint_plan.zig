@@ -1048,10 +1048,10 @@ fn composeTranscriptViewerFooterFrame(
         .full => if (shell.transcript_archive_failed)
             "couldn't load older history · pgup to retry · esc close"
         else if (shell.transcript_archive_damaged)
-            // fx doctor names the session and the command that copies its
+            // tetris doctor names the session and the command that copies its
             // good turns; the scroll hint goes, as for a failed read, so it
             // fits 80 columns.
-            "part of older history couldn't be read · fx doctor · esc close"
+            "part of older history couldn't be read · tetris doctor · esc close"
         else
             "esc close · pgup/pgdn scroll",
         .inline_mode => unreachable,
@@ -1383,7 +1383,7 @@ test "transcript viewer footer says when older history could not load or is dama
         .{ .failed = true, .damaged = false, .text = "  couldn't load older history · pgup to retry · esc close" },
         // A failed read says to retry even when an earlier read hit damage.
         .{ .failed = true, .damaged = true, .text = "  couldn't load older history · pgup to retry · esc close" },
-        .{ .failed = false, .damaged = true, .text = "  part of older history couldn't be read · fx doctor · esc close" },
+        .{ .failed = false, .damaged = true, .text = "  part of older history couldn't be read · tetris doctor · esc close" },
         .{ .failed = false, .damaged = false, .text = "  esc close · pgup/pgdn scroll" },
     }) |case| {
         shell.transcript_archive_failed = case.failed;
@@ -1868,7 +1868,7 @@ test "approval footer composition hides cursor while rendering command prompt" {
     var controls_count: u8 = 0;
     for (frame.rows.items, 0..) |row, row_index| {
         saw_prompt = saw_prompt or std.mem.find(u8, row.text.items, "Would you like to run the following command?") != null;
-        saw_default_reason = saw_default_reason or std.mem.find(u8, row.text.items, "fx needs your approval before running this shell command") != null;
+        saw_default_reason = saw_default_reason or std.mem.find(u8, row.text.items, "Tetris needs your approval before running this shell command") != null;
         saw_selected_choice = saw_selected_choice or std.mem.find(u8, row.text.items, "1. Yes") != null;
         if (std.mem.find(u8, row.text.items, "Would you like to run the following command?") != null) {
             prompt_row = row_index;

@@ -14,7 +14,7 @@ const { readPermissionsPanel } = await targetModule("info-panel.ts");
 
 export type Made = { id: string; read(home: string, v2: boolean): Promise<string | null> };
 
-// Continues `id` in the profile at `home` with one prompt: the requests fx
+// Continues `id` in the profile at `home` with one prompt: the requests Tetris
 // sent the model, or null when it could not continue. Without --auto, the
 // fixture's full access runs every tool call unreviewed.
 async function continued(f: Fixture, id: string, home: string, v2: boolean, prompt: string) {
@@ -64,7 +64,7 @@ async function inApp(f: Fixture, home: string, v2: boolean, id: string, use: (ap
 async function rules(f: Fixture): Promise<Made> {
   plainReplies(f);
   const id = (await f.v1Ask(["CONV_FIRST"])).session_id;
-  // Relative, so the rule's display text, which fx shortens, keeps its name.
+  // Relative, so the rule's display text, which Tetris shortens, keeps its name.
   const command = "touch conv-allowed";
   await inApp(f, f.home, false, id, async app => {
     await app.sendText(`/permissions remember allow shell ${JSON.stringify({ action: "run", timeout_ms: 600_000, command })}`);
@@ -166,7 +166,7 @@ async function terminal(f: Fixture): Promise<Made> {
 // An open v1 turn with its unfinished reply in recovery.json. v1 logs a turn
 // only when it ends, except that compacting inside a turn logs the turn so
 // far, so the turn runs a tool after a reply long enough to compact, then its
-// next reply stalls on a stream timeout and fx is killed while it probes the
+// next reply stalls on a stream timeout and Tetris is killed while it probes the
 // connection. (A checkpoint whose turn is not in the log is dropped by the
 // next prompt.) Read back by what the next turn shows the model.
 async function unfinished(f: Fixture): Promise<Made> {
@@ -267,7 +267,7 @@ async function sideFile(f: Fixture): Promise<Made> {
 export const KINDS: Record<string, { name: string; make(f: Fixture): Promise<Made>; via: Via; shows: RegExp }> = {
   rules: { name: "saved-session permission rules", make: rules, via: "app", shows: /saved-session permission rules \(1\):\n\s+1 allow shell\.run touch .*conv-allowed/ },
   acp: { name: "ACP client prompt and tool identities", make: acpClient, via: "acp", shows: /CONV_CLIENT_PROMPT.*Read page/ },
-  terminal: { name: "hosted terminal state", make: terminal, via: "ask", shows: /ended when the fx process that started it exited/ },
+  terminal: { name: "hosted terminal state", make: terminal, via: "ask", shows: /ended when the Tetris process that started it exited/ },
   unfinished: { name: "unfinished reply in recovery.json", make: unfinished, via: "ask", shows: /CONV_PARTIAL_REPLY.*turn_aborted/ },
   side: { name: "tool-result side files and their handles", make: sideFile, via: "ask", shows: /total_bytes.*output_delta.*150001/ },
   midturn: { name: "cut of a compaction inside a turn", make: midTurn, via: "ask", shows: /CONV_LONG.*CONV_STEP_TWO.*CONV_TURN_DONE/ },

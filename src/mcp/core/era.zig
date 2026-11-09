@@ -912,7 +912,7 @@ test "over HTTP, 404 with -32601 to the probe is a modern server without discove
 test "writes the detection messages" {
     var out: std.Io.Writer.Allocating = .init(testing.allocator);
     defer out.deinit();
-    const client: Client = .{ .info = .{ .name = "fx", .version = "1.0.0" } };
+    const client: Client = .{ .info = .{ .name = "tetris", .version = "1.0.0" } };
     try writeDiscover(&out.writer, test_config, client, 0, 1);
     try out.writer.writeByte('\n');
     try writeInitialize(&out.writer, test_config, client, 2);
@@ -921,9 +921,9 @@ test "writes the detection messages" {
     try testing.expectEqualStrings(
         "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"server/discover\",\"params\":{\"_meta\":{\"progressToken\":1," ++
             "\"io.modelcontextprotocol/protocolVersion\":\"2026-07-28\",\"io.modelcontextprotocol/clientCapabilities\":{}," ++
-            "\"io.modelcontextprotocol/clientInfo\":{\"name\":\"fx\",\"version\":\"1.0.0\"}}}}\n" ++
+            "\"io.modelcontextprotocol/clientInfo\":{\"name\":\"tetris\",\"version\":\"1.0.0\"}}}}\n" ++
             "{\"jsonrpc\":\"2.0\",\"id\":2,\"method\":\"initialize\",\"params\":{\"_meta\":{\"progressToken\":2}," ++
-            "\"protocolVersion\":\"2025-11-25\",\"capabilities\":{},\"clientInfo\":{\"name\":\"fx\",\"version\":\"1.0.0\"}}}\n" ++
+            "\"protocolVersion\":\"2025-11-25\",\"capabilities\":{},\"clientInfo\":{\"name\":\"tetris\",\"version\":\"1.0.0\"}}}\n" ++
             "{\"jsonrpc\":\"2.0\",\"method\":\"notifications/initialized\",\"params\":{}}",
         out.written(),
     );

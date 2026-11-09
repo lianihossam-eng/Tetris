@@ -11094,7 +11094,7 @@ test "app_input_runtime active Ctrl-C cancels stream and arms exit window" {
     var rendered = try app.shell.prepareTranscriptSource(alloc, null);
     defer rendered.deinit(alloc);
     try std.testing.expect(std.mem.find(u8, rendered.bytes, "Cancelled") != null);
-    try std.testing.expect(std.mem.find(u8, rendered.bytes, "What can fx do differently?") != null);
+    try std.testing.expect(std.mem.find(u8, rendered.bytes, "What can Tetris do differently?") != null);
     try std.testing.expect(std.mem.find(u8, rendered.bytes, "System:") == null);
     try std.testing.expect(std.mem.find(u8, rendered.bytes, "Cancelling") == null);
     try std.testing.expectEqual(@as(usize, 0), app.notice_write_count);
@@ -11119,7 +11119,7 @@ test "automatic compaction cancellation is silent only while compaction is activ
         try std.testing.expect(app.agent().worker.cancel_requested);
         var rendered = try app.shell.prepareTranscriptSource(alloc, null);
         defer rendered.deinit(alloc);
-        try std.testing.expectEqual(settled, std.mem.find(u8, rendered.bytes, "What can fx do differently?") != null);
+        try std.testing.expectEqual(settled, std.mem.find(u8, rendered.bytes, "What can Tetris do differently?") != null);
         try std.testing.expectEqualStrings("", app.notice_body.items);
     }
 }
@@ -11151,7 +11151,7 @@ test "app_input_runtime active tool Escape presents final cancellation immediate
     var rendered = try app.shell.prepareTranscriptSource(alloc, null);
     defer rendered.deinit(alloc);
     try std.testing.expect(std.mem.find(u8, rendered.bytes, "Cancelled") != null);
-    try std.testing.expect(std.mem.find(u8, rendered.bytes, "What can fx do differently?") != null);
+    try std.testing.expect(std.mem.find(u8, rendered.bytes, "What can Tetris do differently?") != null);
     try std.testing.expect(std.mem.find(u8, rendered.bytes, "System:") == null);
     try std.testing.expect(std.mem.find(u8, rendered.bytes, "Cancelling") == null);
     try std.testing.expectEqual(@as(usize, 1), app.shell.activeToolActivityCount());
@@ -11174,7 +11174,7 @@ test "app_input_runtime second Ctrl-C after active cancellation exits without du
     defer rendered.deinit(alloc);
     try std.testing.expectEqual(
         @as(usize, 1),
-        std.mem.count(u8, rendered.bytes, "What can fx do differently?"),
+        std.mem.count(u8, rendered.bytes, "What can Tetris do differently?"),
     );
     try std.testing.expect(std.mem.find(u8, rendered.bytes, "System:") == null);
 }

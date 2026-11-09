@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "id": "craft",
+  "name": "Craft Anything review",
+  "description": "Use the installed Craft Anything app for read-only deep investigation and evidence reports.",
+  "slot": "craft",
+  "tools": ["craft_chat", "craft_report"],
+  "requires": ["workspace-files"],
+  "conflicts": []
+}

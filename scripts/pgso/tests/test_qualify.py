@@ -223,7 +223,7 @@ class PgsoQualificationTests(unittest.TestCase):
         control = self.root / "control" / "fx"
         candidate = self.root / "candidate" / "fx"
         hyperfine = self.root / "tools" / "hyperfine"
-        canonical = self.root / "zig-out" / "bin" / "fx"
+        canonical = self.root / "zig-out" / "bin" / "tetris"
         for path, contents in (
             (control, b"control"),
             (candidate, b"candidate"),

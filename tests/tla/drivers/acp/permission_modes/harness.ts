@@ -1,7 +1,7 @@
 // Shared runtime bridge for the permission-mode bundle: an ACP stdio client
-// that declines permission requests, an isolated fx home and fake Gateway,
+// that declines permission requests, an isolated Tetris home and fake Gateway,
 // the client-visible projection of the mode option, the profile's saved
-// mode, and a prompt probe that shows how fx enforced the current mode.
+// mode, and a prompt probe that shows how Tetris enforced the current mode.
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -63,7 +63,7 @@ export function viewOf(result: any): View | null {
 
 /// The profile's saved permission mode, in the CLI's names.
 export function storedMode(home: string): string {
-  const path = join(home, ".fx", "settings.json");
+  const path = join(home, ".tetris", "settings.json");
   if (!existsSync(path)) return "unset";
   let raw: unknown;
   try {
@@ -120,15 +120,15 @@ export class Acp {
   private async readLine(): Promise<any> {
     const buffered = this.lines.shift();
     if (buffered) return JSON.parse(buffered);
-    if (this.closed) throw new Error(`fx acp exited: ${this.stderr.slice(-400)}`);
+    if (this.closed) throw new Error(`tetris acp exited: ${this.stderr.slice(-400)}`);
     const line = await new Promise<string>((resolveLine, reject) => {
-      const timer = setTimeout(() => reject(new Error(`fx acp read timeout: ${this.stderr.slice(-400)}`)), 30_000);
+      const timer = setTimeout(() => reject(new Error(`tetris acp read timeout: ${this.stderr.slice(-400)}`)), 30_000);
       this.waiters.push((value) => {
         clearTimeout(timer);
         resolveLine(value);
       });
     });
-    if (!line) throw new Error(`fx acp exited: ${this.stderr.slice(-400)}`);
+    if (!line) throw new Error(`tetris acp exited: ${this.stderr.slice(-400)}`);
     return JSON.parse(line);
   }
 
@@ -145,7 +145,7 @@ export class Acp {
       const message = await this.readLine();
       if ("method" in message && "id" in message) {
         // Agent-to-client request. Permission requests are declined with the
-        // reject option fx offers, so an "ask" turn never runs the tool.
+        // reject option Tetris offers, so an "ask" turn never runs the tool.
         if (message.method === "session/request_permission") {
           this.permissionRequests += 1;
           const options: any[] = message.params?.options ?? [];
@@ -178,7 +178,7 @@ export class Acp {
   }
 }
 
-// -------------------------------------------------------------- fx fixture --
+// -------------------------------------------------------------- Tetris fixture --
 
 type Helpers = {
   startDynamicFakeGateway: (respond: (body: string) => Response, options: object) => any;
@@ -193,10 +193,10 @@ export async function loadHelpers(worktree: string): Promise<Helpers> {
 // Process overrides that would mask what the profile and ACP decide.
 const STRIPPED_ENV = [
   "VERCEL_OIDC_TOKEN", "FX_PROVIDER", "FX_MODEL", "FX_FAST", "FX_ULTRAFAST",
-  "FX_PERMISSION_MODE", "FX_DEBUG_RECORD",
+  "FX_PERMISSION_MODE", "FX_DEBUG_RECORD", "TETRIS_HOME",
 ];
 
-/// An isolated fx home, workspace and fake Gateway for one run. `profile` is
+/// An isolated Tetris home, workspace and fake Gateway for one run. `profile` is
 /// the saved permission_mode the run starts from ("unset" leaves it out).
 export class Fixture {
   readonly root: string;
@@ -214,11 +214,11 @@ export class Fixture {
     this.root = realpathSync(mkdtempSync(join(tmpdir(), "fx-acp-modes-")));
     this.home = join(this.root, "home");
     this.workspace = join(this.root, "workspace");
-    mkdirSync(join(this.home, ".fx"), { recursive: true, mode: 0o700 });
+    mkdirSync(join(this.home, ".tetris"), { recursive: true, mode: 0o700 });
     mkdirSync(this.workspace, { recursive: true, mode: 0o700 });
     const settings: Record<string, unknown> = { session_titles: false };
     if (profile !== "unset") settings.permission_mode = profile;
-    writeFileSync(join(this.home, ".fx", "settings.json"), `${JSON.stringify(settings)}\n`, { mode: 0o600 });
+    writeFileSync(join(this.home, ".tetris", "settings.json"), `${JSON.stringify(settings)}\n`, { mode: 0o600 });
 
     this.gateway = helpers.startDynamicFakeGateway((body: string) => {
       const probe = this.probe;
@@ -256,7 +256,7 @@ export class Fixture {
   }
 
   async start(): Promise<Acp> {
-    const fxBin = join(this.worktree, "zig-out", "bin", "fx");
+    const fxBin = join(this.worktree, "zig-out", "bin", "tetris");
     const processNumber = this.processes.length + 1;
     this.acp = new Acp(
       Bun.spawn([fxBin, "acp"], { cwd: this.workspace, env: this.env(), stdin: "pipe", stdout: "pipe", stderr: "pipe" }),
@@ -272,8 +272,8 @@ export class Fixture {
   }
 
   /// Runs one turn whose model asks to write a marker file with the shell
-  /// tool, and reports how fx handled it: "asked" (a permission request
-  /// reached the client), "reviewed" (fx's automatic reviewer was called),
+  /// tool, and reports how Tetris handled it: "asked" (a permission request
+  /// reached the client), "reviewed" (Tetris's automatic reviewer was called),
   /// or "direct", plus whether the command ran.
   async probePrompt(sessionId: string): Promise<{ ok: boolean; enforce: string; detail: object }> {
     const acp = this.acp!;
@@ -300,10 +300,10 @@ export class Fixture {
     return storedMode(this.home);
   }
 
-  /// Runs `fx status --json` in the workspace and projects its modes the way
+  /// Runs `tetris status --json` in the workspace and projects its modes the way
   /// a client would read them before a session exists.
   status(): { ok: boolean; view: View | null; detail: object } {
-    const fxBin = join(this.worktree, "zig-out", "bin", "fx");
+    const fxBin = join(this.worktree, "zig-out", "bin", "tetris");
     const run = Bun.spawnSync([fxBin, "status", "--json"], { cwd: this.workspace, env: this.env(), stdout: "pipe", stderr: "pipe" });
     const text = new TextDecoder().decode(run.stdout).trim();
     let parsed: any = null;
@@ -322,11 +322,11 @@ export class Fixture {
     return { ok, view, detail: { exit: run.exitCode, stderr: new TextDecoder().decode(run.stderr).slice(0, 300), permission_mode: parsed?.permission_mode ?? null } };
   }
 
-  /// Saves a mode the way another fx process would (the CLI's /permissions
-  /// or another ACP process). Older fx saved full access as "yolo", which fx
+  /// Saves a mode the way another Tetris process would (the CLI's /permissions
+  /// or another ACP process). Older fx saved full access as "yolo", which Tetris
   /// still reads.
   saveFromOtherProcess(mode: string) {
-    const path = join(this.home, ".fx", "settings.json");
+    const path = join(this.home, ".tetris", "settings.json");
     const settings = JSON.parse(readFileSync(path, "utf8"));
     settings.permission_mode = mode === "full-access" ? "yolo" : mode;
     writeFileSync(path, `${JSON.stringify(settings)}\n`, { mode: 0o600 });

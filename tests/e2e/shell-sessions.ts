@@ -38,7 +38,7 @@ export class Profile {
     this.home = join(this.root, "home");
     this.workspace = join(this.root, `workspace-${label}`);
     this.wiring = join(this.root, "wiring.log");
-    mkdirSync(join(this.home, ".fx"), { recursive: true, mode: 0o700 });
+    mkdirSync(join(this.home, ".tetris"), { recursive: true, mode: 0o700 });
     mkdirSync(this.workspace);
     this.gateway = startDynamicFakeGateway((body) => {
       const prompt = [...this.answers.keys(), ...this.held.keys(), ...this.scripted.keys()]
@@ -52,7 +52,7 @@ export class Profile {
     });
   }
 
-  /// Puts a file where `~/.fx/sessions` belongs, so no process started until
+  /// Puts a file where `~/.tetris/sessions` belongs, so no process started until
   /// `unblockStore` can create or open a session. Saved sessions wait aside
   /// and come back unchanged.
   blockStore() {
@@ -70,7 +70,7 @@ export class Profile {
   }
 
   private get sessions(): string {
-    return join(this.home, ".fx", "sessions");
+    return join(this.home, ".tetris", "sessions");
   }
 
   private get aside(): string {
@@ -87,9 +87,9 @@ export class Profile {
     this.scripted.set(prompt, [...replies]);
   }
 
-  /// Writes the profile's `~/.fx/settings.json`.
+  /// Writes the profile's `~/.tetris/settings.json`.
   settings(value: object) {
-    writeFileSync(join(this.home, ".fx", "settings.json"), JSON.stringify(value));
+    writeFileSync(join(this.home, ".tetris", "settings.json"), JSON.stringify(value));
   }
 
   /// `prompt`'s reply waits until `release` sends `text`.
@@ -162,7 +162,7 @@ export class Profile {
     return saved;
   }
 
-  /// Whether a later fx opens session `id`, as `fx --resume <id>` would.
+  /// Whether a later fx opens session `id`, as `tetris --resume <id>` would.
   async resumable(id: string): Promise<boolean> {
     const result = Bun.spawnSync([this.bin, "session", "--id", id, "--json"], {
       cwd: this.workspace,
@@ -326,18 +326,18 @@ export class Shell {
   async quit(): Promise<string | null> {
     await this.session.sendKeys("C-u");
     await this.session.sendText("/quit");
-    await this.waitUntil(() => this.session.paneStatus().dead, "fx to exit");
+    await this.waitUntil(() => this.session.paneStatus().dead, "tetris to exit");
     const text = await this.session.captureFullScrollback();
-    const named = [...text.matchAll(/^Resume this session with:\nfx --resume (\S+)$/gm)].map((match) => match[1]!);
+    const named = [...text.matchAll(/^Resume this session with:\ntetris --resume (\S+)$/gm)].map((match) => match[1]!);
     if (named.length > 1) throw new Error(`the exit lines named ${named.length} sessions: ${named}`);
-    if (named.length === 0 && text.includes("Resume this session with:")) throw new Error(`an exit hint fx printed did not parse:\n${text}`);
+    if (named.length === 0 && text.includes("Resume this session with:")) throw new Error(`an exit hint tetris printed did not parse:\n${text}`);
     return named[0] ?? null;
   }
 
   /// Kills the process without a chance to write anything.
   async crash() {
     process.kill(this.pid, "SIGKILL");
-    await this.waitUntil(() => this.session.paneStatus().dead, "fx to die");
+    await this.waitUntil(() => this.session.paneStatus().dead, "tetris to die");
   }
 
   /// Every panel titled `title` this process painted, read through fx's

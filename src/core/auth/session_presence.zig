@@ -195,9 +195,9 @@ test "a private sign-in file is present, and a fifo in its place is unavailable 
     const alloc = std.testing.allocator;
     var tmp = std.testing.tmpDir(.{});
     defer tmp.cleanup();
-    try tmp.dir.createDirPath(std.testing.io, ".fx");
+    try tmp.dir.createDirPath(std.testing.io, ".tetris");
     {
-        var file = try tmp.dir.createFile(std.testing.io, ".fx/auth.json", .{
+        var file = try tmp.dir.createFile(std.testing.io, ".tetris/auth.json", .{
             .permissions = std.Io.File.Permissions.fromMode(0o600),
         });
         defer file.close(std.testing.io);
@@ -208,9 +208,9 @@ test "a private sign-in file is present, and a fifo in its place is unavailable 
     try std.testing.expectEqual(host.SecretStorePresence.present, profileFileFromHome(home, "auth.json", 1024));
 
     // Opening a fifo for reading waits for a writer that never comes.
-    try tmp.dir.deleteFile(std.testing.io, ".fx/auth.json");
+    try tmp.dir.deleteFile(std.testing.io, ".tetris/auth.json");
     var path_buf: [std.Io.Dir.max_path_bytes]u8 = undefined;
-    const fifo = try std.mem.printSentinel(&path_buf, "{s}/.fx/auth.json", .{home}, 0);
+    const fifo = try std.mem.printSentinel(&path_buf, "{s}/.tetris/auth.json", .{home}, 0);
     if (mkfifo(fifo, 0o600) != 0) return error.SkipZigTest;
     try std.testing.expectEqual(host.SecretStorePresence.unavailable, profileFileFromHome(home, "auth.json", 1024));
 }

@@ -84,9 +84,9 @@ process.exit(Number(process.env.FX_TEST_EXIT ?? "0"));\n`, { mode: 0o755 });
     expect(createTrialOrder(2)).toEqual(["baseline", "candidate"]);
   });
 
-  test("rejects bare fx and relative binary paths", () => {
-    expect(() => requireAbsoluteExecutableBinary("fx", "baseline")).toThrow(/absolute path/);
-    expect(() => requireAbsoluteExecutableBinary("./zig-out/bin/fx", "candidate")).toThrow(/absolute path/);
+  test("rejects bare tetris and relative binary paths", () => {
+    expect(() => requireAbsoluteExecutableBinary("tetris", "baseline")).toThrow(/absolute path/);
+    expect(() => requireAbsoluteExecutableBinary("./zig-out/bin/tetris", "candidate")).toThrow(/absolute path/);
   });
 
   test("redacts credential-looking values", () => {

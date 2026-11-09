@@ -495,7 +495,7 @@ export function writeFixture(root: string): { repo: string; home: string; tracke
   git(repo, "-c", "user.email=eval@example.com", "-c", "user.name=eval", "add", "-A");
   git(repo, "-c", "user.email=eval@example.com", "-c", "user.name=eval", "commit", "-q", "-m", "fixture");
 
-  const fx = join(home, ".fx");
+  const fx = join(home, ".tetris");
   mkdirSync(join(fx, "skills", "release-notes"), { recursive: true, mode: 0o700 });
   writeFileSync(join(fx, "settings.json"), JSON.stringify({ permission_mode: "full-access" }) + "\n", { mode: 0o600 });
   writeFileSync(join(fx, "skills", "release-notes", "SKILL.md"), RELEASE_NOTES_SKILL);
@@ -829,7 +829,7 @@ export const TASKS: Task[] = [
       `Start a static file server for this repository with \`python3 -m http.server ${port}\` so that it keeps running after you finish, and confirm it serves README.md.`,
     check: (c) => {
       const probe = spawnSync("curl", ["-sf", "--max-time", "3", `http://127.0.0.1:${c.port}/README.md`], { encoding: "utf8" });
-      return ok(probe.status === 0 && probe.stdout.includes("ledger"), "server still running after fx exits");
+      return ok(probe.status === 0 && probe.stdout.includes("ledger"), "server still running after tetris exits");
     },
     cleanup: ({ port }) => killPort(port),
   },
@@ -906,7 +906,7 @@ export const TASKS: Task[] = [
     tool: "install_skill",
     prompt: () => "Install the skill in ./vendor/skills/poem-writer.",
     check: (c) => {
-      const found = spawnSync("sh", ["-c", `find "${c.home}/.fx" -path '*poem-writer*' -name SKILL.md | head -1`], { encoding: "utf8" }).stdout.trim();
+      const found = spawnSync("sh", ["-c", `find "${c.home}/.tetris" -path '*poem-writer*' -name SKILL.md | head -1`], { encoding: "utf8" }).stdout.trim();
       return ok(found.length > 0 && used(c, "install_skill").some((s) => !s.error), "skill installed");
     },
   },
@@ -1003,6 +1003,8 @@ export async function runOne(arm: Arm, model: string, task: Task, trial: number,
     FX_GATEWAY_BASE_URL: proxy.url,
     FX_GATEWAY_CHAT_URL: `${proxy.url}/v4/ai/language-model`,
   };
+  // The task profile lives at `home`; an ambient TETRIS_HOME must not move it.
+  delete env.TETRIS_HOME;
   const askArgs = ["ask", "--full-access", "--json", ...(noSave ? ["--no-save"] : []), "--timeout", String(timeoutSec), "--", prompt];
   const child = spawn(arm.bin, askArgs, {
     cwd: repo,
@@ -1197,7 +1199,7 @@ export async function measureTokens(
 
 // ---------------------------------------------------------------------------
 // Probes: one model step from a captured interactive request, for tools that
-// `fx ask` cannot run, such as ask_user_question.
+// `tetris ask` cannot run, such as ask_user_question.
 
 export interface ProbeCall {
   name: string;

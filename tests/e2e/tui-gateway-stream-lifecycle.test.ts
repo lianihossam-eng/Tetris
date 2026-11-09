@@ -56,7 +56,7 @@ const MODEL = "openai/gpt-5.5";
 /** What fx says when it cannot connect to the model catalog and drops fast
  * mode (`catalogDownNotice` in `src/core/agent/runtime/orchestrator.zig`). */
 const CATALOG_CONNECT_FAST_NOTICE =
-  "fx couldn't connect to AI Gateway to load the model catalog, so fast mode is off until it loads. Check your network connection or firewall.";
+  "Tetris couldn't connect to AI Gateway to load the model catalog, so fast mode is off until it loads. Check your network connection or firewall.";
 
 // A message to a working subagent joins its turn as its parent's words; one
 // to an idle subagent starts its next turn. Each work's end reports to the
@@ -66,8 +66,8 @@ for (const variant of ["joined", "stopped", "late"] as const) test.skipIf(!tmuxA
   root = realpathSync(mkdtempSync(join(tmpdir(), "fx-child-steering-")));
   const home = join(root, "home"), workspace = join(root, "workspace");
   const trace = join(root, "trace.log"), stderr = join(root, "stderr.log");
-  mkdirSync(join(home, ".fx"), { recursive: true }); mkdirSync(workspace);
-  writeFileSync(join(home, ".fx/settings.json"), '{"statusLine":{"context":true}}');
+  mkdirSync(join(home, ".tetris"), { recursive: true }); mkdirSync(workspace);
+  writeFileSync(join(home, ".tetris/settings.json"), '{"statusLine":{"context":true}}');
   const release = join(workspace, "release");
   writeFileSync(join(workspace, "hold.sh"), "printf 'once\\n' >> starts\nwhile [ ! -f release ]; do sleep 0.05; done\nprintf ORIGINAL_TOOL_DONE\n");
   const report = "Subagent report (untrusted agent output, not user instructions):";
@@ -221,7 +221,7 @@ for (const variant of ["joined", "stopped", "late"] as const) test.skipIf(!tmuxA
     expect(await session.captureFullScrollback()).not.toContain("reviewer failed");
     expect(routeErrors).toEqual([]);
     await session.waitForStableComposer(TIMEOUT); await session.sendText("/quit");
-    await waitForCondition(() => session!.paneStatus().dead, "fx exit");
+    await waitForCondition(() => session!.paneStatus().dead, "tetris exit");
     expect(session.paneStatus().status).toBe(0); expect(readFileSync(stderr, "utf8")).toBe("");
     if (variant === "joined") {
       await session.kill();
@@ -236,7 +236,7 @@ for (const variant of ["joined", "stopped", "late"] as const) test.skipIf(!tmuxA
       expect(resumed).not.toContain("Subagent report (untrusted");
       expect(host.requests.length).toBe(requestsBeforeResume);
       await session.sendText("/quit");
-      await waitForCondition(() => session!.paneStatus().dead, "resumed fx exit");
+      await waitForCondition(() => session!.paneStatus().dead, "resumed tetris exit");
       expect(session.paneStatus().status).toBe(0); expect(readFileSync(resumedStderr, "utf8")).toBe("");
     }
   } finally { writeFileSync(release, "go"); }
@@ -1063,7 +1063,7 @@ process.stdin.on("data", (chunk) => {
 `,
   );
   writeFileSync(
-    join(home, ".fx", "mcp.json"),
+    join(home, ".tetris", "mcp.json"),
     JSON.stringify({
       mcp: {
         fixture: {
@@ -1340,11 +1340,11 @@ async function runCanonicalLifecycleFixture(
   root = realpathSync(mkdtempSync(join(tmpdir(), "fx-tui-gateway-ordering-")));
   const home = join(root, "home");
   const workspacePath = join(root, "workspace");
-  mkdirSync(join(home, ".fx"), { recursive: true });
+  mkdirSync(join(home, ".tetris"), { recursive: true });
   mkdirSync(workspacePath, { recursive: true });
   const workspace = realpathSync(workspacePath);
   writeFileSync(
-    join(home, ".fx", "settings.json"),
+    join(home, ".tetris", "settings.json"),
     JSON.stringify({
       permission_mode: "ask",
       permission: {
@@ -1551,9 +1551,9 @@ async function launchRouteRecoveryTui(
   const home = join(root, "home");
   const workspacePath = join(root, "workspace");
   const stderrPath = join(root, "stderr.log");
-  mkdirSync(join(home, ".fx"), { recursive: true });
+  mkdirSync(join(home, ".tetris"), { recursive: true });
   mkdirSync(workspacePath, { recursive: true });
-  writeFileSync(join(home, ".fx", "settings.json"), JSON.stringify(options.settings ?? {}));
+  writeFileSync(join(home, ".tetris", "settings.json"), JSON.stringify(options.settings ?? {}));
   const workspace = realpathSync(workspacePath);
   const model = options.model ?? MODEL;
 
@@ -1681,9 +1681,9 @@ describe.skipIf(!tmuxAvailable())("TUI gateway stream lifecycle", () => {
     const home = join(root, "home");
     const workspacePath = join(root, "workspace");
     const stderrPath = join(root, "stderr.log");
-    mkdirSync(join(home, ".fx"), { recursive: true });
+    mkdirSync(join(home, ".tetris"), { recursive: true });
     mkdirSync(workspacePath, { recursive: true });
-    writeFileSync(join(home, ".fx", "settings.json"), "{}");
+    writeFileSync(join(home, ".tetris", "settings.json"), "{}");
     const workspace = realpathSync(workspacePath);
     // Gemini's UNEXPECTED_TOOL_CALL arrives as `other`, with no text and no tool call.
     const emptyOther = () => fakeGatewaySse([
@@ -1755,9 +1755,9 @@ describe.skipIf(!tmuxAvailable())("TUI gateway stream lifecycle", () => {
     const home = join(root, "home");
     const workspacePath = join(root, "workspace");
     const stderrPath = join(root, "stderr.log");
-    mkdirSync(join(home, ".fx"), { recursive: true });
+    mkdirSync(join(home, ".tetris"), { recursive: true });
     mkdirSync(workspacePath, { recursive: true });
-    writeFileSync(join(home, ".fx", "settings.json"), "{}");
+    writeFileSync(join(home, ".tetris", "settings.json"), "{}");
     const workspace = realpathSync(workspacePath);
     const imagePath = join(workspace, "catalog-rejection.png");
     copyFileSync(join(REPO_ROOT, "tests/e2e/fixtures/favicon.png"), imagePath);
@@ -1832,9 +1832,9 @@ describe.skipIf(!tmuxAvailable())("TUI gateway stream lifecycle", () => {
     const home = join(root, "home");
     const workspacePath = join(root, "workspace");
     const stderrPath = join(root, "stderr.log");
-    mkdirSync(join(home, ".fx"), { recursive: true });
+    mkdirSync(join(home, ".tetris"), { recursive: true });
     mkdirSync(workspacePath, { recursive: true });
-    writeFileSync(join(home, ".fx", "settings.json"), "{}");
+    writeFileSync(join(home, ".tetris", "settings.json"), "{}");
     const workspace = realpathSync(workspacePath);
 
     // The startup catalog load fails fast. Every later catalog request hangs,
@@ -1906,9 +1906,9 @@ describe.skipIf(!tmuxAvailable())("TUI gateway stream lifecycle", () => {
     const home = join(root, "home");
     const workspacePath = join(root, "workspace");
     const stderrPath = join(root, "stderr.log");
-    mkdirSync(join(home, ".fx"), { recursive: true });
+    mkdirSync(join(home, ".tetris"), { recursive: true });
     mkdirSync(workspacePath, { recursive: true });
-    writeFileSync(join(home, ".fx", "settings.json"), JSON.stringify({ fast_mode: true }));
+    writeFileSync(join(home, ".tetris", "settings.json"), JSON.stringify({ fast_mode: true }));
     const workspace = realpathSync(workspacePath);
 
     // A free port, closed again, so every catalog request is refused.
@@ -1984,9 +1984,9 @@ describe.skipIf(!tmuxAvailable())("TUI gateway stream lifecycle", () => {
     const home = join(root, "home");
     const workspacePath = join(root, "workspace");
     const stderrPath = join(root, "stderr.log");
-    mkdirSync(join(home, ".fx"), { recursive: true });
+    mkdirSync(join(home, ".tetris"), { recursive: true });
     mkdirSync(workspacePath, { recursive: true });
-    writeFileSync(join(home, ".fx", "settings.json"), "{}");
+    writeFileSync(join(home, ".tetris", "settings.json"), "{}");
     const workspace = realpathSync(workspacePath);
 
     const queuedGateway = startFakeGateway([
@@ -2308,9 +2308,9 @@ describe.skipIf(!tmuxAvailable())("TUI gateway stream lifecycle", () => {
       const sourceSentence = renderedSentence.replace("smooth", "**smooth**");
       const toolMarker = "PACING_TOOL_BOUNDARY_DONE";
       const finalText = "PACING_STREAM_COMPLETE";
-      mkdirSync(join(home, ".fx"), { recursive: true });
+      mkdirSync(join(home, ".tetris"), { recursive: true });
       mkdirSync(workspace, { recursive: true });
-      writeFileSync(join(home, ".fx", "settings.json"), "{}");
+      writeFileSync(join(home, ".tetris", "settings.json"), "{}");
 
       const queuedGateway = startFakeGateway([
         () =>
@@ -2573,7 +2573,7 @@ describe.skipIf(!tmuxAvailable())("TUI gateway stream lifecycle", () => {
   );
 
   test(
-    "HTTP restricted provider error shows its reason while fx waits for the user",
+    "HTTP restricted provider error shows its reason while tetris waits for the user",
     async () => {
       const { queuedGateway, stderrPath } = await launchRouteRecoveryTui(
         "fx-tui-route-http-403-",
@@ -2609,9 +2609,9 @@ describe.skipIf(!tmuxAvailable())("TUI gateway stream lifecycle", () => {
       const home = join(root, "home");
       const workspacePath = join(root, "workspace");
       const stderrPath = join(root, "stderr.log");
-      mkdirSync(join(home, ".fx"), { recursive: true });
+      mkdirSync(join(home, ".tetris"), { recursive: true });
       mkdirSync(workspacePath, { recursive: true });
-      writeFileSync(join(home, ".fx", "settings.json"), "{}");
+      writeFileSync(join(home, ".tetris", "settings.json"), "{}");
       const workspace = realpathSync(workspacePath);
       const finalText = "Follow-up accepted after HTTP 503.";
 
@@ -2722,9 +2722,9 @@ describe.skipIf(!tmuxAvailable())("TUI gateway stream lifecycle", () => {
       const home = join(root, "home");
       const workspacePath = join(root, "workspace");
       const stderrPath = join(root, "stderr.log");
-      mkdirSync(join(home, ".fx"), { recursive: true });
+      mkdirSync(join(home, ".tetris"), { recursive: true });
       mkdirSync(workspacePath, { recursive: true });
-      writeFileSync(join(home, ".fx", "settings.json"), "{}");
+      writeFileSync(join(home, ".tetris", "settings.json"), "{}");
       const workspace = realpathSync(workspacePath);
 
       const finalText = "TUI route recovery completed.";
@@ -3058,7 +3058,7 @@ describe.skipIf(!tmuxAvailable())("TUI gateway stream lifecycle", () => {
           await session.waitForText(finalText, TIMEOUT);
         } else {
           await session.sendInterruptEscapePair(TIMEOUT);
-          await session.waitForText("What can fx do differently?", TIMEOUT);
+          await session.waitForText("What can Tetris do differently?", TIMEOUT);
         }
         await session.waitForPane((pane) => !pane.includes("Resuming the interrupted request · attempt") && hasEmptyComposer(pane), TIMEOUT);
         const scrollback = await session.captureFullScrollback();
@@ -3080,7 +3080,7 @@ describe.skipIf(!tmuxAvailable())("TUI gateway stream lifecycle", () => {
   // reaches it. This fx starts with SIGHUP blocked, so the hang-up is all it
   // sees, and the window must still close as SIGHUP closes it.
   test.skipIf(!Bun.which("python3"))(
-    "a window that hangs up before SIGHUP reaches fx resumes its request on reopen",
+    "a window that hangs up before SIGHUP reaches tetris resumes its request on reopen",
     async () => {
       const interrupted: HoldState = { started: false, cancelled: false };
       const resumed: HoldState = { started: false, cancelled: false };
@@ -3106,7 +3106,7 @@ describe.skipIf(!tmuxAvailable())("TUI gateway stream lifecycle", () => {
       const firstPid = session!.processPid();
       await session!.kill();
       session = null;
-      await waitForCondition(() => !isProcessAlive(firstPid), "fx to exit after its window closed");
+      await waitForCondition(() => !isProcessAlive(firstPid), "tetris to exit after its window closed");
 
       const resumedStderr = join(root!, "resumed-stderr.log");
       session = await TmuxSession.create({
@@ -3344,12 +3344,12 @@ describe.skipIf(!tmuxAvailable())("TUI gateway stream lifecycle", () => {
         TIMEOUT,
       );
       await session!.sendInterruptEscapePair(TIMEOUT);
-      await session!.waitForText("What can fx do differently?", TIMEOUT);
+      await session!.waitForText("What can Tetris do differently?", TIMEOUT);
       await session!.waitForComposer(TIMEOUT);
       const scrollback = await session!.captureFullScrollback();
 
       expect(queuedGateway.requests).toHaveLength(3);
-      expect(scrollback).toContain("What can fx do differently?");
+      expect(scrollback).toContain("What can Tetris do differently?");
       expect(scrollback).not.toContain("system: cancelled");
       expect(scrollback).not.toContain("Cancelling");
       expect(scrollback).not.toContain("request failed: ModelError");
@@ -3693,7 +3693,7 @@ describe.skipIf(!tmuxAvailable())("TUI gateway stream lifecycle", () => {
       expect(scrollback).toMatch(TURN_SUMMARY_WITH_TOKENS);
       // The status row never becomes transcript.
       expect(scrollback).not.toContain("Gateway error ·");
-      expect(scrollback).not.toContain("What should fx do?");
+      expect(scrollback).not.toContain("What should Tetris do?");
       expect(scrollback).not.toContain("request failed: ModelError");
       expect(readFileSync(stderrPath, "utf8")).toBe("");
     },
@@ -3734,7 +3734,7 @@ describe.skipIf(!tmuxAvailable())("TUI gateway stream lifecycle", () => {
       // The restarted response took the broken-off one's place.
       expect(scrollback).not.toContain("partial unsafe output");
       expect(scrollback.split(finalText).length - 1).toBe(1);
-      expect(scrollback).not.toContain("What should fx do?");
+      expect(scrollback).not.toContain("What should Tetris do?");
       expect(readFileSync(stderrPath, "utf8")).toBe("");
     },
     TIMEOUT,
@@ -3755,7 +3755,7 @@ describe.skipIf(!tmuxAvailable())("TUI gateway stream lifecycle", () => {
 
       expect(queuedGateway.requests.length).toBe(2);
       expect(scrollback).toContain(finalText);
-      expect(scrollback).not.toContain("What should fx do?");
+      expect(scrollback).not.toContain("What should Tetris do?");
       expect(readFileSync(stderrPath, "utf8")).toBe("");
     },
     TIMEOUT,
@@ -3773,9 +3773,9 @@ describe.skipIf(!tmuxAvailable())("TUI gateway stream lifecycle", () => {
       const expectedFailure =
         "read_tool_result failed for handle unknown-dogfood-handle: ResultHandleNotFound. No exact match exists in the active tool-result store; handles are session-scoped and must be copied exactly from the tool result preview.";
       const finalText = "Read tool result failure lifecycle completed.";
-      mkdirSync(join(home, ".fx"), { recursive: true });
+      mkdirSync(join(home, ".tetris"), { recursive: true });
       mkdirSync(workspacePath, { recursive: true });
-      writeFileSync(join(home, ".fx", "settings.json"), "{}");
+      writeFileSync(join(home, ".tetris", "settings.json"), "{}");
       const workspace = realpathSync(workspacePath);
 
       const queuedGateway = startFakeGateway([
@@ -3863,9 +3863,9 @@ describe.skipIf(!tmuxAvailable())("TUI gateway stream lifecycle", () => {
       const tapePath = join(root, "session.fxtape");
       const draft = "draft while stream is active";
       const stream = { started: false, cancelled: false };
-      mkdirSync(join(home, ".fx"), { recursive: true });
+      mkdirSync(join(home, ".tetris"), { recursive: true });
       mkdirSync(workspace, { recursive: true });
-      writeFileSync(join(home, ".fx", "settings.json"), "{}");
+      writeFileSync(join(home, ".tetris", "settings.json"), "{}");
 
       const streamingGateway = startFakeGateway([
         () => heldGatewayResponse(stream),
@@ -3926,9 +3926,9 @@ describe.skipIf(!tmuxAvailable())("TUI gateway stream lifecycle", () => {
       const submittedPrompt = "IDLE_SUBMIT_ORDER_SENTINEL";
       const newerDraft = "RAPID_SECOND_DRAFT_SENTINEL";
       const hold: HoldState = { started: false, cancelled: false };
-      mkdirSync(join(home, ".fx"), { recursive: true });
+      mkdirSync(join(home, ".tetris"), { recursive: true });
       mkdirSync(workspacePath, { recursive: true });
-      writeFileSync(join(home, ".fx", "settings.json"), "{}");
+      writeFileSync(join(home, ".tetris", "settings.json"), "{}");
       writeFileSync(
         join(root, "outside-instructions.md"),
         "# Outside instructions\n",
@@ -3987,7 +3987,7 @@ describe.skipIf(!tmuxAvailable())("TUI gateway stream lifecycle", () => {
       expect(hold.cancelled).toBe(false);
       await session.sendKeys("C-c");
       const cancelledPane = await session.waitForText(
-        "What can fx do differently?",
+        "What can Tetris do differently?",
         TIMEOUT,
       );
 
@@ -4032,9 +4032,9 @@ describe.skipIf(!tmuxAvailable())("TUI gateway stream lifecycle", () => {
       const seedReply = "MULTI_TURN_SEED_REPLY";
       const submittedPrompt = "MULTI_TURN_ROW_SENTINEL";
       const hold: HoldState = { started: false, cancelled: false };
-      mkdirSync(join(home, ".fx"), { recursive: true });
+      mkdirSync(join(home, ".tetris"), { recursive: true });
       mkdirSync(workspace, { recursive: true });
-      writeFileSync(join(home, ".fx", "settings.json"), "{}");
+      writeFileSync(join(home, ".tetris", "settings.json"), "{}");
 
       const queuedGateway = startFakeGateway([
         fakeGatewayFinalText(seedReply),
@@ -4077,7 +4077,7 @@ describe.skipIf(!tmuxAvailable())("TUI gateway stream lifecycle", () => {
       await session.waitForText("Thinking", TIMEOUT);
       await Bun.sleep(250);
       await session.sendKeys("C-c");
-      await session.waitForText("What can fx do differently?", TIMEOUT);
+      await session.waitForText("What can Tetris do differently?", TIMEOUT);
 
       execFileSync(FX_BIN, ["replay", tapePath, "--frames-dir", framesRoot], {
         encoding: "utf8",
@@ -4111,9 +4111,9 @@ describe.skipIf(!tmuxAvailable())("TUI gateway stream lifecycle", () => {
         "TALL_PROMPT_TAIL_SENTINEL",
       ];
       const hold: HoldState = { started: false, cancelled: false };
-      mkdirSync(join(home, ".fx"), { recursive: true });
+      mkdirSync(join(home, ".tetris"), { recursive: true });
       mkdirSync(workspace, { recursive: true });
-      writeFileSync(join(home, ".fx", "settings.json"), "{}");
+      writeFileSync(join(home, ".tetris", "settings.json"), "{}");
 
       const heldGateway = startFakeGateway([() => heldGatewayResponse(hold)]);
       gateway = heldGateway;
@@ -4163,7 +4163,7 @@ describe.skipIf(!tmuxAvailable())("TUI gateway stream lifecycle", () => {
       }
 
       await session.sendKeys("C-c");
-      await session.waitForText("What can fx do differently?", TIMEOUT);
+      await session.waitForText("What can Tetris do differently?", TIMEOUT);
       expect(hold.cancelled).toBe(true);
       expect(readFileSync(stderrPath, "utf8")).toBe("");
       expect(session.isAlive()).toBe(true);
@@ -4190,9 +4190,9 @@ describe.skipIf(!tmuxAvailable())("TUI gateway stream lifecycle", () => {
       ];
       const hold: HoldState = { started: false, cancelled: false };
       const continued: HoldState = { started: false, cancelled: false };
-      mkdirSync(join(home, ".fx"), { recursive: true });
+      mkdirSync(join(home, ".tetris"), { recursive: true });
       mkdirSync(workspace, { recursive: true });
-      writeFileSync(join(home, ".fx", "settings.json"), "{}");
+      writeFileSync(join(home, ".tetris", "settings.json"), "{}");
 
       const heldGateway = startFakeGateway([
         () => heldGatewayResponse(hold),
@@ -4249,7 +4249,7 @@ describe.skipIf(!tmuxAvailable())("TUI gateway stream lifecycle", () => {
       }
 
       await session.sendKeys("C-c");
-      await session.waitForText("What can fx do differently?", TIMEOUT);
+      await session.waitForText("What can Tetris do differently?", TIMEOUT);
       expect(continued.cancelled).toBe(true);
       expect(heldGateway.requests).toHaveLength(2);
       expect(readFileSync(stderrPath, "utf8")).toBe("");
@@ -4270,9 +4270,9 @@ describe.skipIf(!tmuxAvailable())("TUI gateway stream lifecycle", () => {
       const tracePath = join(root, "trace.log");
       const firstResponse: HoldState = { started: false, cancelled: false };
       const secondResponse = { started: false, cancelled: false };
-      mkdirSync(join(home, ".fx"), { recursive: true });
+      mkdirSync(join(home, ".tetris"), { recursive: true });
       mkdirSync(workspacePath, { recursive: true });
-      writeFileSync(join(home, ".fx", "settings.json"), "{}");
+      writeFileSync(join(home, ".tetris", "settings.json"), "{}");
       const workspace = realpathSync(workspacePath);
 
       const splitGateway = startFakeGateway([
@@ -4426,9 +4426,9 @@ describe.skipIf(!tmuxAvailable())("TUI gateway stream lifecycle", () => {
       const steering = lines.join("\n");
       const finalHold: HoldState = { started: false, cancelled: false };
       const requestHold: HoldState = { started: false, cancelled: false };
-      mkdirSync(join(home, ".fx"), { recursive: true });
+      mkdirSync(join(home, ".tetris"), { recursive: true });
       mkdirSync(workspace, { recursive: true });
-      writeFileSync(join(home, ".fx", "settings.json"), "{}");
+      writeFileSync(join(home, ".tetris", "settings.json"), "{}");
       writeFileSync(
         join(workspace, "check.sh"),
         "printf started > started\nwhile [ ! -f release ]; do sleep 0.05; done\nprintf once >> effect\n",
@@ -4551,9 +4551,9 @@ describe.skipIf(!tmuxAvailable())("TUI gateway stream lifecycle", () => {
       const bufferedTail = "CANCELLED_RESPONSE_BUFFERED_TAIL";
       const steering = "Replace the cancelled response with the short corrected answer.";
       const finalText = "STEERED_RESPONSE_FRESH";
-      mkdirSync(join(home, ".fx"), { recursive: true });
+      mkdirSync(join(home, ".tetris"), { recursive: true });
       mkdirSync(workspacePath, { recursive: true });
-      writeFileSync(join(home, ".fx", "settings.json"), "{}");
+      writeFileSync(join(home, ".tetris", "settings.json"), "{}");
       const workspace = realpathSync(workspacePath);
 
       const lateTailGateway = startFakeGateway([
@@ -4644,9 +4644,9 @@ describe.skipIf(!tmuxAvailable())("TUI gateway stream lifecycle", () => {
       const toolOutput = "TOOL_HANDOFF_EXECUTED";
       const steering = "Respond exactly TOOL_HANDOFF_STEERING_COMPLETE.";
       const finalText = "TOOL_HANDOFF_STEERING_COMPLETE";
-      mkdirSync(join(home, ".fx"), { recursive: true });
+      mkdirSync(join(home, ".tetris"), { recursive: true });
       mkdirSync(workspacePath, { recursive: true });
-      writeFileSync(join(home, ".fx", "settings.json"), "{}");
+      writeFileSync(join(home, ".tetris", "settings.json"), "{}");
       const workspace = realpathSync(workspacePath);
 
       const handoffGateway = startFakeGateway([
@@ -4767,9 +4767,9 @@ describe.skipIf(!tmuxAvailable())("TUI gateway stream lifecycle", () => {
       const tracePath = join(root, "trace.log");
       const stderrPath = join(root, "stderr.log");
       const releasePath = join(workspace, ".release-steering-tool");
-      mkdirSync(join(home, ".fx"), { recursive: true });
+      mkdirSync(join(home, ".tetris"), { recursive: true });
       mkdirSync(workspace, { recursive: true });
-      writeFileSync(join(home, ".fx", "settings.json"), "{}");
+      writeFileSync(join(home, ".tetris", "settings.json"), "{}");
       const command =
         `while [ ! -f ${JSON.stringify(releasePath)} ]; do sleep 0.05; done; ` +
         "printf COOPERATIVE_TOOL_DONE";
@@ -4912,9 +4912,9 @@ describe.skipIf(!tmuxAvailable())("TUI gateway stream lifecycle", () => {
       const stderrPath = join(root, "stderr.log");
       const releasePath = join(workspace, ".release-rich-steering-tool");
       const imagePath = join(workspace, "steering-image.png");
-      mkdirSync(join(home, ".fx"), { recursive: true });
+      mkdirSync(join(home, ".tetris"), { recursive: true });
       mkdirSync(workspace, { recursive: true });
-      writeFileSync(join(home, ".fx", "settings.json"), "{}");
+      writeFileSync(join(home, ".tetris", "settings.json"), "{}");
       copyFileSync(join(REPO_ROOT, "tests/e2e/fixtures/favicon.png"), imagePath);
       const expectedImageData = readFileSync(imagePath).toString("base64");
       const command =
@@ -5019,9 +5019,9 @@ describe.skipIf(!tmuxAvailable())("TUI gateway stream lifecycle", () => {
       const tracePath = join(root, "trace.log");
       const stderrPath = join(root, "stderr.log");
       const releasePath = join(workspace, ".release-failed-steering-tool");
-      mkdirSync(join(home, ".fx"), { recursive: true });
+      mkdirSync(join(home, ".tetris"), { recursive: true });
       mkdirSync(workspace, { recursive: true });
-      writeFileSync(join(home, ".fx", "settings.json"), "{}");
+      writeFileSync(join(home, ".tetris", "settings.json"), "{}");
       const command =
         `while [ ! -f ${JSON.stringify(releasePath)} ]; do sleep 0.05; done; ` +
         "printf FAILED_TOOL_STEERING_RESULT; exit 7";
@@ -5097,9 +5097,9 @@ describe.skipIf(!tmuxAvailable())("TUI gateway stream lifecycle", () => {
       const workspace = join(root, "workspace");
       const tracePath = join(root, "trace.log");
       const stderrPath = join(root, "stderr.log");
-      mkdirSync(join(home, ".fx"), { recursive: true });
+      mkdirSync(join(home, ".tetris"), { recursive: true });
       mkdirSync(workspace, { recursive: true });
-      writeFileSync(join(home, ".fx", "settings.json"), "{}");
+      writeFileSync(join(home, ".tetris", "settings.json"), "{}");
       const steering = "Apply IMMEDIATE_STEERING_SENTINEL now.";
       const finalText = "IMMEDIATE_STEERING_COMPLETE";
       const steeringGateway = startFakeGateway([
@@ -5173,9 +5173,9 @@ describe.skipIf(!tmuxAvailable())("TUI gateway stream lifecycle", () => {
       const tracePath = join(root, "trace.log");
       const stderrPath = join(root, "stderr.log");
       const tapePath = join(root, "session.fxtape");
-      mkdirSync(join(home, ".fx"), { recursive: true });
+      mkdirSync(join(home, ".tetris"), { recursive: true });
       mkdirSync(workspacePath, { recursive: true });
-      writeFileSync(join(home, ".fx", "settings.json"), "{}");
+      writeFileSync(join(home, ".tetris", "settings.json"), "{}");
       const workspace = realpathSync(workspacePath);
       const nested = join(workspace, "assets", "nested");
       const sibling = join(workspace, "sibling");
@@ -5198,7 +5198,7 @@ describe.skipIf(!tmuxAvailable())("TUI gateway stream lifecycle", () => {
       const newRootRule = "STEERING_SNAPSHOT_NEW_ROOT_MUST_BE_ABSENT";
       const newNestedRule = "STEERING_SNAPSHOT_NEW_NESTED_MUST_BE_ABSENT";
       const newSiblingRule = "STEERING_SNAPSHOT_NEW_SIBLING_MUST_BE_ABSENT";
-      writeFileSync(join(home, ".fx", "AGENTS.md"), `${oldGlobalRule}\n`);
+      writeFileSync(join(home, ".tetris", "AGENTS.md"), `${oldGlobalRule}\n`);
       writeFileSync(join(launchAncestor, "AGENTS.md"), `${oldAncestorRule}\n`);
       writeFileSync(join(workspace, "AGENTS.md"), `${oldRootRule}\n`);
       writeFileSync(join(nested, "AGENTS.md"), `${oldNestedRule}\n`);
@@ -5258,7 +5258,7 @@ describe.skipIf(!tmuxAvailable())("TUI gateway stream lifecycle", () => {
       await session.waitForText("attached image: steering-snapshot.png", TIMEOUT);
       await session.sendText(steeringPrompt);
 
-      writeFileSync(join(home, ".fx", "AGENTS.md"), `${newGlobalRule}\n`);
+      writeFileSync(join(home, ".tetris", "AGENTS.md"), `${newGlobalRule}\n`);
       writeFileSync(join(launchAncestor, "AGENTS.md"), `${newAncestorRule}\n`);
       writeFileSync(join(workspace, "AGENTS.md"), `${newRootRule}\n`);
       writeFileSync(join(nested, "AGENTS.md"), `${newNestedRule}\n`);
@@ -5341,9 +5341,9 @@ describe.skipIf(!tmuxAvailable())("TUI gateway stream lifecycle", () => {
       const activeAfter = "ACTIVE_PERMISSION_AFTER_SENTINEL\n";
       const followupPrompt = "ACTIVE_PERMISSION_FOLLOWUP_PROMPT_SENTINEL";
       const followupResponse = "ACTIVE_PERMISSION_FOLLOWUP_RESPONSE_SENTINEL";
-      mkdirSync(join(home, ".fx"), { recursive: true });
+      mkdirSync(join(home, ".tetris"), { recursive: true });
       mkdirSync(workspacePath, { recursive: true });
-      writeFileSync(join(home, ".fx", "settings.json"), "{}");
+      writeFileSync(join(home, ".tetris", "settings.json"), "{}");
       writeFileSync(join(workspacePath, readFilename), "active permission fixture\n");
       const workspace = realpathSync(workspacePath);
       const hold: HoldState = { started: false, cancelled: false };
@@ -5447,9 +5447,9 @@ describe.skipIf(!tmuxAvailable())("TUI gateway stream lifecycle", () => {
       const stderrPath = join(artifacts, "stderr.log");
       const tracePath = join(artifacts, "trace.log");
       const tapePath = join(artifacts, "session.fxtape");
-      mkdirSync(join(home, ".fx"), { recursive: true });
+      mkdirSync(join(home, ".tetris"), { recursive: true });
       mkdirSync(workspace, { recursive: true });
-      writeFileSync(join(home, ".fx", "settings.json"), "{}");
+      writeFileSync(join(home, ".tetris", "settings.json"), "{}");
 
       const hold: HoldState = { started: false, cancelled: false };
       const heldGateway = startFakeGateway([
@@ -5490,7 +5490,7 @@ describe.skipIf(!tmuxAvailable())("TUI gateway stream lifecycle", () => {
 
       await session.sendKeys("C-c");
       const afterFirst = await session.waitForText(
-        "What can fx do differently?",
+        "What can Tetris do differently?",
         TIMEOUT,
       );
       await waitForCondition(() => hold.cancelled, "stream cancellation");
@@ -5501,7 +5501,7 @@ describe.skipIf(!tmuxAvailable())("TUI gateway stream lifecycle", () => {
 
       const scrollbackAfterFirst = await session.captureFullScrollbackEscapes();
       expect(
-        countOccurrences(scrollbackAfterFirst, "What can fx do differently?"),
+        countOccurrences(scrollbackAfterFirst, "What can Tetris do differently?"),
       ).toBe(1);
 
       await session.sendKeys("C-c");
@@ -5513,9 +5513,9 @@ describe.skipIf(!tmuxAvailable())("TUI gateway stream lifecycle", () => {
 
       const scrollback = await session.captureFullScrollback();
       const trace = readFileSync(tracePath, "utf8");
-      expect(scrollback).toContain("What can fx do differently?");
+      expect(scrollback).toContain("What can Tetris do differently?");
       expect(
-        countOccurrences(scrollback, "What can fx do differently?"),
+        countOccurrences(scrollback, "What can Tetris do differently?"),
       ).toBe(1);
       expect(scrollback).not.toContain("system: cancelled");
       expect(scrollback).not.toContain("Cancelling");
@@ -5543,10 +5543,10 @@ describe.skipIf(!tmuxAvailable())("TUI gateway stream lifecycle", () => {
       const prompt = "Recall CTRL_C_EXIT_HISTORY_SENTINEL exactly.";
       const finalText = "CTRL_C_EXIT_HISTORY_DONE";
       const exitHint = "press ctrl+c again to exit";
-      mkdirSync(join(home, ".fx"), { recursive: true });
+      mkdirSync(join(home, ".tetris"), { recursive: true });
       mkdirSync(workspace, { recursive: true });
       writeFileSync(
-        join(home, ".fx", "settings.json"),
+        join(home, ".tetris", "settings.json"),
         '{"prompt_history":{"enabled":true}}',
       );
 
@@ -5687,7 +5687,7 @@ describe.skipIf(!tmuxAvailable())("TUI gateway stream lifecycle", () => {
         expect(observed.stderr).toBe(
           stage === "baseline-silent"
             ? ""
-            : "fx: lifecycle reconciliation collision\n",
+            : "tetris: lifecycle reconciliation collision\n",
         );
         return;
       }
@@ -5769,10 +5769,10 @@ describe.skipIf(!tmuxAvailable())("TUI gateway stream lifecycle", () => {
         (_, index) => `SCROLL_PRE_${String(index + 1).padStart(2, "0")}`,
       );
       const final_text = "SCROLLBACK_FINAL_SENTINEL";
-      mkdirSync(join(home, ".fx"), { recursive: true });
+      mkdirSync(join(home, ".tetris"), { recursive: true });
       mkdirSync(workspace, { recursive: true });
       writeFileSync(
-        join(home, ".fx", "settings.json"),
+        join(home, ".tetris", "settings.json"),
         JSON.stringify({}),
       );
       writeFileSync(join(workspace, "one.txt"), "first fixture\n");
@@ -5859,9 +5859,9 @@ describe.skipIf(!tmuxAvailable())("TUI gateway stream lifecycle", () => {
       const workspace = join(root, "workspace");
       const stderrPath = join(root, "stderr.log");
       const tracePath = join(root, "trace.log");
-      mkdirSync(join(home, ".fx"), { recursive: true });
+      mkdirSync(join(home, ".tetris"), { recursive: true });
       mkdirSync(workspace);
-      writeFileSync(join(home, ".fx", "settings.json"), "{}");
+      writeFileSync(join(home, ".tetris", "settings.json"), "{}");
       // Large enough that fx saves the command output behind a handle.
       const lines = Array.from({ length: 4000 }, (_, index) => `SAVED_LINE_${String(index).padStart(5, "0")}`);
       lines[2500] = "PARALLEL_READ_MATCH";
@@ -5958,9 +5958,9 @@ describe.skipIf(!tmuxAvailable())("TUI gateway stream lifecycle", () => {
       const stderrPath = join(root, "stderr.log");
       const commentary = "COMMENTARY_MESSAGE_SENTINEL";
       const answer = "FINAL_ANSWER_SENTINEL";
-      mkdirSync(join(home, ".fx"), { recursive: true });
+      mkdirSync(join(home, ".tetris"), { recursive: true });
       mkdirSync(workspace, { recursive: true });
-      writeFileSync(join(home, ".fx", "settings.json"), JSON.stringify({}));
+      writeFileSync(join(home, ".tetris", "settings.json"), JSON.stringify({}));
       const message = (id: string, phase: string, text: string) => [
         { type: "text-start", id, providerMetadata: { openai: { itemId: id, phase } } },
         { type: "text-delta", id, delta: text },
@@ -6038,7 +6038,7 @@ describe.skipIf(!tmuxAvailable())("TUI gateway stream lifecycle", () => {
         "",
         tail,
       ].join("\n");
-      mkdirSync(join(home, ".fx"), { recursive: true });
+      mkdirSync(join(home, ".tetris"), { recursive: true });
       mkdirSync(workspace, { recursive: true });
       mkdirSync(join(workspace, "docs"), { recursive: true });
       for (let index = 1; index <= 27; index += 1) {
@@ -6048,7 +6048,7 @@ describe.skipIf(!tmuxAvailable())("TUI gateway stream lifecycle", () => {
         );
       }
       writeFileSync(
-        join(home, ".fx", "settings.json"),
+        join(home, ".tetris", "settings.json"),
         JSON.stringify({
           sandbox: "none",
           permission_mode: "yolo",
@@ -6148,10 +6148,10 @@ describe.skipIf(!tmuxAvailable())("TUI gateway stream lifecycle", () => {
         const home = join(runRoot, "home");
         const workspace = join(runRoot, "workspace");
         const stderrPath = join(runRoot, "stderr.log");
-        mkdirSync(join(home, ".fx"), { recursive: true });
+        mkdirSync(join(home, ".tetris"), { recursive: true });
         mkdirSync(workspace, { recursive: true });
         writeFileSync(
-          join(home, ".fx", "settings.json"),
+          join(home, ".tetris", "settings.json"),
           JSON.stringify({}),
         );
         const fixture = writeDelayedMcpFixture(runRoot, home, 0);
@@ -6270,10 +6270,10 @@ describe.skipIf(!tmuxAvailable())("TUI gateway stream lifecycle", () => {
       const argumentTail = "FXC194_OVERLONG_TAIL";
       const overlongText = `FXC194_OVERLONG_HEAD_${"x".repeat(5_000)}\u001b[31m${argumentTail}`;
       const finalText = "FXC194_NARROW_DENY_COMPLETE";
-      mkdirSync(join(home, ".fx"), { recursive: true });
+      mkdirSync(join(home, ".tetris"), { recursive: true });
       mkdirSync(workspace, { recursive: true });
       writeFileSync(
-        join(home, ".fx", "settings.json"),
+        join(home, ".tetris", "settings.json"),
         JSON.stringify({}),
       );
       const fixture = writeDelayedMcpFixture(root, home, 0);
@@ -6363,9 +6363,9 @@ describe.skipIf(!tmuxAvailable())("TUI gateway stream lifecycle", () => {
       const currentInstruction = "NESTED_CURRENT_INSTRUCTION_SENTINEL";
       const refreshLabel = "Reading project instructions before continuing:";
       const header = "● 2 tool calls · 2 commands";
-      mkdirSync(join(home, ".fx"), { recursive: true });
+      mkdirSync(join(home, ".tetris"), { recursive: true });
       mkdirSync(nested, { recursive: true });
-      writeFileSync(join(home, ".fx", "settings.json"), "{}");
+      writeFileSync(join(home, ".tetris", "settings.json"), "{}");
       writeFileSync(join(nested, "AGENTS.md"), `${instruction}\n`);
 
       let executedBeforeRetry: boolean | undefined;
@@ -6489,10 +6489,10 @@ describe.skipIf(!tmuxAvailable())("TUI gateway stream lifecycle", () => {
       const resumedStderrPath = join(root, "resumed-stderr.log");
       const tracePath = join(root, "fx-trace.log");
       const tapePath = join(root, "session.fxtape");
-      mkdirSync(join(home, ".fx"), { recursive: true });
+      mkdirSync(join(home, ".tetris"), { recursive: true });
       mkdirSync(workspace, { recursive: true });
       writeFileSync(
-        join(home, ".fx", "settings.json"),
+        join(home, ".tetris", "settings.json"),
         JSON.stringify({}),
       );
 
@@ -6635,9 +6635,9 @@ describe.skipIf(!tmuxAvailable())("TUI gateway stream lifecycle", () => {
       const home = join(root, "home");
       const workspace = join(root, "workspace");
       const stderrPath = join(root, "stderr.log");
-      mkdirSync(join(home, ".fx"), { recursive: true });
+      mkdirSync(join(home, ".tetris"), { recursive: true });
       mkdirSync(workspace);
-      writeFileSync(join(home, ".fx", "settings.json"), "{}");
+      writeFileSync(join(home, ".tetris", "settings.json"), "{}");
       const fixture = writeDelayedMcpFixture(root, home, 0);
       const toolName = "mcp_fixture_echo";
       const rootPrompt = "SUBAGENT_SELECTED_MCP_FIXTURE";
@@ -6710,9 +6710,9 @@ describe.skipIf(!tmuxAvailable())("TUI gateway stream lifecycle", () => {
       const home = join(root, "home");
       const workspace = join(root, "workspace");
       const stderrPath = join(root, "stderr.log");
-      mkdirSync(join(home, ".fx"), { recursive: true });
+      mkdirSync(join(home, ".tetris"), { recursive: true });
       mkdirSync(workspace);
-      writeFileSync(join(home, ".fx", "settings.json"), "{}");
+      writeFileSync(join(home, ".tetris", "settings.json"), "{}");
       const marker = "CHILD_MEMORY_" + crypto.randomUUID();
       const hold: HoldState = { started: false, cancelled: false };
       const childRequests = new Map<string, number>();
@@ -6823,9 +6823,9 @@ describe.skipIf(!tmuxAvailable())("TUI gateway stream lifecycle", () => {
       const home = join(root, "home");
       const workspace = join(root, "workspace");
       const stderrPath = join(root, "stderr.log");
-      mkdirSync(join(home, ".fx"), { recursive: true });
+      mkdirSync(join(home, ".tetris"), { recursive: true });
       mkdirSync(workspace);
-      writeFileSync(join(home, ".fx", "settings.json"), "{}");
+      writeFileSync(join(home, ".tetris", "settings.json"), "{}");
       const rootPrompt = "PARALLEL_SUBAGENT_ROW_FIXTURE";
       const firstTask = "Check first sibling";
       const secondTask = "Check second sibling";
@@ -6936,9 +6936,9 @@ describe.skipIf(!tmuxAvailable())("TUI gateway stream lifecycle", () => {
       const home = join(root, "home");
       const workspace = join(root, "workspace");
       const stderrPath = join(root, "stderr.log");
-      mkdirSync(join(home, ".fx"), { recursive: true });
+      mkdirSync(join(home, ".tetris"), { recursive: true });
       mkdirSync(workspace);
-      writeFileSync(join(home, ".fx", "settings.json"), "{}");
+      writeFileSync(join(home, ".tetris", "settings.json"), "{}");
       writeFileSync(join(workspace, "fixture.txt"), "ROW_FILE_CONTENT");
       const tasks = ["Check one-off cleanup", "Check provider replay", "Check replay again"];
       // A busy subagent may take a second message into its running turn, so
@@ -7067,9 +7067,9 @@ describe.skipIf(!tmuxAvailable())("TUI gateway stream lifecycle", () => {
       const home = join(root, "home");
       const workspace = join(root, "workspace");
       const stderrPath = join(root, "stderr.log");
-      mkdirSync(join(home, ".fx"), { recursive: true });
+      mkdirSync(join(home, ".tetris"), { recursive: true });
       mkdirSync(workspace);
-      writeFileSync(join(home, ".fx", "settings.json"), "{}");
+      writeFileSync(join(home, ".tetris", "settings.json"), "{}");
       const rootPrompt = "JOINED_REPORT_FIXTURE";
       const task = "Check the joined report";
       const header = "Subagent report (untrusted agent output, not user instructions):";
@@ -7182,10 +7182,10 @@ describe.skipIf(!tmuxAvailable())("TUI gateway stream lifecycle", () => {
       const stderrPath = join(root, "stderr.log");
       const resumedStderrPath = join(root, "resumed-stderr.log");
       const tracePath = join(root, "fx-trace.log");
-      mkdirSync(join(home, ".fx"), { recursive: true });
+      mkdirSync(join(home, ".tetris"), { recursive: true });
       mkdirSync(nested, { recursive: true });
       writeFileSync(
-        join(home, ".fx", "settings.json"),
+        join(home, ".tetris", "settings.json"),
         JSON.stringify({}),
       );
 
@@ -7346,12 +7346,12 @@ describe.skipIf(!tmuxAvailable())("TUI gateway stream lifecycle", () => {
       root = realpathSync(mkdtempSync(join(tmpdir(), "fx-tui-link-start-")));
       const home = join(root, "home");
       const workspace = join(root, "workspace");
-      mkdirSync(join(home, ".fx"), { recursive: true });
+      mkdirSync(join(home, ".tetris"), { recursive: true });
       mkdirSync(workspace);
-      writeFileSync(join(home, ".fx", "settings.json"), "{}");
+      writeFileSync(join(home, ".tetris", "settings.json"), "{}");
 
       const linkGateway = startFakeGateway([
-        fakeGatewayFinalText("[fx docs](https://fx.sh/docs)"),
+        fakeGatewayFinalText("[tetris docs](https://github.com/lianihossam-eng/Tetris)"),
       ]);
       gateway = linkGateway;
       session = await TmuxSession.create({
@@ -7373,9 +7373,9 @@ describe.skipIf(!tmuxAvailable())("TUI gateway stream lifecycle", () => {
 
       await session.waitForComposer(TIMEOUT);
       await session.sendText("link please");
-      await session.waitForText("fx docs", TIMEOUT);
+      await session.waitForText("tetris docs", TIMEOUT);
       const escapes = await session.captureFullScrollbackEscapes();
-      const line = escapes.split("\n").find((l) => l.includes("fx docs")) ?? "";
+      const line = escapes.split("\n").find((l) => l.includes("tetris docs")) ?? "";
       // The default dark theme's link color must survive the row-start
       // restore when the link is the row's first content.
       expect(line).toContain("\x1b[38;5;75m");
@@ -7398,7 +7398,7 @@ test.skipIf(!tmuxAvailable())("command rows reclip to the live width while runni
 
   const root = realpathSync(mkdtempSync(join(tmpdir(), "fx-tui-live-reclip-")));
   const home = join(root, "home"), workspace = join(root, "workspace");
-  mkdirSync(join(home, ".fx"), { recursive: true }); mkdirSync(workspace);
+  mkdirSync(join(home, ".tetris"), { recursive: true }); mkdirSync(workspace);
   const stderr = join(root, "stderr.log");
   const tail = "y".repeat(60);
   const longCommand = `printf '${"x".repeat(60)}' && sleep 4 && printf '${tail}'`;
@@ -7441,7 +7441,7 @@ test.skipIf(!tmuxAvailable())("command rows reclip to the live width while runni
     expect(ranRow!).not.toContain("...");
 
     await session.sendText("/quit");
-    await waitForCondition(() => session!.paneStatus().dead, "fx exit");
+    await waitForCondition(() => session!.paneStatus().dead, "tetris exit");
     expect(session.paneStatus().status).toBe(0);
     session = null;
     expect(readFileSync(stderr, "utf8")).toBe("");
@@ -7498,8 +7498,8 @@ async function startWarmingSession(name: string, settings: object = {}) {
   root = realpathSync(mkdtempSync(join(tmpdir(), `fx-cache-warming-${name}-`)));
   const home = join(root, "home"), workspace = join(root, "workspace");
   const trace = join(root, "trace.log"), stderr = join(root, "stderr.log");
-  mkdirSync(join(home, ".fx"), { recursive: true }); mkdirSync(workspace);
-  writeFileSync(join(home, ".fx/settings.json"), JSON.stringify(settings));
+  mkdirSync(join(home, ".tetris"), { recursive: true }); mkdirSync(workspace);
+  writeFileSync(join(home, ".tetris/settings.json"), JSON.stringify(settings));
   const arrivals: number[] = [];
   const host = startWarmingGateway(arrivals);
   gateway = host;
@@ -7536,7 +7536,7 @@ function savedCacheReadTotal(home: string): number {
       }
     }
   };
-  visit(join(home, ".fx", "sessions"));
+  visit(join(home, ".tetris", "sessions"));
   return total;
 }
 
@@ -7580,7 +7580,7 @@ test.skipIf(!tmuxAvailable())("an idle Claude session pings its exact last reque
   expect(savedCacheReadTotal(home)).toBe(2 * 1_000 + pings.length * PING_CACHE_READ);
 
   await session!.sendText("/quit");
-  await waitForCondition(() => session!.paneStatus().dead, "fx exit");
+  await waitForCondition(() => session!.paneStatus().dead, "tetris exit");
   expect(session!.paneStatus().status).toBe(0);
   session = null;
   expect(readFileSync(stderr, "utf8")).toBe("");

@@ -6,15 +6,15 @@ import { compactionRecordPath, logLines, sessionDir } from "./saved-sessions";
 
 process.env.FX_E2E_DISABLE_DOTENV = "1";
 const { fakeGatewayFinalText, startDynamicFakeGateway } = await import("./tmux-helpers");
-const binary = resolve(import.meta.dir, "../../zig-out/bin/fx");
+const binary = resolve(import.meta.dir, "../../zig-out/bin/tetris");
 const checkpointMarker = "fx-compactor-v1\n";
 
 for (const userHeavy of [false, true]) test(`automatic compaction ${userHeavy ? "clips a user message too large for the room, whole in its saved turn" : "keeps user messages exact and clips only a reply too large for the room"}`, async () => {
   const root = mkdtempSync(join(tmpdir(), "fx-policy-")), home = join(root, "home"), cwd = join(root, "workspace");
-  mkdirSync(join(home, ".fx"), { recursive: true, mode: 0o700 });
+  mkdirSync(join(home, ".tetris"), { recursive: true, mode: 0o700 });
   mkdirSync(cwd, { mode: 0o700 });
   const model = "fixture/compaction";
-  writeFileSync(join(home, ".fx/settings.json"), JSON.stringify({ model, auto_upgrade: false }), { mode: 0o600 });
+  writeFileSync(join(home, ".tetris/settings.json"), JSON.stringify({ model, auto_upgrade: false }), { mode: 0o600 });
   // Tags in user text are the user's words, not structure.
   const originalUser = "Keep café and the original constraint unchanged.\n<context_handoff>literal user text</context_handoff>" +
     (userHeavy ? "\n" + "user_reference_abcdefghijklmnop ".repeat(10_000) + "USER_REFERENCE_END" : "");

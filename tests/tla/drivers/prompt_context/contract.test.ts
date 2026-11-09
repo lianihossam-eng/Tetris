@@ -1,4 +1,4 @@
-// Runs the real fx binary through the sessions the prompt-cache model covers,
+// Runs the real tetris binary through the sessions the prompt-cache model covers,
 // records every request, and has TLC replay them through the model
 // (tests/tla/prompt_context/PromptCache.tla). No model calls: a local fake
 // Gateway serves scripted tool calls and replies.
@@ -7,11 +7,11 @@
 //    design, the proposed one, and every design property must hold on the
 //    observed requests, as check.sh's exhaustive check of that design says.
 //    Each design is checked with mid-session changes riding on the message
-//    that caused them (PromptCache Notes, Carrier "message"), as fx sends an
+//    that caused them (PromptCache Notes, Carrier "message"), as Tetris sends an
 //    agent branch switch on the switching step's tool result.
 // 2. With OpenAI GPT-5.6 or later the same holds under the model's OpenAI
 //    rules, with the markers in OpenAI's syntax.
-// 3. With an older OpenAI model fx sends no markers of its own: the binary
+// 3. With an older OpenAI model Tetris sends no markers of its own: the binary
 //    must conform to the current design. It is replayed under the OpenAI
 //    rules, so a stray OpenAI marker fails as a match to the proposed design;
 //    that model's own caching rules are not modeled.
@@ -47,7 +47,7 @@ const folder = (model: string) => {
 };
 
 // Property verdicts from check.sh's exhaustive check of each design. A
-// branch switch rides on a message, so even without fx markers the stable
+// branch switch rides on a message, so even without Tetris markers the stable
 // instructions are read after it (p6-implicit-context.cfg).
 const EXPECTED: Record<Design, Record<string, string>> = {
   current: {
@@ -118,19 +118,19 @@ async function conformingDesign(model: string): Promise<RuntimeResult> {
   return result;
 }
 
-test("with an Anthropic model, real fx conforms to the proposed design", async () => {
+test("with an Anthropic model, real Tetris conforms to the proposed design", async () => {
   const result = await conformingDesign(ANTHROPIC);
-  assert.equal(result.design, "proposed", `fx sends the stable cache markers\n${explain(result)}`);
+  assert.equal(result.design, "proposed", `Tetris sends the stable cache markers\n${explain(result)}`);
 }, TIMEOUT);
 
-test("with GPT-5.6 or later, real fx conforms to the proposed design", async () => {
+test("with GPT-5.6 or later, real Tetris conforms to the proposed design", async () => {
   const result = await conformingDesign(GPT);
-  assert.equal(result.design, "proposed", `fx sends the stable cache breakpoints\n${explain(result)}`);
+  assert.equal(result.design, "proposed", `Tetris sends the stable cache breakpoints\n${explain(result)}`);
 }, TIMEOUT);
 
-test("with an older model, real fx sends no markers of its own", async () => {
+test("with an older model, real Tetris sends no markers of its own", async () => {
   const result = await conformingDesign(OTHER);
-  assert.equal(result.design, "current", `only Anthropic and GPT-5.6 or later take fx markers\n${explain(result)}`);
+  assert.equal(result.design, "current", `only Anthropic and GPT-5.6 or later take Tetris markers\n${explain(result)}`);
 }, TIMEOUT);
 
 test("bridge rejects a planted marker, missing coverage and empty evidence", async () => {

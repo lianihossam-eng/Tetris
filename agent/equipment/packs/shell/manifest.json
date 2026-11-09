@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "id": "shell",
+  "name": "Approved shell",
+  "description": "Run bounded shell commands after explicit user approval.",
+  "slot": "shell",
+  "tools": ["shell"],
+  "requires": ["workspace-files"],
+  "conflicts": []
+}

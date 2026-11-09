@@ -298,7 +298,7 @@ const ResumeNotice = union(enum) {
 };
 
 fn writeUpgradeNoticeBody(writer: *std.Io.Writer, upgrade: UpgradeNotice) !void {
-    try writer.writeAll("fx has been updated to ");
+    try writer.writeAll("Tetris has been updated to ");
     if (upgrade.channel == .dev and update_target.isValidRevision(upgrade.revision)) {
         try writer.print("dev {s} (v{s})", .{
             upgrade.revision[0..@min(upgrade.revision.len, 12)],
@@ -2434,11 +2434,11 @@ pub fn Runtime(comptime App: type) type {
             else
                 "";
             const folder = if (basename.len == 0) "workspace" else basename;
-            const prefix = "fx v" ++ build_options.app_version ++ " | ";
+            const prefix = "tetris v" ++ build_options.app_version ++ " | ";
             var label_buffer: [prefix.len + std.Io.Dir.max_path_bytes]u8 = undefined;
             const label = std.mem.print(&label_buffer, "{s}{s}", .{ prefix, folder }) catch |err| {
                 debug_trace.logf("session", "terminal title workspace omitted err={s}", .{@errorName(err)});
-                provider.set("fx v" ++ build_options.app_version);
+                provider.set("tetris v" ++ build_options.app_version);
                 return;
             };
             provider.set(label);
@@ -3600,7 +3600,7 @@ pub fn Runtime(comptime App: type) type {
                     // selecting that line copies only the command. The blank
                     // line keeps a row between it and the input box while it
                     // is the newest entry.
-                    const lines = try app.alloc.print("Resume the original session with:\nfx --resume {s}\n\n", .{source_id});
+                    const lines = try app.alloc.print("Resume the original session with:\ntetris --resume {s}\n\n", .{source_id});
                     defer app.alloc.free(lines);
                     try sink.appendRaw(lines);
                 },
@@ -6283,12 +6283,12 @@ test "session runtime owns temporary interactive image snapshot capture" {
 }
 
 fn testPaths(alloc: Allocator, tmp: *std.testing.TmpDir) !struct { home: []u8, workspace: []u8 } {
-    try tmp.dir.createDirPath(io_mod.getIo(), "home/.fx");
+    try tmp.dir.createDirPath(io_mod.getIo(), "home/.tetris");
     try tmp.dir.createDirPath(io_mod.getIo(), "workspace");
     const home = try io_mod.dirRealpathAlloc(alloc, tmp.dir, "home");
     errdefer alloc.free(home);
-    // fx keeps `.fx` private, and resuming a session verifies that.
-    const fx_dir = try std.Io.Dir.path.joinZ(alloc, &.{ home, ".fx" });
+    // fx keeps `.tetris` private, and resuming a session verifies that.
+    const fx_dir = try std.Io.Dir.path.joinZ(alloc, &.{ home, ".tetris" });
     defer alloc.free(fx_dir);
     if (std.c.chmod(fx_dir.ptr, 0o700) != 0) return error.TestChmodFailed;
     return .{ .home = home, .workspace = try io_mod.dirRealpathAlloc(alloc, tmp.dir, "workspace") };
@@ -7895,7 +7895,7 @@ test "upgrade notice body identifies stable notes and dev changes" {
                 .previous_revision = "",
                 .revision = "",
             },
-            .expected = "fx has been updated to v9.9.9 (\x1b]8;;https://fx.sh/changelog#v9.9.9\x1b\\\x1b[4mnotes\x1b[24m\x1b]8;;\x1b\\)",
+            .expected = "Tetris has been updated to v9.9.9 (\x1b]8;;https://github.com/lianihossam-eng/Tetris/releases/tag/v9.9.9\x1b\\\x1b[4mnotes\x1b[24m\x1b]8;;\x1b\\)",
         },
         .{
             .upgrade = .{
@@ -7904,7 +7904,7 @@ test "upgrade notice body identifies stable notes and dev changes" {
                 .previous_revision = "1111111111111111111111111111111111111111",
                 .revision = "abcdef0123456789abcdef0123456789abcdef01",
             },
-            .expected = "fx has been updated to dev abcdef012345 (v9.9.9) (\x1b]8;;https://github.com/vercel-labs/fx/compare/1111111111111111111111111111111111111111...abcdef0123456789abcdef0123456789abcdef01\x1b\\\x1b[4mchanges\x1b[24m\x1b]8;;\x1b\\)",
+            .expected = "Tetris has been updated to dev abcdef012345 (v9.9.9) (\x1b]8;;https://github.com/lianihossam-eng/Tetris/compare/1111111111111111111111111111111111111111...abcdef0123456789abcdef0123456789abcdef01\x1b\\\x1b[4mchanges\x1b[24m\x1b]8;;\x1b\\)",
         },
         .{
             .upgrade = .{
@@ -7913,7 +7913,7 @@ test "upgrade notice body identifies stable notes and dev changes" {
                 .previous_revision = "",
                 .revision = "abcdef0123456789abcdef0123456789abcdef01",
             },
-            .expected = "fx has been updated to dev abcdef012345 (v9.9.9) (\x1b]8;;https://github.com/vercel-labs/fx/commit/abcdef0123456789abcdef0123456789abcdef01\x1b\\\x1b[4mchanges\x1b[24m\x1b]8;;\x1b\\)",
+            .expected = "Tetris has been updated to dev abcdef012345 (v9.9.9) (\x1b]8;;https://github.com/lianihossam-eng/Tetris/commit/abcdef0123456789abcdef0123456789abcdef01\x1b\\\x1b[4mchanges\x1b[24m\x1b]8;;\x1b\\)",
         },
     };
 
@@ -8267,7 +8267,7 @@ test "upgrade resume restores active session with the installed version notice" 
     try std.testing.expectEqualStrings("run server", context[2].assistant.user.text);
     try std.testing.expectEqual(@as(usize, 1), app.notices.items.len);
     try std.testing.expectEqualStrings(
-        "✓ fx has been updated to v9.9.9 (\x1b]8;;https://fx.sh/changelog#v9.9.9\x1b\\\x1b[4mnotes\x1b[24m\x1b]8;;\x1b\\)",
+        "✓ Tetris has been updated to v9.9.9 (\x1b]8;;https://github.com/lianihossam-eng/Tetris/releases/tag/v9.9.9\x1b\\\x1b[4mnotes\x1b[24m\x1b]8;;\x1b\\)",
         app.notices.items[0],
     );
     try std.testing.expectEqual(@as(usize, 2), app.completed_tool_statuses.items.len);
@@ -8681,7 +8681,7 @@ test "resumeRequestedSession replays persisted model Markdown without parsing ge
     );
     try std.testing.expectEqual(@as(usize, 1), app.assistant_thematic_rule_count);
     try std.testing.expect(std.mem.find(u8, app.transcript.items, "Cancelled") != null);
-    try std.testing.expect(std.mem.find(u8, app.transcript.items, "What can fx do differently?") != null);
+    try std.testing.expect(std.mem.find(u8, app.transcript.items, "What can Tetris do differently?") != null);
     try std.testing.expect(std.mem.find(u8, app.transcript.items, "System:") == null);
     try std.testing.expect(std.mem.find(u8, app.transcript.items, "Cancelling") == null);
     try std.testing.expectEqual(
@@ -8800,7 +8800,7 @@ test "resumeRequestedSession replays active-tool interruption with live cancella
     try std.testing.expectEqual(@as(usize, 1), app.cards.items.len);
     try std.testing.expectEqualStrings("inspect the browser", app.cards.items[0].text);
     try std.testing.expect(std.mem.find(u8, app.transcript.items, "Cancelled") != null);
-    try std.testing.expect(std.mem.find(u8, app.transcript.items, "What can fx do differently?") != null);
+    try std.testing.expect(std.mem.find(u8, app.transcript.items, "What can Tetris do differently?") != null);
     try std.testing.expect(std.mem.find(u8, app.transcript.items, "System:") == null);
     try std.testing.expect(std.mem.find(u8, app.transcript.items, "Cancelling") == null);
     try std.testing.expectEqual(@as(usize, 1), app.notices.items.len);
@@ -9978,7 +9978,7 @@ test "session picker current mode filters workspace and all mode includes every 
     var tmp = std.testing.tmpDir(.{});
     defer tmp.cleanup();
 
-    try tmp.dir.createDirPath(io_mod.getIo(), "home/.fx");
+    try tmp.dir.createDirPath(io_mod.getIo(), "home/.tetris");
     try tmp.dir.createDirPath(io_mod.getIo(), "workspace-a");
     try tmp.dir.createDirPath(io_mod.getIo(), "workspace-b");
     const home_path = try io_mod.dirRealpathAlloc(alloc, tmp.dir, "home");
@@ -10928,11 +10928,11 @@ test "terminal title shows the session title once cached and falls back to build
 
     try std.testing.expectEqualStrings("", app.terminalTitleLabelText());
     Runtime(TestApp).syncTerminalTitle(&app, (&app).agent());
-    try std.testing.expectEqualStrings("fx v" ++ build_options.app_version ++ " | workspace", app.terminalTitleLabelText());
+    try std.testing.expectEqualStrings("tetris v" ++ build_options.app_version ++ " | workspace", app.terminalTitleLabelText());
 
     try app.selected_model.appendSlice(alloc, "zai/glm-5.2");
     Runtime(TestApp).syncTerminalTitle(&app, (&app).agent());
-    try std.testing.expectEqualStrings("fx v" ++ build_options.app_version ++ " | workspace", app.terminalTitleLabelText());
+    try std.testing.expectEqualStrings("tetris v" ++ build_options.app_version ++ " | workspace", app.terminalTitleLabelText());
 
     try app.agent().session.appendHistoryEntry(alloc, .{ .assistant = .{
         .user = .{ .text = @constCast("wire the release notes generator") },
@@ -10953,7 +10953,7 @@ test "terminal title shows the session title once cached and falls back to build
 
     Runtime(TestApp).clearCachedSessionTitle(&app, (&app).agent());
     try std.testing.expect(Runtime(TestApp).cachedSessionTitle((&app).agent()) == null);
-    try std.testing.expectEqualStrings("fx v" ++ build_options.app_version ++ " | workspace", app.terminalTitleLabelText());
+    try std.testing.expectEqualStrings("tetris v" ++ build_options.app_version ++ " | workspace", app.terminalTitleLabelText());
 }
 
 test "cached session title drops control bytes before they reach the terminal" {
@@ -10991,7 +10991,7 @@ test "terminal title uses the workspace basename and handles unnamed roots" {
         defer app.deinit();
         Runtime(TestApp).syncTerminalTitle(&app, (&app).agent());
         var expected_buffer: [128]u8 = undefined;
-        const expected = try std.mem.print(&expected_buffer, "fx v{s} | {s}", .{ build_options.app_version, case.folder });
+        const expected = try std.mem.print(&expected_buffer, "tetris v{s} | {s}", .{ build_options.app_version, case.folder });
         try std.testing.expectEqualStrings(expected, app.terminalTitleLabelText());
     }
 }

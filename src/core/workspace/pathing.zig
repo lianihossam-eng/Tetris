@@ -1177,7 +1177,7 @@ test "workspaceRelative shortens only paths inside the workspace" {
     try std.testing.expectEqualStrings(".", workspaceRelative("/w/repo/", "/w/repo/"));
     try std.testing.expectEqualStrings("/w/repo-evil/AGENTS.md", workspaceRelative("/w/repo", "/w/repo-evil/AGENTS.md"));
     try std.testing.expectEqualStrings("/w/AGENTS.md", workspaceRelative("/w/repo", "/w/AGENTS.md"));
-    try std.testing.expectEqualStrings("/home/u/.fx/skills", workspaceRelative("/w/repo", "/home/u/.fx/skills"));
+    try std.testing.expectEqualStrings("/home/u/.tetris/skills", workspaceRelative("/w/repo", "/home/u/.tetris/skills"));
     try std.testing.expectEqualStrings("/etc/x", workspaceRelative("/", "/etc/x"));
     try std.testing.expectEqualStrings("/w/repo/a", workspaceRelative("", "/w/repo/a"));
     try std.testing.expectEqualStrings("/w/repo/a", workspaceRelative("w/repo", "/w/repo/a"));

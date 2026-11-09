@@ -272,7 +272,7 @@ scenario("a short terminal shows the panel's first lines, and ↓ scrolls it a l
   expect(scrolled.length).toBeLessThan(24);
 });
 
-test("fx status runs outside any session and shows none", async () => {
+test("tetris status runs outside any session and shows none", async () => {
   const profile = new Profile("cli-status");
   try {
     const env = { HOME: profile.home, FX_SOUND: "0", FX_AUTO_UPGRADE: "0", AI_GATEWAY_API_KEY: "status-session-fixture" };

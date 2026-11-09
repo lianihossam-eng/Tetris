@@ -1,4 +1,4 @@
-// `bun run verify` from tests/tla/mcp_call/: the one gate for the `fx mcp
+// `bun run verify` from tests/tla/mcp_call/: the one gate for the `tetris mcp
 // call` bridge design. In order, and every step must pass:
 //
 //   1. the pinned TLC and the Java that runs it;
@@ -14,7 +14,7 @@
 //   9. traceability: DESIGN.md accounts for every question, rule, and law,
 //      and rejects designs that drop one.
 //
-// The shell around the core has not landed, so nothing here runs the fx
+// The shell around the core has not landed, so nothing here runs the Tetris
 // binary yet; design/FINISH.md tracks the binary stage.
 //
 // Settings: FX_MCP_CALL_SEED (default 20261029), FX_MCP_CALL_TRACES (random

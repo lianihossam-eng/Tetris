@@ -374,7 +374,7 @@ pub fn executionErrorMessage(err: anyerror) ?[]const u8 {
 pub fn executionErrorSuggestion(err: anyerror) ?[]const u8 {
     return switch (err) {
         error.McpInputTimedOut => "Tell the user the form timed out with input pending, then retry only if they want to complete it again.",
-        error.McpAuthorityChanged => "Retry the tool on the next model step so fx can validate it against the current MCP runtime.",
+        error.McpAuthorityChanged => "Retry the tool on the next model step so Tetris can validate it against the current MCP runtime.",
         else => null,
     };
 }
@@ -403,9 +403,9 @@ pub fn filesystemAccessDeniedJson(
 
 fn filesystemAccessDeniedSuggestion() []const u8 {
     if (builtin.target.os.tag == .macos) {
-        return "Do not retry this path unchanged or propose a symlink. fx permissions cannot override the operating system. If the path is in a protected folder such as Desktop, Documents, or Downloads, ask the user to grant the terminal app Files and Folders or Full Disk Access. Otherwise, ask the user to correct OS filesystem permissions or move/copy the project to an accessible location.";
+        return "Do not retry this path unchanged or propose a symlink. Tetris permissions cannot override the operating system. If the path is in a protected folder such as Desktop, Documents, or Downloads, ask the user to grant the terminal app Files and Folders or Full Disk Access. Otherwise, ask the user to correct OS filesystem permissions or move/copy the project to an accessible location.";
     }
-    return "Do not retry this path unchanged or propose a symlink. fx permissions cannot override the operating system. Ask the user to correct OS filesystem permissions or move/copy the project to an accessible location.";
+    return "Do not retry this path unchanged or propose a symlink. Tetris permissions cannot override the operating system. Ask the user to correct OS filesystem permissions or move/copy the project to an accessible location.";
 }
 
 /// Builds the model-facing result for arguments fx could not parse. The
@@ -435,9 +435,9 @@ pub fn malformedToolArgumentsJson(
     return toolExecutionFailureJson(alloc, .{
         .tool_name = tool_name,
         .message = switch (found.failure) {
-            .truncated => "Tool arguments ended before the JSON was complete, so fx did not run the call. The conversation shows its arguments as {}.",
-            .syntax_error => "Tool arguments were not valid JSON, so fx did not run the call. The conversation shows its arguments as {}.",
-            .rejected_value => "Tool arguments repeated an object key or held a value fx cannot accept, so fx did not run the call. The conversation shows its arguments as {}.",
+            .truncated => "Tool arguments ended before the JSON was complete, so Tetris did not run the call. The conversation shows its arguments as {}.",
+            .syntax_error => "Tool arguments were not valid JSON, so Tetris did not run the call. The conversation shows its arguments as {}.",
+            .rejected_value => "Tool arguments repeated an object key or held a value Tetris cannot accept, so Tetris did not run the call. The conversation shows its arguments as {}.",
         },
         .details = details[0..count],
         .suggestion = switch (found.failure) {
@@ -784,7 +784,7 @@ test "filesystem access denial JSON preserves recovery details" {
         try std.testing.expectEqualStrings(@errorName(err), details.get("error").?.string);
         try std.testing.expect(std.mem.find(u8, suggestion, "Do not retry") != null);
         try std.testing.expect(std.mem.find(u8, suggestion, "symlink") != null);
-        try std.testing.expect(std.mem.find(u8, suggestion, "fx permissions") != null);
+        try std.testing.expect(std.mem.find(u8, suggestion, "Tetris permissions") != null);
         if (builtin.target.os.tag == .macos) {
             try std.testing.expect(std.mem.find(u8, suggestion, "If the path is in a protected folder") != null);
             try std.testing.expect(std.mem.find(u8, suggestion, "Files and Folders") != null);

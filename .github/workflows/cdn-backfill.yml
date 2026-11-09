@@ -25,6 +25,9 @@ env:
 
 jobs:
   backfill:
+    # This workflow only maintains the Fx CDN. Tetris releases live on GitHub,
+    # so the job is inert outside the upstream repository.
+    if: github.repository == 'vercel-labs/fx'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

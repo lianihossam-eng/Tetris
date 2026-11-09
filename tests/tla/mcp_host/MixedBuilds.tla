@@ -1,5 +1,5 @@
 ---- MODULE MixedBuilds ----
-\* fx processes running an older build beside this one, sharing one profile
+\* Tetris processes running an older build beside this one, sharing one profile
 \* and one MCP server's login (src/core/mcp_host/credentials.zig, the store's
 \* location; runtime.zig restoreCredentials, tryRefresh and saveCredential).
 \*

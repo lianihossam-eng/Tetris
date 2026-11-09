@@ -1039,7 +1039,7 @@ pub const Runtime = struct {
             .completed => text orelse "The subagent ended its turn without a reply.",
             .failed => formatFailedResult(a, if (end.failure) |*failure| failure.view() else null, text),
             .cancelled => withPartial(a, cancelledSentence(end.end.cause), text),
-            .interrupted => withPartial(a, "fx stopped before it finished.", text),
+            .interrupted => withPartial(a, "Tetris stopped before it finished.", text),
             .lost => lost_result,
         };
     }
@@ -2321,7 +2321,7 @@ test "a work fx's quit cancels says so in its report" {
 
     try std.testing.expectEqual(@as(usize, 1), fixture.reportCount());
     try std.testing.expectEqual(child_state.EndFacts{ .cause = .fx_quit }, fixture.ends.items[0]);
-    try std.testing.expect(std.mem.find(u8, fixture.reports.items[0], " cancelled fx quit before it finished.") != null);
+    try std.testing.expect(std.mem.find(u8, fixture.reports.items[0], " cancelled Tetris quit before it finished.") != null);
     // The log keeps the cause for a report posted after a restart.
     var lock = runtime.managed.state_store.acquireLock();
     defer lock.release();
@@ -3210,7 +3210,7 @@ fn cancelledSentence(cause: ?child_state.Cause) []const u8 {
     const known = cause orelse return "Its turn was cancelled before it finished.";
     return switch (known) {
         .user_stop => "The user stopped its turn before it finished.",
-        .fx_quit => "fx quit before it finished.",
+        .fx_quit => "Tetris quit before it finished.",
         .user_close => "The user closed it before it finished. A later message to its name starts a new one.",
     };
 }
@@ -3222,7 +3222,7 @@ fn withPartial(a: Allocator, note: []const u8, partial: ?[]const u8) ![]const u8
 }
 
 /// A crash lost the work before the child started it (D33).
-const lost_result = "fx stopped before this message reached the subagent, so it never ran. Send it again if it is still needed.";
+const lost_result = "Tetris stopped before this message reached the subagent, so it never ran. Send it again if it is still needed.";
 
 test "terminal result projects every managed outcome without a lifecycle phase" {
     const completed = terminalResult(.{

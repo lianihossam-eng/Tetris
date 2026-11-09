@@ -1,11 +1,11 @@
-// Binary to spec: runs the built fx binary through one turn of two model
+// Binary to spec: runs the built tetris binary through one turn of two model
 // steps against a fake gateway, reads what Ctrl+O shows live and after a
 // resume in a new process, and has TLC check both views against
 // FullDetailOrder (TraceFullDetailOrder.tla).
 //
 // Two runs. In the first the first call is refused with a 429 and retried,
 // the step's text and a tool follow, and the second step answers; the turn
-// commits. In the second fx is killed while the second step's request is
+// commits. In the second Tetris is killed while the second step's request is
 // still open, so the resume shows what the last write of the turn held.
 //
 // Each Ctrl+O row the model knows becomes one of its items: the prompt, a
@@ -121,7 +121,7 @@ async function observe(bin: string, crash: boolean): Promise<{ live: Item[]; rep
         return new Promise<Response>(() => {});
       }
     : answer();
-  // After the crash, the resumed fx sends the interrupted request again. It
+  // After the crash, the resumed Tetris sends the interrupted request again. It
   // gets no answer either, so the resume shows only what the turn saved.
   const gateway = startFakeGateway(
     crash ? [refused(), toolStep(), second, () => new Promise<Response>(() => {})] : [refused(), toolStep(), second],

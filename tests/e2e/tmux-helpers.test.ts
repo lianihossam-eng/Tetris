@@ -142,7 +142,7 @@ test("observed command keeps wrapper signal diagnostics out of captured stderr",
   try {
     for (const shellPath of ["/bin/sh", "/bin/dash"].filter(existsSync)) {
       const observedCommand = buildObservedCommand(
-        `/bin/sh -c 'printf "fx stderr\\n" >&2; kill -TERM $$'`,
+        `/bin/sh -c 'printf "tetris stderr\\n" >&2; kill -TERM $$'`,
         stderrPath,
         exitStatusPath,
       ).replaceAll("/bin/sh", shellPath);
@@ -151,7 +151,7 @@ test("observed command keeps wrapper signal diagnostics out of captured stderr",
       });
 
       expect(result.status).toBe(143);
-      expect(readFileSync(stderrPath, "utf8")).toBe("fx stderr\n");
+      expect(readFileSync(stderrPath, "utf8")).toBe("tetris stderr\n");
       expect(readFileSync(exitStatusPath, "utf8")).toBe("143\n");
     }
   } finally {

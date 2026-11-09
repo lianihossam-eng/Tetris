@@ -101,7 +101,7 @@ jobs:
             artifact-id: ${{ needs.build-linux-x86_64.outputs.artifact-id }}
     env:
       ARCH: ${{ matrix.arch }}
-      ARCHIVE: fx-${{ matrix.name }}.tar.gz
+      ARCHIVE: tetris-${{ matrix.name }}.tar.gz
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
@@ -143,15 +143,16 @@ jobs:
           python3 -c 'import pathlib, sys; n = pathlib.Path(sys.argv[1]).stat().st_size; print(f"linux PGSO executable: {n:,} bytes ({n / 1048576:.6f} MiB)")' "$RUNNER_TEMP/fx-pgso/candidate/fx" >> "$GITHUB_STEP_SUMMARY"
           package_dir="$RUNNER_TEMP/fx-release-package"
           mkdir -p "$package_dir"
-          cp "$RUNNER_TEMP/fx-pgso/candidate/fx" LICENSE THIRD_PARTY_NOTICES.md "$package_dir/"
-          tar -czf "$RUNNER_TEMP/$ARCHIVE" -C "$package_dir" fx LICENSE THIRD_PARTY_NOTICES.md
+          cp "$RUNNER_TEMP/fx-pgso/candidate/fx" "$package_dir/tetris"
+          cp LICENSE THIRD_PARTY_NOTICES.md "$package_dir/"
+          tar -czf "$RUNNER_TEMP/$ARCHIVE" -C "$package_dir" tetris LICENSE THIRD_PARTY_NOTICES.md
           cd "$RUNNER_TEMP"
           sha256sum "$ARCHIVE" > "$ARCHIVE.sha256"
 
       - name: Upload stable release artifact
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
-          name: fx-${{ matrix.name }}
+          name: tetris-${{ matrix.name }}
           path: |
             ${{ runner.temp }}/${{ env.ARCHIVE }}
             ${{ runner.temp }}/${{ env.ARCHIVE }}.sha256
@@ -176,36 +177,40 @@ jobs:
 
       - name: Sign and notarize
         env:
+          APPLE_DEVELOPER_IDENTITY: ${{ vars.APPLE_DEVELOPER_IDENTITY }}
+          APPLE_TEAM_ID: ${{ vars.APPLE_TEAM_ID }}
+          TETRIS_SIGNING_IDENTIFIER: ${{ vars.TETRIS_SIGNING_IDENTIFIER }}
           APPLE_DEVELOPER_ID_P12_BASE64: ${{ secrets.APPLE_DEVELOPER_ID_P12_BASE64 }}
           APPLE_DEVELOPER_ID_P12_PASSWORD: ${{ secrets.APPLE_DEVELOPER_ID_P12_PASSWORD }}
           APPLE_NOTARY_KEY_P8_BASE64: ${{ secrets.APPLE_NOTARY_KEY_P8_BASE64 }}
           APPLE_NOTARY_KEY_ID: ${{ secrets.APPLE_NOTARY_KEY_ID }}
           APPLE_NOTARY_ISSUER_ID: ${{ secrets.APPLE_NOTARY_ISSUER_ID }}
-        run: scripts/sign-and-notarize-macos.sh zig-out/bin/fx
+        run: scripts/sign-and-notarize-macos.sh zig-out/bin/tetris
 
       - name: Verify notarized Intel binary
         if: github.event_name == 'workflow_dispatch' && inputs.validate_only
         run: |
-          codesign --verify --strict --check-notarization -R=notarized ./zig-out/bin/fx
-          ./zig-out/bin/fx --version
-          ./zig-out/bin/fx help
+          codesign --verify --strict --check-notarization -R=notarized ./zig-out/bin/tetris
+          ./zig-out/bin/tetris --version
+          ./zig-out/bin/tetris help
 
       - name: Package
         run: |
-          python3 -c 'import pathlib; n = pathlib.Path("zig-out/bin/fx").stat().st_size; print(f"macOS Intel signed executable: {n:,} bytes ({n / 1048576:.6f} MiB)")' >> "$GITHUB_STEP_SUMMARY"
+          python3 -c 'import pathlib; n = pathlib.Path("zig-out/bin/tetris").stat().st_size; print(f"macOS Intel signed executable: {n:,} bytes ({n / 1048576:.6f} MiB)")' >> "$GITHUB_STEP_SUMMARY"
           package_dir="$RUNNER_TEMP/fx-package-macos-x86_64"
           mkdir -p "$package_dir"
-          cp zig-out/bin/fx LICENSE THIRD_PARTY_NOTICES.md "$package_dir/"
-          tar -czf fx-macos-x86_64.tar.gz -C "$package_dir" fx LICENSE THIRD_PARTY_NOTICES.md
-          shasum -a 256 fx-macos-x86_64.tar.gz > fx-macos-x86_64.tar.gz.sha256
+          cp zig-out/bin/tetris "$package_dir/tetris"
+          cp LICENSE THIRD_PARTY_NOTICES.md "$package_dir/"
+          tar -czf tetris-macos-x86_64.tar.gz -C "$package_dir" tetris LICENSE THIRD_PARTY_NOTICES.md
+          shasum -a 256 tetris-macos-x86_64.tar.gz > tetris-macos-x86_64.tar.gz.sha256
 
       - name: Upload artifact
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
-          name: fx-macos-x86_64
+          name: tetris-macos-x86_64
           path: |
-            fx-macos-x86_64.tar.gz
-            fx-macos-x86_64.tar.gz.sha256
+            tetris-macos-x86_64.tar.gz
+            tetris-macos-x86_64.tar.gz.sha256
 
   build-macos-arm64:
     needs: check-version
@@ -251,6 +256,9 @@ jobs:
       - name: Sign and notarize stable release candidate
         env:
           VALIDATE_ONLY: ${{ github.event_name == 'workflow_dispatch' && inputs.validate_only }}
+          APPLE_DEVELOPER_IDENTITY: ${{ vars.APPLE_DEVELOPER_IDENTITY }}
+          APPLE_TEAM_ID: ${{ vars.APPLE_TEAM_ID }}
+          TETRIS_SIGNING_IDENTIFIER: ${{ vars.TETRIS_SIGNING_IDENTIFIER }}
           APPLE_DEVELOPER_ID_P12_BASE64: ${{ secrets.APPLE_DEVELOPER_ID_P12_BASE64 }}
           APPLE_DEVELOPER_ID_P12_PASSWORD: ${{ secrets.APPLE_DEVELOPER_ID_P12_PASSWORD }}
           APPLE_NOTARY_KEY_P8_BASE64: ${{ secrets.APPLE_NOTARY_KEY_P8_BASE64 }}
@@ -289,21 +297,22 @@ jobs:
 
       - name: Package stable release candidate
         run: |
-          archive="$RUNNER_TEMP/fx-macos-aarch64.tar.gz"
+          archive="$RUNNER_TEMP/tetris-macos-aarch64.tar.gz"
           package_dir="$RUNNER_TEMP/fx-release-package"
           mkdir -p "$package_dir"
-          cp "$RUNNER_TEMP/fx-pgso-aggregate/candidate/fx" LICENSE THIRD_PARTY_NOTICES.md "$package_dir/"
-          tar -czf "$archive" -C "$package_dir" fx LICENSE THIRD_PARTY_NOTICES.md
+          cp "$RUNNER_TEMP/fx-pgso-aggregate/candidate/fx" "$package_dir/tetris"
+          cp LICENSE THIRD_PARTY_NOTICES.md "$package_dir/"
+          tar -czf "$archive" -C "$package_dir" tetris LICENSE THIRD_PARTY_NOTICES.md
           cd "$RUNNER_TEMP"
-          shasum -a 256 fx-macos-aarch64.tar.gz > fx-macos-aarch64.tar.gz.sha256
+          shasum -a 256 tetris-macos-aarch64.tar.gz > tetris-macos-aarch64.tar.gz.sha256
 
       - name: Upload stable release artifact
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
-          name: fx-macos-aarch64
+          name: tetris-macos-aarch64
           path: |
-            ${{ runner.temp }}/fx-macos-aarch64.tar.gz
-            ${{ runner.temp }}/fx-macos-aarch64.tar.gz.sha256
+            ${{ runner.temp }}/tetris-macos-aarch64.tar.gz
+            ${{ runner.temp }}/tetris-macos-aarch64.tar.gz.sha256
           if-no-files-found: error
 
   release:
@@ -319,7 +328,6 @@ jobs:
       - name: Download artifacts
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
-          pattern: fx-*
           merge-multiple: true
 
       - name: Create git tag
@@ -341,16 +349,39 @@ jobs:
           fi
           echo "Extracted release notes ($LINES lines)"
 
+      - name: Stage latest.txt
+        env:
+          RELEASE_TAG: ${{ needs.check-version.outputs.version }}
+        run: |
+          set -euo pipefail
+          [[ "$RELEASE_TAG" =~ ^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]]
+          printf '%s' "$RELEASE_TAG" > latest.txt
+
+      - name: Verify release assets
+        env:
+          RELEASE_TAG: ${{ needs.check-version.outputs.version }}
+        run: |
+          set -euo pipefail
+          test "$(cat latest.txt)" = "$RELEASE_TAG"
+          for PLATFORM in linux-x86_64 linux-aarch64 macos-x86_64 macos-aarch64; do
+            ARCHIVE="tetris-${PLATFORM}.tar.gz"
+            test -f "$ARCHIVE"
+            test -f "${ARCHIVE}.sha256"
+            tar -tzf "$ARCHIVE" | grep -qx tetris
+          done
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2
         with:
           tag_name: ${{ needs.check-version.outputs.version }}
           body_path: /tmp/release-notes.md
           files: |
-            fx-*.tar.gz
-            fx-*.tar.gz.sha256
+            tetris-*.tar.gz
+            tetris-*.tar.gz.sha256
+            latest.txt
 
       - name: Publish to CDN
+        if: github.repository == 'vercel-labs/fx'
         env:
           BLOB_READ_WRITE_TOKEN: ${{ secrets.BLOB_READ_WRITE_TOKEN }}
           VERSION: ${{ needs.check-version.outputs.version }}
@@ -359,7 +390,7 @@ jobs:
           [[ "$VERSION" =~ ^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]]
           CDN_BASE="cli"
 
-          for FILE in fx-*.tar.gz fx-*.tar.gz.sha256; do
+          for FILE in tetris-*.tar.gz tetris-*.tar.gz.sha256; do
             [ -f "$FILE" ] || continue
             CONTENT_TYPE="application/octet-stream"
             [[ "$FILE" == *.sha256 ]] && CONTENT_TYPE="text/plain"

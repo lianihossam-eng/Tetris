@@ -290,7 +290,7 @@ def temporal_candidate_link_argv(
         "_main",
         "-no_deduplicate",
         "-no_function_starts",
-        # fx builds without unwind tables; newer ld otherwise emits ~160 KB.
+        # Tetris builds without unwind tables; newer ld otherwise emits ~160 KB.
         "-no_compact_unwind",
         "-order_file",
         str(paths.logs / "candidate-order.txt"),

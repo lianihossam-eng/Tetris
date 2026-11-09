@@ -1,8 +1,25 @@
-# fx
+# Tetris
+
+## 0.1.0
+
+<!-- release:start -->
+
+**Tetris now installs and updates as a separate product from Fx.**
+
+### Improvements
+
+- The native executable is `tetris`, its default user profile is `~/.tetris`, and stable updates come from Tetris releases. Installing Tetris leaves an existing `fx` executable and profile unchanged.
+- The installer verifies release archives with SHA-256 before installing the Tetris executable.
+- The `libfx` SDK and shared project integration names remain compatible with Fx.
+- The lightweight `tetris-agent` package ships with validated, executable equipment packs for workspace files, search, approved shell, web retrieval, session todos, and bounded delegation; no OMP `SKILL.md` files are bundled.
+<!-- release:end -->
+
+## Before Tetris: upstream Fx history
+
+The entries below are upstream Fx release notes, preserved for historical context. Tetris releases begin with `0.1.0`.
 
 ## 0.0.16
 
-<!-- release:start -->
 
 **fx uses 41% fewer tokens. The CLI is 2.8% smaller. libfx npm downloads are about 60% smaller. Edit files up to 4× larger, now up to 16 MiB.**
 
@@ -55,7 +72,6 @@
 - libfx now requires Node.js `^20.19.0 || >=22.12.0`, including when loaded with `require()`.
 - libfx 0.0.15 cannot reopen saved turns containing the new context updates. Upgrade every worker sharing their session store before starting new turns.
 
-<!-- release:end -->
 
 ## 0.0.15
 

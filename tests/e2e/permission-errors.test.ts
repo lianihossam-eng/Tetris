@@ -43,14 +43,14 @@ function createIsolatedRoot(prefix: string) {
   const home = join(root, "home");
   const workspace = join(root, "workspace");
   mkdirSync(home, { recursive: true });
-  mkdirSync(join(home, ".fx"), { recursive: true });
+  mkdirSync(join(home, ".tetris"), { recursive: true });
   mkdirSync(workspace, { recursive: true });
   return { root, home, workspace };
 }
 
 function parseFxJson(result: { stdout: string; stderr: string; code: number | null }): FxJson {
   if (result.code !== 0) {
-    throw new Error(`fx exited ${result.code}\nstdout: ${result.stdout}\nstderr: ${result.stderr}`);
+    throw new Error(`tetris exited ${result.code}\nstdout: ${result.stdout}\nstderr: ${result.stderr}`);
   }
   return JSON.parse(result.stdout.trim()) as FxJson;
 }
@@ -101,7 +101,7 @@ async function waitForPaneExit(
     await Bun.sleep(25);
   }
   throw new Error(
-    `Timed out waiting for fx ask to exit.\n${await session.captureFullScrollback()}`,
+    `Timed out waiting for tetris ask to exit.\n${await session.captureFullScrollback()}`,
   );
 }
 
@@ -115,7 +115,7 @@ async function runTtyPromptPermissionsCase(
   const marker = join(root.workspace, `${decision}-marker.txt`);
   const stdoutPath = join(root.root, `${decision}.stdout`);
   writeFileSync(
-    join(root.home, ".fx", "settings.json"),
+    join(root.home, ".tetris", "settings.json"),
     JSON.stringify({ permission_mode: "ask", sandbox: "none" }),
   );
   writeFileSync(stdoutPath, "");
@@ -134,7 +134,7 @@ async function runTtyPromptPermissionsCase(
       remainOnExit: true,
     });
     const prompt = await session.waitForText("Approve? [y/N]", TIMEOUT);
-    expect(prompt).toContain("fx wants to run:");
+    expect(prompt).toContain("tetris wants to run:");
     expect(existsSync(marker)).toBe(false);
     await session.sendText(decision === "approve" ? "y" : "n");
     await waitForPaneExit(session, 0);
@@ -177,7 +177,7 @@ describe("generic permission typed errors", () => {
       ]);
       try {
         writeFileSync(
-          join(root.home, ".fx", "settings.json"),
+          join(root.home, ".tetris", "settings.json"),
           JSON.stringify({
             workspaces: {
               [root.workspace]: {
@@ -256,7 +256,7 @@ describe("generic permission typed errors", () => {
       );
       const stdoutPath = join(root.root, "auto.stdout");
       writeFileSync(
-        join(root.home, ".fx", "settings.json"),
+        join(root.home, ".tetris", "settings.json"),
         JSON.stringify({ permission_mode: "auto", sandbox: "none" }),
       );
       writeFileSync(stdoutPath, "");
@@ -336,7 +336,7 @@ describe("generic permission typed errors", () => {
         );
         const marker = join(root.workspace, "must-not-run.txt");
         writeFileSync(
-          join(root.home, ".fx", "settings.json"),
+          join(root.home, ".tetris", "settings.json"),
           JSON.stringify({ permission_mode: "ask", sandbox: "none" }),
         );
         const gateway = startFakeGateway([

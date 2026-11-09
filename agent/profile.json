@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "packs": [
+    "workspace-files",
+    "workspace-search",
+    "shell",
+    "web-fetch",
+    "planning",
+    "delegation"
+  ]
+}

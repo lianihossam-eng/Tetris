@@ -390,7 +390,7 @@ def _installed_training_binary(
 ) -> Iterator[pathlib.Path]:
     if not binary.is_file() or binary.stat().st_size == 0:
         raise PgsoError(f"training binary is missing or empty: {binary}")
-    canonical = corpus.repo_root / "zig-out" / "bin" / "fx"
+    canonical = corpus.repo_root / "zig-out" / "bin" / "tetris"
     canonical.parent.mkdir(parents=True, exist_ok=True)
     if canonical.is_symlink():
         raise PgsoError(f"canonical training binary cannot be a symlink: {canonical}")
@@ -502,7 +502,7 @@ def _prepare_runtime_home(
         "set-option -g history-limit 100000\n",
         encoding="utf-8",
     )
-    # Only macOS has a Keychain; on Linux fx keeps keys in its profile file.
+    # Only macOS has a Keychain; on Linux Tetris keeps keys in its profile file.
     if allow_keychain and sys.platform == "darwin":
         source = pathlib.Path.home() / "Library" / "Keychains"
         if not source.is_dir():
@@ -839,7 +839,7 @@ def run_behavior_corpus(
 
 
 def main(argv: Sequence[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description="Inspect the fx PGSO corpus")
+    parser = argparse.ArgumentParser(description="Inspect the Tetris PGSO corpus")
     parser.add_argument(
         "--manifest",
         required=True,

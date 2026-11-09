@@ -16,7 +16,7 @@ function evalHomes(): Set<string> {
 }
 
 describe("eval helpers", () => {
-  test("passes the selected eval model to fx through FX_MODEL", () => {
+  test("passes the selected eval model to tetris through FX_MODEL", () => {
     const previous = process.env.FX_MODEL;
     process.env.FX_MODEL = "ambient/model";
 
@@ -35,7 +35,7 @@ describe("eval helpers", () => {
     }
   });
 
-  test("passes the eval budget to fx --timeout in seconds", () => {
+  test("passes the eval budget to tetris --timeout in seconds", () => {
     const args = buildEvalArgs("hello", 150);
     const flag = args.indexOf("--timeout");
 
@@ -45,7 +45,7 @@ describe("eval helpers", () => {
   });
 
   test.skipIf(!existsSync(FX_BIN))(
-    "stops fx when the eval budget runs out and removes its home",
+    "stops tetris when the eval budget runs out and removes its home",
     async () => {
       let modelRequests = 0;
       const gateway = Bun.serve({
@@ -78,7 +78,7 @@ describe("eval helpers", () => {
       let deadlineTimer: ReturnType<typeof setTimeout> | undefined;
       const deadline = new Promise<never>((_, reject) => {
         deadlineTimer = setTimeout(
-          () => reject(new Error("runEval did not stop fx within 10s")),
+          () => reject(new Error("runEval did not stop tetris within 10s")),
           10_000,
         );
       });
@@ -89,7 +89,7 @@ describe("eval helpers", () => {
             runEval("hello", { model: "fake/model", timeoutSec: 1 }),
             deadline,
           ]),
-        ).rejects.toThrow("fx ask did not finish within 1s");
+        ).rejects.toThrow("tetris ask did not finish within 1s");
         expect(modelRequests).toBeGreaterThan(0);
         expect([...evalHomes()].filter((name) => !homesBefore.has(name))).toEqual([]);
       } finally {

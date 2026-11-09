@@ -1,9 +1,9 @@
 -------------------------- MODULE LeanUsageDrive --------------------------
 (***************************************************************************)
 (* The behaviors of LeanUsage that the Bun driver replays against the real *)
-(* fx binary (driver/drive.ts). Two restrictions make a trace drivable:     *)
+(* tetris binary (driver/drive.ts). Two restrictions make a trace drivable:     *)
 (*                                                                         *)
-(* - fx fires a due 15-minute refresh on its next event-loop pass, so a    *)
+(* - Tetris fires a due 15-minute refresh on its next event-loop pass, so a    *)
 (*   due Timer is taken before anything else happens;                      *)
 (* - a running TUI's sign-in cannot be switched from the driver, so each   *)
 (*   process keeps the identity it starts with (no Switch).                *)

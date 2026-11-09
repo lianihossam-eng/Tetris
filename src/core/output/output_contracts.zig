@@ -99,10 +99,10 @@ pub const UsageSnapshot = struct {
             .ready, .fetching => {},
             .failed => |f| try writeUsageFailure(&out.writer, f, "AI Gateway"),
             .unavailable => |u| try out.writer.print("{s}\n", .{switch (u) {
-                .no_gateway_sign_in => "Usage needs an AI Gateway sign-in: run fx login or set an API key.",
-                .no_team => "Usage needs a team: run fx login and pick one.",
+                .no_gateway_sign_in => "Usage needs an AI Gateway sign-in: run tetris login or set an API key.",
+                .no_team => "Usage needs a team: run tetris login and pick one.",
                 .unsupported_provider => "Usage isn't shown for this provider yet; it reads AI Gateway.",
-                .refresh_needed => "The sign-in needs a refresh: send a message in fx, then run fx usage again.",
+                .refresh_needed => "The sign-in needs a refresh: send a message in Tetris, then run tetris usage again.",
             }}),
         }
         if (v.budget) |b| {
@@ -433,7 +433,7 @@ pub fn workspaceErrorMessage(err: anyerror) ?[]const u8 {
 
 pub const ConfigUnknownSetting = struct {
     key: settings_keys.UnknownKey,
-    /// Where the key is: `~/.fx/settings.json` or `.fx.json`.
+    /// Where the key is: `~/.tetris/settings.json` or `.fx.json`.
     file: []const u8,
     suggestion: ?[]const u8 = null,
 };
@@ -465,7 +465,7 @@ pub const ConfigSnapshot = struct {
             if (self.show_origin) {
                 switch (entry.origin) {
                     .project => try out.writer.writeAll("file:.fx.json"),
-                    .global => try out.writer.writeAll(profile_paths.displayText("file:~/.fx/settings.json")),
+                    .global => try out.writer.writeAll(profile_paths.displayText("file:~/.tetris/settings.json")),
                     .workspace => {
                         try out.writer.writeAll("workspace:");
                         try writeTerminalSafe(&out.writer, alloc, self.workspace_root);
@@ -501,7 +501,7 @@ pub const ConfigSnapshot = struct {
                 try std.json.Stringify.value(entry.variable.?, .{}, &out.writer);
             } else if (entry.origin != .default) {
                 try out.writer.writeAll(",\"file\":");
-                try std.json.Stringify.value(if (entry.origin == .project) ".fx.json" else profile_paths.displayText("~/.fx/settings.json"), .{}, &out.writer);
+                try std.json.Stringify.value(if (entry.origin == .project) ".fx.json" else profile_paths.displayText("~/.tetris/settings.json"), .{}, &out.writer);
             }
             if (entry.origin == .workspace) {
                 try out.writer.writeAll(",\"workspace\":");
@@ -545,11 +545,11 @@ pub const ConfigChangeSnapshot = struct {
             .text => {
                 try writeTerminalSafe(&out.writer, alloc, self.key);
                 if (self.unset) {
-                    try out.writer.writeAll(if (self.changed) profile_paths.displayText(" removed from ~/.fx/settings.json.\n") else profile_paths.displayText(" isn't set in ~/.fx/settings.json.\n"));
+                    try out.writer.writeAll(if (self.changed) profile_paths.displayText(" removed from ~/.tetris/settings.json.\n") else profile_paths.displayText(" isn't set in ~/.tetris/settings.json.\n"));
                 } else {
                     try out.writer.writeAll(if (self.changed) " set to " else " is already ");
                     try writeConfigValue(&out.writer, alloc, self.value orelse .null);
-                    try out.writer.writeAll(if (self.changed) profile_paths.displayText(" in ~/.fx/settings.json.\n") else ".\n");
+                    try out.writer.writeAll(if (self.changed) profile_paths.displayText(" in ~/.tetris/settings.json.\n") else ".\n");
                 }
             },
             .json => {
@@ -558,7 +558,7 @@ pub const ConfigChangeSnapshot = struct {
                 try out.writer.writeAll(",\"value\":");
                 try std.json.Stringify.value(self.value orelse .null, .{}, &out.writer);
                 try out.writer.print(",\"changed\":{},\"file\":", .{self.changed});
-                try std.json.Stringify.value(profile_paths.displayText("~/.fx/settings.json"), .{}, &out.writer);
+                try std.json.Stringify.value(profile_paths.displayText("~/.tetris/settings.json"), .{}, &out.writer);
                 try out.writer.writeByte('}');
             },
         }
@@ -868,7 +868,7 @@ pub const StatusSnapshot = struct {
     /// Why the profile settings could not be read, for the `/status` panel.
     /// The credential they select is then unknown, so no auth row is shown.
     settings_error: ?[]const u8 = null,
-    /// fx's folder: `$FX_HOME`, or `~/.fx` expanded. Shown when set.
+    /// fx's folder: `$TETRIS_HOME`, or `~/.tetris` expanded. Shown when set.
     fx_home: ?[]const u8 = null,
     history_turns: usize,
     session_permission_grants: usize,
@@ -1456,13 +1456,13 @@ pub const SessionListSnapshot = struct {
         }
         if (self.has_more) {
             try out.writer.print(
-                "[sessions] more saved sessions; continue with `fx sessions {s}--cursor {s}`\n",
+                "[sessions] more saved sessions; continue with `tetris sessions {s}--cursor {s}`\n",
                 .{ if (self.all_workspaces) "--all " else "", self.next_cursor orelse "" },
             );
         }
         if (self.skipped_invalid > 0) {
             try out.writer.print(
-                "[sessions] warning: skipped {d} unreadable saved session{s}; run `fx doctor` for recovery guidance\n",
+                "[sessions] warning: skipped {d} unreadable saved session{s}; run `tetris doctor` for recovery guidance\n",
                 .{ self.skipped_invalid, if (self.skipped_invalid == 1) "" else "s" },
             );
         }
@@ -1725,7 +1725,7 @@ pub const SessionRecoverySnapshot = struct {
         if (result.permission_rules_dropped) {
             try out.writer.writeAll("warning: saved permission rules could not be read and were not copied\n");
         }
-        try out.writer.print("resume: fx --resume {s}\n", .{result.recovered_session_id});
+        try out.writer.print("resume: tetris --resume {s}\n", .{result.recovered_session_id});
         return try out.toOwnedSlice();
     }
 
@@ -1822,13 +1822,13 @@ pub const SessionConvertSnapshot = struct {
             if (skipped.reason) |reason| {
                 try out.writer.print("{s}: unreadable: {s}\n", .{ skipped.id, reason });
             } else if (std.mem.eql(u8, skipped.code, "SessionBusy")) {
-                try out.writer.print("{s}: busy, open in another fx\n", .{skipped.id});
+                try out.writer.print("{s}: busy, open in another Tetris\n", .{skipped.id});
             } else try out.writer.print("{s}: unreadable\n", .{skipped.id});
         }
         for (self.left_out) |left| {
             try out.writer.print("{s}: converted without {s}", .{ left.id, left.file });
             if (!std.mem.eql(u8, left.member, left.id)) try out.writer.print(" of its subagent {s}", .{left.member});
-            try out.writer.print(" because {s}; ~/.fx/sessions/{s} keeps it\n", .{ left.reason, left.member });
+            try out.writer.print(" because {s}; ~/.tetris/sessions/{s} keeps it\n", .{ left.reason, left.member });
         }
         for (self.kept) |kept| try out.writer.print("{s}: kept as it is: {s}\n", .{ kept.id, kept.reason });
         return out.toOwnedSlice();
@@ -1879,9 +1879,9 @@ test "fx sessions convert names each file it left out, in text and JSON" {
     defer alloc.free(text);
     try std.testing.expectEqualStrings(
         "converted 1, busy 0, unreadable 0\n" ++
-            "root: converted without logs/commands/replay.bin because it is 600 bytes, more than the 512 the new store keeps in one file; ~/.fx/sessions/root keeps it\n" ++
-            "root: converted without tool-results/big.txt of its subagent kid because it is 700 bytes, more than the 512 the new store keeps in one file; ~/.fx/sessions/kid keeps it\n" ++
-            "root: converted without terminal/state/link because it is not a file or folder; ~/.fx/sessions/root keeps it\n",
+            "root: converted without logs/commands/replay.bin because it is 600 bytes, more than the 512 the new store keeps in one file; ~/.tetris/sessions/root keeps it\n" ++
+            "root: converted without tool-results/big.txt of its subagent kid because it is 700 bytes, more than the 512 the new store keeps in one file; ~/.tetris/sessions/kid keeps it\n" ++
+            "root: converted without terminal/state/link because it is not a file or folder; ~/.tetris/sessions/root keeps it\n",
         text,
     );
     const json = try snapshot.render(alloc, .json);
@@ -1904,7 +1904,7 @@ test "fx sessions convert renders its counts and each skip as text and JSON from
     const text = try snapshot.render(alloc, .text);
     defer alloc.free(text);
     try std.testing.expectEqualStrings(
-        "converted 2, busy 1, unreadable 1\nheld: busy, open in another fx\ntorn: unreadable: events.jsonl line 3 is not valid JSON\n",
+        "converted 2, busy 1, unreadable 1\nheld: busy, open in another Tetris\ntorn: unreadable: events.jsonl line 3 is not valid JSON\n",
         text,
     );
     const json = try snapshot.render(alloc, .json);
@@ -1918,20 +1918,20 @@ test "fx sessions convert renders its counts and each skip as text and JSON from
 test "fx sessions convert names each subagent it keeps as it is, in text and JSON (D88)" {
     const alloc = std.testing.allocator;
     const snapshot: SessionConvertSnapshot = .{ .converted = 1, .busy = 0, .unreadable = 0, .skipped = &.{}, .kept = &.{
-        .{ .id = "grandchild", .reason = "it is a subagent of the earlier subagent child, which no fx opens" },
+        .{ .id = "grandchild", .reason = "it is a subagent of the earlier subagent child, which no Tetris opens" },
     } };
     const text = try snapshot.render(alloc, .text);
     defer alloc.free(text);
     try std.testing.expectEqualStrings(
         "converted 1, busy 0, unreadable 0\n" ++
-            "grandchild: kept as it is: it is a subagent of the earlier subagent child, which no fx opens\n",
+            "grandchild: kept as it is: it is a subagent of the earlier subagent child, which no Tetris opens\n",
         text,
     );
     const json = try snapshot.render(alloc, .json);
     defer alloc.free(json);
     try std.testing.expectEqualStrings(
         "{\"kind\":\"sessions_convert\",\"converted\":1,\"busy\":0,\"unreadable\":0,\"skipped\":[],\"left_out\":[]," ++
-            "\"kept\":[{\"id\":\"grandchild\",\"reason\":\"it is a subagent of the earlier subagent child, which no fx opens\"}]}",
+            "\"kept\":[{\"id\":\"grandchild\",\"reason\":\"it is a subagent of the earlier subagent child, which no Tetris opens\"}]}",
         json,
     );
 }
@@ -2221,9 +2221,9 @@ pub const UpgradeSnapshot = struct {
             },
             .up_to_date => {
                 if (std.mem.eql(u8, self.channel, "dev") and self.latest_revision.len > 0) {
-                    try out.writer.print("fx dev {s} is already up to date (", .{shortRevision(self.latest_revision)});
+                    try out.writer.print("tetris dev {s} is already up to date (", .{shortRevision(self.latest_revision)});
                 } else {
-                    try out.writer.writeAll("fx is already up to date (");
+                    try out.writer.writeAll("Tetris is already up to date (");
                 }
                 try writeVersionWithPrefix(&out.writer, self.latest);
                 try out.writer.writeAll(")\n");
@@ -2527,7 +2527,7 @@ test "command failure snapshot renders stable escaped json" {
 test "core status snapshot text and json stay stable" {
     const snapshot = StatusSnapshot{
         .model = "alpha",
-        .auth_help = "fx needs access to Vercel AI Gateway. Run fx login to sign in, fx login vercel --api-key to use an API key, or set AI_GATEWAY_API_KEY.",
+        .auth_help = "Tetris needs access to Vercel AI Gateway. Run tetris login to sign in, tetris login vercel --api-key to use an API key, or set AI_GATEWAY_API_KEY.",
         .permission_mode = .ask,
         .workspace_root = "/tmp/fx",
         .history_turns = 3,
@@ -2538,14 +2538,14 @@ test "core status snapshot text and json stay stable" {
     const text = try snapshot.renderText(std.testing.allocator);
     defer std.testing.allocator.free(text);
     try std.testing.expectEqualStrings(
-        "[status] model=alpha\n[status] update_channel=stable\n[status] build_channel=stable\n[status] auth=missing\n[status] auth_refreshable=false\n[status] auth_help=fx needs access to Vercel AI Gateway. Run fx login to sign in, fx login vercel --api-key to use an API key, or set AI_GATEWAY_API_KEY.\n[status] permission_mode=ask\n[status] workspace=/tmp/fx\n[status] history_turns=3\n[status] session_permission_grants=1\n[status] agent_step_limit=24\n[status] ultrafast_requested=false\n",
+        "[status] model=alpha\n[status] update_channel=stable\n[status] build_channel=stable\n[status] auth=missing\n[status] auth_refreshable=false\n[status] auth_help=Tetris needs access to Vercel AI Gateway. Run tetris login to sign in, tetris login vercel --api-key to use an API key, or set AI_GATEWAY_API_KEY.\n[status] permission_mode=ask\n[status] workspace=/tmp/fx\n[status] history_turns=3\n[status] session_permission_grants=1\n[status] agent_step_limit=24\n[status] ultrafast_requested=false\n",
         text,
     );
 
     const json = try snapshot.renderJson(std.testing.allocator);
     defer std.testing.allocator.free(json);
     try std.testing.expectEqualStrings(
-        "{\"kind\":\"status\",\"model\":\"alpha\",\"update_channel\":\"stable\",\"build_channel\":\"stable\",\"build_revision\":\"\",\"auth\":\"missing\",\"auth_refreshable\":false,\"auth_help\":\"fx needs access to Vercel AI Gateway. Run fx login to sign in, fx login vercel --api-key to use an API key, or set AI_GATEWAY_API_KEY.\",\"permission_mode\":\"ask\",\"workspace\":\"/tmp/fx\",\"history_turns\":3,\"session_permission_grants\":1,\"agent_step_limit\":24,\"ultrafast_requested\":false}",
+        "{\"kind\":\"status\",\"model\":\"alpha\",\"update_channel\":\"stable\",\"build_channel\":\"stable\",\"build_revision\":\"\",\"auth\":\"missing\",\"auth_refreshable\":false,\"auth_help\":\"Tetris needs access to Vercel AI Gateway. Run tetris login to sign in, tetris login vercel --api-key to use an API key, or set AI_GATEWAY_API_KEY.\",\"permission_mode\":\"ask\",\"workspace\":\"/tmp/fx\",\"history_turns\":3,\"session_permission_grants\":1,\"agent_step_limit\":24,\"ultrafast_requested\":false}",
         json,
     );
 }
@@ -2564,14 +2564,14 @@ test "core status snapshot includes selected team when present" {
     const text = try snapshot.renderText(std.testing.allocator);
     defer std.testing.allocator.free(text);
     try std.testing.expectEqualStrings(
-        "[status] model=alpha\n[status] update_channel=stable\n[status] build_channel=stable\n[status] auth=fx login\n[status] auth_refreshable=true\n[status] team=example-team\n[status] permission_mode=ask\n[status] workspace=/tmp/fx\n[status] history_turns=0\n[status] session_permission_grants=0\n[status] agent_step_limit=24\n[status] ultrafast_requested=false\n",
+        "[status] model=alpha\n[status] update_channel=stable\n[status] build_channel=stable\n[status] auth=tetris login\n[status] auth_refreshable=true\n[status] team=example-team\n[status] permission_mode=ask\n[status] workspace=/tmp/fx\n[status] history_turns=0\n[status] session_permission_grants=0\n[status] agent_step_limit=24\n[status] ultrafast_requested=false\n",
         text,
     );
 
     const json = try snapshot.renderJson(std.testing.allocator);
     defer std.testing.allocator.free(json);
     try std.testing.expectEqualStrings(
-        "{\"kind\":\"status\",\"model\":\"alpha\",\"update_channel\":\"stable\",\"build_channel\":\"stable\",\"build_revision\":\"\",\"auth\":\"fx login\",\"auth_refreshable\":true,\"team\":\"example-team\",\"permission_mode\":\"ask\",\"workspace\":\"/tmp/fx\",\"history_turns\":0,\"session_permission_grants\":0,\"agent_step_limit\":24,\"ultrafast_requested\":false}",
+        "{\"kind\":\"status\",\"model\":\"alpha\",\"update_channel\":\"stable\",\"build_channel\":\"stable\",\"build_revision\":\"\",\"auth\":\"tetris login\",\"auth_refreshable\":true,\"team\":\"example-team\",\"permission_mode\":\"ask\",\"workspace\":\"/tmp/fx\",\"history_turns\":0,\"session_permission_grants\":0,\"agent_step_limit\":24,\"ultrafast_requested\":false}",
         json,
     );
 }
@@ -2690,11 +2690,11 @@ test "config entries from the environment name their variable" {
     const snapshot: ConfigSnapshot = .{ .entries = &entries, .workspace_root = "/w", .show_origin = true };
     const text = try snapshot.render(alloc, .text);
     defer alloc.free(text);
-    try std.testing.expectEqualStrings("file:~/.fx/settings.json\tmax_agent_steps=5\nenv:FX_MAX_AGENT_STEPS\tmax_agent_steps=20\n", text);
+    try std.testing.expectEqualStrings("file:~/.tetris/settings.json\tmax_agent_steps=5\nenv:FX_MAX_AGENT_STEPS\tmax_agent_steps=20\n", text);
     const json = try snapshot.render(alloc, .json);
     defer alloc.free(json);
     try std.testing.expect(std.mem.find(u8, json, "{\"key\":\"max_agent_steps\",\"value\":20,\"origin\":\"env\",\"variable\":\"FX_MAX_AGENT_STEPS\"}") != null);
-    try std.testing.expect(std.mem.find(u8, json, "\"origin\":\"global\",\"file\":\"~/.fx/settings.json\"") != null);
+    try std.testing.expect(std.mem.find(u8, json, "\"origin\":\"global\",\"file\":\"~/.tetris/settings.json\"") != null);
 }
 
 test "MCP config diagnostic renders in status text and JSON but not interactive body" {
@@ -3009,7 +3009,7 @@ test "core session list snapshot text and json stay stable" {
     defer std.testing.allocator.free(paged_text);
     try std.testing.expectEqualStrings(
         "[sessions] 1 saved\n - Session title\n   id=abc | 3 turns | Spanish | updated 1970-01-01 00:00:00.002 UTC\n" ++
-            "[sessions] more saved sessions; continue with `fx sessions --cursor v1:2:abc`\n",
+            "[sessions] more saved sessions; continue with `tetris sessions --cursor v1:2:abc`\n",
         paged_text,
     );
 
@@ -3407,7 +3407,7 @@ test "core session recovery snapshot text and json stay stable" {
     );
     defer std.testing.allocator.free(text);
     try std.testing.expectEqualStrings(
-        "[session recovery] copied source-session to recovered-session\nhistory_turns: 4\nresume: fx --resume recovered-session\n",
+        "[session recovery] copied source-session to recovered-session\nhistory_turns: 4\nresume: tetris --resume recovered-session\n",
         text,
     );
 
@@ -3431,7 +3431,7 @@ test "core session recovery snapshot text and json stay stable" {
     }).renderText(std.testing.allocator);
     defer std.testing.allocator.free(partial_text);
     try std.testing.expectEqualStrings(
-        "[session recovery] copied source-session to partial-session\nhistory_turns: 4\nwarning: legacy command artifacts could not be authenticated\nresume: fx --resume partial-session\n",
+        "[session recovery] copied source-session to partial-session\nhistory_turns: 4\nwarning: legacy command artifacts could not be authenticated\nresume: tetris --resume partial-session\n",
         partial_text,
     );
     const partial_json = try (SessionRecoverySnapshot{
@@ -3454,7 +3454,7 @@ test "core session recovery snapshot text and json stay stable" {
     }).renderText(std.testing.allocator);
     defer std.testing.allocator.free(without_rules_text);
     try std.testing.expectEqualStrings(
-        "[session recovery] copied source-session to ruleless-session\nhistory_turns: 4\nwarning: saved permission rules could not be read and were not copied\nresume: fx --resume ruleless-session\n",
+        "[session recovery] copied source-session to ruleless-session\nhistory_turns: 4\nwarning: saved permission rules could not be read and were not copied\nresume: tetris --resume ruleless-session\n",
         without_rules_text,
     );
     const without_rules_json = try (SessionRecoverySnapshot{
@@ -3605,7 +3605,7 @@ test "core upgrade snapshot renders errors and statuses" {
     defer std.testing.allocator.free(upgraded_text);
     try std.testing.expectEqualStrings(
         "upgraded to v0.2.10\n" ++
-            "notes: https://fx.sh/changelog#v0.2.10\n",
+            "notes: https://github.com/lianihossam-eng/Tetris/releases/tag/v0.2.10\n",
         upgraded_text,
     );
 
@@ -3629,7 +3629,7 @@ test "core upgrade snapshot renders errors and statuses" {
     defer std.testing.allocator.free(prefixed_text);
     try std.testing.expectEqualStrings(
         "upgraded to v0.2.10\n" ++
-            "notes: https://fx.sh/changelog#v0.2.10\n",
+            "notes: https://github.com/lianihossam-eng/Tetris/releases/tag/v0.2.10\n",
         prefixed_text,
     );
 
@@ -3641,7 +3641,7 @@ test "core upgrade snapshot renders errors and statuses" {
 
     const up_to_date_text = try up_to_date.renderText(std.testing.allocator);
     defer std.testing.allocator.free(up_to_date_text);
-    try std.testing.expectEqualStrings("fx is already up to date (v0.2.10)\n", up_to_date_text);
+    try std.testing.expectEqualStrings("Tetris is already up to date (v0.2.10)\n", up_to_date_text);
 
     const failed_text = try (UpgradeSnapshot{
         .current = "0.2.9",
@@ -3674,7 +3674,7 @@ test "core upgrade snapshot identifies dev revisions" {
     defer std.testing.allocator.free(text);
     try std.testing.expectEqualStrings(
         "upgraded to dev abcdef012345 (v0.3.66)\n" ++
-            "changes: https://github.com/vercel-labs/fx/compare/111111111111...abcdef0123456789abcdef0123456789abcdef01\n",
+            "changes: https://github.com/lianihossam-eng/Tetris/compare/111111111111...abcdef0123456789abcdef0123456789abcdef01\n",
         text,
     );
 
@@ -4025,12 +4025,12 @@ pub const SlackSnapshot = struct {
         if (format == .json) {
             try std.json.Stringify.value(self, .{}, &out.writer);
         } else if (!self.installed) {
-            try out.writer.writeAll("No local Slack bot installation. Run fx slack install.\n");
+            try out.writer.writeAll("No local Slack bot installation. Run tetris slack install.\n");
         } else {
             try out.writer.writeAll(if (std.mem.eql(u8, self.action, "install"))
-                "fx is now installed in your Slack workspace.\n"
+                "Tetris is now installed in your Slack workspace.\n"
             else
-                "Your fx Slack bot credentials are saved on this computer.\n");
+                "Your Tetris Slack bot credentials are saved on this computer.\n");
             if (self.expires_at_ms) |expiry| {
                 if (local_time.local(expiry)) |reading| {
                     var date_buf: [24]u8 = undefined;
@@ -4040,7 +4040,7 @@ pub const SlackSnapshot = struct {
                 } else {
                     try out.writer.writeAll("Access expiration time is unavailable.\n");
                 }
-                try out.writer.writeAll("Run fx slack refresh to renew locally.\n");
+                try out.writer.writeAll("Run tetris slack refresh to renew locally.\n");
             }
         }
         return out.toOwnedSlice();

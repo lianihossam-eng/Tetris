@@ -205,7 +205,7 @@ const CaptureFailure = enum {
                 .{max_capture_bytes / (1024 * 1024)},
             ),
             .incomplete => "the login shell exited before reporting its state",
-            .out_of_memory => "fx ran out of memory",
+            .out_of_memory => "Tetris ran out of memory",
             .replay_failed => "the captured state could not be restored",
         };
     }

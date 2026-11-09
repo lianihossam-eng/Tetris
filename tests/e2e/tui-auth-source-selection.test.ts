@@ -232,7 +232,7 @@ function writeSeededChatGptLogin(
   accessToken = chatgptAccessToken(),
   expiresAtMs = Date.now() + 60 * 60 * 1000,
 ): void {
-  const fxDir = join(testHome, ".fx");
+  const fxDir = join(testHome, ".tetris");
   mkdirSync(fxDir, { recursive: true, mode: 0o700 });
   chmodSync(fxDir, 0o700);
   const authPath = join(fxDir, "chatgpt-auth.json");
@@ -252,7 +252,7 @@ function writeSeededGrokLogin(
   accountId = "acct_grok_e2e",
   expiresAtMs = Date.now() + 60 * 60 * 1000,
 ): void {
-  const fxDir = join(testHome, ".fx");
+  const fxDir = join(testHome, ".tetris");
   mkdirSync(fxDir, { recursive: true, mode: 0o700 });
   chmodSync(fxDir, 0o700);
   const authPath = join(fxDir, "grok-auth.json");
@@ -272,7 +272,7 @@ function writeSeededFxLogin(
   issuer = "https://vercel.com",
   teamId?: string,
 ): void {
-  const fxDir = join(testHome, ".fx");
+  const fxDir = join(testHome, ".tetris");
   mkdirSync(fxDir, { recursive: true, mode: 0o700 });
   chmodSync(fxDir, 0o700);
   const authPath = join(fxDir, "auth.json");
@@ -1234,14 +1234,14 @@ for (const provider of ["gateway", "codex", "grok"] as const) {
       writeSeededFxLogin(home, Date.now() + 3_600_000, oauth.issuerUrl, "team_fixture");
       writeSeededChatGptLogin(home);
       writeSeededGrokLogin(home, grok.initialAccessToken);
-      writeFileSync(join(home, ".fx", "settings.json"), JSON.stringify({
+      writeFileSync(join(home, ".tetris", "settings.json"), JSON.stringify({
         provider,
         credential_source: "fx_login",
         models: { gateway: FAKE_GATEWAY_MODEL, codex: "gpt-5.6-sol", grok: "grok-4.20" },
       }));
       const name = provider === "gateway" ? "auth.json" : provider === "codex" ? "chatgpt-auth.json" : "grok-auth.json";
       const alias = join(home, "auth.alias");
-      linkSync(join(home, ".fx", name), alias);
+      linkSync(join(home, ".tetris", name), alias);
       session = await startFx(home, stderrPath, gateway, oauth.issuerUrl, undefined, {
         FX_MODEL: undefined,
         ...chatgptOauth.env,
@@ -1271,7 +1271,7 @@ for (const provider of ["gateway", "codex", "grok"] as const) {
       } else {
         expect(gateway.requests).toHaveLength(0);
       }
-      expect(JSON.parse(readFileSync(join(home, ".fx", "settings.json"), "utf8")).provider).toBe(provider);
+      expect(JSON.parse(readFileSync(join(home, ".tetris", "settings.json"), "utf8")).provider).toBe(provider);
       expect(readFileSync(stderrPath, "utf8")).toBe("");
     } finally {
       grok.stop();
@@ -1291,7 +1291,7 @@ for (const provider of ["codex", "grok"] as const) {
     try {
       writeSeededChatGptLogin(home, chatgptOauth.accessToken);
       writeSeededGrokLogin(home, grok.initialAccessToken);
-      const settingsPath = join(home, ".fx", "settings.json");
+      const settingsPath = join(home, ".tetris", "settings.json");
       writeFileSync(settingsPath, JSON.stringify({
         provider, models: { gateway: FAKE_GATEWAY_MODEL, codex: "gpt-5.6-sol", grok: "grok-4.6" },
       }), { mode: 0o600 });
@@ -1306,7 +1306,7 @@ for (const provider of ["codex", "grok"] as const) {
       await session.waitForText(`Signed out of ${provider === "codex" ? "Codex" : "Grok"}.`, TIMEOUT);
       await openProviderPicker(session);
       expect(await session.capturePane()).toContain("vercel · current");
-      expect(existsSync(join(home, ".fx", provider === "codex" ? "chatgpt-auth.json" : "grok-auth.json"))).toBe(false);
+      expect(existsSync(join(home, ".tetris", provider === "codex" ? "chatgpt-auth.json" : "grok-auth.json"))).toBe(false);
       expect(JSON.parse(readFileSync(settingsPath, "utf8")).provider).toBe("gateway");
       await session.sendKeys("Escape");
       await session.sendKeys("C-u");
@@ -1350,7 +1350,7 @@ for (const provider of ["codex", "grok"] as const) {
         await Bun.sleep(20);
       }
       await session.sendKeys("C-c");
-      await session.waitForText("What can fx do differently?", TIMEOUT);
+      await session.waitForText("What can Tetris do differently?", TIMEOUT);
       release();
       await openProviderPicker(session);
       await session.sendKeys("Down");
@@ -1368,7 +1368,7 @@ for (const provider of ["codex", "grok"] as const) {
       await session.sendText("Use the subscription immediately after sign-in.");
       await session.waitForText(provider === "codex" ? "CHATGPT_DIRECT_RESPONSE" : "GROK_DIRECT_RESPONSE", TIMEOUT);
       expect(gateway.requests).toHaveLength(1);
-      expect(JSON.parse(readFileSync(join(home, ".fx", "settings.json"), "utf8")).provider).toBe(provider);
+      expect(JSON.parse(readFileSync(join(home, ".tetris", "settings.json"), "utf8")).provider).toBe(provider);
       expect(readFileSync(stderrPath, "utf8")).toBe("");
     } finally {
       release();
@@ -1388,7 +1388,7 @@ for (const gatewayState of ["absent", "rejected"] as const) {
     try {
       writeSeededChatGptLogin(home, chatgptOauth.accessToken);
       writeSeededGrokLogin(home, grok.initialAccessToken);
-      writeFileSync(join(home, ".fx", "settings.json"), JSON.stringify({
+      writeFileSync(join(home, ".tetris", "settings.json"), JSON.stringify({
         provider: "codex", models: { codex: "gpt-5.6-sol", grok: "grok-4.6" },
       }), { mode: 0o600 });
       session = await startFx(home, stderrPath, gateway, undefined, undefined, {
@@ -1404,7 +1404,7 @@ for (const gatewayState of ["absent", "rejected"] as const) {
       await session.sendKeys("C-u");
       await session.sendText("Use the remaining subscription.");
       await session.waitForText("GROK_DIRECT_RESPONSE", TIMEOUT);
-      expect(JSON.parse(readFileSync(join(home, ".fx", "settings.json"), "utf8")).provider).toBe("grok");
+      expect(JSON.parse(readFileSync(join(home, ".tetris", "settings.json"), "utf8")).provider).toBe("grok");
       expect(grok.requests.filter((request) => request.path === "/oauth2/token")).toHaveLength(0);
       expect(readFileSync(stderrPath, "utf8")).toBe("");
     } finally {
@@ -1421,7 +1421,7 @@ tmuxTest("grok fast mode sends the priority service tier", async () => {
   const grok = startFakeGrokOAuth();
   try {
     writeSeededGrokLogin(home, grok.initialAccessToken);
-    writeFileSync(join(home, ".fx", "settings.json"), JSON.stringify({
+    writeFileSync(join(home, ".tetris", "settings.json"), JSON.stringify({
       provider: "grok", models: { grok: "grok-4.6" },
     }), { mode: 0o600 });
     session = await startFx(home, stderrPath, gateway, undefined, undefined, {
@@ -1463,7 +1463,7 @@ tmuxTest("grok fast mode sends the priority service tier", async () => {
 }, 60_000);
 
 for (const otherProvider of ["codex", "grok"] as const) {
-  tmuxTest(`default logout preserves ${otherProvider} when active fx login becomes unreadable`, async () => {
+  tmuxTest(`default logout preserves ${otherProvider} when active tetris login becomes unreadable`, async () => {
     home = mkdtempSync(join(tmpdir(), "fx-logout-active-unreadable-"));
     stderrPath = join(home, "stderr.log");
     writeFileSync(stderrPath, "");
@@ -1472,22 +1472,22 @@ for (const otherProvider of ["codex", "grok"] as const) {
     writeSeededFxLogin(home, Date.now() + 3_600_000, oauth.issuerUrl, "team_fixture");
     if (otherProvider === "codex") writeSeededChatGptLogin(home);
     else writeSeededGrokLogin(home, "other-grok-token");
-    const otherPath = join(home, ".fx", otherProvider === "codex" ? "chatgpt-auth.json" : "grok-auth.json");
+    const otherPath = join(home, ".tetris", otherProvider === "codex" ? "chatgpt-auth.json" : "grok-auth.json");
     const otherCredential = readFileSync(otherPath, "utf8");
-    writeFileSync(join(home, ".fx", "settings.json"), JSON.stringify({ provider: "gateway", credential_source: "fx_login" }));
+    writeFileSync(join(home, ".tetris", "settings.json"), JSON.stringify({ provider: "gateway", credential_source: "fx_login" }));
     session = await startFx(home, stderrPath, gateway, oauth.issuerUrl, undefined, {
       AI_GATEWAY_API_KEY: undefined,
     });
     await session.waitForComposer(TIMEOUT);
-    await readStatusPanel(session, TIMEOUT, (panel) => panelAuth(panel) === "fx login");
-    const authPath = join(home, ".fx", "auth.json");
+    await readStatusPanel(session, TIMEOUT, (panel) => panelAuth(panel) === "tetris login");
+    const authPath = join(home, ".tetris", "auth.json");
     linkSync(authPath, join(home, "login.alias"));
     await session.sendText("/logout");
     const result = await session.waitForPane(
-      (pane) => pane.includes("Signed out of fx.") || pane.includes(`Signed out of ${otherProvider === "codex" ? "Codex" : "Grok"}.`),
+      (pane) => pane.includes("Signed out of Tetris.") || pane.includes(`Signed out of ${otherProvider === "codex" ? "Codex" : "Grok"}.`),
       TIMEOUT,
     );
-    expect(result).toContain("Signed out of fx.");
+    expect(result).toContain("Signed out of Tetris.");
     expect(readFileSync(otherPath, "utf8")).toBe(otherCredential);
     expect(existsSync(authPath)).toBe(false);
     expect(gateway.requests).toHaveLength(0);
@@ -1502,7 +1502,7 @@ tmuxTest("provider recovery stays signed out when no replacement is connected", 
   gateway = startFakeGateway([]);
   chatgptOauth = startFakeChatGptOAuth();
   writeSeededChatGptLogin(home, chatgptOauth.accessToken);
-  writeFileSync(join(home, ".fx", "settings.json"), JSON.stringify({
+  writeFileSync(join(home, ".tetris", "settings.json"), JSON.stringify({
     provider: "codex", models: { codex: "gpt-5.6-sol" },
   }), { mode: 0o600 });
   session = await startFx(home, stderrPath, gateway, undefined, undefined, {
@@ -1516,7 +1516,7 @@ tmuxTest("provider recovery stays signed out when no replacement is connected", 
   expect(pane).not.toContain("codex · current");
   expect(pane).not.toContain("vercel · current");
   expect(pane).not.toContain("grok · current");
-  expect(existsSync(join(home, ".fx", "chatgpt-auth.json"))).toBe(false);
+  expect(existsSync(join(home, ".tetris", "chatgpt-auth.json"))).toBe(false);
   expect(gateway.requests).toHaveLength(0);
   expect(readFileSync(stderrPath, "utf8")).toBe("");
 }, 60_000);
@@ -1528,8 +1528,8 @@ tmuxTest("provider recovery refuses active logout before deleting a busy subscri
   gateway = startFakeGateway([]);
   chatgptOauth = startFakeChatGptOAuth({ responseDelayMs: 10_000 });
   writeSeededChatGptLogin(home, chatgptOauth.accessToken);
-  const authPath = join(home, ".fx", "chatgpt-auth.json");
-  writeFileSync(join(home, ".fx", "settings.json"), JSON.stringify({
+  const authPath = join(home, ".tetris", "chatgpt-auth.json");
+  writeFileSync(join(home, ".tetris", "settings.json"), JSON.stringify({
     provider: "codex", models: { codex: "gpt-5.6-sol" },
   }), { mode: 0o600 });
   session = await startFx(home, stderrPath, gateway, undefined, undefined, {
@@ -1551,7 +1551,7 @@ tmuxTest("provider recovery refuses active logout before deleting a busy subscri
   expect(outcome).toContain("Sign out is unavailable until active and queued work finishes.");
   expect(existsSync(authPath)).toBe(true);
   await session.sendKeys("C-c");
-  await session.waitForText("What can fx do differently?", TIMEOUT);
+  await session.waitForText("What can Tetris do differently?", TIMEOUT);
   expect(readFileSync(stderrPath, "utf8")).toBe("");
 }, 60_000);
 
@@ -1579,7 +1579,7 @@ tmuxTest("provider recovery validates a Gateway team after a cancelled turn", as
       await Bun.sleep(20);
     }
     await session.sendKeys("C-c");
-    await session.waitForText("What can fx do differently?", TIMEOUT);
+    await session.waitForText("What can Tetris do differently?", TIMEOUT);
     release();
     await selectFxLoginCredential(session);
     expect(gateway.modelRequests.some((request) =>
@@ -1595,8 +1595,8 @@ tmuxTest("provider recovery validates a Gateway team after a cancelled turn", as
 
 tmuxTest("pending Gateway prompt waits for valid saved preferences and a repaired login", async () => {
   home = mkdtempSync(join(tmpdir(), "fx-prompt-preference-retry-"));
-  mkdirSync(join(home, ".fx"), { recursive: true, mode: 0o700 });
-  const settingsPath = join(home, ".fx", "settings.json");
+  mkdirSync(join(home, ".tetris"), { recursive: true, mode: 0o700 });
+  const settingsPath = join(home, ".tetris", "settings.json");
   const settings = JSON.stringify({ provider: "gateway", credential_source: "fx_login", models: { gateway: FAKE_GATEWAY_MODEL } });
   writeFileSync(settingsPath, settings);
   stderrPath = join(home, "stderr.log");
@@ -1612,7 +1612,7 @@ tmuxTest("pending Gateway prompt waits for valid saved preferences and a repaire
   writeFileSync(settingsPath, settings);
   await session.sendKeys("Enter");
   await session.waitForPane(
-    (pane) => pane.lastIndexOf("fx needs access to Vercel AI Gateway") > pane.lastIndexOf("Could not load authentication settings"),
+    (pane) => pane.lastIndexOf("Tetris needs access to Vercel AI Gateway") > pane.lastIndexOf("Could not load authentication settings"),
     TIMEOUT,
   );
   expect(gateway.requests).toHaveLength(0);
@@ -1645,7 +1645,7 @@ test("Vercel CLI keeps an issuer authorization denial distinct from persistence 
   expect(result.code).toBe(1);
   expect(result.stderr).toContain("authorization denied");
   expect(result.stderr).not.toContain("Credential could not be saved");
-  expect(existsSync(join(home, ".fx", "auth.json"))).toBe(false);
+  expect(existsSync(join(home, ".tetris", "auth.json"))).toBe(false);
   expect(oauth.requests.filter((request) => request.path === "/oauth/token")).toHaveLength(0);
 }, TIMEOUT);
 
@@ -1657,7 +1657,7 @@ test("Vercel CLI reports a post-authorization save failure without claiming auth
     teams: [{ id: "team_fixture", slug: "fixture", name: "Fixture" }],
   });
   writeSeededFxLogin(home, Date.now() + 3_600_000, oauth.issuerUrl, "team_fixture");
-  const authPath = join(home, ".fx", "auth.json");
+  const authPath = join(home, ".tetris", "auth.json");
   const previous = readFileSync(authPath, "utf8");
   const login = runFx(["login", "vercel"], { env: {
     HOME: home,
@@ -1699,12 +1699,12 @@ tmuxTest(
         writeSeededGrokLogin(home, grok.initialAccessToken);
         if (damage === "malformed") {
           for (const name of ["auth.json", "chatgpt-auth.json", "grok-auth.json"]) {
-            writeFileSync(join(home, ".fx", name), "not-json", { mode: 0o600 });
+            writeFileSync(join(home, ".tetris", name), "not-json", { mode: 0o600 });
           }
         } else {
           for (const name of ["auth.lock", "chatgpt-auth.lock", "grok-auth.lock"]) {
-            writeFileSync(join(home, ".fx", name), "");
-            chmodSync(join(home, ".fx", name), 0o400);
+            writeFileSync(join(home, ".tetris", name), "");
+            chmodSync(join(home, ".tetris", name), 0o400);
           }
         }
         session = await startFx(home, stderrPath, gateway, oauth.issuerUrl, undefined, {
@@ -1827,7 +1827,7 @@ for (const scenario of [
 
       await session.sendKeys("C-u");
       await session.sendInterruptEscapePair(TIMEOUT);
-      await session.waitForText("What can fx do differently?", TIMEOUT);
+      await session.waitForText("What can Tetris do differently?", TIMEOUT);
       await session.sendText(scenario.command.trim());
       await session.waitForPane(
         (pane) => pane.includes("vercel") && pane.includes("codex") && pane.includes("grok"),
@@ -1859,7 +1859,7 @@ tmuxTest(
     writeSeededChatGptLogin(home);
     writeSeededGrokLogin(home, grok.initialAccessToken);
     for (const name of ["auth.json", "chatgpt-auth.json", "grok-auth.json"]) {
-      linkSync(join(home, ".fx", name), join(home, `${name}.alias`));
+      linkSync(join(home, ".tetris", name), join(home, `${name}.alias`));
     }
     const env = {
       HOME: home,
@@ -1876,7 +1876,7 @@ tmuxTest(
     };
     try {
       for (const provider of ["gateway", "codex", "grok"]) {
-        writeFileSync(join(home, ".fx", "settings.json"), JSON.stringify({
+        writeFileSync(join(home, ".tetris", "settings.json"), JSON.stringify({
           provider,
           credential_source: "fx_login",
           models: { gateway: FAKE_GATEWAY_MODEL, codex: "gpt-5.6-sol", grok: "grok-4.20" },
@@ -1939,7 +1939,7 @@ tmuxTest(
         if (provider === "codex") writeSeededChatGptLogin(home);
         else writeSeededGrokLogin(home, grok.initialAccessToken);
         const name = provider === "codex" ? "chatgpt-auth.json" : "grok-auth.json";
-        const original = join(home, ".fx", name);
+        const original = join(home, ".tetris", name);
         linkSync(original, join(home, `${name}.alias`));
         await completeDisplayedSubscriptionLogin(
           session,
@@ -1976,7 +1976,7 @@ tmuxTest(
     writeSeededChatGptLogin(home);
     writeSeededGrokLogin(home, grok.initialAccessToken);
     for (const name of ["auth.json", "chatgpt-auth.json", "grok-auth.json"]) {
-      linkSync(join(home, ".fx", name), join(home, `${name}.alias`));
+      linkSync(join(home, ".tetris", name), join(home, `${name}.alias`));
     }
     const env = {
       HOME: home,
@@ -2009,7 +2009,7 @@ tmuxTest(
       expect(await session.captureFullScrollback()).not.toContain("Sign in with Vercel");
       for (const name of ["auth.json", "chatgpt-auth.json", "grok-auth.json"]) {
         unlinkSync(join(home, `${name}.alias`));
-        chmodSync(join(home, ".fx", name), 0o400);
+        chmodSync(join(home, ".tetris", name), 0o400);
       }
       for (const provider of ["vercel", "codex", "grok"]) {
         const result = await runFx(["login", provider], { env, timeoutMs: 3000 });
@@ -2038,7 +2038,7 @@ tmuxTest(
     writeSeededChatGptLogin(home);
     writeSeededGrokLogin(home, "grok-initial-access-token");
     for (const name of ["chatgpt-auth.json", "grok-auth.json"]) {
-      linkSync(join(home, ".fx", name), join(home, `${name}.alias`));
+      linkSync(join(home, ".tetris", name), join(home, `${name}.alias`));
     }
     gateway = startFakeGateway([fakeGatewayFinalText("GATEWAY_WITH_UNAVAILABLE_SUBSCRIPTIONS")]);
     session = await startFx(home, stderrPath, gateway);
@@ -2058,7 +2058,7 @@ tmuxTest(
     await session.sendText("Keep using the working Gateway credential.");
     await session.waitForText("GATEWAY_WITH_UNAVAILABLE_SUBSCRIPTIONS", TIMEOUT);
     for (const name of ["chatgpt-auth.json", "grok-auth.json"]) {
-      expect(statSync(join(home, ".fx", name)).nlink).toBe(2);
+      expect(statSync(join(home, ".tetris", name)).nlink).toBe(2);
     }
     expect(session.isAlive()).toBe(true);
     expect(readFileSync(stderrPath, "utf8")).toBe("");
@@ -2074,7 +2074,7 @@ tmuxTest(
     writeSeededChatGptLogin(home);
     writeSeededGrokLogin(home, "grok-initial-access-token");
     for (const name of ["chatgpt-auth.json", "grok-auth.json"]) {
-      linkSync(join(home, ".fx", name), join(home, `${name}.alias`));
+      linkSync(join(home, ".tetris", name), join(home, `${name}.alias`));
     }
     gateway = startFakeGateway([]);
     chatgptOauth = startFakeChatGptOAuth();
@@ -2095,7 +2095,7 @@ tmuxTest(
         await session.waitForComposer(TIMEOUT);
 
         const name = provider === "codex" ? "chatgpt-auth.json" : "grok-auth.json";
-        const original = join(home, ".fx", name);
+        const original = join(home, ".tetris", name);
         expect(statSync(original).nlink).toBe(2);
         expect(readFileSync(original, "utf8")).toBe(readFileSync(join(home, `${name}.alias`), "utf8"));
         unlinkSync(join(home, `${name}.alias`));
@@ -2106,7 +2106,7 @@ tmuxTest(
         await session.waitForText(provider === "codex" ? "CHATGPT_DIRECT_RESPONSE" : "GROK_DIRECT_RESPONSE", TIMEOUT);
       }
       for (const name of ["chatgpt-auth.json", "grok-auth.json"]) {
-        expect(statSync(join(home, ".fx", name)).nlink).toBe(1);
+        expect(statSync(join(home, ".tetris", name)).nlink).toBe(1);
       }
       expect(session.isAlive()).toBe(true);
       expect(readFileSync(stderrPath, "utf8")).toBe("");
@@ -2164,7 +2164,7 @@ tmuxTest(
 );
 
 tmuxTest(
-  "a prompt sent during a running turn queues at once while its fx login refresh is due",
+  "a prompt sent during a running turn queues at once while its tetris login refresh is due",
   async () => {
     home = mkdtempSync(join(tmpdir(), "fx-tui-queued-refresh-"));
     stderrPath = join(home, "stderr.log");
@@ -2240,7 +2240,7 @@ for (const provider of ["codex", "grok"] as const) {
           : "grok-stale-access-token";
         if (provider === "codex") writeSeededChatGptLogin(home, stale);
         else writeSeededGrokLogin(home, stale);
-        writeFileSync(join(home, ".fx", "settings.json"), JSON.stringify({
+        writeFileSync(join(home, ".tetris", "settings.json"), JSON.stringify({
           provider, models: { codex: "gpt-5.6-sol", grok: "grok-4.6" },
         }), { mode: 0o600 });
 
@@ -2281,7 +2281,7 @@ for (const provider of ["codex", "grok"] as const) {
 }
 
 tmuxTest(
-  "one Esc during the sign-in fx opened closes it and ends the request",
+  "one Esc during the sign-in tetris opened closes it and ends the request",
   async () => {
     home = mkdtempSync(join(tmpdir(), "fx-tui-recovery-sign-in-esc-"));
     stderrPath = join(home, "stderr.log");
@@ -2359,7 +2359,7 @@ tmuxTest(
     // for a device code.
     await Bun.sleep(5_500);
     expect(oauth.requests.filter((request) => request.path === "/oauth/device")).toHaveLength(0);
-    expect(existsSync(join(home, ".fx", "auth.json"))).toBe(false);
+    expect(existsSync(join(home, ".tetris", "auth.json"))).toBe(false);
     expect(session.isAlive()).toBe(true);
     expect(readFileSync(stderrPath, "utf8")).toBe("");
   },
@@ -2408,7 +2408,7 @@ tmuxTest(
     await session.waitForComposer(TIMEOUT);
 
     expect(session.isAlive()).toBe(true);
-    expect(existsSync(join(home, ".fx", "auth.json"))).toBe(false);
+    expect(existsSync(join(home, ".tetris", "auth.json"))).toBe(false);
     expect(await session.captureFullScrollback()).not.toContain("Signed in to Vercel.");
     expect(readFileSync(stderrPath, "utf8")).toBe("");
   },
@@ -2460,7 +2460,7 @@ tmuxTest(
     await session.waitForComposer(TIMEOUT);
 
     expect(session.isAlive()).toBe(true);
-    expect(existsSync(join(home, ".fx", "chatgpt-auth.json"))).toBe(false);
+    expect(existsSync(join(home, ".tetris", "chatgpt-auth.json"))).toBe(false);
     expect(await session.captureFullScrollback()).not.toContain("Signed in with Codex.");
     expect(readFileSync(stderrPath, "utf8")).toBe("");
   },
@@ -2493,7 +2493,7 @@ for (const [provider, previousProvider] of [
           const models = { gateway: FAKE_GATEWAY_MODEL, codex: "gpt-5.6-sol", grok: "grok-4.20" };
           const model = models[provider];
           const otherModel = provider === "codex" ? "gpt-5.4-mini" : provider === "grok" ? "grok-4.6" : model;
-          const settingsPath = join(home, ".fx", "settings.json");
+          const settingsPath = join(home, ".tetris", "settings.json");
           writeFileSync(settingsPath, JSON.stringify({ provider, credential_source: "fx_login", models }) + "\n", { mode: 0o600 });
           const env = {
             HOME: home,
@@ -2618,7 +2618,7 @@ tmuxTest(
     writeSeededFxLogin(home, Date.now() + 60 * 60 * 1000, oauth.issuerUrl, "team_123");
     writeSeededChatGptLogin(home, chatgptOauth.accessToken);
     writeFileSync(
-      join(home, ".fx", "settings.json"),
+      join(home, ".tetris", "settings.json"),
       JSON.stringify({ credential_source: "fx_login" }) + "\n",
       { mode: 0o600 },
     );
@@ -2681,7 +2681,7 @@ tmuxTest(
     await completeDisplayedCodexLogin(session, chatgptOauth);
     await session.waitForText("Switched to Codex subscription with gpt-5.6-sol.", TIMEOUT);
 
-    const authPath = join(home, ".fx", "chatgpt-auth.json");
+    const authPath = join(home, ".tetris", "chatgpt-auth.json");
     expect(existsSync(authPath)).toBe(true);
     expect(statSync(authPath).mode & 0o077).toBe(0);
 
@@ -2750,7 +2750,7 @@ tmuxTest(
     const authorizeRequestsBeforeRoundTrip = chatgptOauth.requests.filter(
       (request) => request.path === "/oauth/authorize",
     ).length;
-    const settingsPath = join(home, ".fx", "settings.json");
+    const settingsPath = join(home, ".tetris", "settings.json");
     const gatewayModelBefore = JSON.parse(readFileSync(settingsPath, "utf8")).models.gateway;
     expect(typeof gatewayModelBefore).toBe("string");
     const savedCodex = JSON.parse(readFileSync(settingsPath, "utf8"));
@@ -2845,7 +2845,7 @@ tmuxTest(
     await completeDisplayedCodexLogin(session, chatgptOauth);
     await session.waitForText("Switched to Codex subscription with gpt-5.6-sol.", TIMEOUT);
 
-    const selected = JSON.parse(readFileSync(join(home, ".fx", "settings.json"), "utf8"));
+    const selected = JSON.parse(readFileSync(join(home, ".tetris", "settings.json"), "utf8"));
     expect(selected.provider).toBe("codex");
     expect(selected.models.codex).toBe("gpt-5.6-sol");
     await readStatusPanel(session, TIMEOUT, (panel) => panel.fields.Provider === "Codex subscription");
@@ -2864,7 +2864,7 @@ tmuxTest(
     chatgptOauth = startFakeChatGptOAuth({ responseDelayMs: 10_000 });
     writeSeededChatGptLogin(home, chatgptOauth.accessToken);
     writeFileSync(
-      join(home, ".fx", "settings.json"),
+      join(home, ".tetris", "settings.json"),
       JSON.stringify({ provider: "codex", codex_model: "gpt-5.6-sol" }) + "\n",
       { mode: 0o600 },
     );
@@ -2886,7 +2886,7 @@ tmuxTest(
     const cancelStarted = Date.now();
     await session.sendKeys("C-c");
     const cancelledPane = await session.waitForText(
-      "What can fx do differently?",
+      "What can Tetris do differently?",
       TIMEOUT,
     );
     await session.waitForComposer(TIMEOUT);
@@ -2910,7 +2910,7 @@ tmuxTest(
     chatgptOauth = startFakeChatGptOAuth({ rejectRefresh: true });
     writeSeededChatGptLogin(home, chatgptOauth.accessToken, Date.now() - 60_000);
     writeFileSync(
-      join(home, ".fx", "settings.json"),
+      join(home, ".tetris", "settings.json"),
       JSON.stringify({ provider: "codex", codex_model: "gpt-5.6-sol" }) + "\n",
       { mode: 0o600 },
     );
@@ -2936,7 +2936,7 @@ tmuxTest(
       (request) => request.path === "/chatgpt/token" && request.body?.includes('"grant_type":"refresh_token"'),
     );
     expect(refreshRequests).toHaveLength(1);
-    expect(existsSync(join(home, ".fx", "chatgpt-auth.json"))).toBe(false);
+    expect(existsSync(join(home, ".tetris", "chatgpt-auth.json"))).toBe(false);
     expect(gateway.requests).toHaveLength(0);
     expect(readFileSync(stderrPath, "utf8")).toBe("");
   },
@@ -2953,7 +2953,7 @@ tmuxTest(
     const grok = startFakeGrokOAuth({ rejectRefresh: true });
     writeSeededGrokLogin(home, grok.initialAccessToken, "acct_grok_e2e", Date.now() - 60_000);
     writeFileSync(
-      join(home, ".fx", "settings.json"),
+      join(home, ".tetris", "settings.json"),
       JSON.stringify({ provider: "grok", grok_model: "grok-4.20" }) + "\n",
       { mode: 0o600 },
     );
@@ -2979,7 +2979,7 @@ tmuxTest(
       expect(grok.requests.filter(
         (request) => request.path === "/oauth2/token" && request.body?.includes("grant_type=refresh_token"),
       )).toHaveLength(1);
-      expect(existsSync(join(home, ".fx", "grok-auth.json"))).toBe(false);
+      expect(existsSync(join(home, ".tetris", "grok-auth.json"))).toBe(false);
       expect(gateway.requests).toHaveLength(0);
       expect(readFileSync(stderrPath, "utf8")).toBe("");
     } finally {
@@ -2992,7 +2992,7 @@ tmuxTest(
 test("Codex refresh save failure retires the consumed session", async () => {
   home = mkdtempSync(join(tmpdir(), "fx-chatgpt-refresh-save-failure-"));
   gateway = startFakeGateway([]);
-  const authPath = join(home, ".fx", "chatgpt-auth.json");
+  const authPath = join(home, ".tetris", "chatgpt-auth.json");
   chatgptOauth = startFakeChatGptOAuth({
     beforeRefreshResponse() {
       chmodSync(authPath, 0o400);
@@ -3000,7 +3000,7 @@ test("Codex refresh save failure retires the consumed session", async () => {
   });
   writeSeededChatGptLogin(home, chatgptOauth.accessToken, Date.now() - 60_000);
   writeFileSync(
-    join(home, ".fx", "settings.json"),
+    join(home, ".tetris", "settings.json"),
     JSON.stringify({ provider: "codex", codex_model: "gpt-5.6-sol" }) + "\n",
     { mode: 0o600 },
   );
@@ -3029,7 +3029,7 @@ test("Codex refresh save failure retires the consumed session", async () => {
 test("Grok refresh save failure retires the consumed session", async () => {
   home = mkdtempSync(join(tmpdir(), "fx-grok-refresh-save-failure-"));
   gateway = startFakeGateway([]);
-  const authPath = join(home, ".fx", "grok-auth.json");
+  const authPath = join(home, ".tetris", "grok-auth.json");
   const grok = startFakeGrokOAuth({
     beforeRefreshResponse() {
       chmodSync(authPath, 0o400);
@@ -3037,7 +3037,7 @@ test("Grok refresh save failure retires the consumed session", async () => {
   });
   writeSeededGrokLogin(home, grok.initialAccessToken, "acct_grok_e2e", Date.now() - 60_000);
   writeFileSync(
-    join(home, ".fx", "settings.json"),
+    join(home, ".tetris", "settings.json"),
     JSON.stringify({ provider: "grok", grok_model: "grok-4.20" }) + "\n",
     { mode: 0o600 },
   );
@@ -3117,7 +3117,7 @@ tmuxTest(
       (pane) => pane.includes("env · AI_GATEWAY_API_KEY · current") && pane.includes("new · paste a key"),
       TIMEOUT,
     );
-    expect(keySources).not.toContain("saved · saved by fx");
+    expect(keySources).not.toContain("saved · saved by Tetris");
 
     await session.sendKeys("Down");
     await session.sendKeys("Right");
@@ -3153,7 +3153,7 @@ tmuxTest(
       AI_GATEWAY_API_KEY: undefined,
       FX_TEST_SKIP_ONBOARDING: "0",
     });
-    await session.waitForText("Welcome to fx", TIMEOUT);
+    await session.waitForText("Welcome to Tetris", TIMEOUT);
     await session.sendKeys("Enter");
     await session.waitForText("Vercel team · Search:", TIMEOUT);
     await session.sendKeys("Escape");
@@ -3162,7 +3162,7 @@ tmuxTest(
       TIMEOUT,
     );
     expect(setup).toMatch(/^› Vercel team\s+choose a team$/m);
-    expect(setup).not.toContain("Welcome to fx");
+    expect(setup).not.toContain("Welcome to Tetris");
     expect(setup).not.toContain("sign in to manage");
     expect(readFileSync(stderrPath, "utf8")).toBe("");
   },
@@ -3170,7 +3170,7 @@ tmuxTest(
 );
 
 for (const [provider, help] of [
-  ["gateway", "fx needs access to Vercel AI Gateway."],
+  ["gateway", "Tetris needs access to Vercel AI Gateway."],
   ["codex", "Codex needs a subscription login."],
   ["grok", "Grok needs a subscription login."],
 ] as const) {
@@ -3178,8 +3178,8 @@ for (const [provider, help] of [
     home = mkdtempSync(join(tmpdir(), "fx-tui-status-provider-"));
     stderrPath = join(home, "stderr.log");
     writeFileSync(stderrPath, "");
-    mkdirSync(join(home, ".fx"));
-    const settingsPath = join(home, ".fx", "settings.json");
+    mkdirSync(join(home, ".tetris"));
+    const settingsPath = join(home, ".tetris", "settings.json");
     const settings = JSON.stringify({ provider, models: { [provider]: "test-model" } });
     writeFileSync(settingsPath, settings);
     gateway = startFakeGateway([]);
@@ -3195,7 +3195,7 @@ for (const [provider, help] of [
     expect(panel.fields["Auth help"]).toStartWith(help);
     if (provider !== "gateway") {
       expect(panel.fields.Provider).toBe(`${provider === "codex" ? "Codex" : "Grok"} subscription`);
-      expect(panel.fields["Auth help"]).not.toContain("fx needs access to Vercel AI Gateway");
+      expect(panel.fields["Auth help"]).not.toContain("Tetris needs access to Vercel AI Gateway");
     }
     // Missing, and not refreshable.
     expect(panel.fields.Auth).toBe("missing");
@@ -3213,8 +3213,8 @@ for (const [source, help] of [
     home = mkdtempSync(join(tmpdir(), "fx-status-explicit-key-"));
     stderrPath = join(home, "stderr.log");
     writeFileSync(stderrPath, "");
-    mkdirSync(join(home, ".fx"));
-    const settingsPath = join(home, ".fx", "settings.json");
+    mkdirSync(join(home, ".tetris"));
+    const settingsPath = join(home, ".tetris", "settings.json");
     const settings = JSON.stringify({ provider: "gateway", credential_source: source });
     writeFileSync(settingsPath, settings);
     gateway = startFakeGateway([fakeGatewayFinalText("EXPLICIT_KEY_RECOVERED")]);
@@ -3242,8 +3242,8 @@ tmuxTest("/status preserves a missing selected login through explicit key recove
   home = mkdtempSync(join(tmpdir(), "fx-status-selected-login-"));
   stderrPath = join(home, "stderr.log");
   writeFileSync(stderrPath, "");
-  mkdirSync(join(home, ".fx"));
-  const settingsPath = join(home, ".fx", "settings.json");
+  mkdirSync(join(home, ".tetris"));
+  const settingsPath = join(home, ".tetris", "settings.json");
   const settings = JSON.stringify({
     provider: "gateway",
     models: { gateway: FAKE_GATEWAY_MODEL },
@@ -3255,9 +3255,9 @@ tmuxTest("/status preserves a missing selected login through explicit key recove
   await session.waitForComposer(TIMEOUT);
   await session.sendText("/status");
   const missing = await waitForStatusPanel(session, TIMEOUT, (panel) => panel.fields["Auth help"] !== undefined);
-  expect(await session.captureFullScrollbackEscapes()).toContain("fx login is selected but unavailable.");
+  expect(await session.captureFullScrollbackEscapes()).toContain("Tetris login is selected but unavailable.");
   await closeStatusPanel(session, TIMEOUT);
-  expect(missing.fields["Auth help"]).toStartWith("fx login is selected but unavailable.");
+  expect(missing.fields["Auth help"]).toStartWith("Tetris login is selected but unavailable.");
   expect(missing.fields["Auth help"]).toContain("Run /login to reconnect");
   expect(missing.fields["Auth help"]).not.toContain("or set AI_GATEWAY_API_KEY");
   expect(gateway.requests).toHaveLength(0);
@@ -3293,9 +3293,9 @@ for (const provider of ["codex", "grok"] as const) {
     writeFileSync(stderrPath, "");
     if (provider === "codex") writeSeededChatGptLogin(home);
     else writeSeededGrokLogin(home, "unreadable-grok-token");
-    const credentialPath = join(home, ".fx", provider === "codex" ? "chatgpt-auth.json" : "grok-auth.json");
+    const credentialPath = join(home, ".tetris", provider === "codex" ? "chatgpt-auth.json" : "grok-auth.json");
     linkSync(credentialPath, join(home, "credential.alias"));
-    const settingsPath = join(home, ".fx", "settings.json");
+    const settingsPath = join(home, ".tetris", "settings.json");
     const settings = JSON.stringify({ provider, models: { [provider]: "test-model" } });
     writeFileSync(settingsPath, settings);
     gateway = startFakeGateway([]);
@@ -3305,7 +3305,7 @@ for (const provider of ["codex", "grok"] as const) {
     });
     await session.waitForComposer(TIMEOUT);
     await session.sendText("/logout vercel");
-    await session.waitForText("No fx login session found.", TIMEOUT);
+    await session.waitForText("No Tetris login session found.", TIMEOUT);
     const unavailable = await readStatusPanel(session, TIMEOUT, (panel) => panel.fields["Auth help"] !== undefined);
     expect(unavailable.fields["Auth help"]).toContain("Saved credential storage is unavailable");
     expect(existsSync(credentialPath)).toBe(true);
@@ -3430,10 +3430,10 @@ async function selectFxLoginCredential(pickerSession: TmuxSession): Promise<void
   );
   await pickerSession.sendKeys("Enter");
   const outcome = await pickerSession.waitForPane(
-    (pane) => pane.includes("Switched credential to fx login") || pane.includes("vercel-labs"),
+    (pane) => pane.includes("Switched credential to tetris login") || pane.includes("vercel-labs"),
     TIMEOUT,
   );
-  if (!outcome.includes("Switched credential to fx login")) {
+  if (!outcome.includes("Switched credential to tetris login")) {
     await pickerSession.sendKeys("Enter");
     await pickerSession.waitForText("Changed Vercel team", TIMEOUT);
   }
@@ -3459,7 +3459,7 @@ async function selectEnvKeyCredential(pickerSession: TmuxSession): Promise<void>
 }
 
 function savedCredentialSource(testHome: string): string | undefined {
-  const settingsPath = join(testHome, ".fx", "settings.json");
+  const settingsPath = join(testHome, ".tetris", "settings.json");
   if (!existsSync(settingsPath)) return undefined;
   return (JSON.parse(readFileSync(settingsPath, "utf8")) as { credential_source?: string })
     .credential_source;
@@ -3489,7 +3489,7 @@ profileStoredKeyTmuxTest(
     await session.waitForText("Saved the API key to profile file and made it active", TIMEOUT);
     await session.sendText("/provider vercel api-key");
     const keyColumn = await session.waitForPane(
-      (pane) => pane.includes("saved · saved by fx · current"),
+      (pane) => pane.includes("saved · saved by Tetris · current"),
       TIMEOUT,
     );
     expect(keyColumn).toContain("env · AI_GATEWAY_API_KEY");
@@ -3498,7 +3498,7 @@ profileStoredKeyTmuxTest(
     await readStatusPanel(session, TIMEOUT, (panel) => panelAuth(panel) === "stored API key (profile file)");
     expect(savedCredentialSource(home)).toBe("stored_key");
 
-    const keyPath = join(home, ".fx", "api-key");
+    const keyPath = join(home, ".tetris", "api-key");
     expect(readFileSync(keyPath, "utf8")).toBe(STORED_TOKEN);
     expect(statSync(keyPath).mode & 0o777).toBe(0o600);
 
@@ -3557,7 +3557,7 @@ tmuxTest(
     await session.waitForText("Vercel team · Search:", TIMEOUT);
     await session.sendKeys("Enter");
     await session.waitForText("Changed Vercel team to Vercel Labs", TIMEOUT);
-    await readStatusPanel(session, TIMEOUT, (panel) => panelAuth(panel) === "fx login");
+    await readStatusPanel(session, TIMEOUT, (panel) => panelAuth(panel) === "tetris login");
     expect(savedCredentialSource(home)).toBe("fx_login");
     await session.sendText("use the direct login credential");
     await session.waitForText(DIRECT_LOGIN_RESPONSE, TIMEOUT);
@@ -3568,7 +3568,7 @@ tmuxTest(
     await session.kill();
     session = await startFx(home, stderrPath, gateway, oauth.issuerUrl);
     await session.waitForComposer(TIMEOUT);
-    await readStatusPanel(session, TIMEOUT, (panel) => panelAuth(panel) === "fx login");
+    await readStatusPanel(session, TIMEOUT, (panel) => panelAuth(panel) === "tetris login");
     await session.sendText("use the remembered direct login credential");
     await session.waitForText(RESTART_RESPONSE, TIMEOUT);
     expect(gateway.requests[1].headers.get("authorization")).toBe(
@@ -3593,7 +3593,7 @@ tmuxTest(
 );
 
 tmuxTest(
-  "Change team activates and persists fx login ahead of the environment",
+  "Change team activates and persists tetris login ahead of the environment",
   async () => {
     home = mkdtempSync(join(tmpdir(), "fx-tui-team-preference-"));
     stderrPath = join(home, "stderr.log");
@@ -3624,10 +3624,10 @@ tmuxTest(
     await session.waitForText("vercel-labs", TIMEOUT);
     await session.sendKeys("Enter");
     await session.waitForText("Changed Vercel team to Vercel Labs", TIMEOUT);
-    await readStatusPanel(session, TIMEOUT, (panel) => panelAuth(panel) === "fx login");
+    await readStatusPanel(session, TIMEOUT, (panel) => panelAuth(panel) === "tetris login");
     expect(savedCredentialSource(home)).toBe("fx_login");
 
-    const savedAuth = JSON.parse(readFileSync(join(home, ".fx", "auth.json"), "utf8")) as {
+    const savedAuth = JSON.parse(readFileSync(join(home, ".tetris", "auth.json"), "utf8")) as {
       team_id?: string;
       team_slug?: string;
     };
@@ -3637,7 +3637,7 @@ tmuxTest(
     await session.kill();
     session = await startFx(home, stderrPath, gateway, oauth.issuerUrl);
     await session.waitForComposer(TIMEOUT);
-    await readStatusPanel(session, TIMEOUT, (panel) => panelAuth(panel) === "fx login");
+    await readStatusPanel(session, TIMEOUT, (panel) => panelAuth(panel) === "tetris login");
     await session.sendText("use the selected team after restart");
     await session.waitForText(LOGIN_RESPONSE, TIMEOUT);
     expect(gateway.requests[0].headers.get("authorization")).toBe(`Bearer ${LOGIN_TOKEN}`);
@@ -3648,12 +3648,12 @@ tmuxTest(
 );
 
 tmuxTest(
-  "API key and fx login coexist through selection, restart, login, and logout",
+  "API key and tetris login coexist through selection, restart, login, and logout",
   async () => {
     home = mkdtempSync(join(tmpdir(), "fx-tui-auth-lifecycle-"));
     stderrPath = join(home, "stderr.log");
     writeFileSync(stderrPath, "");
-    const authPath = join(home, ".fx", "auth.json");
+    const authPath = join(home, ".tetris", "auth.json");
     gateway = startFakeGateway([
       fakeGatewayFinalText(ENV_RESPONSE),
       fakeGatewayFinalText(LOGIN_RESPONSE),
@@ -3684,7 +3684,7 @@ tmuxTest(
     expect(readFileSync(authPath, "utf8")).toBe(seededAuthFile);
 
     await selectFxLoginCredential(session);
-    await readStatusPanel(session, TIMEOUT, (panel) => panelAuth(panel) === "fx login");
+    await readStatusPanel(session, TIMEOUT, (panel) => panelAuth(panel) === "tetris login");
     const selectedAuth = JSON.parse(readFileSync(authPath, "utf8")) as {
       team_id?: string;
       team_slug?: string;
@@ -3704,7 +3704,7 @@ tmuxTest(
     await session.waitForComposer(TIMEOUT);
     // The switch above is remembered, so the restart keeps fx login rather than
     // letting AI_GATEWAY_API_KEY reclaim it through precedence.
-    await readStatusPanel(session, TIMEOUT, (panel) => panelAuth(panel) === "fx login");
+    await readStatusPanel(session, TIMEOUT, (panel) => panelAuth(panel) === "tetris login");
     expect(JSON.parse(readFileSync(authPath, "utf8")).team_slug).toBe("vercel-labs");
     await session.sendText("use the remembered credential after restart");
     await session.waitForText(RESTART_RESPONSE, TIMEOUT);
@@ -3714,7 +3714,7 @@ tmuxTest(
     // Acquiring a fresh login needs a signed-out state first; the remembered
     // seeded login would otherwise resolve straight into the team column.
     await session.sendText("/logout");
-    await session.waitForText("Signed out of fx.", TIMEOUT);
+    await session.waitForText("Signed out of Tetris.", TIMEOUT);
     const oauthBase = oauth.requests.length;
     await session.sendText("/login");
     await session.waitForPane(
@@ -3759,7 +3759,7 @@ tmuxTest(
       (await session.captureFullScrollback()).match(/Signed in to Vercel\./g) ?? [],
     ).toHaveLength(1);
 
-    await readStatusPanel(session, TIMEOUT, (panel) => panelAuth(panel) === "fx login");
+    await readStatusPanel(session, TIMEOUT, (panel) => panelAuth(panel) === "tetris login");
     await session.sendText("direct login prompt");
     await session.waitForText(DIRECT_LOGIN_RESPONSE, TIMEOUT);
     expect(gateway.requests).toHaveLength(4);
@@ -3767,7 +3767,7 @@ tmuxTest(
 
     const revokedBefore = completedRevocations(oauth).length;
     await session.sendText("/logout");
-    await session.waitForText("Signed out of fx.", TIMEOUT);
+    await session.waitForText("Signed out of Tetris.", TIMEOUT);
     expect(existsSync(authPath)).toBe(false);
     // The issuer revocation runs after the local sign-out, off the input loop.
     await waitForRevocations(oauth, revokedBefore + 2);
@@ -3955,7 +3955,7 @@ tmuxTest(
     expect(gateway.modelRequests[1].headers.get("x-vercel-ai-gateway-team")).toBeNull();
 
     await session.sendText("/logout");
-    await session.waitForText("Signed out of fx.", TIMEOUT);
+    await session.waitForText("Signed out of Tetris.", TIMEOUT);
     await waitForModelRequestCount(gateway, 3);
     expect(gateway.modelRequests).toHaveLength(3);
     expect(gateway.modelRequests[2].headers.get("authorization")).toBe(`Bearer ${ENV_TOKEN}`);
@@ -3965,11 +3965,11 @@ tmuxTest(
 );
 
 test(
-  "fx login falls back once when a custom OAuth client is invalid",
+  "tetris login falls back once when a custom OAuth client is invalid",
   async () => {
     home = mkdtempSync(join(tmpdir(), "fx-tui-login-client-fallback-"));
     writeSeededFxLogin(home);
-    const authPath = join(home, ".fx", "auth.json");
+    const authPath = join(home, ".tetris", "auth.json");
     gateway = startFakeGateway([]);
     oauth = startFakeOAuth(
       ACQUIRED_LOGIN_TOKEN,
@@ -4048,7 +4048,7 @@ test(
 );
 
 test(
-  "fx teams validates Gateway before committing and persists fx login",
+  "tetris teams validates Gateway before committing and persists tetris login",
   async () => {
     home = mkdtempSync(join(tmpdir(), "fx-cli-teams-validation-"));
     gateway = startFakeGateway([]);
@@ -4080,7 +4080,7 @@ test(
     expect(result.stdout).toContain("Selected Vercel team: Vercel Labs (vercel-labs).");
     expect(savedCredentialSource(home)).toBe("fx_login");
     const persisted = JSON.parse(
-      readFileSync(join(home, ".fx", "auth.json"), "utf8"),
+      readFileSync(join(home, ".tetris", "auth.json"), "utf8"),
     ) as {
       team_id?: string;
       team_slug?: string;
@@ -4097,7 +4097,7 @@ test(
 );
 
 test(
-  "fx teams preserves the previous team when Gateway rejects the candidate",
+  "tetris teams preserves the previous team when Gateway rejects the candidate",
   async () => {
     home = mkdtempSync(join(tmpdir(), "fx-cli-teams-rejected-"));
     gateway = startFakeGateway([], {
@@ -4132,7 +4132,7 @@ test(
     expect(result.stderr).toContain("selected team could not access AI Gateway");
     expect(savedCredentialSource(home)).toBeUndefined();
     const persisted = JSON.parse(
-      readFileSync(join(home, ".fx", "auth.json"), "utf8"),
+      readFileSync(join(home, ".tetris", "auth.json"), "utf8"),
     ) as {
       team_id?: string;
     };
@@ -4141,12 +4141,12 @@ test(
   60_000,
 );
 
-test("fx logout clears a remembered fx login source", async () => {
+test("tetris logout clears a remembered tetris login source", async () => {
   home = mkdtempSync(join(tmpdir(), "fx-cli-logout-preference-"));
   oauth = startFakeOAuth(ACQUIRED_LOGIN_TOKEN);
   writeSeededFxLogin(home, Date.now() + 60 * 60 * 1000, oauth.issuerUrl, "team_123");
   writeFileSync(
-    join(home, ".fx", "settings.json"),
+    join(home, ".tetris", "settings.json"),
     JSON.stringify({ credential_source: "fx_login" }) + "\n",
     { mode: 0o600 },
   );
@@ -4165,16 +4165,16 @@ test("fx logout clears a remembered fx login source", async () => {
   });
 
   expect(result.code, `stdout: ${result.stdout}\nstderr: ${result.stderr}`).toBe(0);
-  expect(result.stdout).toContain("Signed out of fx.");
+  expect(result.stdout).toContain("Signed out of Tetris.");
   expect(savedCredentialSource(home)).toBeUndefined();
-  expect(existsSync(join(home, ".fx", "auth.json"))).toBe(false);
+  expect(existsSync(join(home, ".tetris", "auth.json"))).toBe(false);
 });
 
-test("fx models does not retry anonymously for an explicit credential", async () => {
+test("tetris models does not retry anonymously for an explicit credential", async () => {
   home = mkdtempSync(join(tmpdir(), "fx-cli-models-explicit-auth-"));
   writeSeededFxLogin(home, Date.now() + 60 * 60 * 1000, "https://vercel.com", "team_123");
   writeFileSync(
-    join(home, ".fx", "settings.json"),
+    join(home, ".tetris", "settings.json"),
     JSON.stringify({ credential_source: "fx_login" }) + "\n",
     { mode: 0o600 },
   );
@@ -4209,9 +4209,9 @@ test("fx models does not retry anonymously for an explicit credential", async ()
 
 test("status never substitutes an environment key for a missing explicit login", async () => {
   home = mkdtempSync(join(tmpdir(), "fx-cli-status-strict-source-"));
-  mkdirSync(join(home, ".fx"), { recursive: true, mode: 0o700 });
+  mkdirSync(join(home, ".tetris"), { recursive: true, mode: 0o700 });
   writeFileSync(
-    join(home, ".fx", "settings.json"),
+    join(home, ".tetris", "settings.json"),
     JSON.stringify({ credential_source: "fx_login" }) + "\n",
     { mode: 0o600 },
   );
@@ -4259,10 +4259,10 @@ test(
     expect(login.stdout).not.toContain("Code:");
     expect(login.stderr).toBe("");
 
-    const authPath = join(home, ".fx", "chatgpt-auth.json");
+    const authPath = join(home, ".tetris", "chatgpt-auth.json");
     expect(existsSync(authPath)).toBe(true);
     expect(statSync(authPath).mode & 0o077).toBe(0);
-    const settingsPath = join(home, ".fx", "settings.json");
+    const settingsPath = join(home, ".tetris", "settings.json");
     const selected = JSON.parse(readFileSync(settingsPath, "utf8"));
     expect(selected.provider).toBe("codex");
     expect(selected.models.codex).toBe("gpt-5.6-sol");
@@ -4382,23 +4382,23 @@ test("Codex runs from FX_MODEL or --model without a saved model and saves neithe
   expect(flagAsk.stdout).toContain("CHATGPT_DIRECT_RESPONSE");
 
   expect(codexResponseModels(chatgptOauth)).toEqual(["gpt-5.6-luna", "gpt-5.4-mini"]);
-  expect(existsSync(join(home, ".fx", "settings.json"))).toBe(false);
+  expect(existsSync(join(home, ".tetris", "settings.json"))).toBe(false);
 });
 
-test("Codex without a model explains the fix and fx provider codex saves one", async () => {
+test("Codex without a model explains the fix and tetris provider codex saves one", async () => {
   home = mkdtempSync(join(tmpdir(), "fx-codex-missing-model-"));
   writeSeededChatGptLogin(home);
   chatgptOauth = startFakeChatGptOAuth();
   const env = withoutSavedModelEnv(home, "codex", chatgptOauth.env);
-  const guidance = "no Codex model is selected; run `fx provider codex` to choose one, or set a model for this run with --model or FX_MODEL";
+  const guidance = "no Codex model is selected; run `tetris provider codex` to choose one, or set a model for this run with --model or FX_MODEL";
 
   const status = await runFx(["status"], { env, timeoutMs: TIMEOUT });
   expect(status.code).toBe(1);
-  expect(status.stderr).toBe(`fx: ${guidance}\n`);
+  expect(status.stderr).toBe(`tetris: ${guidance}\n`);
 
   const ask = await runFx(["ask", "--no-save", "Answer directly."], { env, timeoutMs: TIMEOUT });
   expect(ask.code).toBe(1);
-  expect(ask.stderr).toContain(`fx ask: ${guidance}`);
+  expect(ask.stderr).toContain(`tetris ask: ${guidance}`);
 
   const askJson = await runFx(["ask", "--json", "--no-save", "Answer directly."], { env, timeoutMs: TIMEOUT });
   expect(askJson.code).toBe(1);
@@ -4409,7 +4409,7 @@ test("Codex without a model explains the fix and fx provider codex saves one", a
   const repair = await runFx(["provider", "codex"], { env, timeoutMs: TIMEOUT });
   expect(repair.code, `stdout: ${repair.stdout}\nstderr: ${repair.stderr}`).toBe(0);
   expect(repair.stdout).not.toContain("already selected");
-  const saved = JSON.parse(readFileSync(join(home, ".fx", "settings.json"), "utf8"));
+  const saved = JSON.parse(readFileSync(join(home, ".tetris", "settings.json"), "utf8"));
   expect(saved.provider).toBe("codex");
   expect(saved.models.codex).toBe("gpt-5.6-sol");
 
@@ -4422,7 +4422,7 @@ test("Codex without a model explains the fix and fx provider codex saves one", a
   expect(again.stdout).toContain("Codex is already selected.");
 });
 
-test("Grok runs from FX_MODEL or --model without a saved model and fx provider grok saves one", async () => {
+test("Grok runs from FX_MODEL or --model without a saved model and tetris provider grok saves one", async () => {
   home = mkdtempSync(join(tmpdir(), "fx-grok-run-model-"));
   const grok = startFakeGrokOAuth();
   try {
@@ -4434,7 +4434,7 @@ test("Grok runs from FX_MODEL or --model without a saved model and fx provider g
 
     const missing = await runFx(["status"], { env, timeoutMs: TIMEOUT });
     expect(missing.code).toBe(1);
-    expect(missing.stderr).toBe("fx: no Grok model is selected; run `fx provider grok` to choose one, or set a model for this run with --model or FX_MODEL\n");
+    expect(missing.stderr).toBe("tetris: no Grok model is selected; run `tetris provider grok` to choose one, or set a model for this run with --model or FX_MODEL\n");
 
     const status = await runFx(["status", "--json"], { env: { ...env, FX_MODEL: "grok-4.6" }, timeoutMs: TIMEOUT });
     expect(status.code, status.stderr).toBe(0);
@@ -4446,12 +4446,12 @@ test("Grok runs from FX_MODEL or --model without a saved model and fx provider g
     const envAsk = await runFx(["ask", "--json", "--no-save", "Answer directly."], { env: { ...env, FX_MODEL: "grok-4.20" }, timeoutMs: TIMEOUT });
     expect(envAsk.code, `stdout: ${envAsk.stdout}\nstderr: ${envAsk.stderr}`).toBe(0);
     expect(responseModels()).toEqual(["grok-4.6", "grok-4.20"]);
-    expect(existsSync(join(home, ".fx", "settings.json"))).toBe(false);
+    expect(existsSync(join(home, ".tetris", "settings.json"))).toBe(false);
 
     const repair = await runFx(["provider", "grok"], { env, timeoutMs: TIMEOUT });
     expect(repair.code, `stdout: ${repair.stdout}\nstderr: ${repair.stderr}`).toBe(0);
     expect(repair.stdout).not.toContain("already selected");
-    const saved = JSON.parse(readFileSync(join(home, ".fx", "settings.json"), "utf8"));
+    const saved = JSON.parse(readFileSync(join(home, ".tetris", "settings.json"), "utf8"));
     expect(saved.provider).toBe("grok");
     expect(typeof saved.models.grok).toBe("string");
     const repaired = await runFx(["status", "--json"], { env, timeoutMs: TIMEOUT });
@@ -4498,7 +4498,7 @@ tmuxTest(
 
     expect(codexResponseModels(chatgptOauth)).toEqual(["gpt-5.6-luna", "gpt-5.6-luna", "gpt-5.6-luna"]);
     expect(gateway.requests).toHaveLength(0);
-    const settingsPath = join(home, ".fx", "settings.json");
+    const settingsPath = join(home, ".tetris", "settings.json");
     if (existsSync(settingsPath)) {
       expect(JSON.parse(readFileSync(settingsPath, "utf8")).models?.codex).toBeUndefined();
     }
@@ -4536,7 +4536,7 @@ tmuxTest(
     expect(models.length).toBeGreaterThan(0);
     expect(models.every((model) => model === "gpt-5.6-luna")).toBe(true);
     expect(gateway.requests).toHaveLength(0);
-    const settingsPath = join(home, ".fx", "settings.json");
+    const settingsPath = join(home, ".tetris", "settings.json");
     if (existsSync(settingsPath)) {
       expect(JSON.parse(readFileSync(settingsPath, "utf8")).models?.codex).toBeUndefined();
     }
@@ -4570,10 +4570,10 @@ test(
       expect(login.stdout).toContain("Signed in with Grok.");
       expect(login.stderr).toBe("");
 
-      const authPath = join(home, ".fx", "grok-auth.json");
+      const authPath = join(home, ".tetris", "grok-auth.json");
       expect(existsSync(authPath)).toBe(true);
       expect(statSync(authPath).mode & 0o077).toBe(0);
-      const settings = JSON.parse(readFileSync(join(home, ".fx", "settings.json"), "utf8"));
+      const settings = JSON.parse(readFileSync(join(home, ".tetris", "settings.json"), "utf8"));
       expect(settings.provider).toBe("grok");
       expect(settings.models.grok).toBe("grok-4.20");
 
@@ -4664,7 +4664,7 @@ test(
       expect(result.stdout).not.toContain("grok-code");
       expect(result.stderr).toBe("");
       expect(grok.tokenCalls()).toBe(1);
-      expect(existsSync(join(home, ".fx", "grok-auth.json"))).toBe(true);
+      expect(existsSync(join(home, ".tetris", "grok-auth.json"))).toBe(true);
     } finally {
       grok.stop();
     }
@@ -4678,11 +4678,11 @@ test("Grok logout removes local credentials when remote revocation fails", async
   try {
     writeSeededGrokLogin(home, grok.initialAccessToken);
     writeFileSync(
-      join(home, ".fx", "settings.json"),
+      join(home, ".tetris", "settings.json"),
       JSON.stringify({ provider: "grok", grok_model: "grok-4.20" }) + "\n",
       { mode: 0o600 },
     );
-    const authPath = join(home, ".fx", "grok-auth.json");
+    const authPath = join(home, ".tetris", "grok-auth.json");
     const result = await runFx(["logout", "grok"], {
       env: {
         HOME: home,
@@ -4696,14 +4696,14 @@ test("Grok logout removes local credentials when remote revocation fails", async
     expect(result.stdout).toContain("Signed out of Grok.");
     expect(result.stderr).toContain("remote revocation could not be confirmed");
     expect(existsSync(authPath)).toBe(false);
-    expect(JSON.parse(readFileSync(join(home, ".fx", "settings.json"), "utf8")).provider)
+    expect(JSON.parse(readFileSync(join(home, ".tetris", "settings.json"), "utf8")).provider)
       .toBe("grok");
     const ask = await runFx(["ask", "--json", "--no-save", "Still Grok?"], {
       env: { HOME: home, FX_DISABLE_KEYCHAIN: "1", FX_AUTO_UPGRADE: "0" },
       timeoutMs: TIMEOUT,
     });
     expect(ask.code).toBe(1);
-    expect(ask.stderr).toContain("fx login grok");
+    expect(ask.stderr).toContain("tetris login grok");
   } finally {
     grok.stop();
   }
@@ -4713,7 +4713,7 @@ test("Grok logout removes malformed and unsafe local credentials", async () => {
   home = mkdtempSync(join(tmpdir(), "fx-grok-logout-unreadable-"));
   const grok = startFakeGrokOAuth();
   try {
-    const authPath = join(home, ".fx", "grok-auth.json");
+    const authPath = join(home, ".tetris", "grok-auth.json");
     for (const failure of ["malformed", "unsafe"]) {
       writeSeededGrokLogin(home, grok.initialAccessToken);
       if (failure === "malformed") writeFileSync(authPath, "{invalid-json");
@@ -4747,7 +4747,7 @@ test("Grok 401 replay refuses a different account before the second provider sen
   try {
     writeSeededGrokLogin(home, grok.initialAccessToken);
     writeFileSync(
-      join(home, ".fx", "settings.json"),
+      join(home, ".tetris", "settings.json"),
       JSON.stringify({ provider: "grok", grok_model: "grok-4.20" }) + "\n",
       { mode: 0o600 },
     );
@@ -4767,7 +4767,7 @@ test("Grok 401 replay refuses a different account before the second provider sen
     });
     expect(ask.code).toBe(1);
     expect(grok.requests.filter((request) => request.path === "/v1/responses")).toHaveLength(1);
-    expect(existsSync(join(home, ".fx", "grok-auth.json"))).toBe(false);
+    expect(existsSync(join(home, ".tetris", "grok-auth.json"))).toBe(false);
     for (const request of [...gateway.requests, ...gateway.modelRequests]) {
       expect(request.headers.get("authorization")).not.toContain("grok-");
     }
@@ -4783,7 +4783,7 @@ test("Grok CLI sends verified images directly without advertising the vision fal
   try {
     writeSeededGrokLogin(home, grok.initialAccessToken);
     writeFileSync(
-      join(home, ".fx", "settings.json"),
+      join(home, ".tetris", "settings.json"),
       JSON.stringify({ provider: "grok", grok_model: "grok-4.20" }) + "\n",
       { mode: 0o600 },
     );
@@ -4880,7 +4880,7 @@ tmuxTest(
       }
       await session.sendKeys("Escape");
       await session.waitForComposer(TIMEOUT);
-      const settingsPath = join(home, ".fx", "settings.json");
+      const settingsPath = join(home, ".tetris", "settings.json");
       const persistenceDeadline = Date.now() + TIMEOUT;
       let saved: { provider: string; models: { grok: string } } | undefined;
       while (Date.now() < persistenceDeadline) {
@@ -4958,7 +4958,7 @@ tmuxTest(
       const scrollback = await session.captureFullScrollback();
       expect(scrollback).not.toContain("grok-code");
       expect(grok.tokenCalls()).toBe(1);
-      expect(existsSync(join(home, ".fx", "grok-auth.json"))).toBe(true);
+      expect(existsSync(join(home, ".tetris", "grok-auth.json"))).toBe(true);
       expect(readFileSync(stderrPath, "utf8")).toBe("");
     } finally {
       grok.stop();
@@ -4977,7 +4977,7 @@ tmuxTest(
     try {
       writeSeededGrokLogin(home, grok.initialAccessToken);
       writeFileSync(
-        join(home, ".fx", "settings.json"),
+        join(home, ".tetris", "settings.json"),
         JSON.stringify({ provider: "grok", grok_model: "grok-4.20", statusLine: { context: true } }) + "\n",
         { mode: 0o600 },
       );
@@ -5005,7 +5005,7 @@ tmuxTest(
       expect(body.model).toBe("grok-4.6");
       expect(body.reasoning?.effort).toBe("xhigh");
       expect(await session.capturePane()).toContain("/500k");
-      expect(readFileSync(join(home, ".fx", "settings.json"), "utf8")).toContain('"effort":"xhigh"');
+      expect(readFileSync(join(home, ".tetris", "settings.json"), "utf8")).toContain('"effort":"xhigh"');
       expect(readFileSync(stderrPath, "utf8")).toBe("");
     } finally {
       grok.stop();
@@ -5015,7 +5015,7 @@ tmuxTest(
 );
 
 tmuxTest(
-  "fx --provider grok overrides the configured provider for the launch",
+  "tetris --provider grok overrides the configured provider for the launch",
   async () => {
     home = mkdtempSync(join(tmpdir(), "fx-launch-provider-"));
     stderrPath = join(home, "stderr.log");
@@ -5024,7 +5024,7 @@ tmuxTest(
     try {
       writeSeededGrokLogin(home, grok.initialAccessToken);
       writeFileSync(
-        join(home, ".fx", "settings.json"),
+        join(home, ".tetris", "settings.json"),
         JSON.stringify({ provider: "gateway", models: { grok: "grok-4.20" } }) + "\n",
         { mode: 0o600 },
       );
@@ -5048,7 +5048,7 @@ tmuxTest(
       expect(gateway.requests.filter((request) => request.path.includes("responses"))).toHaveLength(0);
       expect(JSON.parse(grokResponse!.body ?? "{}")).toMatchObject({ model: "grok-4.20" });
       // The flag stays launch-scoped: the configured provider is untouched.
-      expect(readFileSync(join(home, ".fx", "settings.json"), "utf8")).toContain('"provider":"gateway"');
+      expect(readFileSync(join(home, ".tetris", "settings.json"), "utf8")).toContain('"provider":"gateway"');
       expect(readFileSync(stderrPath, "utf8")).toBe("");
     } finally {
       grok.stop();
@@ -5067,7 +5067,7 @@ tmuxTest(
     try {
       writeSeededGrokLogin(home, grok.accessToken, "acct_resource_limit");
       writeFileSync(
-        join(home, ".fx", "settings.json"),
+        join(home, ".tetris", "settings.json"),
         JSON.stringify({ provider: "grok", grok_model: "grok-4.20" }) + "\n",
         { mode: 0o600 },
       );
@@ -5142,7 +5142,7 @@ for (const scenario of ["replace", "conflict", "invalid-index"] as const) {
       try {
         if (provider === "codex") writeSeededChatGptLogin(profile, direct.accessToken);
         else writeSeededGrokLogin(profile, direct.accessToken);
-        writeFileSync(join(profile, ".fx", "settings.json"), JSON.stringify({ provider, [provider + "_model"]: model }), { mode: 0o600 });
+        writeFileSync(join(profile, ".tetris", "settings.json"), JSON.stringify({ provider, [provider + "_model"]: model }), { mode: 0o600 });
         const env = {
           HOME: profile, AI_GATEWAY_API_KEY: "fixture", VERCEL_OIDC_TOKEN: undefined, FX_MODEL: undefined,
           FX_DISABLE_KEYCHAIN: "1", FX_AUTO_UPGRADE: "0", FX_SOUND: "0",
@@ -5224,7 +5224,7 @@ test("native assistant messages keep their boundaries and phases through tools a
     try {
       if (provider === "codex") writeSeededChatGptLogin(profile, direct.accessToken);
       else writeSeededGrokLogin(profile, direct.accessToken);
-      writeFileSync(join(profile, ".fx", "settings.json"), JSON.stringify({ provider, [provider + "_model"]: model }), { mode: 0o600 });
+      writeFileSync(join(profile, ".tetris", "settings.json"), JSON.stringify({ provider, [provider + "_model"]: model }), { mode: 0o600 });
       writeFileSync(join(profile, "notes.txt"), "42\n");
       const env = {
         HOME: profile, AI_GATEWAY_API_KEY: "fixture", VERCEL_OIDC_TOKEN: undefined, FX_MODEL: undefined,
@@ -5291,7 +5291,7 @@ test("native reasoning snapshots survive tools and saved resume exactly once", a
     try {
       if (provider === "codex") writeSeededChatGptLogin(profile, direct.accessToken);
       else writeSeededGrokLogin(profile, direct.accessToken);
-      writeFileSync(join(profile, ".fx", "settings.json"), JSON.stringify({ provider, [provider + "_model"]: model }), { mode: 0o600 });
+      writeFileSync(join(profile, ".tetris", "settings.json"), JSON.stringify({ provider, [provider + "_model"]: model }), { mode: 0o600 });
       writeFileSync(join(profile, "notes.txt"), "SETTLED_READ_RESULT\n");
       const env = {
         HOME: profile, AI_GATEWAY_API_KEY: "fixture", VERCEL_OIDC_TOKEN: undefined, FX_MODEL: undefined,
@@ -5365,7 +5365,7 @@ test("native final snapshots preserve completed items and reject conflicting kin
     try {
       if (provider === "codex") writeSeededChatGptLogin(profile, direct.accessToken);
       else writeSeededGrokLogin(profile, direct.accessToken);
-      writeFileSync(join(profile, ".fx", "settings.json"), JSON.stringify({ provider, [provider + "_model"]: model }), { mode: 0o600 });
+      writeFileSync(join(profile, ".tetris", "settings.json"), JSON.stringify({ provider, [provider + "_model"]: model }), { mode: 0o600 });
       writeFileSync(join(profile, "notes.txt"), "SNAPSHOT_READ_RESULT\n");
       const tracePath = join(profile, "trace.log");
       const env = {
@@ -5450,7 +5450,7 @@ test("native discarded prose keeps tool continuation and saved resume valid", as
     try {
       if (provider === "codex") writeSeededChatGptLogin(profile, direct.accessToken);
       else writeSeededGrokLogin(profile, direct.accessToken);
-      writeFileSync(join(profile, ".fx", "settings.json"), JSON.stringify({ provider, [provider + "_model"]: model }), { mode: 0o600 });
+      writeFileSync(join(profile, ".tetris", "settings.json"), JSON.stringify({ provider, [provider + "_model"]: model }), { mode: 0o600 });
       writeFileSync(join(profile, "notes.txt"), "FILTERED_READ_RESULT\n");
       const tracePath = join(profile, "trace.log");
       const env = {
@@ -5528,8 +5528,8 @@ test("native terminal outcomes preserve recovery and incomplete warnings", async
     try {
       if (provider === "codex") writeSeededChatGptLogin(profile, direct!.accessToken);
       else if (provider === "grok") writeSeededGrokLogin(profile, direct!.accessToken);
-      mkdirSync(join(profile, ".fx"), { recursive: true });
-      writeFileSync(join(profile, ".fx", "settings.json"), JSON.stringify({ provider, [native ? provider + "_model" : "model"]: model }));
+      mkdirSync(join(profile, ".tetris"), { recursive: true });
+      writeFileSync(join(profile, ".tetris", "settings.json"), JSON.stringify({ provider, [native ? provider + "_model" : "model"]: model }));
       const env = {
         HOME: profile, AI_GATEWAY_API_KEY: "fixture", VERCEL_OIDC_TOKEN: undefined, FX_MODEL: native ? undefined : model,
         FX_DISABLE_KEYCHAIN: "1", FX_AUTO_UPGRADE: "0", FX_SOUND: "0",
@@ -5624,8 +5624,8 @@ test("provider SSE framing preserves saved and resumed answers", async () => {
     try {
       if (provider === "codex") writeSeededChatGptLogin(profile, direct!.accessToken);
       else if (provider === "grok") writeSeededGrokLogin(profile, direct!.accessToken);
-      mkdirSync(join(profile, ".fx"), { recursive: true });
-      writeFileSync(join(profile, ".fx", "settings.json"), JSON.stringify({ provider, [native ? provider + "_model" : "model"]: model }));
+      mkdirSync(join(profile, ".tetris"), { recursive: true });
+      writeFileSync(join(profile, ".tetris", "settings.json"), JSON.stringify({ provider, [native ? provider + "_model" : "model"]: model }));
       const env = {
         HOME: profile, AI_GATEWAY_API_KEY: "fixture", VERCEL_OIDC_TOKEN: undefined, FX_MODEL: native ? undefined : model,
         FX_DISABLE_KEYCHAIN: "1", FX_AUTO_UPGRADE: "0", FX_SOUND: "0",
@@ -5706,7 +5706,7 @@ test("direct providers reconcile final text before saving or releasing tools", a
     try {
       if (provider === "codex") writeSeededChatGptLogin(profile, direct.accessToken);
       else writeSeededGrokLogin(profile, direct.accessToken);
-      writeFileSync(join(profile, ".fx", "settings.json"), JSON.stringify({ provider, [provider + "_model"]: model }), { mode: 0o600 });
+      writeFileSync(join(profile, ".tetris", "settings.json"), JSON.stringify({ provider, [provider + "_model"]: model }), { mode: 0o600 });
       const env = {
         HOME: profile, AI_GATEWAY_API_KEY: "fixture", VERCEL_OIDC_TOKEN: undefined, FX_MODEL: undefined,
         FX_DISABLE_KEYCHAIN: "1", FX_AUTO_UPGRADE: "0", FX_SOUND: "0",
@@ -5769,7 +5769,7 @@ test("direct providers keep images with their users through tools and resume", a
     try {
       if (provider === "codex") writeSeededChatGptLogin(profile, direct.accessToken);
       else writeSeededGrokLogin(profile, direct.accessToken);
-      writeFileSync(join(profile, ".fx", "settings.json"), JSON.stringify({ provider, [provider + "_model"]: model }), { mode: 0o600 });
+      writeFileSync(join(profile, ".tetris", "settings.json"), JSON.stringify({ provider, [provider + "_model"]: model }), { mode: 0o600 });
       writeFileSync(join(profile, "fixture.txt"), "fixture text");
       const firstImage = readFileSync(join(REPO_ROOT, "tests/e2e/fixtures/favicon.png"));
       const secondImage = readFileSync(join(REPO_ROOT, "tests/e2e/fixtures/placeholder-logo.png"));
@@ -5854,10 +5854,10 @@ test("provider context accounting is independent of image encoding size", async 
       const direct = provider === "codex" ? startFakeCodexToolLoop({ responses, model, inputModalities: ["text", "image"] })
         : provider === "grok" ? startFakeGrokToolLoop({ responses, model }) : null;
       try {
-        mkdirSync(join(profile, ".fx"), { recursive: true });
+        mkdirSync(join(profile, ".tetris"), { recursive: true });
         if (provider === "codex") writeSeededChatGptLogin(profile, direct!.accessToken);
         if (provider === "grok") writeSeededGrokLogin(profile, direct!.accessToken);
-        writeFileSync(join(profile, ".fx", "settings.json"), JSON.stringify({ provider, [provider + "_model"]: model }), { mode: 0o600 });
+        writeFileSync(join(profile, ".tetris", "settings.json"), JSON.stringify({ provider, [provider + "_model"]: model }), { mode: 0o600 });
         const path = join(profile, "image.png"), trace = join(profile, "trace.log");
         writeFileSync(path, bytes);
         const result = await runFx(["ask", "--json", "--auto", "--no-save", "--image", path, "Describe the attached image."], {
@@ -5910,7 +5910,7 @@ test("direct provider tool identities obey the session boundary before execution
         else writeSeededGrokLogin(profile, direct.accessToken);
         const catalog = await (await fetch(direct.modelsUrl)).json();
         const model = provider === "codex" ? catalog.models[0].slug : catalog.data[0].id;
-        writeFileSync(join(profile, ".fx", "settings.json"), JSON.stringify({ provider, [`${provider}_model`]: model }), { mode: 0o600 });
+        writeFileSync(join(profile, ".tetris", "settings.json"), JSON.stringify({ provider, [`${provider}_model`]: model }), { mode: 0o600 });
         const env = {
           HOME: profile, AI_GATEWAY_API_KEY: "fixture", VERCEL_OIDC_TOKEN: undefined, FX_MODEL: undefined,
           FX_DISABLE_KEYCHAIN: "1", FX_AUTO_UPGRADE: "0", FX_SOUND: "0",
@@ -5957,7 +5957,7 @@ test(
     try {
       writeSeededChatGptLogin(home, codex.accessToken);
       writeFileSync(
-        join(home, ".fx", "settings.json"),
+        join(home, ".tetris", "settings.json"),
         JSON.stringify({ provider: "codex", codex_model: "gpt-5.6-sol" }) + "\n",
         { mode: 0o600 },
       );
@@ -6004,7 +6004,7 @@ tmuxTest(
     try {
       writeSeededChatGptLogin(home, codex.accessToken);
       writeFileSync(
-        join(home, ".fx", "settings.json"),
+        join(home, ".tetris", "settings.json"),
         JSON.stringify({ provider: "codex", codex_model: "gpt-5.6-sol" }) + "\n",
         { mode: 0o600 },
       );
@@ -6040,7 +6040,7 @@ test(
     try {
       writeSeededGrokLogin(home, grok.accessToken, "acct_tool_loop");
       writeFileSync(
-        join(home, ".fx", "settings.json"),
+        join(home, ".tetris", "settings.json"),
         JSON.stringify({ provider: "grok", grok_model: "grok-4.20" }) + "\n",
         { mode: 0o600 },
       );
@@ -6100,9 +6100,9 @@ test(
     const login = await runCodexLoginWithBrowser(env);
     expect(login.code).toBe(1);
     expect(login.stdout).not.toContain("Signed in with Codex.");
-    expect(login.stderr).toContain("fx login: could not load the target model catalog (malformed_response)");
-    expect(existsSync(join(home, ".fx", "chatgpt-auth.json"))).toBe(true);
-    const settingsPath = join(home, ".fx", "settings.json");
+    expect(login.stderr).toContain("tetris login: could not load the target model catalog (malformed_response)");
+    expect(existsSync(join(home, ".tetris", "chatgpt-auth.json"))).toBe(true);
+    const settingsPath = join(home, ".tetris", "settings.json");
     expect(existsSync(settingsPath)).toBe(false);
   },
   60_000,
@@ -6132,9 +6132,9 @@ test(
       const login = await runGrokLoginWithBrowser(env);
       expect(login.code).toBe(1);
       expect(login.stdout).not.toContain("Signed in with Grok.");
-      expect(login.stderr).toContain("fx login: target model catalog is empty");
-      expect(existsSync(join(home, ".fx", "grok-auth.json"))).toBe(true);
-      expect(existsSync(join(home, ".fx", "settings.json"))).toBe(false);
+      expect(login.stderr).toContain("tetris login: target model catalog is empty");
+      expect(existsSync(join(home, ".tetris", "grok-auth.json"))).toBe(true);
+      expect(existsSync(join(home, ".tetris", "settings.json"))).toBe(false);
     } finally {
       grok.stop();
     }
@@ -6156,7 +6156,7 @@ test(
     try {
       writeSeededChatGptLogin(home, codex.accessToken);
       writeFileSync(
-        join(home, ".fx", "settings.json"),
+        join(home, ".tetris", "settings.json"),
         JSON.stringify({ provider: "codex", codex_model: "gpt-5.6-sol" }) + "\n",
         { mode: 0o600 },
       );
@@ -6212,7 +6212,7 @@ test(
     try {
       writeSeededGrokLogin(home, grok.accessToken, "acct_vision");
       writeFileSync(
-        join(home, ".fx", "settings.json"),
+        join(home, ".tetris", "settings.json"),
         JSON.stringify({ provider: "grok", grok_model: "grok-4.20" }) + "\n",
         { mode: 0o600 },
       );
@@ -6261,7 +6261,7 @@ test(
     try {
       writeSeededChatGptLogin(home, codex.accessToken);
       writeFileSync(
-        join(home, ".fx", "settings.json"),
+        join(home, ".tetris", "settings.json"),
         JSON.stringify({ provider: "codex", codex_model: "gpt-5.6-sol" }) + "\n",
         { mode: 0o600 },
       );
@@ -6320,7 +6320,7 @@ test(
           writeSeededGrokLogin(testHome, direct.accessToken);
         }
         writeFileSync(
-          join(testHome, ".fx", "settings.json"),
+          join(testHome, ".tetris", "settings.json"),
           JSON.stringify(provider === "codex"
             ? { provider, codex_model: direct.workingModel }
             : { provider, grok_model: direct.workingModel }) + "\n",
@@ -6390,7 +6390,7 @@ test(
     try {
       writeSeededGrokLogin(home, grok.accessToken, "acct_auto_review");
       writeFileSync(
-        join(home, ".fx", "settings.json"),
+        join(home, ".tetris", "settings.json"),
         JSON.stringify({ provider: "grok", grok_model: "grok-4.20" }) + "\n",
         { mode: 0o600 },
       );
@@ -6446,11 +6446,11 @@ test(
 );
 
 test(
-  "fx login bounds invalid OAuth client fallback to two device requests",
+  "tetris login bounds invalid OAuth client fallback to two device requests",
   async () => {
     home = mkdtempSync(join(tmpdir(), "fx-tui-login-client-fallback-failure-"));
     writeSeededFxLogin(home);
-    const authPath = join(home, ".fx", "auth.json");
+    const authPath = join(home, ".tetris", "auth.json");
     const seededAuthFile = readFileSync(authPath, "utf8");
     oauth = startFakeOAuth(
       ACQUIRED_LOGIN_TOKEN,
@@ -6489,7 +6489,7 @@ test(
     expect(deviceRequests[1].clientId).toBeDefined();
     expect(deviceRequests[1].clientId).not.toBe("test-client");
     expect(result.stdout).toBe("");
-    expect(result.stderr).toBe("fx login: failed to sign in\n");
+    expect(result.stderr).toBe("tetris login: failed to sign in\n");
     expect(result.stderr).not.toContain(oauth.providerDetail);
     expect(readFileSync(authPath, "utf8")).toBe(seededAuthFile);
   },
@@ -6497,11 +6497,11 @@ test(
 );
 
 test(
-  "fx login does not fall back for another OAuth device error",
+  "tetris login does not fall back for another OAuth device error",
   async () => {
     home = mkdtempSync(join(tmpdir(), "fx-tui-login-client-no-fallback-"));
     writeSeededFxLogin(home);
-    const authPath = join(home, ".fx", "auth.json");
+    const authPath = join(home, ".tetris", "auth.json");
     const seededAuthFile = readFileSync(authPath, "utf8");
     oauth = startFakeOAuth(
       ACQUIRED_LOGIN_TOKEN,
@@ -6537,7 +6537,7 @@ test(
     expect(deviceRequests).toHaveLength(1);
     expect(deviceRequests[0].clientId).toBe("test-client");
     expect(result.stdout).toBe("");
-    expect(result.stderr).toBe("fx login: failed to sign in\n");
+    expect(result.stderr).toBe("tetris login: failed to sign in\n");
     expect(result.stderr).not.toContain(oauth.providerDetail);
     expect(readFileSync(authPath, "utf8")).toBe(seededAuthFile);
   },
@@ -6569,12 +6569,12 @@ tmuxTest(
     await session.sendText(" preserve this exact prompt");
     const blocked = await session.waitForPane(
       (pane) =>
-        pane.includes("fx needs access to Vercel AI Gateway") &&
+        pane.includes("Tetris needs access to Vercel AI Gateway") &&
         pane.includes("preserve this exact prompt") &&
         pane.includes("Image 1"),
       TIMEOUT,
     );
-    expect(blocked).not.toContain("Welcome to fx");
+    expect(blocked).not.toContain("Welcome to Tetris");
     expect(blocked).not.toContain("Switch credential");
     expect(gateway.requests).toHaveLength(0);
     expect(session.isAlive()).toBe(true);
@@ -6605,14 +6605,14 @@ tmuxTest(
     });
     await session.waitForComposer(TIMEOUT);
     await selectFxLoginCredential(session);
-    await session.sendText("prove fx login is active before logout");
+    await session.sendText("prove tetris login is active before logout");
     await session.waitForText(LOGIN_RESPONSE, TIMEOUT);
     expect(gateway.requests[0].headers.get("authorization")).toBe(`Bearer ${LOGIN_TOKEN}`);
 
     await session.sendText("/logout");
     const loggedOut = await session.waitForPane(
       (pane) =>
-        pane.includes("Signed out of fx.") &&
+        pane.includes("Signed out of Tetris.") &&
         pane.includes("remote session could not be revoked"),
       TIMEOUT,
     );
@@ -6620,7 +6620,7 @@ tmuxTest(
     expect(
       loggedOut.match(/remote session could not be revoked/g) ?? [],
     ).toHaveLength(1);
-    expect(existsSync(join(home, ".fx", "auth.json"))).toBe(false);
+    expect(existsSync(join(home, ".tetris", "auth.json"))).toBe(false);
 
     await readStatusPanel(session, TIMEOUT, (panel) => panelAuth(panel) === "AI_GATEWAY_API_KEY");
 
@@ -6689,7 +6689,7 @@ tmuxTest(
     session = await startFx(home, stderrPath, gateway, oauth.issuerUrl);
     await session.waitForComposer(TIMEOUT);
     await session.sendText("/logout");
-    await session.waitForText("Signed out of fx.", 1_000);
+    await session.waitForText("Signed out of Tetris.", 1_000);
 
     const quitAt = Date.now();
     await session.sendText("/quit");
@@ -6697,7 +6697,7 @@ tmuxTest(
     session = null;
     // Shutdown gives the revocation 2 seconds, then cancels it.
     expect(Date.now() - quitAt).toBeLessThan(5_000);
-    expect(existsSync(join(home, ".fx", "auth.json"))).toBe(false);
+    expect(existsSync(join(home, ".tetris", "auth.json"))).toBe(false);
     expect(readFileSync(stderrPath, "utf8")).toBe("");
   },
   60_000,
@@ -6717,8 +6717,8 @@ tmuxTest(
     session = await startFx(home, stderrPath, gateway, oauth.issuerUrl);
     await session.waitForComposer(TIMEOUT);
     await session.sendText("/logout");
-    await session.waitForText("Signed out of fx.", 1_000);
-    expect(existsSync(join(home, ".fx", "auth.json"))).toBe(false);
+    await session.waitForText("Signed out of Tetris.", 1_000);
+    expect(existsSync(join(home, ".tetris", "auth.json"))).toBe(false);
     const draft = "TYPING_WHILE_LOGOUT_REVOKES";
     await session.sendLiteral(draft);
     await session.waitForPane((pane) => pane.includes(draft), 1_000);
@@ -6737,7 +6737,7 @@ tmuxTest(
 );
 
 tmuxTest(
-  "logout preserves an active API key when fx login is inactive",
+  "logout preserves an active API key when tetris login is inactive",
   async () => {
     home = mkdtempSync(join(tmpdir(), "fx-tui-logout-inactive-login-"));
     stderrPath = join(home, "stderr.log");
@@ -6749,8 +6749,8 @@ tmuxTest(
     session = await startFx(home, stderrPath, gateway, oauth.issuerUrl);
     await session.waitForComposer(TIMEOUT);
     await session.sendText("/logout");
-    await session.waitForText("Signed out of fx.", TIMEOUT);
-    expect(existsSync(join(home, ".fx", "auth.json"))).toBe(false);
+    await session.waitForText("Signed out of Tetris.", TIMEOUT);
+    expect(existsSync(join(home, ".tetris", "auth.json"))).toBe(false);
 
     await readStatusPanel(session, TIMEOUT, (panel) => panelAuth(panel) === "AI_GATEWAY_API_KEY");
     await session.sendText("prove the active API key was unchanged");
@@ -6763,7 +6763,7 @@ tmuxTest(
 );
 
 tmuxTest(
-  "logout removes an fx login rejected for unsafe permissions",
+  "logout removes a tetris login rejected for unsafe permissions",
   async () => {
     home = mkdtempSync(join(tmpdir(), "fx-tui-logout-rejected-login-"));
     stderrPath = join(home, "stderr.log");
@@ -6771,13 +6771,13 @@ tmuxTest(
     gateway = startFakeGateway([]);
     oauth = startFakeOAuth(ACQUIRED_LOGIN_TOKEN);
     writeSeededFxLogin(home, Date.now() + 60 * 60 * 1000, oauth.issuerUrl);
-    const authPath = join(home, ".fx", "auth.json");
+    const authPath = join(home, ".tetris", "auth.json");
     chmodSync(authPath, 0o644);
 
     session = await startFx(home, stderrPath, gateway, oauth.issuerUrl);
     await session.waitForComposer(TIMEOUT);
     await session.sendText("/logout");
-    const loggedOut = await session.waitForText("Signed out of fx.", TIMEOUT);
+    const loggedOut = await session.waitForText("Signed out of Tetris.", TIMEOUT);
     expect(existsSync(authPath)).toBe(false);
 
     await readStatusPanel(session, TIMEOUT, (panel) => panelAuth(panel) === "AI_GATEWAY_API_KEY");
@@ -6803,7 +6803,7 @@ tmuxTest(
     gateway = startFakeGateway([fakeGatewayFinalText(LOGIN_RESPONSE)]);
     oauth = startFakeOAuth(ACQUIRED_LOGIN_TOKEN);
     writeSeededFxLogin(home, Date.now() + 60 * 60 * 1000, oauth.issuerUrl);
-    const fxDir = join(home, ".fx");
+    const fxDir = join(home, ".tetris");
 
     session = await startFx(home, stderrPath, gateway, oauth.issuerUrl, undefined, {
       AI_GATEWAY_API_KEY: undefined,
@@ -6815,10 +6815,10 @@ tmuxTest(
 
     await session.sendText("/logout");
     const failed = await session.waitForText(
-      "Could not confirm durable fx logout. The active source was recalculated.",
+      "Could not confirm durable Tetris logout. The active source was recalculated.",
       TIMEOUT,
     );
-    expect(failed).not.toContain("Signed out of fx.");
+    expect(failed).not.toContain("Signed out of Tetris.");
     expect(failed).toContain(
       "Warning: signed out locally, but the remote session could not be revoked.",
     );
@@ -6848,7 +6848,7 @@ tmuxTest(
     });
     await session.waitForComposer(TIMEOUT);
     await session.sendText("/logout");
-    await session.waitForText("Signed out of fx.", TIMEOUT);
+    await session.waitForText("Signed out of Tetris.", TIMEOUT);
     await readStatusPanel(session, TIMEOUT, (panel) => panelAuth(panel) === "missing");
 
     await session.sendText("/setup");
@@ -6866,13 +6866,13 @@ tmuxTest(
     const onboarding = await session.waitForPane(
       (pane) =>
         pane.includes(prompt) &&
-        pane.includes("Welcome to fx") &&
+        pane.includes("Welcome to Tetris") &&
         pane.includes("Sign in with Vercel") &&
         pane.includes("Add an API key") &&
         pane.includes("esc to set up later"),
       TIMEOUT,
     );
-    expect(onboarding).not.toMatch(/^\s+fx login\s+/m);
+    expect(onboarding).not.toMatch(/^\s+tetris login\s+/m);
     expect(onboarding).not.toContain("Switch credential");
     expect(onboarding).not.toContain("Skip for now");
     expect(gateway.requests).toHaveLength(0);
@@ -7003,7 +7003,7 @@ for (const outcome of ["failure", "cancel"] as const) {
     });
     const expiresAt = Date.now() + 80_000;
     writeSeededFxLogin(home, expiresAt, oauth.issuerUrl, "team_123");
-    writeFileSync(join(home, ".fx", "settings.json"), JSON.stringify({ credential_source: "fx_login" }));
+    writeFileSync(join(home, ".tetris", "settings.json"), JSON.stringify({ credential_source: "fx_login" }));
     session = await startFx(home, stderrPath, gateway, oauth.issuerUrl, tracePath, {
       FX_TRACE_SCOPES: "auth,input,worker,context_compaction,session",
     }, home);
@@ -7079,7 +7079,7 @@ tmuxTest(
     await session.sendKeys("Enter");
     const failed = await session.waitForPane(
       (pane) =>
-        pane.includes("fx login sign-in expired.") &&
+        pane.includes("Tetris login sign-in expired.") &&
         pane.includes("press enter to sign in again.") &&
         !pane.includes("Setup"),
       TIMEOUT,
@@ -7111,7 +7111,7 @@ tmuxTest(
 );
 
 tmuxTest(
-  "permanent fx login failure enters repair without retrying or losing the prompt",
+  "permanent tetris login failure enters repair without retrying or losing the prompt",
   async () => {
     home = mkdtempSync(join(tmpdir(), "fx-tui-auth-repair-"));
     stderrPath = join(home, "stderr.log");
@@ -7151,7 +7151,7 @@ tmuxTest(
     await session.sendKeys("C-u");
     await session.sendKeys("C-k");
     await session.waitForPane(
-      (pane) => pane.includes("fx login sign-in expired.") && !pane.includes("Thinking"),
+      (pane) => pane.includes("Tetris login sign-in expired.") && !pane.includes("Thinking"),
       TIMEOUT,
     );
     expect(oauth.requests.filter((request) => request.grantType === "refresh_token")).toHaveLength(1);
@@ -7191,7 +7191,7 @@ tmuxTest(
     await session.sendKeys("Enter");
     await session.waitForText(REFRESH_RECOVERY_RESPONSE, TIMEOUT);
     const full = await session.captureFullScrollback();
-    expect(full.match(/fx login sign-in expired\./g)).toHaveLength(1);
+    expect(full.match(/tetris login sign-in expired\./g)).toHaveLength(1);
     expect(gateway.requests).toHaveLength(1);
     expect(gateway.requests[0]!.body).toContain(prompt);
     expect(readFileSync(stderrPath, "utf8")).toBe("");
@@ -7200,7 +7200,7 @@ tmuxTest(
 );
 
 tmuxTest(
-  "cancelled fx login repair allows a later explicit login",
+  "cancelled tetris login repair allows a later explicit login",
   async () => {
     home = mkdtempSync(join(tmpdir(), "fx-tui-auth-cancelled-repair-"));
     stderrPath = join(home, "stderr.log");
@@ -7218,7 +7218,7 @@ tmuxTest(
     await session.waitForComposer(TIMEOUT);
     const prompt = "DO_NOT_REPLAY_AFTER_CANCELLED_REPAIR";
     await session.sendText(prompt);
-    await session.waitForText("fx login sign-in expired.", TIMEOUT);
+    await session.waitForText("Tetris login sign-in expired.", TIMEOUT);
     expect(oauth.requests.filter((request) => request.grantType === "refresh_token")).toHaveLength(1);
 
     await session.sendKeys("Enter");
@@ -7251,7 +7251,7 @@ tmuxTest(
     await session.waitForText("Changed Vercel team to Team Harness", TIMEOUT);
     expect(gateway.requests).toHaveLength(0);
 
-    await session.sendText("use the repaired fx login");
+    await session.sendText("use the repaired tetris login");
     await session.waitForText(REFRESH_RECOVERY_RESPONSE, TIMEOUT);
     expect(gateway.requests).toHaveLength(1);
     expect(gateway.requests[0]!.headers.get("authorization")).toBe(
@@ -7271,7 +7271,7 @@ tmuxTest(
     stderrPath = join(home, "stderr.log");
     writeFileSync(stderrPath, "");
     gateway = startFakeGateway([]);
-    const authPath = join(home, ".fx", "auth.json");
+    const authPath = join(home, ".tetris", "auth.json");
     oauth = startFakeOAuth(ACQUIRED_LOGIN_TOKEN, undefined, 3600, Number.POSITIVE_INFINITY, {
       tokenDelayMs: 5_000,
       beforeRefreshResponse() {
@@ -7512,7 +7512,7 @@ tmuxTest(
 );
 
 tmuxTest(
-  "ready team catalog downgrades after fx login expiry and refresh failure",
+  "ready team catalog downgrades after tetris login expiry and refresh failure",
   async () => {
     home = mkdtempSync(join(tmpdir(), "fx-tui-auth-ready-catalog-expiry-"));
     stderrPath = join(home, "stderr.log");
@@ -7577,7 +7577,7 @@ tmuxTest(
     await session.waitForPane(
       (pane) =>
         pane.includes(blockedPrompt) &&
-        pane.includes("fx login sign-in expired.") &&
+        pane.includes("Tetris login sign-in expired.") &&
         pane.includes("press enter to sign in again.") &&
         !pane.includes("Model provider"),
       TIMEOUT,
@@ -7645,7 +7645,7 @@ tmuxTest(
     const firstFailure = await session.waitForPane(
       (pane) =>
         pane.includes(firstPrompt) &&
-        pane.includes("fx login sign-in expired.") &&
+        pane.includes("Tetris login sign-in expired.") &&
         pane.includes("press enter to sign in again.") &&
         !pane.includes("Model provider"),
       TIMEOUT,
@@ -7653,7 +7653,7 @@ tmuxTest(
     expect(firstFailure).not.toContain("Choose another source");
     expect(gateway.requests).toHaveLength(0);
     expect(gateway.modelRequests).toHaveLength(1);
-    expect(existsSync(join(home, ".fx", "auth.json"))).toBe(false);
+    expect(existsSync(join(home, ".tetris", "auth.json"))).toBe(false);
     expect(oauth.requests.map((request) => `${request.method} ${request.path}`)).toEqual([
       "GET /.well-known/openid-configuration",
       "POST /oauth/token",
@@ -7955,7 +7955,7 @@ tmuxTest(
     await session.sendText("/credits");
     const failed = await session.waitForPane(
       (pane) =>
-        pane.includes("fx login sign-in expired.") &&
+        pane.includes("Tetris login sign-in expired.") &&
         pane.includes("press enter to sign in again.") &&
         pane.includes("/credits"),
       TIMEOUT,
@@ -8130,11 +8130,11 @@ for (const provider of ["codex", "grok"] as const) {
     try {
       if (chatgpt) writeSeededChatGptLogin(home);
       else writeSeededGrokLogin(home, grok!.initialAccessToken);
-      writeFileSync(join(home, ".fx/settings.json"), JSON.stringify({
+      writeFileSync(join(home, ".tetris/settings.json"), JSON.stringify({
         provider, models: { [provider]: model },
       }), { mode: 0o600 });
-      mkdirSync(join(home, ".fx/provider-versions"), { mode: 0o700 });
-      const cachePath = join(home, ".fx/provider-versions", `${provider}.json`);
+      mkdirSync(join(home, ".tetris/provider-versions"), { mode: 0o700 });
+      const cachePath = join(home, ".tetris/provider-versions", `${provider}.json`);
       expect(spawnSync("mkfifo", ["-m", "600", cachePath]).status).toBe(0);
       const env = {
         HOME: home,
@@ -8186,7 +8186,7 @@ tmuxTest("Codex discovers upstream versions and refreshes models in an open sess
   stderrPath = join(home, "stderr.log");
   gateway = startFakeGateway([]);
   writeSeededChatGptLogin(home);
-  writeFileSync(join(home, ".fx", "settings.json"), JSON.stringify({
+  writeFileSync(join(home, ".tetris", "settings.json"), JSON.stringify({
     provider: "codex",
     models: { codex: "gpt-5.6-luna" },
   }) + "\n", { mode: 0o600 });
@@ -8277,7 +8277,7 @@ test("Grok refreshes upstream versions for catalogs and responses and survives l
   });
   try {
     writeSeededGrokLogin(home, grok.initialAccessToken);
-    writeFileSync(join(home, ".fx", "settings.json"), JSON.stringify({
+    writeFileSync(join(home, ".tetris", "settings.json"), JSON.stringify({
       provider: "grok", models: { grok: "grok-4.20" },
     }) + "\n", { mode: 0o600 });
     const env = {
@@ -8290,7 +8290,7 @@ test("Grok refreshes upstream versions for catalogs and responses and survives l
       FX_TEST_GROK_VERSION_URL: `http://127.0.0.1:${releases.port}/stable`,
       FX_TEST_GROK_CLIENT_VERSION: undefined,
     };
-    const cachePath = join(home, ".fx", "provider-versions", "grok.json");
+    const cachePath = join(home, ".tetris", "provider-versions", "grok.json");
     const expireCache = () => {
       const cached = JSON.parse(readFileSync(cachePath, "utf8"));
       cached.checked_at_ms = 0;
@@ -8321,7 +8321,7 @@ test("Grok refreshes upstream versions for catalogs and responses and survives l
     const malformed = await runFx(["models", "--json"], { env });
     expect(malformed.code).toBe(1);
     expect(existsSync(cachePath)).toBe(false);
-    expect(existsSync(join(home, ".fx", "grok-auth.json"))).toBe(true);
+    expect(existsSync(join(home, ".tetris", "grok-auth.json"))).toBe(true);
     failure = "slow";
     const started = Date.now();
     const timedOut = await runFx(["models", "--json"], { env, timeoutMs: 8000 });
@@ -8359,7 +8359,7 @@ for (const provider of ["codex", "grok"] as const) {
       try {
         writeSeededChatGptLogin(home, chatgptOauth.accessToken);
         writeSeededGrokLogin(home, grok.initialAccessToken);
-        const settingsPath = join(home, ".fx", "settings.json");
+        const settingsPath = join(home, ".tetris", "settings.json");
         writeFileSync(settingsPath, JSON.stringify({ provider: "gateway", models: { gateway: FAKE_GATEWAY_MODEL } }));
         session = await startFx(home, stderrPath, gateway, undefined, join(home, "trace.log"), {
           ...chatgptOauth.env, ...grok.env, FX_MODEL: undefined, FX_SOUND: "0", FX_TRACE_SCOPES: "auth,prompt,input,provider",
@@ -8476,8 +8476,8 @@ for (const outcome of ["cancel", "failure"] as const) {
     chatgptOauth = startFakeChatGptOAuth();
     writeSeededFxLogin(home, Date.now() + 3_600_000, oauth.issuerUrl, "team_previous");
     writeSeededChatGptLogin(home, chatgptOauth.accessToken);
-    const settingsPath = join(home, ".fx", "settings.json");
-    const authPath = join(home, ".fx", "auth.json");
+    const settingsPath = join(home, ".tetris", "settings.json");
+    const authPath = join(home, ".tetris", "auth.json");
     writeFileSync(settingsPath, JSON.stringify({ provider: "codex", models: { codex: "gpt-5.6-sol", gateway: "openai/gpt-5.6-sol" } }));
     const beforeAuth = readFileSync(authPath, "utf8");
     try {
@@ -8526,7 +8526,7 @@ for (const outcome of ["cancel", "failure"] as const) {
   }, TIMEOUT);
 }
 
-tmuxTest("a Vercel team choice names an AI Gateway catalog fx could not connect to", async () => {
+tmuxTest("a Vercel team choice names an AI Gateway catalog Tetris could not connect to", async () => {
   home = mkdtempSync(join(tmpdir(), "fx-team-catalog-refused-"));
   stderrPath = join(home, "stderr.log");
   writeFileSync(stderrPath, "");
@@ -8537,8 +8537,8 @@ tmuxTest("a Vercel team choice names an AI Gateway catalog fx could not connect 
   chatgptOauth = startFakeChatGptOAuth();
   writeSeededFxLogin(home, Date.now() + 3_600_000, oauth.issuerUrl, "team_previous");
   writeSeededChatGptLogin(home, chatgptOauth.accessToken);
-  const settingsPath = join(home, ".fx", "settings.json");
-  const authPath = join(home, ".fx", "auth.json");
+  const settingsPath = join(home, ".tetris", "settings.json");
+  const authPath = join(home, ".tetris", "auth.json");
   writeFileSync(settingsPath, JSON.stringify({ provider: "codex", models: { codex: "gpt-5.6-sol" } }));
   const beforeAuth = readFileSync(authPath, "utf8");
   session = await startFx(home, stderrPath, gateway, oauth.issuerUrl, undefined, {
@@ -8558,7 +8558,7 @@ tmuxTest("a Vercel team choice names an AI Gateway catalog fx could not connect 
   await session.waitForText("couldn't connect to AI Gateway to validate", TIMEOUT);
   const transcript = collapsedText(await session.captureFullScrollback());
   expect(transcript).toContain(
-    "fx couldn't connect to AI Gateway to validate the selected Vercel team. Check your network connection or firewall. The current team is unchanged.",
+    "Tetris couldn't connect to AI Gateway to validate the selected Vercel team. Check your network connection or firewall. The current team is unchanged.",
   );
   expect(transcript).not.toContain("could not be validated for AI Gateway");
   expect(readFileSync(authPath, "utf8")).toBe(beforeAuth);
@@ -8583,7 +8583,7 @@ tmuxTest("provider preparation cancellation stops logout fallback", async () => 
   try {
     writeSeededChatGptLogin(home, chatgptOauth.accessToken);
     writeSeededGrokLogin(home, grok.initialAccessToken);
-    writeFileSync(join(home, ".fx", "settings.json"), JSON.stringify({ provider: "codex", models: { codex: "gpt-5.6-sol" } }));
+    writeFileSync(join(home, ".tetris", "settings.json"), JSON.stringify({ provider: "codex", models: { codex: "gpt-5.6-sol" } }));
     session = await startFx(home, stderrPath, gateway, undefined, undefined, { ...chatgptOauth.env, ...grok.env, FX_MODEL: undefined, FX_SOUND: "0" });
     await session.waitForComposer(TIMEOUT);
     await session.sendText("/logout");
@@ -8593,8 +8593,8 @@ tmuxTest("provider preparation cancellation stops logout fallback", async () => 
     release();
     await Bun.sleep(100);
     expect(grok.requests.filter((request) => request.path === "/v1/models")).toHaveLength(0);
-    expect(existsSync(join(home, ".fx", "chatgpt-auth.json"))).toBe(false);
-    expect(existsSync(join(home, ".fx", "grok-auth.json"))).toBe(true);
+    expect(existsSync(join(home, ".tetris", "chatgpt-auth.json"))).toBe(false);
+    expect(existsSync(join(home, ".tetris", "grok-auth.json"))).toBe(true);
     expect(readFileSync(stderrPath, "utf8")).toBe("");
     await session.sendText("/quit");
     await session.waitForSessionEnd(3000);
@@ -8619,7 +8619,7 @@ tmuxTest("provider recovery continues after a held prompt and failed catalog", a
   try {
     writeSeededChatGptLogin(home, chatgptOauth.accessToken);
     writeSeededGrokLogin(home, grok.initialAccessToken);
-    writeFileSync(join(home, ".fx", "settings.json"), JSON.stringify({ provider: "codex", models: { codex: "gpt-5.6-sol" } }));
+    writeFileSync(join(home, ".tetris", "settings.json"), JSON.stringify({ provider: "codex", models: { codex: "gpt-5.6-sol" } }));
     const trace = join(home, "trace.log");
     session = await startFx(home, stderrPath, gateway, undefined, trace, { ...chatgptOauth.env, ...grok.env, FX_MODEL: undefined, FX_SOUND: "0", FX_TRACE_SCOPES: "auth,provider,input,prompt" });
     await session.waitForComposer(TIMEOUT);
@@ -8629,7 +8629,7 @@ tmuxTest("provider recovery continues after a held prompt and failed catalog", a
     await waitForTrace(trace, "pending_prompt_adopted", 3000);
     release();
     await session.waitForText("GROK_DIRECT_RESPONSE", 5000);
-    expect(JSON.parse(readFileSync(join(home, ".fx", "settings.json"), "utf8")).provider).toBe("grok");
+    expect(JSON.parse(readFileSync(join(home, ".tetris", "settings.json"), "utf8")).provider).toBe("grok");
     expect(grok.requests.filter((request) => request.path === "/v1/responses")).toHaveLength(1);
     expect(gateway.requests).toHaveLength(0);
     expect(readFileSync(stderrPath, "utf8")).toBe("");
@@ -8677,14 +8677,14 @@ tmuxTest("provider preparation resumes a held prompt after explicit provider ret
   } finally { release(); }
 }, TIMEOUT);
 
-tmuxTest("a provider switch names a target catalog fx could not connect to", async () => {
+tmuxTest("a provider switch names a target catalog Tetris could not connect to", async () => {
   home = mkdtempSync(join(tmpdir(), "fx-provider-switch-refused-"));
   stderrPath = join(home, "stderr.log");
   writeFileSync(stderrPath, "");
   gateway = startFakeGateway([]);
   chatgptOauth = startFakeChatGptOAuth();
   writeSeededChatGptLogin(home, chatgptOauth.accessToken);
-  const settingsPath = join(home, ".fx", "settings.json");
+  const settingsPath = join(home, ".tetris", "settings.json");
   session = await startFx(home, stderrPath, gateway, undefined, undefined, {
     ...chatgptOauth.env,
     FX_TEST_OPENAI_CODEX_MODELS_URL: await refusedLoopbackUrl("/chatgpt/models"),
@@ -8698,7 +8698,7 @@ tmuxTest("a provider switch names a target catalog fx could not connect to", asy
   await session.waitForText("couldn't connect to the model provider", TIMEOUT);
   const transcript = collapsedText(await session.captureFullScrollback());
   expect(transcript).toContain(
-    "fx couldn't connect to the model provider to load the target provider catalog. Check your network connection or firewall. The current provider is unchanged.",
+    "Tetris couldn't connect to the model provider to load the target provider catalog. Check your network connection or firewall. The current provider is unchanged.",
   );
   expect(transcript).not.toContain("could not be validated");
   if (existsSync(settingsPath)) expect(JSON.parse(readFileSync(settingsPath, "utf8")).provider).not.toBe("codex");
@@ -8712,8 +8712,8 @@ tmuxTest("provider preparation completes existing-key recovery for a held prompt
   gateway = startFakeGateway([fakeGatewayFinalText("KEY_RECOVERY_OK")]);
   chatgptOauth = startFakeChatGptOAuth();
   writeSeededChatGptLogin(home, chatgptOauth.accessToken);
-  linkSync(join(home, ".fx", "chatgpt-auth.json"), join(home, "auth-alias"));
-  writeFileSync(join(home, ".fx", "settings.json"), JSON.stringify({ provider: "codex", models: { codex: "gpt-5.6-sol" } }));
+  linkSync(join(home, ".tetris", "chatgpt-auth.json"), join(home, "auth-alias"));
+  writeFileSync(join(home, ".tetris", "settings.json"), JSON.stringify({ provider: "codex", models: { codex: "gpt-5.6-sol" } }));
   const trace = join(home, "trace.log");
   session = await startFx(home, stderrPath, gateway, undefined, trace, { ...chatgptOauth.env, FX_MODEL: undefined, FX_SOUND: "0", FX_TRACE_SCOPES: "auth,provider,input,prompt" });
   await session.waitForComposer(TIMEOUT);
@@ -8729,7 +8729,7 @@ tmuxTest("provider preparation completes existing-key recovery for a held prompt
   await session.sendLiteral("env");
   await session.sendKeys("Enter");
   await session.waitForText("KEY_RECOVERY_OK", 5000);
-  expect(JSON.parse(readFileSync(join(home, ".fx", "settings.json"), "utf8")).provider).toBe("gateway");
+  expect(JSON.parse(readFileSync(join(home, ".tetris", "settings.json"), "utf8")).provider).toBe("gateway");
   expect(gateway.requests).toHaveLength(1);
   expect(JSON.stringify(gateway.requests[0]!.body)).toContain("Use the Gateway after repair.");
   expect(gateway.requests[0]!.headers.get("authorization")).toBe(`Bearer ${ENV_TOKEN}`);

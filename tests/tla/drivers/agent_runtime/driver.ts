@@ -1,19 +1,19 @@
-// Runs the built fx binary along tests/tla/agent_runtime/EmptyReply.tla and has
+// Runs the built tetris binary along tests/tla/agent_runtime/EmptyReply.tla and has
 // TLC check every turn it observes (EmptyReplyTrace.tla).
 //
-// Each turn is one `fx ask` against a local fake gateway that serves a script
+// Each turn is one `tetris ask` against a local fake gateway that serves a script
 // of replies: tool calls with or without text, a final answer, text that stops
 // for `other`, and a reply that stops for `other` with no text and no tool
 // call, as Gemini's UNEXPECTED_TOOL_CALL does. The driver runs every script up
 // to --depth replies under every step limit in Limits, then --random seeded
-// longer scripts. When fx asks for more replies than the script holds, the
+// longer scripts. When Tetris asks for more replies than the script holds, the
 // gateway serves a final answer, and that answer is part of what was observed.
 //
-// For each turn it records the replies served, what each request fx sent
+// For each turn it records the replies served, what each request Tetris sent
 // carried (the prompt, tool results, the empty-reply nudge, or the older
 // "Summarize what you just did." continuation), and how the turn ended. TLC
 // replays the turns through the model's own actions. --self-check also replays
-// them through the model of fx before the change (Bug = "today"), which must
+// them through the model of Tetris before the change (Bug = "today"), which must
 // reject them. --stress N adds one long turn with N separate stalls, each a
 // tool step followed by an empty reply, with no step limit, and prints its wall
 // time and the binary's peak memory.
@@ -47,7 +47,7 @@ type Verdict = "ACCEPTED" | "REJECTED" | "TOOL_ERROR";
 const KINDS: Kind[] = ["tool", "tool_silent", "text", "text_other", "empty_other"];
 const LIMITS = [0, 1, 2, 3];
 const MODEL = "google/gemini-4-argon";
-// The nudge fx sends after an empty reply (src/core/agent/runtime/orchestrator.zig).
+// The nudge Tetris sends after an empty reply (src/core/agent/runtime/orchestrator.zig).
 const NUDGE = "Your last reply had no text and no tool call.";
 const SUMMARIZE = "Summarize what you just did.";
 const tlaDir = join(TLA_ROOT, "agent_runtime");
@@ -147,9 +147,9 @@ async function runTurn(
   const root = mkdtempSync(join(scratch, `${id}-`));
   const home = join(root, "home");
   const workspace = join(root, "workspace");
-  mkdirSync(join(home, ".fx"), { recursive: true });
+  mkdirSync(join(home, ".tetris"), { recursive: true });
   mkdirSync(workspace, { recursive: true });
-  writeFileSync(join(home, ".fx", "settings.json"), "{}");
+  writeFileSync(join(home, ".tetris", "settings.json"), "{}");
   writeFileSync(join(workspace, "notes.txt"), "fixture\n");
   try {
     const started = performance.now();
@@ -334,7 +334,7 @@ async function main(): Promise<number> {
   }
   if (options.selfCheck) {
     const today = await runTrace(observations, "today", out);
-    console.log(`self-check, the model of fx before the change: ${today.verdict} (must be REJECTED)`);
+    console.log(`self-check, the model of Tetris before the change: ${today.verdict} (must be REJECTED)`);
     if (today.verdict !== "REJECTED") return today.verdict === "TOOL_ERROR" ? 2 : 1;
   }
   console.log("ACCEPTED");

@@ -65,7 +65,7 @@ const DEFAULT_MODEL = "spacexai/grok-4.7";
 /** What fx says when it cannot connect to the model catalog and drops fast
  * mode (`catalogDownNotice` in `src/core/agent/runtime/orchestrator.zig`). */
 const CATALOG_CONNECT_FAST_NOTICE =
-  "fx couldn't connect to AI Gateway to load the model catalog, so fast mode is off until it loads. Check your network connection or firewall.";
+  "Tetris couldn't connect to AI Gateway to load the model catalog, so fast mode is off until it loads. Check your network connection or firewall.";
 const DELAY_MS = 32_500;
 // What the shell description tells the model to run for a service that
 // outlives fx; macOS has no setsid command (src/builtins/tools.zig).
@@ -89,9 +89,9 @@ function createFixtureRoot(label: string): FixtureRoot {
   const root = realpathSync(mkdtempSync(join(tmpdir(), `fx-gateway-lifecycle-${label}-`)));
   const home = join(root, "home");
   const workspace = join(root, "workspace");
-  mkdirSync(join(home, ".fx"), { recursive: true });
+  mkdirSync(join(home, ".tetris"), { recursive: true });
   mkdirSync(workspace, { recursive: true });
-  writeFileSync(join(home, ".fx", "settings.json"), "{}");
+  writeFileSync(join(home, ".tetris", "settings.json"), "{}");
   return { root, home, workspace: realpathSync(workspace) };
 }
 
@@ -213,7 +213,7 @@ test("a compaction commit while a subagent finishes lists each record once", asy
   }
 }, 90_000);
 
-test("fx killed while a compaction's write holds its records resumes the session", async () => {
+test("tetris killed while a compaction's write holds its records resumes the session", async () => {
   const f = compactionRaceFixture("compaction-commit-kill");
   try {
     const proc = Bun.spawn([FX_BIN, "ask", "--full-access", "--json", RACE_PROMPT], {
@@ -239,7 +239,7 @@ test("fx killed while a compaction's write holds its records resumes the session
   }
 }, 120_000);
 
-test("fx told to quit while a compaction's write is held and a subagent's waits behind it exits without a panic", async () => {
+test("tetris told to quit while a compaction's write is held and a subagent's waits behind it exits without a panic", async () => {
   const f = compactionRaceFixture("compaction-commit-term");
   const proc = Bun.spawn([FX_BIN, "ask", "--full-access", "--json", RACE_PROMPT], {
     cwd: f.root.workspace, env: { ...process.env, ...f.env }, stdin: "ignore", stdout: "pipe", stderr: "pipe",
@@ -420,7 +420,7 @@ function writeContextLimitFixture(root: FixtureRoot) {
     `---\nname: oversized-context\ndescription: ${"description-".repeat(12)}\n---\n\nSKILL_FIRST_LINE\n${"skill-body-line\n".repeat(12)}SKILL_TAIL_SENTINEL\n`,
   );
   writeFileSync(
-    join(root.home, ".fx", "settings.json"),
+    join(root.home, ".tetris", "settings.json"),
     JSON.stringify({
       context_limits: {
         project_instruction_file_bytes: 96,
@@ -920,7 +920,7 @@ process.stdin.on("data", (chunk) => {
 `,
   );
   writeFileSync(
-    join(root.home, ".fx", "mcp.json"),
+    join(root.home, ".tetris", "mcp.json"),
     JSON.stringify({
       mcp: {
         fixture: {
@@ -1342,7 +1342,7 @@ describe("gateway stream lifecycle", () => {
       expectOnlyLeadingSystemMessages(gateway.requests[0]!.body);
       expect(contentText(request.prompt[1]?.content)).toBe(WEB_SEARCH_GUIDANCE);
       expect(toolByName(oracleRequest, "shell")?.description).toBe(
-        `Run a shell command. Each call starts a new shell with the user's startup files, so cd and export do not carry over. If the command is still running after yield_time_ms, you get a session_id: call again with action=interact to wait for more output, or action=stop to end it. Never rerun it. Owned sessions end when fx exits; & and nohup jobs end with their command. To keep a service running, use \`${DETACH_COMMAND}\` and check it is ready in that call. In zsh, quote globs meant for another program. To list, find, or read files, use glob_files, grep_files, and read_file, not ls, find, grep, or cat.`,
+        `Run a shell command. Each call starts a new shell with the user's startup files, so cd and export do not carry over. If the command is still running after yield_time_ms, you get a session_id: call again with action=interact to wait for more output, or action=stop to end it. Never rerun it. Owned sessions end when Tetris exits; & and nohup jobs end with their command. To keep a service running, use \`${DETACH_COMMAND}\` and check it is ready in that call. In zsh, quote globs meant for another program. To list, find, or read files, use glob_files, grep_files, and read_file, not ls, find, grep, or cat.`,
       );
       expect(toolByName(oracleRequest, "skill")?.description).toContain(
         "relative to the skill, not the workspace",
@@ -1393,7 +1393,7 @@ describe("gateway stream lifecycle", () => {
   test("removed memory tool is absent and stale calls cannot touch persisted bytes", async () => {
     const root = createFixtureRoot("memory-removed");
     const tracePath = join(root.root, "trace.log");
-    const memoriesPath = join(root.home, ".fx", "memories.json");
+    const memoriesPath = join(root.home, ".tetris", "memories.json");
     const legacyStore = '["must survive removal"]\n';
     writeFileSync(memoriesPath, legacyStore);
     writeFileSync(join(root.workspace, "surviving.txt"), "surviving tool works\n");
@@ -1561,7 +1561,7 @@ describe("gateway stream lifecycle", () => {
   test("ask --config overrides the settings files and yields to dedicated flags", async () => {
     const root = createFixtureRoot("ask-config-overrides");
     const tracePath = join(root.root, "trace.log");
-    const settingsPath = join(root.home, ".fx", "settings.json");
+    const settingsPath = join(root.home, ".tetris", "settings.json");
     writeFileSync(settingsPath, JSON.stringify({ effort: "low", fast_mode: false }) + "\n");
     const settingsBefore = readFileSync(settingsPath, "utf8");
     const gateway = startDynamicFakeGateway(
@@ -1784,7 +1784,7 @@ describe("gateway stream lifecycle", () => {
     const root = createFixtureRoot("fast-catalog-failure");
     const tracePath = join(root.root, "trace.log");
     writeFileSync(
-      join(root.home, ".fx", "settings.json"),
+      join(root.home, ".tetris", "settings.json"),
       JSON.stringify({ fast_mode: true }),
     );
     const gateway = startDynamicFakeGateway(
@@ -1831,7 +1831,7 @@ describe("gateway stream lifecycle", () => {
     const root = createFixtureRoot("fast-catalog-refused");
     const tracePath = join(root.root, "trace.log");
     writeFileSync(
-      join(root.home, ".fx", "settings.json"),
+      join(root.home, ".tetris", "settings.json"),
       JSON.stringify({ fast_mode: true }),
     );
     const gateway = startDynamicFakeGateway(() => fakeGatewayFinalText("STANDARD_SPEED_COMPLETE"));
@@ -1868,7 +1868,7 @@ describe("gateway stream lifecycle", () => {
     const root = createFixtureRoot("fast-catalog-refused-rounds");
     const tracePath = join(root.root, "trace.log");
     writeFileSync(
-      join(root.home, ".fx", "settings.json"),
+      join(root.home, ".tetris", "settings.json"),
       JSON.stringify({ fast_mode: true }),
     );
     writeFileSync(
@@ -1912,14 +1912,14 @@ describe("gateway stream lifecycle", () => {
     }
   }, 150_000);
 
-  test("fx ask projects explicit permission mode on initial and continuing requests", async () => {
+  test("tetris ask projects explicit permission mode on initial and continuing requests", async () => {
     for (const mode of ["ask", "auto"] as const) {
       const root = createFixtureRoot(`permission-mode-${mode}`);
       const tracePath = join(root.root, "trace.log");
       const probePath = join(root.workspace, "permission-mode-probe.txt");
       writeFileSync(probePath, "permission mode probe\n");
       writeFileSync(
-        join(root.home, ".fx", "settings.json"),
+        join(root.home, ".tetris", "settings.json"),
         JSON.stringify({ permission_mode: "ask", sandbox: "none" }),
       );
       const responses = [
@@ -2221,7 +2221,7 @@ describe("gateway stream lifecycle", () => {
       join(skillsRoot, "external-skill"),
       "dir",
     );
-    const settingsPath = join(root.home, ".fx", "settings.json");
+    const settingsPath = join(root.home, ".tetris", "settings.json");
 
     const ask = async (settings: unknown) => {
       writeFileSync(settingsPath, JSON.stringify(settings));
@@ -2281,7 +2281,7 @@ describe("gateway stream lifecycle", () => {
       const root = createFixtureRoot("source-context-limits-tui");
       writeContextLimitFixture(root);
       writeLargeSkillCatalog(root.workspace);
-      const settingsPath = join(root.home, ".fx", "settings.json");
+      const settingsPath = join(root.home, ".tetris", "settings.json");
       const settings = JSON.parse(readFileSync(settingsPath, "utf8"));
       settings.workspaces[root.workspace].context_limits.skill_description_bytes = 1_024;
       writeFileSync(settingsPath, JSON.stringify(settings));
@@ -2542,7 +2542,7 @@ describe("gateway stream lifecycle", () => {
         `---\nname: ${skillName}\ndescription: tool-time context fixture\n---\n\n${"bounded skill instruction line\n".repeat(16)}`,
       );
       writeFileSync(
-        join(root.home, ".fx", "settings.json"),
+        join(root.home, ".tetris", "settings.json"),
         JSON.stringify({
           context_limits: {
             skill_chunk_bytes: 96,
@@ -2637,7 +2637,7 @@ describe("gateway stream lifecycle", () => {
     const largeBody = "bounded body line\n".repeat(240_000);
     mkdirSync(join(skillDirectory, "assets"), { recursive: true });
     writeFileSync(
-      join(root.home, ".fx", "settings.json"),
+      join(root.home, ".tetris", "settings.json"),
       JSON.stringify({ context_limits: { skill_chunk_bytes: 160 } }),
     );
     writeFileSync(
@@ -2716,16 +2716,16 @@ describe("gateway stream lifecycle", () => {
         gateway.requests[1]!.body,
         installCallId,
       );
-      expect(installOutput).toContain("Installed 1 skill(s) into fx.");
+      expect(installOutput).toContain("Installed 1 skill(s) into Tetris.");
       expect(installOutput).toContain(`- ${skillName}\n`);
       expect(installOutput).not.toContain(bodySentinel);
       expect(installOutput).not.toContain(companionSentinel);
-      expect(installOutput).not.toContain(join(root.home, ".fx", "skills"));
+      expect(installOutput).not.toContain(join(root.home, ".tetris", "skills"));
       expect(promptText(gateway.requests[1]!.body)).not.toContain(
         "<loaded_skill_context>",
       );
 
-      const installedDirectory = join(root.home, ".fx", "skills", skillName);
+      const installedDirectory = join(root.home, ".tetris", "skills", skillName);
       expect(readFileSync(join(installedDirectory, "SKILL.md"), "utf8")).toBe(
         readFileSync(join(skillDirectory, "SKILL.md"), "utf8"),
       );
@@ -2761,7 +2761,7 @@ describe("gateway stream lifecycle", () => {
     );
     const skillDirectoryB = join(
       root.home,
-      ".fx",
+      ".tetris",
       "skills",
       "exact-duplicate-b",
     );
@@ -2949,7 +2949,7 @@ describe("gateway stream lifecycle", () => {
       "skills",
       "TOKEN=runtime-location-secret",
     );
-    const safeDirectory = join(root.home, ".fx", "skills", "mail-helper");
+    const safeDirectory = join(root.home, ".tetris", "skills", "mail-helper");
     const safeBody = "SAFE_SKILL_SEARCH_BODY_SENTINEL";
     mkdirSync(unsafeDirectory, { recursive: true });
     mkdirSync(safeDirectory, { recursive: true });
@@ -3073,7 +3073,7 @@ describe("gateway stream lifecycle", () => {
     const root = createFixtureRoot("skill-resource-progress");
     const tracePath = join(root.root, "trace.log");
     const skillName = "system-design-fixture";
-    const skillDirectory = join(root.home, ".fx", "skills", skillName);
+    const skillDirectory = join(root.home, ".tetris", "skills", skillName);
     mkdirSync(join(skillDirectory, "references"), { recursive: true });
     writeFileSync(
       join(skillDirectory, "SKILL.md"),
@@ -3140,13 +3140,13 @@ describe("gateway stream lifecycle", () => {
     const binary = process.env.FX_TEST_PRODUCT_EXE ?? FX_BIN;
     const root = createFixtureRoot("skill-location-labels");
     const skillName = "visible-workflow";
-    const skillDirectory = join(root.home, ".fx", "skills", "different-directory");
+    const skillDirectory = join(root.home, ".tetris", "skills", "different-directory");
     mkdirSync(join(skillDirectory, "references"), { recursive: true });
     writeFileSync(join(skillDirectory, "SKILL.md"), `---\nname: ${skillName}\ndescription: Label fixture\n---\nMAIN_LABEL_BODY\n${"Required instructions.\n".repeat(1200)}`);
     writeFileSync(join(skillDirectory, "references", "rules.md"), "REFERENCE_LABEL_BODY\n");
     const additionalSkills = ["second-workflow", "third-workflow"];
     for (const name of additionalSkills) {
-      const directory = join(root.home, ".fx", "skills", name);
+      const directory = join(root.home, ".tetris", "skills", name);
       mkdirSync(directory, { recursive: true });
       writeFileSync(join(directory, "SKILL.md"), `---\nname: ${name}\ndescription: Label fixture\n---\n${name} INSTRUCTIONS\n`);
     }
@@ -3237,7 +3237,7 @@ describe("gateway stream lifecycle", () => {
         const binary = process.env.FX_TEST_PRODUCT_EXE ?? FX_BIN;
         const root = createFixtureRoot("held-skill-resource-label");
         const skillName = "streamed-workflow";
-        const skillDirectory = join(root.home, ".fx", "skills", skillName);
+        const skillDirectory = join(root.home, ".tetris", "skills", skillName);
         const resource = "references/contract-design.md";
         const resourcePath = join(skillDirectory, resource);
         const mainSentinel = "HELD_SKILL_MAIN_INSTRUCTIONS";
@@ -3363,7 +3363,7 @@ describe("gateway stream lifecycle", () => {
           writeFileSync(resourcePath, `${resourceSentinel}\n`);
           if (scenario.cancel) {
             await tui.sendKeys("C-c");
-            await tui.waitForText("What can fx do differently?", 10_000);
+            await tui.waitForText("What can Tetris do differently?", 10_000);
             await tui.waitForStableComposer(10_000);
             expect(gateway.requestCount()).toBe(heldRequestCount);
             releaseFinish();
@@ -4181,7 +4181,7 @@ describe("gateway stream lifecycle", () => {
       expect(output).toContain("AccessDenied");
       expect(output).toContain("Do not retry");
       expect(output).toContain("symlink");
-      expect(output).toContain("fx permissions");
+      expect(output).toContain("Tetris permissions");
     } finally {
       gateway.stop();
       chmodSync(blockedPath, 0o700);
@@ -4192,7 +4192,7 @@ describe("gateway stream lifecycle", () => {
   test("saved ask resumes configured model without process override", async () => {
     const root = createFixtureRoot("configured-model-resume");
     writeFileSync(
-      join(root.home, ".fx", "settings.json"),
+      join(root.home, ".tetris", "settings.json"),
       JSON.stringify({ model: MODEL }),
     );
     const firstTracePath = join(root.root, "first-trace.log");
@@ -4303,7 +4303,7 @@ describe("gateway stream lifecycle", () => {
         // A session an older fx saved, its replies rewritten as standalone
         // ones; the resume converts it.
         const seed = { session_id: copyV1Fixture(root.home, "plain")[0]! };
-        const path = join(root.home, ".fx", "sessions", seed.session_id, "events.jsonl");
+        const path = join(root.home, ".tetris", "sessions", seed.session_id, "events.jsonl");
         const events = readFileSync(path, "utf8").trim().split("\n").map((line) => JSON.parse(line));
         const user = events.find((event) => event.event.user);
         const completed = events.find((event) => event.event.turn_completed);
@@ -5548,7 +5548,7 @@ describe("gateway stream lifecycle", () => {
       expect(gateway.requestCount()).toBe(4);
       expect(elapsedMs).toBeLessThan(5_000);
       expect(existsSync(markerPath)).toBe(false);
-      expect(existsSync(join(root.home, ".fx", "sessions"))).toBe(false);
+      expect(existsSync(join(root.home, ".tetris", "sessions"))).toBe(false);
       const childPid = Number.parseInt(readFileSync(childPidPath, "utf8"), 10);
       expect(Number.isInteger(childPid)).toBe(true);
       await waitForProcessExit(childPid);
@@ -5824,7 +5824,7 @@ printf '%s' ${JSON.stringify(trailingMarker)} > ${JSON.stringify(effectPath)}
           ? readFileSync(tracePath, "utf8").slice(-4_000)
           : "(trace missing)";
         throw new Error(
-          `fx ask exited ${result.code}; signal=${result.signal}; timed_out=${result.timedOut}; kill_sent=${result.killSent}; elapsed_ms=${result.elapsedMs}; pid=${result.pid}\nstdout:\n${result.stdout}\nstderr:\n${result.stderr}\nprocess_at_timeout:\n${result.processStateAtTimeout}\nprocess_after_close:\n${result.processStateAfterClose}\ntrace:\n${trace}`,
+          `tetris ask exited ${result.code}; signal=${result.signal}; timed_out=${result.timedOut}; kill_sent=${result.killSent}; elapsed_ms=${result.elapsedMs}; pid=${result.pid}\nstdout:\n${result.stdout}\nstderr:\n${result.stderr}\nprocess_at_timeout:\n${result.processStateAtTimeout}\nprocess_after_close:\n${result.processStateAfterClose}\ntrace:\n${trace}`,
         );
       }
       const json = parseAskJson(result.stdout);
@@ -6004,7 +6004,7 @@ printf '%s' ${JSON.stringify(trailingMarker)} > ${JSON.stringify(effectPath)}
     }
   }, 30_000);
 
-  test("a service started the way the shell description says keeps serving after fx ask exits", async () => {
+  test("a service started the way the shell description says keeps serving after tetris ask exits", async () => {
     const root = createFixtureRoot("shell-setsid-service");
     const tracePath = join(root.root, "trace.log");
     const pidPath = join(root.workspace, "service.pid");
@@ -6094,7 +6094,7 @@ printf '%s' ${JSON.stringify(trailingMarker)} > ${JSON.stringify(effectPath)}
         output_delta: "SERVICE-READY",
       });
       expect(started).not.toHaveProperty("error");
-      // Connect only after fx has exited, as a later check of the machine would.
+      // Connect only after tetris has exited, as a later check of the machine would.
       await Bun.sleep(500);
       const response = await fetch(`http://127.0.0.1:${port}/`);
       expect(response.status).toBe(200);
@@ -6266,7 +6266,7 @@ printf '%s' ${JSON.stringify(trailingMarker)} > ${JSON.stringify(effectPath)}
         name.startsWith(".fx-command-replay-") && !before.has(name)
       );
       expect(after).toEqual([]);
-      expect(existsSync(join(root.home, ".fx", "sessions"))).toBe(false);
+      expect(existsSync(join(root.home, ".tetris", "sessions"))).toBe(false);
     } finally {
       if (proc.exitCode === null) proc.kill("SIGKILL");
       gateway.stop();
@@ -6300,7 +6300,7 @@ printf '%s' ${JSON.stringify(trailingMarker)} > ${JSON.stringify(effectPath)}
     });
     const usageValues = (id: string) =>
       (logLines(root.home, id) as Array<{ kind: string; key?: string; value?: unknown }>).filter((line) => line.kind === "set" && line.key === "usage").map((line) => line.value);
-    // As Harbor runs fx: the agent phase ends with a kill, not a turn end.
+    // As Harbor runs tetris: the agent phase ends with a kill, not a turn end.
     const proc = Bun.spawn([FX_BIN, "ask", "--yolo", "--json", "--", "Run the usage fixture."], {
       cwd: root.workspace,
       env: fixtureEnv(root, gateway, join(root.root, "trace.log")),
@@ -6411,11 +6411,11 @@ printf '%s' ${JSON.stringify(trailingMarker)} > ${JSON.stringify(effectPath)}
   }, 45_000);
 
   test.skipIf(process.platform !== "linux")(
-    "a second headless shell run survives replacing the running fx binary",
+    "a second headless shell run survives replacing the running tetris binary",
     async () => {
       const root = createFixtureRoot("headless-reexec-after-rebuild");
       const tracePath = join(root.root, "trace.log");
-      const liveBin = join(root.root, "fx");
+      const liveBin = join(root.root, "tetris");
       const replacementBin = join(root.root, "fx.next");
       const parentExePath = join(root.root, "parent-exe.txt");
       const firstHelperPidPath = join(root.root, "first-helper.pid");
@@ -6434,7 +6434,7 @@ printf '%s' ${JSON.stringify(trailingMarker)} > ${JSON.stringify(effectPath)}
         switch (responseIndex++) {
           case 0:
             if (fxPid === null) {
-              return new Response("fx pid unavailable", { status: 500 });
+              return new Response("tetris pid unavailable", { status: 500 });
             }
             return fakeShellRun(
               firstCallId,
@@ -7201,7 +7201,7 @@ printf '%s' ${JSON.stringify(trailingMarker)} > ${JSON.stringify(effectPath)}
         );
         expect(beforeResume.code).toBe(0);
         // Nothing outside the store.
-        expect(readdirSync(join(root.home, ".fx", "sessions"))).toEqual(["v2"]);
+        expect(readdirSync(join(root.home, ".tetris", "sessions"))).toEqual(["v2"]);
         const canonical = JSON.parse(beforeResume.stdout) as {
           history_len: number;
           history: Array<{
@@ -7392,7 +7392,7 @@ printf '%s' ${JSON.stringify(trailingMarker)} > ${JSON.stringify(effectPath)}
           // A subagent never carries main's first prompt.
           if (!body.includes("Run the requested subagent.")) return held.response;
           const latest = latestUserText(body);
-          // The child was still working when fx quit, which ended its turn,
+          // The child was still working when tetris quit, which ended its turn,
           // so after the restart its owed report reaches main once.
           if (latestUserIsReport(body)) {
             restartReport = latest;
@@ -7645,7 +7645,7 @@ printf '%s' ${JSON.stringify(trailingMarker)} > ${JSON.stringify(effectPath)}
       const tracePath = join(root.root, "trace.log");
       const stderrPath = join(root.root, "stderr.log");
       const skillName = "compaction-explicit";
-      const skillDirectory = join(root.home, ".fx", "skills", skillName);
+      const skillDirectory = join(root.home, ".tetris", "skills", skillName);
       const bodySentinel = "COMPACTION_EXPLICIT_BODY_SENTINEL";
       const tailSentinel = "COMPACTION_COMPLETE_SKILL_TAIL";
       mkdirSync(skillDirectory, { recursive: true });
@@ -7744,7 +7744,7 @@ printf '%s' ${JSON.stringify(trailingMarker)} > ${JSON.stringify(effectPath)}
     90_000,
   );
 
-  test("default fx ask recovers malformed serialized tool arguments", async () => {
+  test("default tetris ask recovers malformed serialized tool arguments", async () => {
     const root = createFixtureRoot("malformed-arguments-turn");
     const tracePath = join(root.root, "trace.log");
     const responses = [
@@ -7787,7 +7787,7 @@ printf '%s' ${JSON.stringify(trailingMarker)} > ${JSON.stringify(effectPath)}
     }
   });
 
-  test("default fx ask retries replay-safe provider errors before success", async () => {
+  test("default tetris ask retries replay-safe provider errors before success", async () => {
     const root = createFixtureRoot("provider-error-retry-turn");
     const tracePath = join(root.root, "trace.log");
     const responses = [
@@ -7831,7 +7831,7 @@ printf '%s' ${JSON.stringify(trailingMarker)} > ${JSON.stringify(effectPath)}
     }
   }, 30_000);
 
-  test("default fx ask recovers after an immediate peer reset", async () => {
+  test("default tetris ask recovers after an immediate peer reset", async () => {
     const expectedOutput = "Recovered after immediate peer reset.";
     const responseBody = await fakeGatewayFinalText(expectedOutput).text();
 
@@ -7849,10 +7849,10 @@ printf '%s' ${JSON.stringify(trailingMarker)} > ${JSON.stringify(effectPath)}
           socketFailure ??= error;
         });
         connections += 1;
-        // The first connection is usually the one fx warms at launch. A
+        // The first connection is usually the one tetris warms at launch. A
         // pooled connection reset before use is resent silently on a fresh
         // connection, so the second reset is the one that lands on a fresh
-        // connection, which fx reports and the turn retries.
+        // connection, which tetris reports and the turn retries.
         if (connections <= 2) {
           socket.resetAndDestroy();
           return;
@@ -7957,7 +7957,7 @@ printf '%s' ${JSON.stringify(trailingMarker)} > ${JSON.stringify(effectPath)}
     }
   }, 60_000);
 
-  test("default fx ask resends without a warning when the gateway closed a pooled connection", async () => {
+  test("default tetris ask resends without a warning when the gateway closed a pooled connection", async () => {
     const expectedOutput = "Answered after a closed pooled connection.";
     const toolCallBody = await fakeGatewayToolCall("read_notes", "read_file", {
       path: "notes.txt",
@@ -8005,7 +8005,7 @@ printf '%s' ${JSON.stringify(trailingMarker)} > ${JSON.stringify(effectPath)}
           requests += 1;
           if (requests === 1) {
             // Keep-alive response, then the connection closes the way a
-            // gateway drops an idle one. fx pools it and finds it dead when
+            // gateway drops an idle one. tetris pools it and finds it dead when
             // it sends the tool result.
             socket.end(
               "HTTP/1.1 200 OK\r\n" +
@@ -8083,7 +8083,7 @@ printf '%s' ${JSON.stringify(trailingMarker)} > ${JSON.stringify(effectPath)}
     }
   }, 60_000);
 
-  test("default fx ask starts fresh network pacing after explicitly timed provider retries", async () => {
+  test("default tetris ask starts fresh network pacing after explicitly timed provider retries", async () => {
     const root = createFixtureRoot("mixed-provider-network-pacing");
     const tracePath = join(root.root, "trace.log");
     const expectedOutput = "Recovered after mixed provider and network failures.";
@@ -8201,7 +8201,7 @@ printf '%s' ${JSON.stringify(trailingMarker)} > ${JSON.stringify(effectPath)}
     }
   }, 20_000);
 
-  test("default fx ask regenerates an unstarted streamed tool after provider failure", async () => {
+  test("default tetris ask regenerates an unstarted streamed tool after provider failure", async () => {
     const root = createFixtureRoot("provider-error-tool-start-turn");
     const tracePath = join(root.root, "trace.log");
     const responses = [
@@ -8225,7 +8225,7 @@ printf '%s' ${JSON.stringify(trailingMarker)} > ${JSON.stringify(effectPath)}
       expect(result.stdout).toContain("Recovered without executing the unstarted tool.");
       expect(result.stderr).toMatch(/^\[notice\] Gateway error · next try in 1s · attempt 1$/m);
       expect(gateway.requestCount()).toBe(2);
-      expect(gateway.requests[1]!.body).toContain("fx did not execute that call");
+      expect(gateway.requests[1]!.body).toContain("Tetris did not execute that call");
       expect(trace).toContain("event=route_failure");
       expect(trace).toContain("saw_tool_start=true");
       expect(trace).toContain("retry=true");
@@ -8485,7 +8485,7 @@ printf '%s' ${JSON.stringify(trailingMarker)} > ${JSON.stringify(effectPath)}
     const tracePath = join(root.root, "trace.log");
     const mcp = writeMcpFixture(root, { initializeDelayMs });
     writeFileSync(
-      join(root.home, ".fx", "settings.json"),
+      join(root.home, ".tetris", "settings.json"),
       JSON.stringify({ permission: { [DYNAMIC_MCP_TOOL_NAME]: "allow" } }),
     );
     const childPrompt = "Select and call the inherited MCP echo fixture.";
@@ -8661,7 +8661,7 @@ printf '%s' ${JSON.stringify(trailingMarker)} > ${JSON.stringify(effectPath)}
     const tracePath = join(root.root, "trace.log");
     const mcp = writeMcpFixture(root, { initializeDelayMs: 4_000 });
     // The parent delegates; the child's search starts the server, whose
-    // initialize is still pending when fx is interrupted.
+    // initialize is still pending when tetris is interrupted.
     let childRequests = 0;
     const gateway = startDynamicFakeGateway((body) => {
       if (!body.includes('"name":"subagent"')) {
@@ -8851,7 +8851,7 @@ printf '%s' ${JSON.stringify(trailingMarker)} > ${JSON.stringify(effectPath)}
     mkdirSync(target);
     writeFileSync(join(target, "match.txt"), "APPROVAL_SEARCH\n");
     writeFileSync(join(root.workspace, "notes.txt"), "AFTER_APPROVAL\n");
-    writeFileSync(join(root.home, ".fx/settings.json"), JSON.stringify({ permission: { grep_files: "ask" } }));
+    writeFileSync(join(root.home, ".tetris/settings.json"), JSON.stringify({ permission: { grep_files: "ask" } }));
     let childRequests = 0;
     const gateway = startDynamicFakeGateway((body) => {
       // The child's report starts main's next turn.
@@ -9000,7 +9000,7 @@ printf '%s' ${JSON.stringify(trailingMarker)} > ${JSON.stringify(effectPath)}
       expect(parseAskJson(result.stdout).output).toContain(
         "MANAGED_SUBAGENT_OK",
       );
-      expect(existsSync(join(root.home, ".fx", "agents"))).toBe(false);
+      expect(existsSync(join(root.home, ".tetris", "agents"))).toBe(false);
     } finally {
       gateway.stop();
       rmSync(root.root, { recursive: true, force: true });
@@ -9978,7 +9978,7 @@ printf '%s' ${JSON.stringify(trailingMarker)} > ${JSON.stringify(effectPath)}
   }
 
   test("an empty reply cut short by the provider's default limit is asked again with a limit", async () => {
-    // A window this large bounds the retry at fx's full-window limit.
+    // A window this large bounds the retry at tetris's full-window limit.
     const { result, json, bodies, trace } = await askWithReplies("empty-length-retry", [
       emptyLengthLimitedReply,
       () => fakeGatewayFinalText("answered after the limit retry"),
@@ -10321,7 +10321,7 @@ printf '%s' ${JSON.stringify(trailingMarker)} > ${JSON.stringify(effectPath)}
     const gateway = startDynamicFakeGateway((body) => {
       bodies.push(body);
       if (bodies.length === 1) return emptyOtherReply()();
-      // The nudge request never answers: fx is killed while it waits.
+      // The nudge request never answers: tetris is killed while it waits.
       if (bodies.length === 2) {
         return new Response(new ReadableStream({ start() {} }), { headers: { "content-type": "text/event-stream" } });
       }
@@ -11329,7 +11329,7 @@ printf '%s' ${JSON.stringify(trailingMarker)} > ${JSON.stringify(effectPath)}
     }
   });
 
-  test("default fx ask returns output-limit failure without committing completed history", async () => {
+  test("default tetris ask returns output-limit failure without committing completed history", async () => {
     const root = createFixtureRoot("gated-length-tool");
     const tracePath = join(root.root, "trace.log");
     const sentinelPath = join(root.workspace, "command-must-not-run.txt");
@@ -11430,7 +11430,7 @@ printf '%s' ${JSON.stringify(trailingMarker)} > ${JSON.stringify(effectPath)}
       const json = parseAskJson(result.stdout);
       const trace = readFileSync(tracePath, "utf8");
 
-      // The stream ends as one without a finish: fx never runs its tool and
+      // The stream ends as one without a finish: tetris never runs its tool and
       // sends the same request again.
       expect(result.code).toBe(0);
       expect(json.exit_code).toBe(0);
@@ -11448,7 +11448,7 @@ printf '%s' ${JSON.stringify(trailingMarker)} > ${JSON.stringify(effectPath)}
     }
   });
 
-  test("an invalid request error event ends fx ask after one request", async () => {
+  test("an invalid request error event ends tetris ask after one request", async () => {
     const root = createFixtureRoot("invalid-request-event");
     const tracePath = join(root.root, "trace.log");
     const gateway = startGateway(() =>
@@ -11485,7 +11485,7 @@ printf '%s' ${JSON.stringify(trailingMarker)} > ${JSON.stringify(effectPath)}
     }
   }, 20_000);
 
-  test("a non-retryable error code without a finish ends fx ask after one request", async () => {
+  test("a non-retryable error code without a finish ends tetris ask after one request", async () => {
     const root = createFixtureRoot("invalid-request-no-finish");
     const tracePath = join(root.root, "trace.log");
     const gateway = startGateway(() =>
@@ -11590,7 +11590,7 @@ printf '%s' ${JSON.stringify(trailingMarker)} > ${JSON.stringify(effectPath)}
     }
   }, 20_000);
 
-  test("fx ask JSON reports only the last request's recovery", async () => {
+  test("tetris ask JSON reports only the last request's recovery", async () => {
     const root = createFixtureRoot("stale-recovery");
     const tracePath = join(root.root, "trace.log");
     writeFileSync(join(root.workspace, "notes.txt"), "fixture notes\n");
@@ -12009,7 +12009,7 @@ describe("request recovery across statuses and garbled streams", () => {
     return new Response(body, { status, headers: { "content-type": contentType, "retry-after": "0" } });
   }
 
-  test("fx ask retries 529, 520 and 524 like 503 and answers once", async () => {
+  test("tetris ask retries 529, 520 and 524 like 503 and answers once", async () => {
     const root = createFixtureRoot("every-5xx-retries");
     const tracePath = join(root.root, "trace.log");
     const responses = [
@@ -12040,7 +12040,7 @@ describe("request recovery across statuses and garbled streams", () => {
   // body arrives; only a request that cannot connect is given up on
   // (`src/core/gateway/gateway_provider.zig` resolveWithin).
   for (const [label, bodyDelayMs] of [["at once", 0], ["slowly after it connects", 3_000]] as const) {
-    test(`fx ask uses the model catalog's limits when the catalog answers ${label}`, async () => {
+    test(`tetris ask uses the model catalog's limits when the catalog answers ${label}`, async () => {
       const root = createFixtureRoot("catalog-limits");
       const tracePath = join(root.root, "trace.log");
       const catalogBody = JSON.stringify({
@@ -12083,7 +12083,7 @@ describe("request recovery across statuses and garbled streams", () => {
     }, 40_000);
   }
 
-  test("fx ask names the status of a failure it does not retry", async () => {
+  test("tetris ask names the status of a failure it does not retry", async () => {
     const root = createFixtureRoot("named-status");
     const tracePath = join(root.root, "trace.log");
     const gateway = startGateway(() => statusResponse(404, JSON.stringify({ error: { message: "no such route" } })));
@@ -12103,7 +12103,7 @@ describe("request recovery across statuses and garbled streams", () => {
     }
   });
 
-  test("fx ask resends after a stream event that is not JSON", async () => {
+  test("tetris ask resends after a stream event that is not JSON", async () => {
     const root = createFixtureRoot("garbled-event-resend");
     const tracePath = join(root.root, "trace.log");
     const garbled =
@@ -12141,7 +12141,7 @@ describe("request recovery across statuses and garbled streams", () => {
       expect(result.code).not.toBe(0);
       expect(gateway.requestCount()).toBe(3);
       expect(result.stderr).toMatch(/^\[notice\] Unreadable reply · next try in .* · attempt 2$/m);
-      expect(result.stderr).toMatch(/^fx: unreadable reply$/m);
+      expect(result.stderr).toMatch(/^tetris: unreadable reply$/m);
       expect(result.stderr).not.toContain("MalformedGatewaySseEvent");
     } finally {
       gateway.stop();
@@ -12149,7 +12149,7 @@ describe("request recovery across statuses and garbled streams", () => {
     }
   }, 30_000);
 
-  test("fx ask does not retry a 501", async () => {
+  test("tetris ask does not retry a 501", async () => {
     const root = createFixtureRoot("not-implemented");
     const tracePath = join(root.root, "trace.log");
     const gateway = startGateway(() => statusResponse(501, JSON.stringify({ error: { message: "not implemented" } })));
@@ -12182,7 +12182,7 @@ describe("request recovery across statuses and garbled streams", () => {
       expect(result.code).not.toBe(0);
       expect(gateway.requestCount()).toBe(1);
       // The error reads as words; its name stays in the trace.
-      expect(result.stderr).toBe("fx: unreadable reply\n");
+      expect(result.stderr).toBe("tetris: unreadable reply\n");
       expect(readFileSync(tracePath, "utf8")).toContain("command error err=InvalidGatewaySseEvent");
     } finally {
       gateway.stop();
@@ -12202,7 +12202,7 @@ describe("request recovery across statuses and garbled streams", () => {
       });
       expect(result.code).not.toBe(0);
       expect(gateway.requestCount()).toBe(1);
-      expect(result.stderr).toBe("fx: unreadable reply\n");
+      expect(result.stderr).toBe("tetris: unreadable reply\n");
     } finally {
       gateway.stop();
       rmSync(root.root, { recursive: true, force: true });

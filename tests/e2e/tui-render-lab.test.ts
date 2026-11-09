@@ -177,7 +177,7 @@ test("render-lab analyzer treats thinking token counters as activity rows", () =
   expect(failures).toContain("activity-footer-extra-blank");
 });
 
-test("render-lab analyzer recognizes the real fx prompt glyph", () => {
+test("render-lab analyzer recognizes the real tetris prompt glyph", () => {
   outDir = mkdtempSync(join(tmpdir(), "fx-render-lab-analyzer-test-"));
   const manifest = writeAnalyzerFixture(outDir, [
     "Run /help for commands",
@@ -230,7 +230,7 @@ test("render-lab analyzer rejects damaged multiline footer with real hint and cu
     "  transcript row one",
     "  transcript row two",
     "────────────────",
-    "run fx login · opus 4.7 · default",
+    "run tetris login · opus 4.7 · default",
   ], { row: 3, col: 8 });
 
   const failures = analyzeRun(manifest).failures.map((failure) => failure.invariant);
@@ -247,7 +247,7 @@ test("render-lab analyzer recognizes clipped multiline input continuation rows",
     "  wrapped input continuation",
     "  clipped input tail",
     "────────────────",
-    "run fx login · opus 4.7 · default",
+    "run tetris login · opus 4.7 · default",
   ], { row: 3, col: 20 }, ["clipped input tail"], "overflow-long-prompt-editor-tail-visible");
 
   const failures = analyzeRun(manifest).failures.map((failure) => failure.invariant);
@@ -674,7 +674,7 @@ describe.skipIf(SKIP)("tui: render lab", () => {
 
       expect(output).toContain("same-shell-relaunch");
       expect(output).toContain("run-");
-      expect(FX_BIN).toContain("zig-out/bin/fx");
+      expect(FX_BIN).toContain("zig-out/bin/tetris");
       const runDir = output.trim().split(/\s+/).at(-1)!;
       const manifest = JSON.parse(readFileSync(join(runDir, "manifest.json"), "utf8"));
       const replay = JSON.parse(readFileSync(join(runDir, "replay-summary.json"), "utf8"));

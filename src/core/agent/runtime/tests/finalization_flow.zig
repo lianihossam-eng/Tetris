@@ -907,7 +907,7 @@ test "common Stop continues once with original history and joined presentation" 
     try expectBodyContains(
         &gateway,
         1,
-        "Continue the turn. fx hook context:\\nverify the answer",
+        "Continue the turn. Tetris hook context:\\nverify the answer",
     );
     try std.testing.expectEqualStrings(
         "candidate\nfinal",
@@ -938,7 +938,7 @@ test "common Stop continues once with original history and joined presentation" 
     try expectBodyNotContains(
         &follow_gateway,
         0,
-        "Continue the turn. fx hook context",
+        "Continue the turn. Tetris hook context",
     );
 }
 
@@ -1757,7 +1757,7 @@ test "two standalone compaction cuts retain matching request and finalization hi
     const last_call = toolCall("last_tool", "read_file", "{\"path\":\"b.txt\"}");
     const messages = [_]ChatMessage{
         .{ .role = .assistant, .content = "first candidate", .standalone_response = true },
-        .{ .role = .user, .content = "Continue the turn. fx hook context:\nverify" },
+        .{ .role = .user, .content = "Continue the turn. Tetris hook context:\nverify" },
         .{ .role = .assistant, .tool_calls = &.{first_call} },
         .{ .role = .tool, .content = "first result", .tool_call_id = first_call.id, .tool_name = first_call.name, .tool_result_status = .success },
         .{

@@ -354,7 +354,7 @@ const logo_shapes = "<rect width=\"180\" height=\"180\" rx=\"37\" fill=\"#000\"/
 
 /// The fx logo, inline so the page needs no image request under its CSP.
 const callback_logo = "<svg class=\"brand\" width=\"64\" height=\"64\" viewBox=\"0 0 180 180\" fill=\"none\" " ++
-    "xmlns=\"http://www.w3.org/2000/svg\" role=\"img\" aria-label=\"fx\">" ++ logo_shapes ++ "</svg>";
+    "xmlns=\"http://www.w3.org/2000/svg\" role=\"img\" aria-label=\"Tetris\">" ++ logo_shapes ++ "</svg>";
 
 /// The same logo as the tab icon, a data URL because the callback server
 /// serves nothing else and the CSP allows only `data:` images.
@@ -373,7 +373,7 @@ fn callbackPage(comptime title: []const u8, comptime detail: []const u8) []const
         "<meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">" ++
         "<meta name=\"theme-color\" content=\"#000000\">" ++
         "<link rel=\"icon\" href=\"" ++ callback_icon ++ "\">" ++
-        "<title>fx</title><style>" ++
+        "<title>Tetris</title><style>" ++
         ":root{color-scheme:dark;font-family:\"Geist Mono\",ui-monospace,SFMono-Regular,Menlo,monospace;" ++
         "font-size:15px;line-height:1.75}" ++
         "*{box-sizing:border-box}" ++
@@ -398,14 +398,14 @@ pub fn writeResponse(stream: std.Io.net.Stream, outcome: Response, cors_origin: 
             .status = "200 OK",
             .body = comptime callbackPage(
                 "Authorization complete",
-                "You can close this tab and return to fx.",
+                "You can close this tab and return to Tetris.",
             ),
         },
         .failed => .{
             .status = "400 Bad Request",
             .body = comptime callbackPage(
                 "Authorization failed",
-                "Return to fx for details.",
+                "Return to Tetris for details.",
             ),
         },
         .unrelated => .{

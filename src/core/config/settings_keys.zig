@@ -91,7 +91,7 @@ pub const Key = struct {
 
 const sound_children = [_][]const u8{ "attention_required", "max", "turn_end" };
 const sound_child_descriptions = [_][]const u8{
-    "Play a sound when fx needs your attention",
+    "Play a sound when Tetris needs your attention",
     "Play extra interaction sounds when sound is on",
     "Play a sound when a turn finishes",
 };
@@ -101,11 +101,11 @@ const status_line_child_descriptions = [_][]const u8{
     "Show the session title in the footer",
     "Show the workspace path and Git branch in the footer",
 };
-const retired_description = "No longer used; fx ignores it";
+const retired_description = "No longer used; Tetris ignores it";
 
 pub const keys = [_]Key{
     .{ .name = "$schema", .where = .editor, .kind = .string, .top_level_only = true, .description = "The JSON Schema editors use to check this file" },
-    .{ .name = "additional_directories", .where = .profile, .kind = .strings, .workspace_only = true, .description = "Directories added to this workspace; manage them with fx workspace" },
+    .{ .name = "additional_directories", .where = .profile, .kind = .strings, .workspace_only = true, .description = "Directories added to this workspace; manage them with tetris workspace" },
     .{ .name = "auto_compact_percent", .where = .profile, .kind = .integer, .minimum = 10, .maximum = 80, .description = "Start automatic compaction at this percentage of usable input capacity" },
     .{ .name = "auto_upgrade", .where = .profile, .kind = .boolean, .description = "Download and install updates in the background" },
     .{ .name = "cache_warming", .where = .profile, .kind = .boolean, .description = "Keep a waiting Claude conversation's prompt cache alive for up to 30 minutes" },
@@ -113,13 +113,13 @@ pub const keys = [_]Key{
     .{ .name = "collapse_tool_calls", .where = .profile, .kind = .boolean, .description = "Show a summary for each group of tool calls" },
     .{ .name = "context", .where = .project_safe, .kind = .boolean, .description = "Load project instructions such as AGENTS.md" },
     .{ .name = "context_limits", .where = .profile, .kind = .object, .map = true, .description = "Context limits by name, in bytes or off, as --context-limit takes them" },
-    .{ .name = "credential_source", .where = .profile, .kind = .string, .values = &.{ "vercel_oidc_token", "ai_gateway_api_key", "fx_login", "stored_key", "chatgpt_subscription", "grok_subscription" }, .description = "The saved credential fx uses; fx login sets it" },
-    .{ .name = "disabledMcpjsonServers", .where = .profile, .kind = .strings, .workspace_only = true, .description = "Project MCP servers rejected in this workspace; manage them with fx mcp approve and reject" },
+    .{ .name = "credential_source", .where = .profile, .kind = .string, .values = &.{ "vercel_oidc_token", "ai_gateway_api_key", "fx_login", "stored_key", "chatgpt_subscription", "grok_subscription" }, .description = "The saved credential Tetris uses; tetris login sets it" },
+    .{ .name = "disabledMcpjsonServers", .where = .profile, .kind = .strings, .workspace_only = true, .description = "Project MCP servers rejected in this workspace; manage them with tetris mcp approve and reject" },
     .{ .name = "effort", .where = .profile, .kind = .string_or_null, .description = "Reasoning effort: auto or a name the model supports; null means auto" },
-    .{ .name = "enableAllProjectMcpServers", .where = .profile, .kind = .boolean, .workspace_only = true, .description = "Approve every server in this workspace's .mcp.json; manage it with fx mcp approve and reject" },
-    .{ .name = "enabledMcpjsonServers", .where = .profile, .kind = .strings, .workspace_only = true, .description = "Project MCP servers approved in this workspace; manage them with fx mcp approve and reject" },
+    .{ .name = "enableAllProjectMcpServers", .where = .profile, .kind = .boolean, .workspace_only = true, .description = "Approve every server in this workspace's .mcp.json; manage it with tetris mcp approve and reject" },
+    .{ .name = "enabledMcpjsonServers", .where = .profile, .kind = .strings, .workspace_only = true, .description = "Project MCP servers approved in this workspace; manage them with tetris mcp approve and reject" },
     .{ .name = "fast_mode", .where = .profile, .kind = .boolean, .description = "Use faster inference when the model supports it" },
-    .{ .name = "fast_mode_model_bound", .where = .profile, .kind = .boolean, .description = "Managed by fx alongside fast_mode" },
+    .{ .name = "fast_mode_model_bound", .where = .profile, .kind = .boolean, .description = "Managed by Tetris alongside fast_mode" },
     .{ .name = "first_call_tool_choice", .where = .profile, .kind = .string, .values = &.{ "auto", "none" }, .description = "Tool choice for the first request of a turn" },
     .{ .name = "grok_model", .where = .profile, .kind = .string, .superseded_by = "models.grok", .description = "Older form of models.grok" },
     .{ .name = "input_appearance", .where = .retired, .kind = .any, .description = retired_description },
@@ -130,7 +130,7 @@ pub const keys = [_]Key{
     .{ .name = "models", .where = .profile, .kind = .string_map, .map = true, .description = "The saved model for each provider or connection, such as {\"gateway\": \"<model id>\"}" },
     .{ .name = "notifications", .where = .profile, .kind = .switches, .children = &sound_children, .child_descriptions = &sound_child_descriptions, .renamed_to = "sound", .description = "Renamed to sound" },
     .{ .name = "permission", .where = .profile, .kind = .object, .map = true, .description = "Permission rules; manage them with /permissions" },
-    .{ .name = "permission_mode", .where = .profile, .kind = .string, .values = &.{ "ask", "auto", "full-access", "yolo" }, .description = "How fx handles tool calls that need permission; yolo is an older name for full-access" },
+    .{ .name = "permission_mode", .where = .profile, .kind = .string, .values = &.{ "ask", "auto", "full-access", "yolo" }, .description = "How Tetris handles tool calls that need permission; yolo is an older name for full-access" },
     .{ .name = "prompt_history", .where = .profile, .kind = .switches, .children = &.{"enabled"}, .child_descriptions = &.{"Save prompts and slash commands for input history"}, .description = "Input history" },
     .{ .name = "provider", .where = .profile, .kind = .string, .description = "The service for model requests: gateway, codex, grok, or a name under providers" },
     .{ .name = "provider_order", .where = .project_safe, .kind = .strings, .max_items = 8, .description = "Preferred AI Gateway providers, in order" },
@@ -140,19 +140,19 @@ pub const keys = [_]Key{
     .{ .name = "sandbox", .where = .retired, .kind = .any, .description = retired_description },
     .{ .name = "session_titles", .where = .profile, .kind = .boolean, .description = "Name each session from its first prompt" },
     // Retired, but still read so that fx can explain the migration.
-    .{ .name = "skill_match_fuzzy", .where = .profile, .kind = .refused, .description = "No longer supported; fx refuses a file that sets it, so remove it" },
+    .{ .name = "skill_match_fuzzy", .where = .profile, .kind = .refused, .description = "No longer supported; Tetris refuses a file that sets it, so remove it" },
     .{ .name = "skill_symlink_authorities", .where = .profile, .kind = .strings, .description = "Absolute directories that symlinked skills may resolve into" },
     .{ .name = "slash_menu_categories", .where = .profile, .kind = .boolean, .description = "Show command categories and skill sources in slash menu results" },
     .{ .name = "sound", .where = .profile, .kind = .switches, .children = &sound_children, .child_descriptions = &sound_child_descriptions, .description = "Sounds" },
     .{ .name = "startup_scrollback", .where = .profile, .kind = .boolean, .description = "Restore terminal output at startup" },
     .{ .name = "statusLine", .where = .profile, .kind = .switches, .children = &status_line_children, .child_descriptions = &status_line_child_descriptions, .renamed_to = "status_line", .description = "Renamed to status_line" },
     .{ .name = "status_line", .where = .profile, .kind = .switches, .children = &status_line_children, .child_descriptions = &status_line_child_descriptions, .description = "What the footer shows" },
-    .{ .name = "theme", .where = .profile, .kind = .string, .description = "light, dark, or the name of a theme file in ~/.fx/themes" },
+    .{ .name = "theme", .where = .profile, .kind = .string, .description = "light, dark, or the name of a theme file in ~/.tetris/themes" },
     .{ .name = "ultrafast_mode", .where = .profile, .kind = .boolean, .description = "Request the higher-priced Ultrafast tier for an eligible AI Gateway model" },
     .{ .name = "update_channel", .where = .profile, .kind = .string, .values = &.{ "stable", "dev" }, .description = "Release channel for updates" },
     .{ .name = "web_fetch_worker_model", .where = .retired, .kind = .any, .description = retired_description },
     .{ .name = "workspaces", .where = .profile, .kind = .workspaces, .map = true, .top_level_only = true, .description = "Overrides for each workspace, by absolute path" },
-    .{ .name = "yolo_acknowledged", .where = .profile, .kind = .boolean, .description = "Managed by fx after you first confirm full-access mode" },
+    .{ .name = "yolo_acknowledged", .where = .profile, .kind = .boolean, .description = "Managed by Tetris after you first confirm full-access mode" },
 };
 
 const names = blk: {

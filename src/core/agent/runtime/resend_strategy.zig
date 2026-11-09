@@ -44,7 +44,7 @@ pub fn select(delivery: Delivery, tool: ToolEvidence) Strategy {
 }
 
 pub const regenerate_tool_prompt =
-    "The previous response ended during an incomplete tool call. fx did not execute that call. Recreate it only if it is still needed.";
+    "The previous response ended during an incomplete tool call. Tetris did not execute that call. Recreate it only if it is still needed.";
 pub const continue_after_confirmed_tool_prompt =
     "Continue from the confirmed tool result above without repeating the tool.";
 pub const reconcile_tool_prompt =

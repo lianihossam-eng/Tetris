@@ -1,7 +1,7 @@
 //! Client-provided system prompt for ACP sessions, following the ACP
 //! client system prompt RFD in append mode. The prompt is validated before a
 //! session exists, persisted with the session, restored on load and resume,
-//! and delivered in the system slot after fx's own instructions.
+//! and delivered in the system slot after Tetris's own instructions.
 
 const std = @import("std");
 const acp_types = @import("types.zig");
@@ -128,7 +128,7 @@ pub fn load(
 }
 
 /// Joins host instructions with the client prompt for the system slot, after
-/// fx's built-in instructions. Caller owns the result.
+/// Tetris's built-in instructions. Caller owns the result.
 pub fn compose(alloc: Allocator, host_instructions: []const u8, client_prompt: []const u8) ![]u8 {
     if (client_prompt.len == 0) return alloc.dupe(u8, host_instructions);
     const separator = if (host_instructions.len > 0) "\n\n" else "";

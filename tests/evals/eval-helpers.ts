@@ -12,7 +12,7 @@ import {
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 
-export const FX_BIN = resolve(import.meta.dirname, "../../zig-out/bin/fx");
+export const FX_BIN = resolve(import.meta.dirname, "../../zig-out/bin/tetris");
 export const REPO_ROOT = resolve(import.meta.dirname, "../..");
 
 export function providerVersionTestEnv(env: Record<string, string | undefined>): Record<string, string | undefined> {
@@ -138,9 +138,9 @@ export function cleanupIsolatedTestHome(home: string): void {
 
 function createEvalHome(): string {
   const home = mkdtempSync(join(tmpdir(), HOME_PREFIX));
-  mkdirSync(join(home, ".fx"), { recursive: true, mode: 0o700 });
+  mkdirSync(join(home, ".tetris"), { recursive: true, mode: 0o700 });
   writeFileSync(
-    join(home, ".fx", "settings.json"),
+    join(home, ".tetris", "settings.json"),
     JSON.stringify({
       permission_mode: "auto",
       permission: {
@@ -162,7 +162,7 @@ export function buildEvalProcessEnv(
   home: string,
   model: string,
 ): Record<string, string | undefined> {
-  return {
+  const env: Record<string, string | undefined> = {
     ...dotEnvVars,
     ...process.env,
     NO_COLOR: "1",
@@ -170,6 +170,9 @@ export function buildEvalProcessEnv(
     PATH: process.env.PATH ?? "",
     FX_MODEL: model,
   };
+  // The eval profile lives at `home`; an ambient TETRIS_HOME must not move it.
+  delete env.TETRIS_HOME;
+  return env;
 }
 
 export function buildEvalArgs(prompt: string, timeoutSec: number): string[] {
@@ -201,7 +204,7 @@ export async function runEval(
 
     if (!existsSync(FX_BIN)) {
       throw new Error(
-        `fx binary not found at ${FX_BIN}. Run 'zig build' first.`,
+        `tetris binary not found at ${FX_BIN}. Run 'zig build' first.`,
       );
     }
 
@@ -248,7 +251,7 @@ export async function runEval(
 
     if (result.timedOut) {
       throw new Error(
-        `fx ask did not finish within ${timeoutSec}s\nstderr: ${result.stderr.slice(-1000)}`,
+        `tetris ask did not finish within ${timeoutSec}s\nstderr: ${result.stderr.slice(-1000)}`,
       );
     }
 
@@ -257,7 +260,7 @@ export async function runEval(
       json = JSON.parse(result.stdout.trim());
     } catch {
       throw new Error(
-        `Failed to parse fx JSON output.\nstdout: ${result.stdout}\nstderr: ${result.stderr}`,
+        `Failed to parse tetris JSON output.\nstdout: ${result.stdout}\nstderr: ${result.stderr}`,
       );
     }
 
@@ -279,7 +282,7 @@ export async function runEval(
 
     if (json.error) {
       throw new Error(
-        `fx returned error: ${json.error}\nstderr: ${result.stderr.slice(-1000)}`,
+        `tetris returned error: ${json.error}\nstderr: ${result.stderr.slice(-1000)}`,
       );
     }
 
@@ -480,7 +483,7 @@ function captureFxProcessState(): string {
     return execFileSync("ps", ["-axo", "pid,ppid,stat,etime,command"], {
       encoding: "utf8",
     }).split("\n").filter((line) =>
-      line.includes("/zig-out/bin/fx") ||
+      line.includes("/zig-out/bin/tetris") ||
       line.includes("mcp-modern-") ||
       line.includes("mcp-legacy-") ||
       line.includes("bun test")
@@ -500,7 +503,7 @@ export async function runFx(
   } = {},
 ): Promise<FxRunResult> {
   if (!existsSync(FX_BIN)) {
-    throw new Error(`fx binary not found at ${FX_BIN}. Run 'zig build' first.`);
+    throw new Error(`tetris binary not found at ${FX_BIN}. Run 'zig build' first.`);
   }
 
   const { cwd, timeoutMs = 15_000 } = opts;
@@ -513,6 +516,9 @@ export async function runFx(
       HOME: process.env.HOME ?? "",
       PATH: process.env.PATH ?? "",
     };
+    // Each test names its own profile through HOME; an ambient TETRIS_HOME
+    // would otherwise move it to the developer's folder.
+    delete env.TETRIS_HOME;
     for (const [key, value] of Object.entries(opts.env ?? {})) {
       if (value === undefined) {
         delete env[key];

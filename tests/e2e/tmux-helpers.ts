@@ -25,10 +25,11 @@ const AUTH_ENV_KEYS = [
 ] as const;
 const DEFAULT_UNSET_ENV_KEYS = [
   ...AUTH_ENV_KEYS,
+  "TETRIS_HOME",
   "FX_TEST_GATEWAY_CHAT_URL",
   "FX_TEST_GATEWAY_MODELS_URL",
   "FX_TEST_GATEWAY_CREDITS_URL",
-  "FX_TEST_UPGRADE_BASE_URL",
+  "TETRIS_TEST_UPGRADE_BASE_URL",
   "FX_PERMISSION_MODE",
 ] as const;
 const MIRRORED_ENV_KEYS = [
@@ -585,8 +586,8 @@ export function startUpgradeServer(
   } = {},
 ): { baseUrl: string; stop: () => void } {
   const artifactDir = join(root, "release-artifact");
-  const wrapperPath = join(artifactDir, "fx");
-  const archivePath = join(root, "fx.tar.gz");
+  const wrapperPath = join(artifactDir, "tetris");
+  const archivePath = join(root, "tetris.tar.gz");
   mkdirSync(artifactDir);
   const script = `#!/bin/sh
 {
@@ -600,15 +601,15 @@ exec ${shellQuote(FX_BIN)} "$@"
 `;
   writeFileSync(wrapperPath, script);
   chmodSync(wrapperPath, 0o755);
-  const tar = Bun.spawnSync(["tar", "-czf", archivePath, "-C", artifactDir, "fx"]);
+  const tar = Bun.spawnSync(["tar", "-czf", archivePath, "-C", artifactDir, "tetris"]);
   if (tar.exitCode !== 0) throw new Error(tar.stderr.toString());
 
   const archive = readFileSync(archivePath);
   const checksum = createHash("sha256").update(archive).digest("hex");
   const platform = `${process.platform === "darwin" ? "macos" : "linux"}-${process.arch === "arm64" ? "aarch64" : "x86_64"}`;
   const revision = options.revision ?? "abcdef0123456789abcdef0123456789abcdef01";
-  const stableArchiveRoute = `/v9.9.9/fx-${platform}.tar.gz`;
-  const devArchiveRoute = `/dev/${revision}/fx-${platform}.tar.gz`;
+  const stableArchiveRoute = `/v9.9.9/tetris-${platform}.tar.gz`;
+  const devArchiveRoute = `/dev/${revision}/tetris-${platform}.tar.gz`;
   const server = Bun.serve({
     hostname: "127.0.0.1",
     port: 0,

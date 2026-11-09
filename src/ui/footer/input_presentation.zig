@@ -1863,7 +1863,7 @@ test "compose hint row prioritizes red yolo warning with compact fallback" {
     var input = InputRuntime{};
     defer input.deinit(std.testing.allocator);
     var ctx = testRenderContext(&input);
-    ctx.danger_status = "Full access enabled: fx permission checks disabled";
+    ctx.danger_status = "Full access enabled: Tetris permission checks disabled";
     ctx.danger_status_compact = "Full access";
 
     var full = try composeHintRow(std.testing.allocator, false, ctx, 80);
@@ -1887,7 +1887,7 @@ test "compose hint row yields the yolo warning to a pending ctrl+c quit hint" {
     var input = InputRuntime{};
     defer input.deinit(std.testing.allocator);
     var ctx = testRenderContext(&input);
-    ctx.danger_status = "Full access enabled: fx permission checks disabled";
+    ctx.danger_status = "Full access enabled: Tetris permission checks disabled";
     ctx.danger_status_compact = "Full access";
     ctx.ctrl_c_pending = true;
 

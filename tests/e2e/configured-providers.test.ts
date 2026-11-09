@@ -91,7 +91,7 @@ describe("configured providers", () => {
     } finally { f.close(); }
   }, 25000);
 
-  test("a tool call cut off by the provider's own limit is resent once with fx's limit", async () => {
+  test("a tool call cut off by the provider's own limit is resent once with tetris's limit", async () => {
     let calls = 0;
     const f = fixture(body => ++calls === 1 ? cutToolCall(body.model, "printf ran > cut.txt") : completion(body.model, "finished after the resend"));
     try {
@@ -177,7 +177,7 @@ describe("configured providers", () => {
     try {
       const result = await runFx(["ask", "--json", "--no-save", "say hello"], { cwd: f.workspace, env: f.env, timeoutMs: 20000 });
       expect(result.stderr).toBe("");
-      if (result.code !== 0) throw new Error(`fx ask failed: ${result.stdout} ${result.stderr}; paths=${f.requests.map(r => r.path).join(",")}`);
+      if (result.code !== 0) throw new Error(`tetris ask failed: ${result.stdout} ${result.stderr}; paths=${f.requests.map(r => r.path).join(",")}`);
       expect(result.code).toBe(0);
       expect(JSON.parse(result.stdout).output).toBe("local reply");
       expect(f.requests).toHaveLength(1);
@@ -213,7 +213,7 @@ describe("configured providers", () => {
       expect(selection.code).toBe(0);
       expect(JSON.parse(readFileSync(f.settingsPath, "utf8")).provider).toBe("remote");
       const result = await runFx(["ask", "--json", "--no-save", "say hello"], { cwd: f.workspace, env: f.env, timeoutMs: 20000 });
-      if (result.code !== 0) throw new Error(`fx ask failed: ${result.stdout} ${result.stderr}; paths=${f.requests.map(r => r.path).join(",")}`);
+      if (result.code !== 0) throw new Error(`tetris ask failed: ${result.stdout} ${result.stderr}; paths=${f.requests.map(r => r.path).join(",")}`);
       expect(result.code).toBe(0);
       expect(f.requests).toHaveLength(1);
       expect(f.requests[0].authorization).toBe("Bearer own-provider-token");
@@ -255,13 +255,13 @@ describe("configured providers", () => {
       expect(selection.code).toBe(2);
       expect(selection.stdout).toBe("");
       expect(selection.stderr).toBe(
-        'fx provider: unknown provider remte; expected gateway, codex, grok, or a name under "providers" in ~/.fx/settings.json\n',
+        'tetris provider: unknown provider remte; expected gateway, codex, grok, or a name under "providers" in ~/.tetris/settings.json\n',
       );
       // fx ask --provider names it the same way.
       const ask = await runFx(["ask", "--provider", "remte", "hi"], { cwd: f.workspace, env: f.env });
       expect(ask.code).toBe(2);
       expect(ask.stderr).toBe(
-        'fx ask: unknown provider remte; expected gateway, codex, grok, or a name under "providers" in ~/.fx/settings.json\n',
+        'tetris ask: unknown provider remte; expected gateway, codex, grok, or a name under "providers" in ~/.tetris/settings.json\n',
       );
       expect(readFileSync(f.settingsPath, "utf8")).toBe(before);
       expect(f.requests).toHaveLength(0);
@@ -645,7 +645,7 @@ describe("configured providers", () => {
 
       const blank = await runFx(["status"], { cwd: f.workspace, env: { ...f.env, FX_MODEL: "   " } });
       expect(blank.code).toBe(1);
-      expect(blank.stderr).toBe("fx: no model is selected for this connection; save one under \"models\" in ~/.fx/settings.json, or set a model for this run with --model or FX_MODEL\n");
+      expect(blank.stderr).toBe("tetris: no model is selected for this connection; save one under \"models\" in ~/.tetris/settings.json, or set a model for this run with --model or FX_MODEL\n");
       expect(chatModels()).toHaveLength(2);
       expect(JSON.parse(readFileSync(f.settingsPath, "utf8")).models.local).toBeUndefined();
     } finally { f.close(); }

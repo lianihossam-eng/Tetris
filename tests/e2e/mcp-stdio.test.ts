@@ -152,14 +152,14 @@ function createRoot(
       `printf '%s\\n' "$$" >> "$FX_MCP_LAUNCH_LOG"; exec "$FX_MCP_FIXTURE_RUNTIME" "$FX_MCP_FIXTURE_PATH"`,
     ]
     : [process.execPath, scriptPath];
-  mkdirSync(join(home, ".fx"), { recursive: true });
+  mkdirSync(join(home, ".tetris"), { recursive: true });
   mkdirSync(workspace, { recursive: true });
   writeFileSync(
-    join(home, ".fx", "settings.json"),
+    join(home, ".tetris", "settings.json"),
     JSON.stringify({}),
   );
   writeFileSync(
-    join(home, ".fx", "mcp.json"),
+    join(home, ".tetris", "mcp.json"),
     JSON.stringify({
       mcp: {
         fixture: {
@@ -231,7 +231,7 @@ function createRoot(
 }
 
 function moveProfileFixtureToWorkspace(root: FixtureRoot): void {
-  const profilePath = join(root.home, ".fx", "mcp.json");
+  const profilePath = join(root.home, ".tetris", "mcp.json");
   const profile = JSON.parse(readFileSync(profilePath, "utf8"));
   const fixture = profile.mcp.fixture;
   if (Array.isArray(fixture.command)) {
@@ -343,7 +343,7 @@ async function waitForTtyAskExit(
     await Bun.sleep(25);
   }
   throw new Error(
-    `Timed out waiting for terminal fx ask to exit.\n${await session.captureFullScrollback()}`,
+    `Timed out waiting for terminal tetris ask to exit.\n${await session.captureFullScrollback()}`,
   );
 }
 
@@ -390,7 +390,7 @@ describe("modern MCP stdio compatibility", () => {
       expect(approval).toContain("Allow this MCP tool call?");
       expect(approval).toContain(TOOL_NAME);
       expect(approval).toContain(
-        "This MCP tool needs approval before fx can send the request.",
+        "This MCP tool needs approval before Tetris can send the request.",
       );
       expect(approval).toContain("3. Deny");
       expect(
@@ -421,10 +421,10 @@ describe("modern MCP stdio compatibility", () => {
     const home = join(root, "home");
     const workspace = join(root, "workspace");
     const marker = join(root, "project-mcp-launched");
-    mkdirSync(join(home, ".fx"), { recursive: true });
-    mkdirSync(join(workspace, ".fx"), { recursive: true });
-    writeFileSync(join(home, ".fx", "settings.json"), JSON.stringify({}));
-    writeFileSync(join(home, ".fx", "mcp.json"), JSON.stringify({ mcp: {} }));
+    mkdirSync(join(home, ".tetris"), { recursive: true });
+    mkdirSync(join(workspace, ".tetris"), { recursive: true });
+    writeFileSync(join(home, ".tetris", "settings.json"), JSON.stringify({}));
+    writeFileSync(join(home, ".tetris", "mcp.json"), JSON.stringify({ mcp: {} }));
 
     let projectRequestCount = 0;
     const projectEndpoint = Bun.serve({
@@ -453,7 +453,7 @@ describe("modern MCP stdio compatibility", () => {
       },
     });
     writeFileSync(join(workspace, ".mcp.json"), hostile);
-    writeFileSync(join(workspace, ".fx", "mcp.json"), hostile);
+    writeFileSync(join(workspace, ".tetris", "mcp.json"), hostile);
 
     gateway = startFakeGateway([fakeGatewayFinalText("Project MCP stayed inert.")], {
       models: [{ id: MODEL, type: "language", tags: ["tool-use"] }],
@@ -487,7 +487,7 @@ describe("modern MCP stdio compatibility", () => {
     }
   }, 20_000);
 
-  test("fx ask skips pending workspace MCP and uses it after explicit trust", async () => {
+  test("tetris ask skips pending workspace MCP and uses it after explicit trust", async () => {
     const root = createRoot("workspace-ask", MODERN_FIXTURE);
     moveProfileFixtureToWorkspace(root);
     const projectPath = join(root.workspace, ".mcp.json");
@@ -532,7 +532,7 @@ describe("modern MCP stdio compatibility", () => {
       "skipped unapproved project MCP servers: fixture",
     );
     expect(existsSync(root.wireLogPath)).toBe(false);
-    let settings = readFileSync(join(root.home, ".fx", "settings.json"), "utf8");
+    let settings = readFileSync(join(root.home, ".tetris", "settings.json"), "utf8");
     expect(settings).not.toContain("enabledMcpjsonServers");
     expect(settings).not.toContain("enableAllProjectMcpServers");
 
@@ -543,7 +543,7 @@ describe("modern MCP stdio compatibility", () => {
     expect(trusted.code).toBe(0);
     // It says what the approved server runs, as the file writes it.
     expect(trusted.stdout).toBe("Approved fixture, which runs: '${WORKSPACE_MCP_COMMAND}' '${WORKSPACE_MCP_FIXTURE}'\n");
-    settings = readFileSync(join(root.home, ".fx", "settings.json"), "utf8");
+    settings = readFileSync(join(root.home, ".tetris", "settings.json"), "utf8");
     expect(settings).toContain("enabledMcpjsonServers");
 
     const result = await runFx(
@@ -559,7 +559,7 @@ describe("modern MCP stdio compatibility", () => {
     await expectFixtureProcessesExited(readWire(root.wireLogPath));
   }, 35_000);
 
-  test("fx ask reports rejected workspace MCP entries on stderr", async () => {
+  test("tetris ask reports rejected workspace MCP entries on stderr", async () => {
     const root = createRoot("workspace-invalid-entry", MODERN_FIXTURE);
     moveProfileFixtureToWorkspace(root);
     const projectPath = join(root.workspace, ".mcp.json");
@@ -596,7 +596,7 @@ describe("modern MCP stdio compatibility", () => {
   describe("big MCP results", () => {
     const bigResultRoot = (label: string) => {
       const root = createRoot(label, MODERN_FIXTURE);
-      const profilePath = join(root.home, ".fx", "mcp.json");
+      const profilePath = join(root.home, ".tetris", "mcp.json");
       const profile = JSON.parse(readFileSync(profilePath, "utf8"));
       profile.mcp.fixture.environment.FX_MCP_RESULT_PAD_BYTES = String(1536 * 1024);
       profile.mcp.fixture.environment.FX_MCP_RESULT_TEXT = "SBXF2_TAIL";
@@ -607,9 +607,9 @@ describe("modern MCP stdio compatibility", () => {
     // fx reads at most 16 MiB of one stdio message: past that it drops the
     // reply and restarts the server. Before, the model was told the server
     // went away, as if it had crashed.
-    test("a stdio reply over fx's message limit tells the model fx restarted the server for it", async () => {
+    test("a stdio reply over tetris's message limit tells the model tetris restarted the server for it", async () => {
       const root = createRoot("oversized-reply", MODERN_FIXTURE);
-      const profilePath = join(root.home, ".fx", "mcp.json");
+      const profilePath = join(root.home, ".tetris", "mcp.json");
       const profile = JSON.parse(readFileSync(profilePath, "utf8"));
       profile.mcp.fixture.environment.FX_MCP_RESULT_PAD_BYTES = String(17 * 1024 * 1024);
       writeFileSync(profilePath, JSON.stringify(profile));
@@ -631,14 +631,14 @@ describe("modern MCP stdio compatibility", () => {
       });
       expect(result.code).toBe(0);
       expect(JSON.parse(result.stdout).output).toContain("OVERSIZED_REPLY_DONE");
-      expect(first).toContain("its reply was larger than fx reads in one message, so fx restarted the server");
+      expect(first).toContain("its reply was larger than Tetris reads in one message, so Tetris restarted the server");
       expect(first).not.toContain("the server went away");
       const wire = readWire(root.wireLogPath);
       expect(wire.filter((entry) => entry.message.method === "tools/call")).toHaveLength(1);
       await expectFixtureProcessesExited(wire);
     }, 60_000);
 
-    test("fx ask keeps a big MCP result whole behind a handle, and read_tool_result reaches its end", async () => {
+    test("tetris ask keeps a big MCP result whole behind a handle, and read_tool_result reaches its end", async () => {
       const root = bigResultRoot("big-result-stored");
       let stored = "";
       let read = "";
@@ -671,7 +671,7 @@ describe("modern MCP stdio compatibility", () => {
       expect(read).toContain("SBXF2_TAIL:hello");
     }, 45_000);
 
-    test("fx ask --no-save cuts a big MCP result to the model's limit instead of failing it", async () => {
+    test("tetris ask --no-save cuts a big MCP result to the model's limit instead of failing it", async () => {
       const root = bigResultRoot("big-result-unsaved");
       let cut = "";
       gateway = startFakeGateway([
@@ -742,7 +742,7 @@ describe("modern MCP stdio compatibility", () => {
       project.mcpServers.fixture.command = "secret-prefix-${MISSING_WORKSPACE_COMMAND}";
       writeFileSync(projectPath, JSON.stringify(project));
       writeFileSync(
-        join(root.home, ".fx", "mcp.json"),
+        join(root.home, ".tetris", "mcp.json"),
         JSON.stringify({
           mcp: {
             canary: {
@@ -792,7 +792,7 @@ describe("modern MCP stdio compatibility", () => {
   test("top-level mcp add persists stdio and a later ask calls it", async () => {
     const root = createRoot("top-level-add", MODERN_FIXTURE);
     writeFileSync(
-      join(root.home, ".fx", "mcp.json"),
+      join(root.home, ".tetris", "mcp.json"),
       JSON.stringify({ mcp: {} }),
     );
     gateway = startToolGateway("TOP_LEVEL_STDIO_MCP_READY");
@@ -815,7 +815,7 @@ describe("modern MCP stdio compatibility", () => {
       { cwd: root.workspace, env },
     );
     expect(added.code).toBe(0);
-    expect(added.stdout).toContain("Added fixture to ~/.fx/mcp.json.");
+    expect(added.stdout).toContain("Added fixture to ~/.tetris/mcp.json.");
     expect(existsSync(root.wireLogPath)).toBe(false);
 
     const result = await runFx(
@@ -835,7 +835,7 @@ describe("modern MCP stdio compatibility", () => {
       `MCP slash add preserves scoped arguments with ${matchingPath ? "a matching" : "no matching"} local path`,
       async () => {
         const root = createRoot(`scoped-add-${matchingPath}`, LEGACY_FIXTURE);
-        const configPath = join(root.home, ".fx", "mcp.json");
+        const configPath = join(root.home, ".tetris", "mcp.json");
         writeFileSync(configPath, JSON.stringify({ mcp: {} }));
         const packageArg = "@modelcontextprotocol/server-memory@2026.8.31";
         if (matchingPath) {
@@ -870,7 +870,7 @@ describe("modern MCP stdio compatibility", () => {
         await tui.sendLiteral(`/mcp add ${envFlags} literal -- ${process.execPath} ${LEGACY_FIXTURE} ${packageArg}`);
         if (matchingPath) await tui.sendKeys("Tab");
         await tui.sendKeys("Enter");
-        await tui.waitForText("Added literal to ~/.fx/mcp.json.", 5_000);
+        await tui.waitForText("Added literal to ~/.tetris/mcp.json.", 5_000);
         // Saved as .mcp.json writes it: the program, then its arguments as typed.
         const saved = JSON.parse(readFileSync(configPath, "utf8")).mcp.literal;
         expect({ command: saved.command, args: saved.args })
@@ -923,13 +923,13 @@ describe("modern MCP stdio compatibility", () => {
     expect(existsSync(root.wireLogPath)).toBe(false);
   }, 30_000);
 
-  test("fx ask skips workspace MCP when profile choices are unreadable", async () => {
+  test("tetris ask skips workspace MCP when profile choices are unreadable", async () => {
     const root = createRoot("workspace-choice-failure", MODERN_FIXTURE, {
       recordLaunchAttempts: true,
     });
     moveProfileFixtureToWorkspace(root);
     writeFileSync(
-      join(root.home, ".fx", "settings.json"),
+      join(root.home, ".tetris", "settings.json"),
       JSON.stringify({
         workspaces: {
           [root.workspace]: { disabledMcpjsonServers: "fixture" },
@@ -1021,7 +1021,7 @@ describe("modern MCP stdio compatibility", () => {
     initialGateway.stop();
     gateway = null;
 
-    const profilePath = join(root.home, ".fx", "mcp.json");
+    const profilePath = join(root.home, ".tetris", "mcp.json");
     const profile = JSON.parse(readFileSync(profilePath, "utf8"));
     profile.mcp.fixture.environment.FX_MCP_INITIAL_TOOL_NAME = "sum";
     profile.mcp.fixture.environment.FX_MCP_RESULT_TEXT = "RESUMED_PROFILE_TOOL_RESULT";
@@ -1125,7 +1125,7 @@ describe("modern MCP stdio compatibility", () => {
     60_000,
   );
 
-  test("a resumed fx ask runs a direct call to an MCP tool an earlier turn loaded", async () => {
+  test("a resumed tetris ask runs a direct call to an MCP tool an earlier turn loaded", async () => {
     const root = createRoot("ask-later-turn-direct-call", MODERN_FIXTURE);
     const firstGateway = startToolGateway("FIRST_ASK_DONE");
     gateway = firstGateway;
@@ -1183,7 +1183,7 @@ describe("modern MCP stdio compatibility", () => {
       });
       const allowedWirePath = join(root.root, "allowed-wire.jsonl");
       const deniedWirePath = join(root.root, "denied-wire.jsonl");
-      const profilePath = join(root.home, ".fx", "mcp.json");
+      const profilePath = join(root.home, ".tetris", "mcp.json");
       const profile = JSON.parse(readFileSync(profilePath, "utf8"));
       const base = profile.mcp.fixture;
       profile.mcp = {
@@ -1210,7 +1210,7 @@ describe("modern MCP stdio compatibility", () => {
       };
       writeFileSync(profilePath, JSON.stringify(profile));
       writeFileSync(
-        join(root.home, ".fx", "settings.json"),
+        join(root.home, ".tetris", "settings.json"),
         JSON.stringify({
           permission: { mcp_denied_blocked: "deny" },
         }),
@@ -1410,7 +1410,7 @@ describe("modern MCP stdio compatibility", () => {
   // 10 s discovery probe ends.
   test("silent legacy discovery preserves time for initialization", async () => {
     const root = createRoot("silent-discovery", LEGACY_FIXTURE);
-    const profilePath = join(root.home, ".fx", "mcp.json");
+    const profilePath = join(root.home, ".tetris", "mcp.json");
     const profile = JSON.parse(readFileSync(profilePath, "utf8"));
     profile.mcp.fixture.environment.FX_MCP_IGNORE_DISCOVERY = "1";
     writeFileSync(profilePath, JSON.stringify(profile));
@@ -1675,7 +1675,7 @@ describe("modern MCP stdio compatibility", () => {
   }, 30_000);
 
   // A server that dies while starting is reported in its own words.
-  test("fx mcp show reports how a stdio server that exits during startup ended", async () => {
+  test("tetris mcp show reports how a stdio server that exits during startup ended", async () => {
     const root = createRoot("startup-exit", LEGACY_FIXTURE, {
       mode: "startup_exit",
       recordLaunchAttempts: true,
@@ -1707,7 +1707,7 @@ describe("modern MCP stdio compatibility", () => {
   // A start gets 30 s from launch, so a 2025 server that never answers
   // initialize fails then instead of after the 60 s request timeout. What it
   // wrote instead of an answer is quoted.
-  test("fx mcp show ends the start of a 2025 stdio server that answers with a line that isn't JSON, and quotes it", async () => {
+  test("tetris mcp show ends the start of a 2025 stdio server that answers with a line that isn't JSON, and quotes it", async () => {
     const root = createRoot("startup-garbage", LEGACY_FIXTURE, {
       mode: "startup_garbage",
       recordLaunchAttempts: true,
@@ -1739,7 +1739,7 @@ describe("modern MCP stdio compatibility", () => {
   }, 60_000);
 
   // A banner on stdout is a common server mistake; it's quoted.
-  test("fx mcp show quotes the stdout line a 2026 stdio server wrote instead of answering", async () => {
+  test("tetris mcp show quotes the stdout line a 2026 stdio server wrote instead of answering", async () => {
     const root = createRoot("modern-startup-garbage", MODERN_FIXTURE, {
       mode: "startup_garbage",
       recordLaunchAttempts: true,
@@ -1766,7 +1766,7 @@ describe("modern MCP stdio compatibility", () => {
     await expectProcessesExited(launches);
   }, 30_000);
 
-  test("fx ask search tells the model why a named stdio server failed to start", async () => {
+  test("tetris ask search tells the model why a named stdio server failed to start", async () => {
     const root = createRoot("ask-startup-exit", LEGACY_FIXTURE, {
       mode: "startup_exit",
       recordLaunchAttempts: true,
@@ -1803,13 +1803,13 @@ describe("modern MCP stdio compatibility", () => {
     await expectProcessesExited(readAttemptedPids(root.launchLogPath));
   }, 30_000);
 
-  test("fx ask tells the model why a stopped stdio server could not restart", async () => {
+  test("tetris ask tells the model why a stopped stdio server could not restart", async () => {
     const root = createRoot("ask-restart-failed", MODERN_FIXTURE, {
       mode: "exit_after_result",
       recordLaunchAttempts: true,
     });
     // The first launch runs the server; every relaunch fails during startup.
-    const profilePath = join(root.home, ".fx", "mcp.json");
+    const profilePath = join(root.home, ".tetris", "mcp.json");
     const profile = JSON.parse(readFileSync(profilePath, "utf8"));
     profile.mcp.fixture.command = [
       "/bin/sh",
@@ -1861,7 +1861,7 @@ exec "$FX_MCP_FIXTURE_RUNTIME" "$FX_MCP_FIXTURE_PATH"`,
       },
     );
 
-    expect(sawFirstExit, "fx never saw the first server exit").toBe(true);
+    expect(sawFirstExit, "tetris never saw the first server exit").toBe(true);
     expect(result.code).toBe(0);
     // The second call fails with the relaunch it waited for, not after
     // every try the backoff allows.
@@ -1945,7 +1945,7 @@ exec "$FX_MCP_FIXTURE_RUNTIME" "$FX_MCP_FIXTURE_PATH"`,
       },
     ] as const
   ) {
-    test(`fx ask calls the ${fixture.label} stdio fixture`, async () => {
+    test(`tetris ask calls the ${fixture.label} stdio fixture`, async () => {
       const root = createRoot(`ask-${fixture.label}`, fixture.path, {
         recordLaunchAttempts: true,
       });
@@ -2003,10 +2003,10 @@ exec "$FX_MCP_FIXTURE_RUNTIME" "$FX_MCP_FIXTURE_PATH"`,
   // As the MCP SDKs do, fx gives a stdio server only HOME, LOGNAME, PATH,
   // SHELL, TERM and USER of its environment, then the server's own `env`;
   // never fx's Gateway key or anything else.
-  test("a stdio server gets only the MCP SDKs' few variables of fx's, then its config's env", async () => {
+  test("a stdio server gets only the MCP SDKs' few variables of tetris's, then its config's env", async () => {
     const root = createRoot("ask-environment-sdk", MODERN_FIXTURE, { captureEnvironment: true });
     const namesPath = join(root.root, "mcp-environment-names.json");
-    const profilePath = join(root.home, ".fx", "mcp.json");
+    const profilePath = join(root.home, ".tetris", "mcp.json");
     const profile = JSON.parse(readFileSync(profilePath, "utf8"));
     profile.mcp.fixture.environment.FX_MCP_ENV_NAMES_CAPTURE = namesPath;
     writeFileSync(profilePath, JSON.stringify(profile));
@@ -2046,7 +2046,7 @@ exec "$FX_MCP_FIXTURE_RUNTIME" "$FX_MCP_FIXTURE_PATH"`,
   for (const discovery of ["select", "search"] as const) {
     test(`targeted MCP ${discovery} leaves unrelated optional servers dormant`, async () => {
       const root = createRoot("targeted-activation", MODERN_FIXTURE);
-      const profilePath = join(root.home, ".fx", "mcp.json");
+      const profilePath = join(root.home, ".tetris", "mcp.json");
       const profile = JSON.parse(readFileSync(profilePath, "utf8"));
       const unrelatedWire = join(root.root, "unrelated-wire.jsonl");
       profile.mcp.unrelated = { ...profile.mcp.fixture, environment: {
@@ -2072,7 +2072,7 @@ exec "$FX_MCP_FIXTURE_RUNTIME" "$FX_MCP_FIXTURE_PATH"`,
     }, 30_000);
   }
 
-  test("fx ask does not start an unused optional MCP server", async () => {
+  test("tetris ask does not start an unused optional MCP server", async () => {
     const root = createRoot("ask-unused-optional", MODERN_FIXTURE, {
       recordLaunchAttempts: true,
     });
@@ -2099,7 +2099,7 @@ exec "$FX_MCP_FIXTURE_RUNTIME" "$FX_MCP_FIXTURE_PATH"`,
     expect(existsSync(root.wireLogPath)).toBe(false);
   }, 15_000);
 
-  test("fx ask accepts the official legacy SDK Draft 7 tool schema", async () => {
+  test("tetris ask accepts the official legacy SDK Draft 7 tool schema", async () => {
     const root = createRoot("ask-legacy-draft7", LEGACY_FIXTURE, {
       mode: "draft7_schema",
     });
@@ -2130,7 +2130,7 @@ exec "$FX_MCP_FIXTURE_RUNTIME" "$FX_MCP_FIXTURE_PATH"`,
     await expectFixtureProcessesExited(wire);
   });
 
-  test("fx ask lets the legacy server validate Draft 7 arguments", async () => {
+  test("tetris ask lets the legacy server validate Draft 7 arguments", async () => {
     const root = createRoot("ask-legacy-draft7-invalid", LEGACY_FIXTURE, {
       mode: "draft7_schema",
       draft7Pattern: "^\\S+$",
@@ -2163,7 +2163,7 @@ exec "$FX_MCP_FIXTURE_RUNTIME" "$FX_MCP_FIXTURE_PATH"`,
     await expectFixtureProcessesExited(wire);
   });
 
-  test("fx ask routes legacy stdio progress", async () => {
+  test("tetris ask routes legacy stdio progress", async () => {
     const root = createRoot("ask-legacy-progress", LEGACY_FIXTURE, {
       mode: "progress",
     });
@@ -2188,7 +2188,7 @@ exec "$FX_MCP_FIXTURE_RUNTIME" "$FX_MCP_FIXTURE_PATH"`,
     await expectFixtureProcessesExited(wire);
   }, 30_000);
 
-  test("noninteractive fx ask returns typed input-required without fabricating a continuation", async () => {
+  test("noninteractive tetris ask returns typed input-required without fabricating a continuation", async () => {
     const root = createRoot("ask-mrtr", MODERN_FIXTURE, {
       mode: "mrtr_input_required",
     });
@@ -2209,7 +2209,7 @@ exec "$FX_MCP_FIXTURE_RUNTIME" "$FX_MCP_FIXTURE_PATH"`,
     expect(JSON.parse(result.stdout).output).toContain("MRTR Ask boundary complete.");
     expect(activeGateway.requests).toHaveLength(3);
     expect(toolResultText(activeGateway.requests[2]?.body ?? "", "call_mcp")).toBe(
-      "MCP server 'fixture' ended the call: the server asked for input fx can't give.",
+      "MCP server 'fixture' ended the call: the server asked for input Tetris can't give.",
     );
     expect(activeGateway.requests[1]?.body).not.toContain("inputResponses");
     const wire = readWire(root.wireLogPath);
@@ -2221,7 +2221,7 @@ exec "$FX_MCP_FIXTURE_RUNTIME" "$FX_MCP_FIXTURE_PATH"`,
     await expectFixtureProcessesExited(wire);
   }, 30_000);
 
-  test("fx ask tells the model that a stdio call outlived its operation timeout", async () => {
+  test("tetris ask tells the model that a stdio call outlived its operation timeout", async () => {
     const root = createRoot("ask-operation-timeout", MODERN_FIXTURE, {
       mode: "stall_operation",
       operationTimeoutMs: 1_500,
@@ -2243,7 +2243,7 @@ exec "$FX_MCP_FIXTURE_RUNTIME" "$FX_MCP_FIXTURE_PATH"`,
     expect(JSON.parse(result.stdout).output).toContain("Operation timeout complete.");
     expect(activeGateway.requests).toHaveLength(3);
     const toolResult = toolResultText(activeGateway.requests[2]?.body ?? "", "call_mcp");
-    expect(toolResult).toStartWith("fx stopped waiting for MCP server 'fixture': it did not answer within its operation timeout.");
+    expect(toolResult).toStartWith("tetris stopped waiting for MCP server 'fixture': it did not answer within its operation timeout.");
     expect(toolResult).toContain("Raise operation_timeout_ms for this server in its MCP config if it needs longer.");
     expect(toolResult).not.toContain("Cancelled");
     const wire = readWire(root.wireLogPath);
@@ -2465,7 +2465,7 @@ exec "$FX_MCP_FIXTURE_RUNTIME" "$FX_MCP_FIXTURE_PATH"`,
         const activeGateway = startToolGateway(`${surface} terminal-safe elicitation complete.`);
         gateway = activeGateway;
         const stderrPath = join(root.root, "stderr.log");
-        const binary = join(REPO_ROOT, "zig-out", "bin", "fx");
+        const binary = join(REPO_ROOT, "zig-out", "bin", "tetris");
         tui = await TmuxSession.create({
           isolated: true,
           ...(surface === "Ask"
@@ -2542,7 +2542,7 @@ exec "$FX_MCP_FIXTURE_RUNTIME" "$FX_MCP_FIXTURE_PATH"`,
         const activeGateway = startToolGateway(`${surface} collision form complete.`);
         gateway = activeGateway;
         const stderrPath = join(root.root, "stderr.log");
-        const binary = join(REPO_ROOT, "zig-out", "bin", "fx");
+        const binary = join(REPO_ROOT, "zig-out", "bin", "tetris");
         tui = await TmuxSession.create({
           isolated: true,
           ...(surface === "Ask"
@@ -2749,7 +2749,7 @@ exec "$FX_MCP_FIXTURE_RUNTIME" "$FX_MCP_FIXTURE_PATH"`,
   }, 30_000);
 
   test.skipIf(!tmuxAvailable())(
-    "interactive fx ask validates and submits a modern MCP form elicitation",
+    "interactive tetris ask validates and submits a modern MCP form elicitation",
     async () => {
       const root = createRoot("ask-interactive-mrtr", MODERN_FIXTURE, {
         mode: "mrtr_input_required",
@@ -2757,7 +2757,7 @@ exec "$FX_MCP_FIXTURE_RUNTIME" "$FX_MCP_FIXTURE_PATH"`,
       });
       const activeGateway = startToolGateway("Interactive Ask elicitation complete.");
       gateway = activeGateway;
-      const binary = join(REPO_ROOT, "zig-out", "bin", "fx");
+      const binary = join(REPO_ROOT, "zig-out", "bin", "tetris");
       const prompt = "Call the MRTR MCP fixture interactively.";
       tui = await TmuxSession.create({
         isolated: true,
@@ -2801,7 +2801,7 @@ exec "$FX_MCP_FIXTURE_RUNTIME" "$FX_MCP_FIXTURE_PATH"`,
   );
 
   test.skipIf(!tmuxAvailable())(
-    "interactive fx ask puts a server's form question to the user",
+    "interactive tetris ask puts a server's form question to the user",
     async () => {
       const root = createRoot("ask-interactive-mrtr-v2", MODERN_FIXTURE, {
         mode: "mrtr_input_required",
@@ -2809,7 +2809,7 @@ exec "$FX_MCP_FIXTURE_RUNTIME" "$FX_MCP_FIXTURE_PATH"`,
       });
       const activeGateway = startToolGateway("Interactive Ask elicitation complete.");
       gateway = activeGateway;
-      const binary = join(REPO_ROOT, "zig-out", "bin", "fx");
+      const binary = join(REPO_ROOT, "zig-out", "bin", "tetris");
       const prompt = "Call the MRTR MCP fixture interactively.";
       tui = await TmuxSession.create({
         isolated: true,
@@ -2835,7 +2835,7 @@ exec "$FX_MCP_FIXTURE_RUNTIME" "$FX_MCP_FIXTURE_PATH"`,
       expect(calls[1]?.message.params?.inputResponses).toEqual({
         confirm: { action: "accept", content: { confirmed: true } },
       });
-      expect(await tui.captureFullScrollback()).not.toContain("the server asked for input fx can't give");
+      expect(await tui.captureFullScrollback()).not.toContain("the server asked for input Tetris can't give");
 
       await tui.kill();
       tui = null;
@@ -2845,7 +2845,7 @@ exec "$FX_MCP_FIXTURE_RUNTIME" "$FX_MCP_FIXTURE_PATH"`,
 
   for (const legacyVersion of ["2025-06-18", "2025-11-25"] as const) {
     test.skipIf(!tmuxAvailable())(
-      `interactive fx ask handles negotiated ${legacyVersion} direct elicitation/create`,
+      `interactive tetris ask handles negotiated ${legacyVersion} direct elicitation/create`,
       async () => {
         const root = createRoot(`ask-legacy-direct-${legacyVersion}`, LEGACY_FIXTURE, {
           mode: "direct_form",
@@ -2855,7 +2855,7 @@ exec "$FX_MCP_FIXTURE_RUNTIME" "$FX_MCP_FIXTURE_PATH"`,
         });
         const activeGateway = startToolGateway(`Legacy ${legacyVersion} elicitation complete.`);
         gateway = activeGateway;
-        const binary = join(REPO_ROOT, "zig-out", "bin", "fx");
+        const binary = join(REPO_ROOT, "zig-out", "bin", "tetris");
         tui = await TmuxSession.create({
           isolated: true,
           cmd: `${JSON.stringify(binary)} ask --auto --no-save ${JSON.stringify("Call the direct legacy elicitation fixture.")}`,
@@ -2926,7 +2926,7 @@ exec "$FX_MCP_FIXTURE_RUNTIME" "$FX_MCP_FIXTURE_PATH"`,
       );
       const activeGateway = startToolGateway("Legacy URL-required complete.");
       gateway = activeGateway;
-      const binary = join(REPO_ROOT, "zig-out", "bin", "fx");
+      const binary = join(REPO_ROOT, "zig-out", "bin", "tetris");
       try {
         tui = await TmuxSession.create({
           isolated: true,
@@ -2989,7 +2989,7 @@ exec "$FX_MCP_FIXTURE_RUNTIME" "$FX_MCP_FIXTURE_PATH"`,
       );
       const activeGateway = startToolGateway("Legacy multiple URL completion complete.");
       gateway = activeGateway;
-      const binary = join(REPO_ROOT, "zig-out", "bin", "fx");
+      const binary = join(REPO_ROOT, "zig-out", "bin", "tetris");
       tui = await TmuxSession.create({
         isolated: true,
         cmd: `${JSON.stringify(binary)} ask --auto --no-save ${JSON.stringify("Call the multiple legacy URL fixture.")}`,
@@ -3058,7 +3058,7 @@ exec "$FX_MCP_FIXTURE_RUNTIME" "$FX_MCP_FIXTURE_PATH"`,
       );
       const activeGateway = startToolGateway("Legacy malformed completion complete.");
       gateway = activeGateway;
-      const binary = join(REPO_ROOT, "zig-out", "bin", "fx");
+      const binary = join(REPO_ROOT, "zig-out", "bin", "tetris");
       tui = await TmuxSession.create({
         isolated: true,
         cmd: `${JSON.stringify(binary)} ask --auto --no-save ${JSON.stringify("Call the malformed completion fixture.")}`,
@@ -3111,7 +3111,7 @@ exec "$FX_MCP_FIXTURE_RUNTIME" "$FX_MCP_FIXTURE_PATH"`,
       });
       const activeGateway = startToolGateway("must not complete");
       gateway = activeGateway;
-      const binary = join(REPO_ROOT, "zig-out", "bin", "fx");
+      const binary = join(REPO_ROOT, "zig-out", "bin", "tetris");
       const fakeBin = join(root.root, "fake-bin");
       mkdirSync(fakeBin);
       writeFakeUrlOpeners(fakeBin, "#!/bin/sh\nexit 0\n");
@@ -3153,7 +3153,7 @@ exec "$FX_MCP_FIXTURE_RUNTIME" "$FX_MCP_FIXTURE_PATH"`,
       });
       const activeGateway = startToolGateway("Legacy URL timeout handled.");
       gateway = activeGateway;
-      const binary = join(REPO_ROOT, "zig-out", "bin", "fx");
+      const binary = join(REPO_ROOT, "zig-out", "bin", "tetris");
       const fakeBin = join(root.root, "fake-bin");
       mkdirSync(fakeBin);
       writeFakeUrlOpeners(fakeBin, "#!/bin/sh\nexit 0\n");
@@ -3188,7 +3188,7 @@ exec "$FX_MCP_FIXTURE_RUNTIME" "$FX_MCP_FIXTURE_PATH"`,
   );
 
   test.skipIf(!tmuxAvailable())(
-    "interactive fx ask validates Unicode patterns, edits, and submits every form field kind",
+    "interactive tetris ask validates Unicode patterns, edits, and submits every form field kind",
     async () => {
       const root = createRoot("ask-interactive-full-form", MODERN_FIXTURE, {
         mode: "mrtr_full_form",
@@ -3196,7 +3196,7 @@ exec "$FX_MCP_FIXTURE_RUNTIME" "$FX_MCP_FIXTURE_PATH"`,
       });
       const activeGateway = startToolGateway("Interactive Ask full form complete.");
       gateway = activeGateway;
-      const binary = join(REPO_ROOT, "zig-out", "bin", "fx");
+      const binary = join(REPO_ROOT, "zig-out", "bin", "tetris");
       tui = await TmuxSession.create({
         isolated: true,
         cmd: `${JSON.stringify(binary)} ask --auto --no-save ${JSON.stringify("Complete the full MCP form.")}`,
@@ -3302,7 +3302,7 @@ exec "$FX_MCP_FIXTURE_RUNTIME" "$FX_MCP_FIXTURE_PATH"`,
   );
 
   test.skipIf(!tmuxAvailable())(
-    "interactive fx ask retries a URL browser failure without prefetching",
+    "interactive tetris ask retries a URL browser failure without prefetching",
     async () => {
       let targetRequests = 0;
       const target = Bun.serve({
@@ -3329,7 +3329,7 @@ exec "$FX_MCP_FIXTURE_RUNTIME" "$FX_MCP_FIXTURE_PATH"`,
       );
       const activeGateway = startToolGateway("Interactive Ask URL elicitation complete.");
       gateway = activeGateway;
-      const binary = join(REPO_ROOT, "zig-out", "bin", "fx");
+      const binary = join(REPO_ROOT, "zig-out", "bin", "tetris");
       try {
         tui = await TmuxSession.create({
           isolated: true,
@@ -3385,7 +3385,7 @@ exec "$FX_MCP_FIXTURE_RUNTIME" "$FX_MCP_FIXTURE_PATH"`,
   );
 
   test.skipIf(!tmuxAvailable())(
-    "interactive fx ask can refuse a URL without launching a browser",
+    "interactive tetris ask can refuse a URL without launching a browser",
     async () => {
       let targetRequests = 0;
       const target = Bun.serve({
@@ -3410,7 +3410,7 @@ exec "$FX_MCP_FIXTURE_RUNTIME" "$FX_MCP_FIXTURE_PATH"`,
       );
       const activeGateway = startToolGateway("Interactive Ask URL refusal complete.");
       gateway = activeGateway;
-      const binary = join(REPO_ROOT, "zig-out", "bin", "fx");
+      const binary = join(REPO_ROOT, "zig-out", "bin", "tetris");
       try {
         tui = await TmuxSession.create({
           isolated: true,
@@ -3451,7 +3451,7 @@ exec "$FX_MCP_FIXTURE_RUNTIME" "$FX_MCP_FIXTURE_PATH"`,
   );
 
   // A long tool's progress notes show while it runs.
-  test("fx ask shows a 2026 server's progress notes", async () => {
+  test("tetris ask shows a 2026 server's progress notes", async () => {
     const progressRoot = createRoot("ask-progress", MODERN_FIXTURE, {
       mode: "progress",
     });
@@ -3485,7 +3485,7 @@ exec "$FX_MCP_FIXTURE_RUNTIME" "$FX_MCP_FIXTURE_PATH"`,
       fakeGatewayToolCall("cancel_startup", "capability_search", { server: "fixture", query: "echo" }),
       fakeGatewayFinalText("Unexpected continuation."),
     ], { models: [{ id: MODEL, type: "language", tags: ["tool-use"] }] });
-    const proc = Bun.spawn([join(REPO_ROOT, "zig-out", "bin", "fx"), "ask", "--json", "--auto", "--no-save", "Find the fixture tool"], {
+    const proc = Bun.spawn([join(REPO_ROOT, "zig-out", "bin", "tetris"), "ask", "--json", "--auto", "--no-save", "Find the fixture tool"], {
       cwd: root.workspace, env: { ...process.env, ...fixtureEnv(root, gateway) }, stdout: "ignore", stderr: "ignore",
     });
     try {
@@ -3641,10 +3641,10 @@ exec "$FX_MCP_FIXTURE_RUNTIME" "$FX_MCP_FIXTURE_PATH"`,
   );
 
   test(
-    "fx mcp show reports a ready stdio server without its environment's values",
+    "tetris mcp show reports a ready stdio server without its environment's values",
     async () => {
       const root = createRoot("health-output", MODERN_FIXTURE);
-      const profilePath = join(root.home, ".fx", "mcp.json");
+      const profilePath = join(root.home, ".tetris", "mcp.json");
       const profile = JSON.parse(readFileSync(profilePath, "utf8"));
       profile.mcp.fixture.environment.S11_SECRET_ENV = "HEALTH_SECRET_SENTINEL";
       writeFileSync(profilePath, JSON.stringify(profile));
@@ -3666,7 +3666,7 @@ exec "$FX_MCP_FIXTURE_RUNTIME" "$FX_MCP_FIXTURE_PATH"`,
       expect({ status: status.status, source: status.source, transport: status.transport, version: status.version })
         .toEqual({ status: "ready", source: "profile", transport: "stdio", version: "2026-07-28" });
       expect(status.tools.map((tool: { name: string }) => tool.name)).toEqual(["echo"]);
-      // The server's environment and fx's Gateway key never show.
+      // The server's environment and tetris's Gateway key never show.
       for (const forbidden of ["HEALTH_SECRET_SENTINEL", "S11_SECRET_ENV", "fake-mcp-stdio-key", root.workspace]) {
         expect(result.stdout).not.toContain(forbidden);
       }
@@ -3676,7 +3676,7 @@ exec "$FX_MCP_FIXTURE_RUNTIME" "$FX_MCP_FIXTURE_PATH"`,
     35_000,
   );
 
-  test("fx ask performs one fresh-discovery restart without replaying the failed call", async () => {
+  test("tetris ask performs one fresh-discovery restart without replaying the failed call", async () => {
     const root = createRoot("ask-restart", MODERN_FIXTURE, {
       mode: "crash_once",
       restartLimit: 1,
@@ -3742,7 +3742,7 @@ describe("MCP stdio servers", () => {
     ["2026", MODERN_FIXTURE, MODERN_RESULT],
     ["2025", LEGACY_FIXTURE, LEGACY_RESULT],
   ] as const) {
-    test(`fx ask selects and calls a ${era} stdio tool`, async () => {
+    test(`tetris ask selects and calls a ${era} stdio tool`, async () => {
       // A 2025-11-25 server, the newest before 2026.
       const root = createRoot(`v2-call-${era}`, fixture, { legacyVersion: "2025-11-25" });
       gateway = startToolGateway(`V2_${era}_DONE`);
@@ -3786,10 +3786,10 @@ describe("MCP stdio servers", () => {
     expect(Date.now() - started).toBeLessThan(10_000);
     expect(calls(root)).toHaveLength(0);
     expect(modelSaw()).toContain("MCP server 'fixture' is unavailable");
-    expect(modelSaw()).toContain("an MCP version fx doesn't support");
+    expect(modelSaw()).toContain("an MCP version tetris doesn't support");
   }, 25_000);
 
-  test("capability_search finds the tool under its fx name and the model calls it", async () => {
+  test("capability_search finds the tool under its tetris name and the model calls it", async () => {
     const root = createRoot("v2-search", MODERN_FIXTURE);
     gateway = startFakeGateway([
       fakeGatewayToolCall("search", "capability_search", { query: "echo", server: "fixture" }),
@@ -3895,13 +3895,13 @@ describe("MCP stdio servers", () => {
     await expectFixtureProcessesExited(wire);
   }, 40_000);
 
-  test("fx ask with no way to ask tells the model the server wanted input", async () => {
+  test("tetris ask with no way to ask tells the model the server wanted input", async () => {
     const root = createRoot("v2-no-asker", MODERN_FIXTURE, { mode: "mrtr_input_required" });
     gateway = startToolGateway("V2_INPUT_DECLINED_SEEN");
     const result = await ask(root, "Call the MRTR MCP fixture.");
     expect(result.code).toBe(0);
     expect(result.stdout).toContain("V2_INPUT_DECLINED_SEEN");
-    expect(modelSaw()).toContain("the server asked for input fx can't give");
+    expect(modelSaw()).toContain("the server asked for input Tetris can't give");
   }, 25_000);
 
   test("a search for a server that isn't configured says so", async () => {
@@ -3918,18 +3918,18 @@ describe("MCP stdio servers", () => {
   }, 25_000);
 });
 
-// `fx mcp call` lets a command fx's shell tool runs call the session's MCP
+// `tetris mcp call` lets a command fx's shell tool runs call the session's MCP
 // tools, so a big result can go to a file and only what the command prints
 // reaches the model (`src/core/mcp_host/mcp_call_bridge.zig`).
-describe("fx mcp call", () => {
+describe("tetris mcp call", () => {
   const bridgeRoot = (label: string, settings: Record<string, unknown> = {}, options: RootOptions = {}) => {
     const root = createRoot(label, MODERN_FIXTURE, options);
-    const profilePath = join(root.home, ".fx", "mcp.json");
+    const profilePath = join(root.home, ".tetris", "mcp.json");
     const profile = JSON.parse(readFileSync(profilePath, "utf8"));
     profile.mcp.fixture.environment.FX_MCP_RESULT_PAD_BYTES = String(1536 * 1024);
     profile.mcp.fixture.environment.FX_MCP_RESULT_TEXT = "BRIDGE_TAIL";
     writeFileSync(profilePath, JSON.stringify(profile));
-    writeFileSync(join(root.home, ".fx", "settings.json"), JSON.stringify(settings));
+    writeFileSync(join(root.home, ".tetris", "settings.json"), JSON.stringify(settings));
     return root;
   };
   const command = `"${FX_BIN}" mcp call ${TOOL_NAME} '{"text":"hello"}' > out.txt; echo "exit=$?"; wc -c < out.txt | tr -d ' '; tail -c 18 out.txt`;
@@ -3964,7 +3964,7 @@ describe("fx mcp call", () => {
     expect(saved.length).toBeGreaterThan(1536 * 1024);
     expect(saved.trimEnd().endsWith("BRIDGE_TAIL:hello")).toBe(true);
     // Its stderr line tells the model what the file holds.
-    expect(seen).toContain(`fx mcp call: wrote ${Buffer.byteLength(saved)} bytes of text`);
+    expect(seen).toContain(`tetris mcp call: wrote ${Buffer.byteLength(saved)} bytes of text`);
     expect(toolCalls(root)).toHaveLength(1);
   }, 60_000);
 
@@ -3999,7 +3999,7 @@ describe("fx mcp call", () => {
       // The shell command asks first, as any command does in ask mode.
       await tui.waitForText("Would you like to run the following command?", 20_000);
       await tui.sendKeys("1");
-      // Then its `fx mcp call` asks while the command waits, and nothing
+      // Then its `tetris mcp call` asks while the command waits, and nothing
       // reaches the server before the answer.
       const approval = await tui.waitForText("Allow this MCP tool call?", 20_000);
       expect(approval).toContain(TOOL_NAME);
@@ -4079,7 +4079,7 @@ describe("fx mcp call", () => {
     const root = bridgeRoot("bridge-crash", {}, { mode: "crash_always", restartLimit: 0 });
     const seen = await runBridgeCommand(root, callTo("out.txt"));
     expect(seen).toContain("exit=1");
-    expect(seen).toContain("fx mcp call: ");
+    expect(seen).toContain("tetris mcp call: ");
     expect(seen).toContain("out=0");
   }, 90_000);
 
@@ -4146,16 +4146,16 @@ describe("fx mcp call", () => {
     return { stdout, stderr, code };
   };
 
-  test("outside a shell call, or against another fx version, a call exits 3", async () => {
+  test("outside a shell call, or against another Tetris version, a call exits 3", async () => {
     const outside = await runClient({});
     expect(outside.code).toBe(3);
-    expect(outside.stderr).toContain("no running fx shell call to reach");
+    expect(outside.stderr).toContain("no running tetris shell call to reach");
     expect(outside.stdout).toBe("");
 
     await withFakeBridge('{"v":999,"status":"ok","bytes":0}\n', async (env) => {
       const other = await runClient(env);
       expect(other.code).toBe(3);
-      expect(other.stderr).toContain("another fx version");
+      expect(other.stderr).toContain("another Tetris version");
       expect(other.stdout).toBe("");
     });
   }, 30_000);
@@ -4164,7 +4164,7 @@ describe("fx mcp call", () => {
     await withFakeBridge(null, async (env) => {
       const lost = await runClient(env);
       expect(lost.code).toBe(1);
-      expect(lost.stderr).toContain("the connection to fx was lost");
+      expect(lost.stderr).toContain("the connection to Tetris was lost");
       expect(lost.stdout).toBe("");
     });
   }, 30_000);
@@ -4214,7 +4214,7 @@ describe("fx mcp call", () => {
     const seen = await runSubagentCommand(root, "--full-access");
     expect(seen).toContain("exit=0");
     expect(seen).toContain("BRIDGE_TAIL:hello");
-    expect(seen).toContain("fx mcp call: wrote");
+    expect(seen).toContain("tetris mcp call: wrote");
     expect(seen.length).toBeLessThan(4096);
     const saved = readFileSync(join(root.workspace, "out.txt"), "utf8");
     expect(saved.length).toBeGreaterThan(1536 * 1024);
@@ -4262,7 +4262,7 @@ describe("fx mcp call", () => {
     expect(seen).toContain("exit=0");
     const saved = readFileSync(join(root.workspace, "docs.md"), "utf8");
     expect(saved).toBe("# Page: Overview\n\nwrapped docs\n");
-    expect(seen).toContain(`fx mcp call: wrote ${Buffer.byteLength(saved)} bytes of text`);
+    expect(seen).toContain(`tetris mcp call: wrote ${Buffer.byteLength(saved)} bytes of text`);
   }, 90_000);
 
   test("list, search, and help describe the agent's tools to a command, and call none", async () => {

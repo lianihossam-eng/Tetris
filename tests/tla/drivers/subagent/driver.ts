@@ -1,36 +1,36 @@
-// Runs the built fx binary along tests/tla/subagent/SteerQueue.tla: main's
+// Runs the built tetris binary along tests/tla/subagent/SteerQueue.tla: main's
 // messages into its subagents' running turns (Owner.steer in
 // src/core/subagent/managed_owner.zig).
 //
-// Each walk is one `fx ask` against a local fake gateway. The driver plays
+// Each walk is one `tetris ask` against a local fake gateway. The driver plays
 // main's model and every subagent's model. Main's replies call the subagent
 // tool: `message` to start an idle subagent or steer a working one, `stop`,
 // and `close`. A subagent's model request is held until the driver lets it
 // go: a tool call makes the subagent's next step read every waiting message,
 // and a final answer ends its work. So the driver decides when each event
-// happens, and fx decides what to answer.
+// happens, and Tetris decides what to answer.
 //
 // The walk is planned from the model's enabled actions (spec to code), and
-// after every event the driver compares what fx answered with what the model
+// after every event the driver compares what Tetris answered with what the model
 // predicts. Then TLC replays the whole run through the model's own actions
 // (SteerQueueTrace.tla, code to spec). Messages that can't be refused go in
-// one model step; one that the model may refuse goes alone, so the order fx
+// one model step; one that the model may refuse goes alone, so the order Tetris
 // handles them in never matters.
 //
-// Entries leave only at a new work and a close. With fx's trace on, the
+// Entries leave only at a new work and a close. With Tetris's trace on, the
 // driver checks each start's `feedback_settled_dropped` count and each
 // close's `feedback_forgotten` count against what the model holds for that
 // subagent (SteerQueue.tla EntriesFromThisWork and ClosedHoldsNothing).
 //
 // The first walk, "lifetime", is fixed: 64 messages, read, then one more,
-// which fx before the fix refused; a second subagent filled to exactly 64
+// which Tetris before the fix refused; a second subagent filled to exactly 64
 // unread, one more refused, read, then one more accepted. The rest are seeded
 // random walks. --self-check also replays the lifetime walk through the model
-// of fx before the fix (Bug = "today"), which must reject it.
+// of Tetris before the fix (Bug = "today"), which must reject it.
 //
 // --stress N starts --children subagents (20 by default in this mode) and
 // sends each 30 messages per round for N rounds, reading after each round;
-// it prints the wall time and fx's peak memory, and TLC checks the trace.
+// it prints the wall time and Tetris's peak memory, and TLC checks the trace.
 // --race N lets every subagent read while main's next messages go in, for N
 // rounds; the order is not fixed, so instead of a trace it checks that every
 // accepted message reaches its subagent exactly once and none is refused.
@@ -42,7 +42,7 @@
 //   bun tests/tla/drivers/subagent/driver.ts --random 0 --race 20 --children 6
 //
 // Exit codes: 0 every walk matched and TLC accepted it (and the self-check
-// rejected), 1 fx answered something the model doesn't allow, 2 a toolchain,
+// rejected), 1 Tetris answered something the model doesn't allow, 2 a toolchain,
 // build, or harness failure.
 import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
@@ -51,7 +51,7 @@ import { TLA_ROOT, outDir, tlcToolchain, writeJson } from "../lib/tlc";
 
 const CAP = 64;
 const MAIN_MARK = "DRIVER_MAIN";
-// A long walk fills main's context, and fx compacts it mid-turn. That
+// A long walk fills main's context, and Tetris compacts it mid-turn. That
 // request is not one of main's steps; it gets plain notes, as the E2E tests'
 // fake gateways give.
 const COMPACTION_MARK = "You write compaction notes";
@@ -268,7 +268,7 @@ const marker = (c: string, n: number) => `MSG-${c}-${String(n).padStart(5, "0")}
 
 type Outcome = { events: Event[]; mismatch: Event | null; seconds: number; maxRss: number | null; exit: number | null; stderr: string; delivery: string[]; compactions: number };
 
-// Runs one planned walk on the built fx. In race mode the plan is ignored
+// Runs one planned walk on the built tetris. In race mode the plan is ignored
 // and `race` rounds of concurrent reads and messages run instead.
 async function runWalk(label: string, children: string[], plan: Planned[], scratch: string, race = 0): Promise<Outcome> {
   const helpers = await targetHelpers();
@@ -313,7 +313,7 @@ async function runWalk(label: string, children: string[], plan: Planned[], scrat
   });
   // How many works of subagent `c` main's saved log has finished.
   const finishedCount = (c: string): number => {
-    const root = join(home, ".fx", "sessions", "v2");
+    const root = join(home, ".tetris", "sessions", "v2");
     if (!existsSync(root)) return 0;
     const ids = new Set<string>();
     let count = 0;
@@ -328,10 +328,10 @@ async function runWalk(label: string, children: string[], plan: Planned[], scrat
     }
     return count;
   };
-  // fx's ids for subagent `c`, from main's saved log.
+  // Tetris's ids for subagent `c`, from main's saved log.
   const childIds = (c: string): Set<string> => {
     const ids = new Set<string>();
-    const root = join(home, ".fx", "sessions", "v2");
+    const root = join(home, ".tetris", "sessions", "v2");
     if (!existsSync(root)) return ids;
     for (const id of readdirSync(root)) {
       const log = join(root, id, "log.jsonl");
@@ -356,8 +356,8 @@ async function runWalk(label: string, children: string[], plan: Planned[], scrat
     }
     return counts;
   };
-  // How many entries of `c` fx dropped at its last start or close, against
-  // the `kept` entries the model holds. fx traces only a drop of one or more.
+  // How many entries of `c` Tetris dropped at its last start or close, against
+  // the `kept` entries the model holds. Tetris traces only a drop of one or more.
   const dropped = async (event: string, c: string, kept: number): Promise<number> => {
     const key = `${event} ${c}`;
     const before = traceSeen.get(key) ?? 0;
@@ -384,10 +384,10 @@ async function runWalk(label: string, children: string[], plan: Planned[], scrat
     events.push(event);
     if (!mismatch && predicted !== result) {
       mismatch = event;
-      console.error(`${label}: event ${events.length}, ${planned.op} ${planned.child}: fx ${str(result)}, model ${str(predicted)}`);
+      console.error(`${label}: event ${events.length}, ${planned.op} ${planned.child}: tetris ${str(result)}, model ${str(predicted)}`);
     }
   };
-  // After a mismatch the walk stops: every held subagent ends, so fx ask
+  // After a mismatch the walk stops: every held subagent ends, so tetris ask
   // can deliver their reports and exit.
   const releaseAll = () => {
     for (const [c, resolve] of held) { held.delete(c); resolve(final(`DONE ${c}`)); }
@@ -563,9 +563,9 @@ async function runWalk(label: string, children: string[], plan: Planned[], scrat
   home = join(root, "home");
   tracePath = join(root, "trace.log");
   const workspace = join(root, "workspace");
-  mkdirSync(join(home, ".fx"), { recursive: true });
+  mkdirSync(join(home, ".tetris"), { recursive: true });
   mkdirSync(workspace, { recursive: true });
-  writeFileSync(join(home, ".fx", "settings.json"), "{}");
+  writeFileSync(join(home, ".tetris", "settings.json"), "{}");
   writeFileSync(join(workspace, "notes.txt"), "fixture\n");
   const started = performance.now();
   const child = Bun.spawn([binary, "ask", "--json", "--full-access", `${MAIN_MARK} run the walk`], {
@@ -674,7 +674,7 @@ async function main() {
       results.push({ ...walk, ...outcome });
       const refused = outcome.events.filter((e) => e.result === "refused").length;
       const peak = outcome.maxRss ? `${Math.round(outcome.maxRss / 1024 / 1024)} MiB` : "unknown";
-      console.log(`${walk.label}: ${outcome.events.length} events, ${refused} refused, ${outcome.compactions} compactions, ${outcome.seconds}s, peak memory ${peak}, fx exit ${outcome.exit}`);
+      console.log(`${walk.label}: ${outcome.events.length} events, ${refused} refused, ${outcome.compactions} compactions, ${outcome.seconds}s, peak memory ${peak}, Tetris exit ${outcome.exit}`);
     }
   };
   await Promise.all(Array.from({ length: Math.min(options.jobs, walks.length) }, worker));
@@ -684,7 +684,7 @@ async function main() {
   for (const r of results) {
     if (r.mismatch) {
       bad = true;
-      console.error(`${r.label}: fx answered ${str(r.mismatch.result)} to ${r.mismatch.op} ${r.mismatch.child}; the model predicts ${str(r.mismatch.predicted)} (event ${r.events.indexOf(r.mismatch) + 1})`);
+      console.error(`${r.label}: Tetris answered ${str(r.mismatch.result)} to ${r.mismatch.op} ${r.mismatch.child}; the model predicts ${str(r.mismatch.predicted)} (event ${r.events.indexOf(r.mismatch) + 1})`);
       continue;
     }
     if (r.race > 0) {
@@ -701,7 +701,7 @@ async function main() {
     const life = results.find((r) => r.label === "lifetime");
     if (!life || life.mismatch) fail(2, "--self-check needs a matched lifetime walk");
     const today = await runTrace(life.events, life.children, "today", out);
-    console.log(`self-check: the model of fx before the fix ${today === "REJECTED" ? "rejects" : "accepts"} the lifetime walk`);
+    console.log(`self-check: the model of Tetris before the fix ${today === "REJECTED" ? "rejects" : "accepts"} the lifetime walk`);
     if (today !== "REJECTED") bad = true;
   }
   process.exit(bad ? 1 : 0);

@@ -709,11 +709,11 @@ function preflightNative(scenario: NativeScenario): void {
     throw new Error(`${scenario.name} requires macOS native terminal automation`);
   }
   if (!existsSync(FX_BIN)) {
-    throw new Error(`fx binary not found at ${FX_BIN}. Run zig build first.`);
+    throw new Error(`tetris binary not found at ${FX_BIN}. Run zig build first.`);
   }
   const stat = statSync(FX_BIN);
   if (!stat.isFile() || (stat.mode & 0o111) === 0) {
-    throw new Error(`fx binary is not executable at ${FX_BIN}`);
+    throw new Error(`tetris binary is not executable at ${FX_BIN}`);
   }
   if (!existsSync(scenario.appPath)) {
     throw new Error(`${scenario.appName} app not found at ${scenario.appPath}`);

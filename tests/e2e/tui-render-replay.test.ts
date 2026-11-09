@@ -60,9 +60,9 @@ async function launch(options: {
   const tapePath = join(workDir, "render.fxtape");
   const goldenPath = join(workDir, "grid.txt");
   const tracePath = join(workDir, "trace.log");
-  mkdirSync(join(workDir, ".fx"), { recursive: true });
+  mkdirSync(join(workDir, ".tetris"), { recursive: true });
   writeFileSync(
-    join(workDir, ".fx", "settings.json"),
+    join(workDir, ".tetris", "settings.json"),
     JSON.stringify({}),
   );
 
@@ -105,9 +105,9 @@ async function launchAutomaticRecording(options: {
   const workDir = mkdtempSync("/tmp/fx-render-auto-replay-");
   workDirs.push(workDir);
   const home = join(workDir, "home");
-  mkdirSync(join(home, ".fx"), { recursive: true });
+  mkdirSync(join(home, ".tetris"), { recursive: true });
   writeFileSync(
-    join(home, ".fx", "settings.json"),
+    join(home, ".tetris", "settings.json"),
     JSON.stringify({}),
   );
 
@@ -133,7 +133,7 @@ async function launchAutomaticRecording(options: {
     await s.waitForText("visual terminal capture:", 10_000);
   }
   await s.waitForComposer(10_000);
-  const recordingsDir = join(home, ".fx", "recordings");
+  const recordingsDir = join(home, ".tetris", "recordings");
   const tapes = readdirSync(recordingsDir).filter((name) =>
     name.endsWith(".fxtape")
   );
@@ -329,14 +329,14 @@ describe("tui: render record/replay", () => {
         { length: 33 },
         (_, index) => `captured input line ${index + 1}: ${"x".repeat(32)}`,
       ).join("\n");
-      const authNotice = "auth: fx needs access to Vercel AI Gateway. Run /login to sign in, /provider to use an API key, or set AI_GATEWAY_API_KEY.";
+      const authNotice = "auth: Tetris needs access to Vercel AI Gateway. Run /login to sign in, /provider to use an API key, or set AI_GATEWAY_API_KEY.";
       const launched = await launch({ recordInput: true });
       session = launched.session;
 
       await session.pasteText(pasted);
       await session.waitForText("[Pasted text #1, 33 lines]", 5_000);
       await session.sendKeys("Enter");
-      await session.waitForText("auth: fx needs access", 5_000);
+      await session.waitForText("auth: Tetris needs access", 5_000);
       expect((await session.captureFullScrollback()).replace(/\s+/g, " ")).toContain(authNotice);
 
       const stdin = readTapeFrames(launched.tapePath)
@@ -371,7 +371,7 @@ describe("tui: render record/replay", () => {
       session = launched.session;
 
       await session.sendText(marker);
-      await session.waitForText("fx needs access to Vercel AI Gateway", 5_000);
+      await session.waitForText("Tetris needs access to Vercel AI Gateway", 5_000);
       await session.sendKeys("C-u");
       await session.sendText("/allowlist");
       await session.waitForText("* allowlist: effective", 5_000);
@@ -422,13 +422,13 @@ describe("tui: render record/replay", () => {
       const launched = await launchAutomaticRecording();
       session = launched.session;
 
-      expect(launched.tapePath.startsWith(join(launched.home, ".fx", "recordings"))).toBe(true);
+      expect(launched.tapePath.startsWith(join(launched.home, ".tetris", "recordings"))).toBe(true);
       expect(statSync(launched.tapePath).mode & 0o077).toBe(0);
       expect(await session.captureFullScrollback()).toContain(
         "visual terminal capture:",
       );
       await session.sendText(marker);
-      await session.waitForText("fx needs access to Vercel AI Gateway", 5_000);
+      await session.waitForText("Tetris needs access to Vercel AI Gateway", 5_000);
       await session.sendKeys(`-l '${inputTail}'`);
       await session.waitForText(inputTail, 5_000);
       await session.resizeWindow(120, 28);
@@ -478,7 +478,7 @@ describe("tui: render record/replay", () => {
       );
 
       await session.sendText(marker);
-      await session.waitForText("fx needs access to Vercel AI Gateway", 5_000);
+      await session.waitForText("Tetris needs access to Vercel AI Gateway", 5_000);
       execFileSync(FX_BIN, [
         "replay",
         launched.tapePath,
@@ -501,7 +501,7 @@ describe("tui: render record/replay", () => {
       const forbiddenPrompt = "trace_secret_prompt_token_6179";
       const forbiddenTokens = [
         forbiddenPrompt,
-        "fx needs access to Vercel AI Gateway",
+        "Tetris needs access to Vercel AI Gateway",
         "footer row preview secret",
         "shimmer label secret",
         "command output secret",
@@ -512,7 +512,7 @@ describe("tui: render record/replay", () => {
       session = launched.session;
 
       await session.sendText(forbiddenPrompt);
-      await session.waitForText("fx needs access to Vercel AI Gateway", 5_000);
+      await session.waitForText("Tetris needs access to Vercel AI Gateway", 5_000);
       await session.resizeWindow(72, 24);
       await session.sendKeys("C-u");
       await session.sendText("/allowlist");

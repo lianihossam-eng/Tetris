@@ -1,7 +1,7 @@
-// Replays UsageModel DriveSpec behaviors from TLC against the real fx binary.
+// Replays UsageModel DriveSpec behaviors from TLC against the real tetris binary.
 //
-// Two fx TUIs (p1, p2) run in tmux and share one HOME, so one
-// ~/.fx/usage-cache. Identities a and b are two AI Gateway API keys. Each
+// Two Tetris TUIs (p1, p2) run in tmux and share one HOME, so one
+// ~/.tetris/usage-cache. Identities a and b are two AI Gateway API keys. Each
 // process has its own fake gateway that holds every /v1/report request until
 // the behavior says the fetch completes or fails. The usage clock seam
 // (FX_TEST_USAGE_CLOCK_FILE) is the wall clock: wall tick n is 23:40 UTC on
@@ -9,7 +9,7 @@
 // three, and UTC midnight falls between ticks 3 and 4.
 //
 // Non-ideal steps: Fail answers the held request with 500; Crash SIGKILLs the
-// fx process and starts a new one in its place; Corrupt writes garbage over an
+// Tetris process and starts a new one in its place; Corrupt writes garbage over an
 // identity's cache file; ClockBack moves the wall clock back.
 //
 // After every step the driver compares the real system with the next model
@@ -94,7 +94,7 @@ export function actionBetween(s: State, t: State): Action {
   if (t.faults !== s.faults) {
     const changed = PROCS.find((p) => procChanged(s, t, p));
     if (changed) return { kind: "Crash", p: changed };
-    // A crash that changes nothing hit a process already in a fresh fx's
+    // A crash that changes nothing hit a process already in a fresh Tetris's
     // state (closed, no fetch history, nothing in memory); crash that one.
     const fresh = PROCS.find((p) =>
       rec(s.open)[p] === false && rec(s.inflight)[p] === null && rec(s.lastStart)[p] === null &&
@@ -124,7 +124,7 @@ export const describe = (a: Action) =>
 
 function cachePath(home: string, ident: string): string {
   const hash = createHash("sha256").update(`fx-usage-cache-v1\0api_key\0${KEYS[ident]}\0`).digest("hex");
-  return join(home, ".fx", "usage-cache", `${hash}.json`);
+  return join(home, ".tetris", "usage-cache", `${hash}.json`);
 }
 
 type CacheRec = { todayDay: number | null; todayAt: number | null; finDay: number | null; corrupt: boolean };
@@ -230,12 +230,12 @@ class Process {
     this.fetch = null;
   }
 
-  /** SIGKILL, then a new fx in its place. Returns the killed pid. */
+  /** SIGKILL, then a new Tetris in its place. Returns the killed pid. */
   async crash(home: string, clock: string): Promise<number> {
     const pid = this.session.processPid();
     process.kill(pid, "SIGKILL");
     const gone = await until(() => { try { process.kill(pid, 0); return false; } catch { return true; } });
-    if (!gone) throw new Error(`${this.name}: fx ${pid} survived SIGKILL`);
+    if (!gone) throw new Error(`${this.name}: tetris ${pid} survived SIGKILL`);
     await this.session.kill();
     this.dropHeld();
     await this.start(home, clock);
@@ -250,7 +250,7 @@ class Process {
 
   async claimStart(f: Fetch): Promise<void> {
     const got = await until(() => this.held.length > 0);
-    if (!got) throw new Divergence(`${this.name}: the model starts a fetch, fx sent no request`, { fetch: f });
+    if (!got) throw new Divergence(`${this.name}: the model starts a fetch, Tetris sent no request`, { fetch: f });
     const today = this.held.shift()!;
     const day = this.env.utcDate(tickMs(f.at));
     const range = `${today.url.searchParams.get("start_date")}..${today.url.searchParams.get("end_date")}`;
@@ -260,7 +260,7 @@ class Process {
 
   async answerNext(label: string, start: string, end: string, cost: number): Promise<void> {
     const got = await until(() => this.held.length > 0);
-    if (!got) throw new Divergence(`${this.name}: the model reads finished days, fx sent no ${label} request`);
+    if (!got) throw new Divergence(`${this.name}: the model reads finished days, Tetris sent no ${label} request`);
     const h = this.held.shift()!;
     const range = `${h.url.searchParams.get("start_date")}..${h.url.searchParams.get("end_date")}`;
     if (range !== `${start}..${end}`) throw new Divergence(`${this.name}: ${label} request reads ${range}, model expects ${start}..${end}`);
@@ -387,7 +387,7 @@ async function settleAndCheck(t: State, procs: Record<Proc, Process>, home: stri
     const allowed = timerDue(t, p) ? 1 : 0;
     if (procs[p].held.length > allowed) {
       const ranges = procs[p].held.map((h) => `${h.url.searchParams.get("start_date")}..${h.url.searchParams.get("end_date")}`);
-      throw new Divergence(`${p}: fx sent a request the model does not make`, { ranges });
+      throw new Divergence(`${p}: Tetris sent a request the model does not make`, { ranges });
     }
   }
   for (const ident of Object.keys(KEYS)) {

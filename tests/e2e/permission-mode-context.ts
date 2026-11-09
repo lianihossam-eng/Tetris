@@ -2,8 +2,8 @@ import { expect } from "bun:test";
 
 const permissionModeContext = {
   ask: "Runtime context: permission mode is ask. Sensitive tool calls may need user approval unless configured rules or session grants decide them.",
-  auto: "Runtime context: permission mode is auto. fx sends each action that rules and grants leave unresolved to a safety reviewer. A clear result allows only that exact action. A caution or unavailable review holds only that action and returns advice without ending the turn. Cautions are reused for this turn, so choose a materially different safe action or explain why no safe path remains.",
-  yolo: "Runtime context: permission mode is full access; fx permission policy is off. Argument validation, limits, and operating-system permissions still apply.",
+  auto: "Runtime context: permission mode is auto. Tetris sends each action that rules and grants leave unresolved to a safety reviewer. A clear result allows only that exact action. A caution or unavailable review holds only that action and returns advice without ending the turn. Cautions are reused for this turn, so choose a materially different safe action or explain why no safe path remains.",
+  yolo: "Runtime context: permission mode is full access; Tetris permission policy is off. Argument validation, limits, and operating-system permissions still apply.",
 } as const;
 
 export function expectPermissionModeContext(

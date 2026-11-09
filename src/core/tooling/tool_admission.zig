@@ -2148,7 +2148,7 @@ fn defaultRunCommandPermissionOutcome(
 }
 
 const unsafe_git_hold_output =
-    "fx did not run this git command. It could not run git here with every program this repository's config " ++
+    "Tetris did not run this git command. It could not run git here with every program this repository's config " ++
     "names turned off, and plain git could start them. Inspect files with read_file, glob_files or grep_files, " ++
     "or ask the user to run git themselves.";
 

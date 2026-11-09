@@ -258,7 +258,7 @@ pub const ActiveSessionState = struct {
     title_task: ?*session_title_generation.Task = null,
     /// The session's MCP servers; null when it has none.
     mcp_host: ?*mcp_host.Host = null,
-    /// Session-scoped client system prompt, appended after fx's instructions.
+    /// Session-scoped client system prompt, appended after Tetris's instructions.
     /// Owned by the server allocator; empty when the client supplied none.
     client_system_prompt: []u8 = &.{},
     /// MCP identities shown for earlier tool calls, for session/load replay.
@@ -315,7 +315,7 @@ pub const ServerState = struct {
     cfg: Config,
     writer: jsonrpc.Writer,
     initialized: bool = false,
-    /// Selects fx's terminal or embedded base prompt for this connection.
+    /// Selects Tetris's terminal or embedded base prompt for this connection.
     terminal_ui: bool = true,
     client_fs_read: bool = false,
     client_fs_write: bool = false,
@@ -1893,7 +1893,7 @@ fn handleKernelRestore(
             .code = ErrorCode.invalid_params,
             // The host reports a newer checkpoint as it reports a newer journal.
             .message = if (err == error.UnsupportedCheckpointVersion)
-                "libfx checkpoint was written by a newer fx"
+                "libfx checkpoint was written by a newer Tetris"
             else
                 "Invalid or non-fresh libfx checkpoint",
         });
@@ -2019,7 +2019,7 @@ fn handleKernelJournalOpen(
         }),
         error.UnsupportedJournalVersion => return state.writer.writeError(alloc, msg.id, .{
             .code = ErrorCode.invalid_params,
-            .message = "libfx journal was written by a newer fx",
+            .message = "libfx journal was written by a newer Tetris",
         }),
         error.OutOfOrderJournalEvent => return state.writer.writeError(alloc, msg.id, .{
             .code = ErrorCode.invalid_params,
@@ -2388,7 +2388,7 @@ fn handleKernelSteer(
             },
         });
     };
-    // While the model streams a reply, the steer cuts it short, as in the fx
+    // While the model streams a reply, the steer cuts it short, as in the Tetris
     // CLI. The turn shows the steer when a boundary places it.
     if (active.steering.claimInterrupt(&active.cancel_flag)) {
         debug_trace.logf("acp", "libfx steer interrupts the streaming reply bytes={d}", .{text.string.len});
@@ -2684,7 +2684,7 @@ fn cloneMessage(alloc: Allocator, msg: *const jsonrpc.Message) !jsonrpc.Message 
 }
 
 const InitializeRequest = struct {
-    /// False when the client presents fx inside an application rather than a
+    /// False when the client presents Tetris inside an application rather than a
     /// terminal, set through `_meta.fx.terminal`.
     terminal_ui: bool = true,
     client_fs_read: bool = false,
@@ -3071,7 +3071,7 @@ fn handleInitialize(state: *ServerState, alloc: Allocator, msg: *jsonrpc.Message
         .mcp_servers = state.cfg.allow_acp_mcp,
         .steering = !host_target.is_wasm and !state.cfg.minimal_kernel,
         .system_prompt = !host_target.is_wasm and !state.cfg.minimal_kernel,
-        // fx takes only what ACP v1 defines and fx's MCP engine speaks: stdio and
+        // Tetris exposes only ACP v1 transports its MCP engine supports: stdio and
         // HTTP.
         .mcp_over_acp = false,
         .mcp_sse = false,
@@ -3081,7 +3081,7 @@ fn handleInitialize(state: *ServerState, alloc: Allocator, msg: *jsonrpc.Message
 
 /// The selected model's capabilities from `provider`'s catalog, loading it
 /// first if needed. A first load whose request cannot connect gives up after
-/// `gateway_provider.catalog_connect_wait_ms`, as `fx ask`'s does, so a
+/// `gateway_provider.catalog_connect_wait_ms`, also used by `tetris ask`, so a
 /// dead network doesn't hold up the reply for the 20 to 30 seconds its DNS
 /// lookup or connect takes to fail (`CapabilityResolver.resolveWithin`).
 fn resolveSelectedModelCapabilities(
@@ -3886,10 +3886,10 @@ fn handleSetConfigOption(state: *ServerState, alloc: Allocator, msg: *jsonrpc.Me
 
 /// Loads the catalog when it is due, before a reply that lists its models. A
 /// due load whose request cannot connect gives up after
-/// `gateway_provider.catalog_connect_wait_ms` and keeps the catalog fx
-/// already has (`CapabilityResolver.refreshWithin`), so a dead network does
-/// not hold up the reply, or the prompt sent after it, for the 20 to 30
-/// seconds its DNS lookup or connect takes to fail.
+/// `gateway_provider.catalog_connect_wait_ms` and keeps the catalog already
+/// loaded by the current Tetris process (`CapabilityResolver.refreshWithin`),
+/// so a dead network does not hold up the reply, or the prompt sent after it,
+/// for the 20 to 30 seconds its DNS lookup or connect takes to fail.
 pub fn refreshModelCatalogForOptions(state: *ServerState) !void {
     if (comptime host_target.is_wasm) return;
     if (state.cfg.minimal_kernel) return;
@@ -4291,7 +4291,7 @@ fn selectSessionMode(
 }
 
 /// Saves a chosen permission mode to the profile so new sessions, here and
-/// in other fx processes, start in it. Hosts without a profile keep it for
+/// in other Tetris processes, start in it. Hosts without a profile keep it for
 /// this process only.
 fn saveSessionPermissionMode(state: *ServerState, alloc: Allocator, mode: types.PermissionMode) void {
     state.permission_mode = mode;
@@ -4318,7 +4318,7 @@ pub const StartingMode = struct {
 };
 
 /// Reads the saved permission mode as it is now, so a running process
-/// follows a mode another fx process saved, and returns the registered mode
+/// follows a mode another Tetris process saved, and returns the registered mode
 /// that applies it, or the default mode when none does.
 pub fn loadStartingMode(state: *ServerState, alloc: Allocator) StartingMode {
     if (comptime !host_target.is_wasm) {
@@ -4333,7 +4333,7 @@ pub fn loadStartingMode(state: *ServerState, alloc: Allocator) StartingMode {
             }
         }
     }
-    // `fx acp --permission-mode` beats the saved mode, as FX_PERMISSION_MODE does.
+    // `tetris acp --permission-mode` beats the saved mode, as FX_PERMISSION_MODE does.
     if (state.cfg.permission_override) |mode| state.permission_mode = mode;
     return .{
         .id = state.cfg.mode_registry.startingModeId(state.permission_mode),

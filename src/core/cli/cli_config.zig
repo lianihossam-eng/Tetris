@@ -24,7 +24,7 @@ const tool_result_limits = @import("../tooling/tool_result_limits.zig");
 const Allocator = std.mem.Allocator;
 
 fn profileDisplay() []const u8 {
-    return profile_paths.displayText("~/.fx/settings.json");
+    return profile_paths.displayText("~/.tetris/settings.json");
 }
 pub const project_display = ".fx.json";
 
@@ -76,22 +76,22 @@ pub fn parseArgs(
     };
 
     if (word_count == 0) {
-        if (options.project) return wordsProblem(problem, "--project goes with fx config schema");
+        if (options.project) return wordsProblem(problem, "--project goes with tetris config schema");
         return options;
     }
     options.action = std.meta.stringToEnum(Action, words[0]) orelse
         return wordsProblem(problem, "the first word is list, get, set, unset, or schema");
-    if (options.project and options.action != .schema) return wordsProblem(problem, "--project goes with fx config schema");
+    if (options.project and options.action != .schema) return wordsProblem(problem, "--project goes with tetris config schema");
     switch (options.action) {
         .list, .schema => if (word_count > 1) return wordsProblem(problem, "list and schema take no key"),
         .get, .unset => {
-            if (word_count < 2) return wordsProblem(problem, "get and unset need a key, as in fx config get fast_mode");
+            if (word_count < 2) return wordsProblem(problem, "get and unset need a key, as in tetris config get fast_mode");
             if (word_count > 2) return wordsProblem(problem, "get and unset take one key");
         },
         .set => if (word_count < 3) return wordsProblem(problem, if (std.mem.findScalar(u8, words[word_count - 1], '=') != null)
-            "set takes the key and the value as two words, as in fx config set fast_mode true"
+            "set takes the key and the value as two words, as in tetris config set fast_mode true"
         else
-            "set needs a key and a value, as in fx config set fast_mode true"),
+            "set needs a key and a value, as in tetris config set fast_mode true"),
     }
     if (options.action == .list) return options;
     // The schema is already JSON and describes files, not one scope's values.
@@ -241,7 +241,7 @@ pub fn change(options: Options, problem: *WriteProblem) error{ RefusedConfigSett
     return .{ .patch = patch, .value = .{ .bool = enabled } };
 }
 
-const theme_values = "light, dark, or the name of a theme file in ~/.fx/themes";
+const theme_values = "light, dark, or the name of a theme file in ~/.tetris/themes";
 
 fn invalid(problem: *WriteProblem, expected: []const u8) error{InvalidConfigValue} {
     problem.* = .{ .invalid_value = expected };
@@ -269,16 +269,16 @@ fn ownerHint(key: []const u8) []const u8 {
     const head = key[0 .. std.mem.findScalar(u8, key, '.') orelse key.len];
     const hints = [_]struct { keys: []const []const u8, hint: []const u8 }{
         .{ .keys = &.{ "model", "models", "codex_model", "grok_model" }, .hint = "use /model in a session" },
-        .{ .keys = &.{"provider"}, .hint = "use fx provider <name>" },
+        .{ .keys = &.{"provider"}, .hint = "use tetris provider <name>" },
         .{ .keys = &.{"permission_mode"}, .hint = "use /permissions in a session, or --permission-mode for one run" },
         .{ .keys = &.{"permission"}, .hint = "use /permissions in a session" },
-        .{ .keys = &.{"credential_source"}, .hint = "use fx login" },
-        .{ .keys = &.{"review_model"}, .hint = profile_paths.displayText("edit ~/.fx/settings.json, or set FX_REVIEW_MODEL for one run") },
-        .{ .keys = &.{ "workspaces", "additional_directories" }, .hint = "use fx workspace" },
-        .{ .keys = &.{ "enabledMcpjsonServers", "disabledMcpjsonServers", "enableAllProjectMcpServers" }, .hint = "use fx mcp approve or reject" },
-        .{ .keys = &.{"context_limits"}, .hint = profile_paths.displayText("use --context-limit for one run, or edit ~/.fx/settings.json") },
-        .{ .keys = &.{"provider_order"}, .hint = profile_paths.displayText("use --provider-order for one run, or edit ~/.fx/settings.json") },
-        .{ .keys = &.{ "yolo_acknowledged", "fast_mode_model_bound", "skill_match_fuzzy" }, .hint = "fx manages it" },
+        .{ .keys = &.{"credential_source"}, .hint = "use tetris login" },
+        .{ .keys = &.{"review_model"}, .hint = profile_paths.displayText("edit ~/.tetris/settings.json, or set FX_REVIEW_MODEL for one run") },
+        .{ .keys = &.{ "workspaces", "additional_directories" }, .hint = "use tetris workspace" },
+        .{ .keys = &.{ "enabledMcpjsonServers", "disabledMcpjsonServers", "enableAllProjectMcpServers" }, .hint = "use tetris mcp approve or reject" },
+        .{ .keys = &.{"context_limits"}, .hint = profile_paths.displayText("use --context-limit for one run, or edit ~/.tetris/settings.json") },
+        .{ .keys = &.{"provider_order"}, .hint = profile_paths.displayText("use --provider-order for one run, or edit ~/.tetris/settings.json") },
+        .{ .keys = &.{ "yolo_acknowledged", "fast_mode_model_bound", "skill_match_fuzzy" }, .hint = "Tetris manages it" },
         .{ .keys = &.{"status_line"}, .hint = "set status_line.context, status_line.session, or status_line.workspace" },
         .{ .keys = &.{"sound"}, .hint = "set sound.turn_end, sound.attention_required, or sound.max" },
         .{ .keys = &.{"prompt_history"}, .hint = "set prompt_history.enabled" },
@@ -288,10 +288,10 @@ fn ownerHint(key: []const u8) []const u8 {
             if (std.mem.eql(u8, name, head)) return entry.hint;
         }
     }
-    return profile_paths.displayText("edit ~/.fx/settings.json");
+    return profile_paths.displayText("edit ~/.tetris/settings.json");
 }
 
-/// `can't change permission_mode with fx config; use /permissions ...` or
+/// `can't change permission_mode with tetris config; use /permissions ...` or
 /// `invalid value for fast_mode: maybe (use true or false)`, where `via` names
 /// the surface, such as `fx config` or `--config`. Caller owns the result.
 pub fn formatWriteProblem(alloc: Allocator, key: []const u8, value: ?[]const u8, problem: WriteProblem, via: []const u8) ![]u8 {
@@ -635,7 +635,7 @@ fn unknownSetting(key: settings_keys.UnknownKey, file: []const u8) output_contra
 }
 
 /// Why a settings file couldn't be loaded, in words, as in
-/// `~/.fx/settings.json can't be read: permission denied`.
+/// `~/.tetris/settings.json can't be read: permission denied`.
 pub fn loadFailureReason(err: anyerror) []const u8 {
     return switch (err) {
         error.StreamTooLong => "is larger than 64 KiB",
@@ -648,13 +648,13 @@ pub fn loadFailureReason(err: anyerror) []const u8 {
 }
 
 /// Why saving the profile's settings file failed, in words, with what to do
-/// where there is something, as in `failed to save ~/.fx/settings.json:
+/// where there is something, as in `failed to save ~/.tetris/settings.json:
 /// another fx is saving settings; try again`.
 pub fn saveFailureReason(err: anyerror) []const u8 {
     return switch (err) {
         error.DurablePathUnsafe => unsafe_settings_path,
         error.SettingsPrimaryTooLarge, error.FileTooBig => "it is larger than 64 KiB; remove settings you no longer use",
-        error.SettingsLockBusy => "another fx is saving settings; try again",
+        error.SettingsLockBusy => "another Tetris is saving settings; try again",
         error.AccessDenied, error.PermissionDenied => "permission denied",
         error.ReadOnlyFileSystem => "the disk is read-only",
         error.NoSpaceLeft => "the disk is full",
@@ -665,12 +665,12 @@ pub fn saveFailureReason(err: anyerror) []const u8 {
     };
 }
 
-const unsafe_settings_path = "fx keeps settings only in a regular file in a folder it owns, not through a symlink or a hard link";
+const unsafe_settings_path = "Tetris keeps settings only in a regular file in a folder it owns, not through a symlink or a hard link";
 
 test "settings failures name the cause in words" {
     try std.testing.expectEqualStrings("can't be read: permission denied", loadFailureReason(error.AccessDenied));
     try std.testing.expectEqualStrings("can't be read", loadFailureReason(error.Unexpected));
-    try std.testing.expectEqualStrings("another fx is saving settings; try again", saveFailureReason(error.SettingsLockBusy));
+    try std.testing.expectEqualStrings("another Tetris is saving settings; try again", saveFailureReason(error.SettingsLockBusy));
     try std.testing.expect(std.mem.find(u8, saveFailureReason(error.DurablePathUnsafe), "symlink") != null);
     try std.testing.expectEqualStrings("Unexpected", saveFailureReason(error.Unexpected));
 }
@@ -757,16 +757,16 @@ test "config set explains a bad value or a key it doesn't change" {
     const cases = [_]struct { args: []const [:0]const u8, err: anyerror, message: []const u8 }{
         .{ .args = &.{ "set", "fast_mode", "maybe" }, .err = error.InvalidConfigValue, .message = "invalid value for fast_mode: maybe (use true or false)" },
         .{ .args = &.{ "set", "max_tool_result_bytes", "12" }, .err = error.InvalidConfigValue, .message = "invalid value for max_tool_result_bytes: 12 (use a whole number of bytes, at least 1024)" },
-        .{ .args = &.{ "set", "permission_mode", "full-access" }, .err = error.RefusedConfigSetting, .message = "can't change permission_mode with fx config; use /permissions in a session, or --permission-mode for one run" },
-        .{ .args = &.{ "unset", "review_model" }, .err = error.RefusedConfigSetting, .message = "can't change review_model with fx config; edit ~/.fx/settings.json, or set FX_REVIEW_MODEL for one run" },
-        .{ .args = &.{ "set", "models.codex", "gpt" }, .err = error.RefusedConfigSetting, .message = "can't change models.codex with fx config; use /model in a session" },
-        .{ .args = &.{ "set", "yolo_acknowledged", "true" }, .err = error.RefusedConfigSetting, .message = "can't change yolo_acknowledged with fx config; fx manages it" },
+        .{ .args = &.{ "set", "permission_mode", "full-access" }, .err = error.RefusedConfigSetting, .message = "can't change permission_mode with tetris config; use /permissions in a session, or --permission-mode for one run" },
+        .{ .args = &.{ "unset", "review_model" }, .err = error.RefusedConfigSetting, .message = "can't change review_model with tetris config; edit ~/.tetris/settings.json, or set FX_REVIEW_MODEL for one run" },
+        .{ .args = &.{ "set", "models.codex", "gpt" }, .err = error.RefusedConfigSetting, .message = "can't change models.codex with tetris config; use /model in a session" },
+        .{ .args = &.{ "set", "yolo_acknowledged", "true" }, .err = error.RefusedConfigSetting, .message = "can't change yolo_acknowledged with tetris config; Tetris manages it" },
     };
     for (cases) |case| {
         const options = try parseForTest(case.args);
         var problem: WriteProblem = .none;
         try std.testing.expectError(case.err, change(options, &problem));
-        const message = try formatWriteProblem(alloc, options.key.?, options.value, problem, "fx config");
+        const message = try formatWriteProblem(alloc, options.key.?, options.value, problem, "tetris config");
         defer alloc.free(message);
         try std.testing.expectEqualStrings(case.message, message);
     }
@@ -849,7 +849,7 @@ test "load reads both files and keeps unknown keys for the scope" {
     try std.testing.expectEqualStrings("fast_mdoe", global.unknown[0].key.name);
 }
 
-test "load ends with the FX_* overrides fx applies, only without a scope" {
+test "load ends with the FX_* overrides Tetris applies, only without a scope" {
     const alloc = std.testing.allocator;
     const io_mod = @import("../shared/io.zig");
     var tmp = std.testing.tmpDir(.{});
@@ -913,7 +913,7 @@ test "load names the file it can't parse" {
     }
 }
 
-test "fx config set writes each key with the type the settings list gives it" {
+test "tetris config set writes each key with the type the settings list gives it" {
     inline for (@typeInfo(Writable).@"enum".field_names) |path| {
         errdefer std.debug.print("key {s}\n", .{path});
         const dot = comptime std.mem.findScalar(u8, path, '.');
@@ -939,7 +939,7 @@ test "fx config set writes each key with the type the settings list gives it" {
     }
 }
 
-test "fx config schema takes only --project" {
+test "tetris config schema takes only --project" {
     var unknown: ?settings_keys.UnknownPart = null;
     var problem: ?[]const u8 = null;
     const plain = try parseForTest(&.{"schema"});
@@ -956,12 +956,12 @@ test "fx config schema takes only --project" {
     }) |args| try std.testing.expectError(error.InvalidConfigArgs, parseArgs(args, &unknown, &problem));
 }
 
-test "fx config names what is wrong with its words" {
+test "tetris config names what is wrong with its words" {
     var unknown: ?settings_keys.UnknownPart = null;
     for ([_]struct { args: []const [:0]const u8, problem: []const u8 }{
-        .{ .args = &.{ "set", "fast_mode" }, .problem = "set needs a key and a value, as in fx config set fast_mode true" },
-        .{ .args = &.{ "set", "fast_mode=true" }, .problem = "set takes the key and the value as two words, as in fx config set fast_mode true" },
-        .{ .args = &.{"get"}, .problem = "get and unset need a key, as in fx config get fast_mode" },
+        .{ .args = &.{ "set", "fast_mode" }, .problem = "set needs a key and a value, as in tetris config set fast_mode true" },
+        .{ .args = &.{ "set", "fast_mode=true" }, .problem = "set takes the key and the value as two words, as in tetris config set fast_mode true" },
+        .{ .args = &.{"get"}, .problem = "get and unset need a key, as in tetris config get fast_mode" },
         .{ .args = &.{"sett"}, .problem = "the first word is list, get, set, unset, or schema" },
         .{ .args = &.{ "set", "theme", "--show-origin", "dark" }, .problem = "--show-origin goes with list and get" },
     }) |case| {

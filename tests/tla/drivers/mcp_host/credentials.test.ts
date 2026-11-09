@@ -1,6 +1,6 @@
-// Credentials: real `fx mcp list --json`, `fx mcp logout` and `fx mcp login`
+// Credentials: real `tetris mcp list --json`, `tetris mcp logout` and `tetris mcp login`
 // runs against a scratch HOME (FX_DISABLE_KEYCHAIN=1, so the file backend),
-// each command's effect on ~/.fx/mcp-credentials read back, and the trace
+// each command's effect on ~/.tetris/mcp-credentials read back, and the trace
 // checked against Credentials.tla through CredentialsTrace.tla. No server is
 // contacted: list never connects, these logins have no revocation endpoint,
 // and a login on an unreadable store stops before it opens a listener.
@@ -12,7 +12,7 @@ import { fixture, fxEnv, observeStores, runFx, save, v1Entry, v1Path, storePath,
 import { checkTrace, type TraceRecord } from "./trace";
 
 const URL = "http://127.0.0.1:9/mcp";
-const UNREADABLE = "fx can't read the saved MCP sign-ins in ~/.fx/mcp-credentials/credentials-v3.json. A newer fx saved them, or they're damaged; fix or delete them, then try again.\n";
+const UNREADABLE = "Tetris can't read the saved MCP sign-ins in ~/.tetris/mcp-credentials/credentials-v3.json. A newer Tetris saved them, or they're damaged; fix or delete them, then try again.\n";
 
 function setup(name: string) {
   const f = fixture(artifacts, name);
@@ -29,7 +29,7 @@ class Session {
     return o;
   }
   async run(cmd: "get" | "logout" | "put", args: string[], server = "") {
-    this.records.push({ event: "run", data: { cmd, server }, at: Date.now(), note: `fx ${args.join(" ")}` });
+    this.records.push({ event: "run", data: { cmd, server }, at: Date.now(), note: `tetris ${args.join(" ")}` });
     const ran = await runFx(binary, this.f, args, fxEnv(this.f), 30_000);
     const o = this.observe();
     return { ran, o };
@@ -52,13 +52,13 @@ class Session {
 
 const CREDENTIAL = JSON.stringify({ access: "kept-by-newer-fx", refresh: "r", expires_at_ms: null, token_endpoint: "http://127.0.0.1:9/token", revocation_endpoint: null, resource: URL, client_id: "c", client_secret: null, method: "none" });
 
-/** fx's MCP credential store holding web's login, as `version` (this fx reads 1 and 2, and writes 2). */
+/** Tetris's MCP credential store holding web's login, as `version` (this Tetris reads 1 and 2, and writes 2). */
 function writeStore(f: Fixture, version = 1) {
-  mkdirSync(join(f.home, ".fx", "mcp-credentials"), { recursive: true, mode: 0o700 });
+  mkdirSync(join(f.home, ".tetris", "mcp-credentials"), { recursive: true, mode: 0o700 });
   writeFileSync(storePath(f), JSON.stringify({ version, servers: [{ name: "web", url: URL, credential: CREDENTIAL }] }), { mode: 0o600 });
 }
 
-/** A newer fx's document: version 3, which this fx can't read. */
+/** A newer Tetris's document: version 3, which this Tetris can't read. */
 function rewriteAsVersion(f: Fixture, version: number) {
   const doc = JSON.parse(readFileSync(storePath(f), "utf8"));
   writeFileSync(storePath(f), JSON.stringify({ ...doc, version }), { mode: 0o600 });
@@ -79,14 +79,14 @@ test("control: v1's login is never taken over, and v1's store is left as it is (
   expect(verdict.verdict).toBe("ACCEPTED");
 }, 120_000);
 
-test("A newer fx's store is never written over; sign-in and sign-out say why they can't, and the login is there once it's readable (trace ACCEPTED)", async () => {
+test("A newer Tetris's store is never written over; sign-in and sign-out say why they can't, and the login is there once it's readable (trace ACCEPTED)", async () => {
   const s = new Session(setup("cred-unreadable"));
   writeStore(s.f, 3);
   const before = readFileSync(storePath(s.f), "utf8");
   save(join(s.f.base, "store-before.json"), before);
   expect(s.observe()).toEqual({ kind: "unreadable", entries: ["web"], v1: [] });
 
-  // `fx mcp list` never connects; it reads web's credential to start the host.
+  // `tetris mcp list` never connects; it reads web's credential to start the host.
   const list = await s.run("get", ["mcp", "list", "--json"]);
   expect(list.ran.code).toBe(0);
   const logout = await s.run("logout", ["mcp", "logout", "web"], "web");
@@ -95,7 +95,7 @@ test("A newer fx's store is never written over; sign-in and sign-out say why the
   const login = await s.run("put", ["mcp", "login", "--no-browser", "web"], "web");
   expect(login.ran.code).toBe(1);
   expect(login.ran.stderr).toBe(`Can't sign in to web: ${UNREADABLE}`);
-  // Independent oracle: the file is byte for byte what the newer fx wrote.
+  // Independent oracle: the file is byte for byte what the newer Tetris wrote.
   save(join(s.f.base, "store-after.json"), readFileSync(storePath(s.f), "utf8"));
   expect(readFileSync(storePath(s.f), "utf8")).toBe(before);
   expect(login.o).toEqual({ kind: "unreadable", entries: ["web"], v1: [] });
@@ -130,7 +130,7 @@ test("a logout stays when the store becomes unreadable (trace ACCEPTED)", async 
   expect(verdict.verdict).toBe("ACCEPTED");
 }, 120_000);
 
-test("With fx's MCP credential store deleted after a logout, v1's login still isn't taken (trace ACCEPTED)", async () => {
+test("With Tetris's MCP credential store deleted after a logout, v1's login still isn't taken (trace ACCEPTED)", async () => {
   const s = new Session(setup("cred-deleted"));
   writeV1(s.f, [v1Entry("web", URL)]);
   writeStore(s.f);

@@ -2872,9 +2872,9 @@ fn savePromptImages(raw_ctx: *anyopaque, alloc: std.mem.Allocator, images: []typ
 
 /// `AgentRuntimeDeps.append_turn_piece` for a journaled libfx session. The
 /// orchestrator calls it before any call in a batch runs: the calls reach the
-/// journal first, and a batch with a call fx runs itself waits until the host
-/// holds them, unless every such call runs ahead (see below). Finished pieces
-/// travel in `turn_progress` instead.
+/// journal first. A batch with any local tool call that needs the host to hold
+/// its intent waits, unless all calls can safely run ahead (see below).
+/// Finished pieces travel in `turn_progress` instead.
 fn appendJournalToolIntent(raw_ctx: *anyopaque, progress: agent_runtime.TurnProgress) !void {
     if (progress.running_calls.len == 0) return;
     const ctx: *AcpContext = @ptrCast(@alignCast(raw_ctx));
@@ -3274,7 +3274,7 @@ fn pushEvent(raw_ctx: *anyopaque, event: worker_runtime.WorkerEvent) !void {
     const ctx: *AcpContext = @ptrCast(@alignCast(raw_ctx));
     switch (event) {
         .clear_route_recovery_status => try ctx.clearModelRecoveryStatus(),
-        // A libfx steer cuts a streaming reply short, as in the fx CLI, but
+        // A libfx steer cuts a streaming reply short, as in the Tetris CLI, but
         // waits once the model streams a tool call's arguments.
         .turn_phase_update => |update| if (ctx.state.cfg.minimal_kernel) {
             server.noteSteeringPhase(ctx.state, update.step_id, switch (update.phase) {
@@ -3651,11 +3651,11 @@ fn formatAcpElicitationMessage(
 ) ![]u8 {
     return switch (request.mode) {
         .form => alloc.print(
-            "fx received a form request from MCP server {s}. {s}",
+            "Tetris received a form request from MCP server {s}. {s}",
             .{ server_name, request.message },
         ),
         .url => alloc.print(
-            "fx received a URL request from MCP server {s} for host {s}. {s}",
+            "Tetris received a URL request from MCP server {s} for host {s}. {s}",
             .{ server_name, request.url_host orelse "unknown", request.message },
         ),
         .unknown => error.McpInputRequired,

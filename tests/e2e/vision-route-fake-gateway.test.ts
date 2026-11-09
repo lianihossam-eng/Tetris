@@ -28,13 +28,13 @@ const TIMEOUT = 15_000;
 /** What fx says when it cannot connect to the model catalog and withholds
  * earlier images (`catalogDownNotice` in `src/core/agent/runtime/orchestrator.zig`). */
 const CATALOG_CONNECT_IMAGE_NOTICE =
-  "fx couldn't connect to AI Gateway to load the model catalog, so earlier images aren't reaching the model until it loads. Check your network connection or firewall.";
+  "Tetris couldn't connect to AI Gateway to load the model catalog, so earlier images aren't reaching the model until it loads. Check your network connection or firewall.";
 const CATALOG_CONNECT_IMAGE_FAST_NOTICE =
-  "fx couldn't connect to AI Gateway to load the model catalog, so earlier images aren't reaching the model and fast mode is off until it loads. Check your network connection or firewall.";
+  "Tetris couldn't connect to AI Gateway to load the model catalog, so earlier images aren't reaching the model and fast mode is off until it loads. Check your network connection or firewall.";
 /** The line before the error for an image attached this turn
  * (`catalogUnreachableImageLine` in `src/core/agent/runtime/orchestrator.zig`). */
 const CATALOG_CONNECT_ATTACHED_IMAGE_LINE =
-  "fx couldn't connect to AI Gateway to load the model catalog, so it couldn't confirm that this model accepts images. Check your network connection or firewall.";
+  "Tetris couldn't connect to AI Gateway to load the model catalog, so it couldn't confirm that this model accepts images. Check your network connection or firewall.";
 const GLM_MODEL = "zai/glm-5.2-fast";
 const GEMINI_MODEL = "google/gemini-2.5-flash";
 const KIMI_MODEL = "moonshotai/kimi-k3";
@@ -286,9 +286,9 @@ function createIsolatedRoot() {
   const root = realpathSync(mkdtempSync(join(tmpdir(), "fx-vision-route-e2e-")));
   const home = join(root, "home");
   const workspace = join(root, "workspace");
-  mkdirSync(join(home, ".fx"), { recursive: true });
+  mkdirSync(join(home, ".tetris"), { recursive: true });
   mkdirSync(workspace, { recursive: true });
-  writeFileSync(join(home, ".fx", "settings.json"), JSON.stringify({ permission: {} }));
+  writeFileSync(join(home, ".tetris", "settings.json"), JSON.stringify({ permission: {} }));
   return { root, home, workspace: realpathSync(workspace) };
 }
 
@@ -322,7 +322,7 @@ function writeMarkedImage(imagePath: string, marker: string) {
 // holds the image, and its digest is one no other image there shares, so
 // an identical copy saved as a blob cannot restore it (D89).
 function damageFirstV1Image(home: string, sessionId: string): void {
-  const folder = join(home, ".fx", "sessions", sessionId);
+  const folder = join(home, ".tetris", "sessions", sessionId);
   const snapshot = readdirSync(join(folder, "images")).find((name) => name.startsWith("image-1-"));
   expect(snapshot).toBeDefined();
   writeFileSync(join(folder, "images", snapshot!), "corrupt");
@@ -350,7 +350,7 @@ function writeLegacyZeroImageSession(
   sessionId: string,
   imagePaths: [string, string, string, string],
 ) {
-  const sessionDir = join(root.home, ".fx", "sessions", sessionId);
+  const sessionDir = join(root.home, ".tetris", "sessions", sessionId);
   mkdirSync(sessionDir, { recursive: true, mode: 0o700 });
   writeFileSync(
     join(sessionDir, "session.json"),
@@ -491,7 +491,7 @@ async function expectChangedCanonicalVisionPathFailure(
   writeMarkedImage(targetPath, "TMUX_APPROVED_TARGET_A");
   symlinkSync(targetPath, approvedPath);
   writeFileSync(
-    join(root.home, ".fx", "settings.json"),
+    join(root.home, ".tetris", "settings.json"),
     JSON.stringify({ permission_mode: "ask", permission: {} }),
   );
   const gateway = startImageGateway([
@@ -618,7 +618,7 @@ function toolResultText(body: string, toolCallId: string): string {
 
 describe("Vision route fake Gateway", () => {
   test(
-    "fx ask rejects missing images before Gateway startup in text and JSON modes",
+    "tetris ask rejects missing images before Gateway startup in text and JSON modes",
     async () => {
       const root = createIsolatedRoot();
       const gateway = startImageGateway([]);
@@ -720,7 +720,7 @@ describe("Vision route fake Gateway", () => {
   );
 
   test(
-    "fx ask gates GLM images through Vision without leaking paths",
+    "tetris ask gates GLM images through Vision without leaking paths",
     async () => {
       const root = createIsolatedRoot();
       const fixture = createScopedImageFixture(root);
@@ -779,7 +779,7 @@ describe("Vision route fake Gateway", () => {
   );
 
   test(
-    "fx ask recovers when the model rejects the post-Vision prompt as assistant prefill",
+    "tetris ask recovers when the model rejects the post-Vision prompt as assistant prefill",
     async () => {
       const root = createIsolatedRoot();
       const fixture = createScopedImageFixture(root);
@@ -843,7 +843,7 @@ describe("Vision route fake Gateway", () => {
   );
 
   test(
-    "fx ask executes path-source Vision and cleans transient snapshots without failure telemetry",
+    "tetris ask executes path-source Vision and cleans transient snapshots without failure telemetry",
     async () => {
       const root = createIsolatedRoot();
       const imagePath = join(root.workspace, "path-source.png");
@@ -1015,7 +1015,7 @@ describe("Vision route fake Gateway", () => {
             for (const imagePath of fixture.paths) expect(request.body).not.toContain(imagePath);
             expect(request.body).not.toContain("data:image");
             expect(request.body).not.toContain("fx-image-snapshots");
-            expect(request.body).not.toContain(".fx/sessions");
+            expect(request.body).not.toContain(".tetris/sessions");
           }
         } finally {
           gateway.stop();
@@ -1089,7 +1089,7 @@ describe("Vision route fake Gateway", () => {
   );
 
   test(
-    "fx ask preserves native image parts for Gemini",
+    "tetris ask preserves native image parts for Gemini",
     async () => {
       const root = createIsolatedRoot();
       const fixture = createScopedImageFixture(root);
@@ -1131,7 +1131,7 @@ describe("Vision route fake Gateway", () => {
   );
 
   test(
-    "fx ask uses Kimi native vision without Vision tool",
+    "tetris ask uses Kimi native vision without Vision tool",
     async () => {
       const root = createIsolatedRoot();
       const fixture = createScopedImageFixture(root);
@@ -1173,7 +1173,7 @@ describe("Vision route fake Gateway", () => {
   );
 
   test(
-    "fx ask withholds byte-oversized native images instead of normalizing or rejecting",
+    "tetris ask withholds byte-oversized native images instead of normalizing or rejecting",
     async () => {
       const root = createIsolatedRoot();
       const oversizedPath = join(root.workspace, "encoded-oversized.png");
@@ -1218,7 +1218,7 @@ describe("Vision route fake Gateway", () => {
   );
 
   test(
-    "fx ask sends single-request native PNG images byte-for-byte below the 8000-pixel limit",
+    "tetris ask sends single-request native PNG images byte-for-byte below the 8000-pixel limit",
     async () => {
       const root = createIsolatedRoot();
       const widePath = join(root.workspace, "wide-screenshot.png");
@@ -1260,7 +1260,7 @@ describe("Vision route fake Gateway", () => {
   );
 
   test(
-    "fx ask names the saved copy of an attached image but not its source path",
+    "tetris ask names the saved copy of an attached image but not its source path",
     async () => {
       const root = createIsolatedRoot();
       const shotPath = join(root.workspace, "CleanShot 2026-10-18 at 4.36.41 PM@2x.png");
@@ -1287,7 +1287,7 @@ describe("Vision route fake Gateway", () => {
         expect(body).not.toContain(shotPath);
         // The saved copy outlives the run and holds the bytes the model saw.
         const saved = JSON.parse(note![1]!) as string;
-        expect(saved.startsWith(join(root.home, ".fx", "sessions"))).toBe(true);
+        expect(saved.startsWith(join(root.home, ".tetris", "sessions"))).toBe(true);
         expect(readFileSync(saved)).toEqual(original);
       } finally {
         gateway.stop();
@@ -1298,7 +1298,7 @@ describe("Vision route fake Gateway", () => {
   );
 
   test(
-    "fx ask withholds native JPEG images over the 8000-pixel limit with saved-path guidance",
+    "tetris ask withholds native JPEG images over the 8000-pixel limit with saved-path guidance",
     async () => {
       const root = createIsolatedRoot();
       const photoPath = join(root.workspace, "photo.jpg");
@@ -1572,7 +1572,7 @@ describe("Vision route fake Gateway", () => {
         // A prompt image only an older fx's session file holds, damaged
         // before the session converts on its next open.
         const [sessionId] = copyV1Fixture(root.home, "image", 1, root.workspace) as [string];
-        const imageDir = join(root.home, ".fx", "sessions", sessionId, "images");
+        const imageDir = join(root.home, ".tetris", "sessions", sessionId, "images");
         const snapshotNames = readdirSync(imageDir).filter((name) => name.endsWith(".bin"));
         expect(snapshotNames).toHaveLength(1);
         entry.damage(join(imageDir, snapshotNames[0]));
@@ -1632,7 +1632,7 @@ describe("Vision route fake Gateway", () => {
   );
 
   test(
-    "fx ask applies image_adapter_output_bytes to Vision provider capture",
+    "tetris ask applies image_adapter_output_bytes to Vision provider capture",
     async () => {
       const root = createIsolatedRoot();
       const fixture = createScopedImageFixture(root);
@@ -1848,7 +1848,7 @@ describe("Vision route fake Gateway", () => {
         expect(result.code).toBe(1);
         expect(result.stdout).toBe("");
         expect(result.stderr).toBe(
-          "fx ask: Unable to verify image support for this model, so the image was not sent. Try again later, choose another model, or remove the image.\n",
+          "tetris ask: Unable to verify image support for this model, so the image was not sent. Try again later, choose another model, or remove the image.\n",
         );
         expect(result.stderr).not.toContain("ModelImageCapabilityUnavailable");
         expect(gateway.catalogRequests).toBe(1);
@@ -1879,7 +1879,7 @@ describe("Vision route fake Gateway", () => {
         expect(text.code).toBe(1);
         expect(text.stdout).toBe("");
         expect(text.stderr).toBe(
-          `${CATALOG_CONNECT_ATTACHED_IMAGE_LINE}\nfx ask: Unable to verify image support for this model, so the image was not sent. Try again later, choose another model, or remove the image.\n`,
+          `${CATALOG_CONNECT_ATTACHED_IMAGE_LINE}\ntetris ask: Unable to verify image support for this model, so the image was not sent. Try again later, choose another model, or remove the image.\n`,
         );
 
         // JSON output keeps its error code; the cause line stays on stderr.
@@ -1932,7 +1932,7 @@ describe("Vision route fake Gateway", () => {
         expect(filePartCount(body)).toBe(0);
         expect(body).not.toContain(imageData);
         expect(body).not.toContain('"name":"vision"');
-        expect(body).toContain("[Image #1 was not sent with this request: fx could not confirm image input support");
+        expect(body).toContain("[Image #1 was not sent with this request: Tetris could not confirm image input support");
         expect(resumed.stderr.split("Earlier images aren't reaching the model right now")).toHaveLength(2);
         expect(resumed.stderr).not.toContain("Unable to verify image support");
       } finally {
@@ -1991,7 +1991,7 @@ describe("Vision route fake Gateway", () => {
         expect(down.chatRequests).toHaveLength(2);
         for (const request of down.chatRequests) {
           expect(request.body).not.toContain(imageData);
-          expect(request.body).toContain("[Image #1 was not sent with this request: fx could not confirm image input support");
+          expect(request.body).toContain("[Image #1 was not sent with this request: Tetris could not confirm image input support");
         }
       } finally {
         up.stop();
@@ -2779,7 +2779,7 @@ describe("Vision route fake Gateway", () => {
       const imagePath = join(desktop, "test.png");
       writeMarkedImage(imagePath, "TMUX_AT_HOME_IMAGE");
       writeFileSync(
-        join(root.home, ".fx", "settings.json"),
+        join(root.home, ".tetris", "settings.json"),
         JSON.stringify({ permission_mode: "ask", permission: {} }),
       );
       const gateway = startImageGateway([
@@ -2894,7 +2894,7 @@ describe("Vision route fake Gateway", () => {
       const imagePath = join(desktop, "test.png");
       writeMarkedImage(imagePath, "TMUX_PATH_SOURCE_APPROVAL");
       writeFileSync(
-        join(root.home, ".fx", "settings.json"),
+        join(root.home, ".tetris", "settings.json"),
         JSON.stringify({ permission_mode: "ask", permission: {} }),
       );
       const gateway = startImageGateway([
@@ -2963,7 +2963,7 @@ describe("Vision route fake Gateway", () => {
       const payload = writeMarkedImage(sourcePath, "TMUX_HARD_LINKED_IMAGE");
       linkSync(sourcePath, approvedPath);
       writeFileSync(
-        join(root.home, ".fx", "settings.json"),
+        join(root.home, ".tetris", "settings.json"),
         JSON.stringify({ permission_mode: "ask", permission: {} }),
       );
       const gateway = startImageGateway([
@@ -3034,7 +3034,7 @@ describe("Vision route fake Gateway", () => {
       const payloadB = writeMarkedImage(targetB, "TMUX_RETARGETED_TARGET_B");
       symlinkSync(targetA, approvedPath);
       writeFileSync(
-        join(root.home, ".fx", "settings.json"),
+        join(root.home, ".tetris", "settings.json"),
         JSON.stringify({ permission_mode: "ask", permission: {} }),
       );
       const gateway = startImageGateway([
@@ -3234,7 +3234,7 @@ describe("Vision route fake Gateway", () => {
       const imagePath = join(root.workspace, "feedback.png");
       writeMarkedImage(imagePath, "TMUX_PERMISSION_FEEDBACK");
       writeFileSync(
-        join(root.home, ".fx", "settings.json"),
+        join(root.home, ".tetris", "settings.json"),
         JSON.stringify({ permission_mode: "ask", permission: {} }),
       );
       const feedback = "Do not modify any more files.";
@@ -3267,7 +3267,7 @@ describe("Vision route fake Gateway", () => {
         await session.sendText(rootRequest);
         await session.waitForText("Would you like to allow this action?", TIMEOUT);
         await session.sendKeys("Tab");
-        await session.waitForText("Yes, and tell fx what to do next", TIMEOUT);
+        await session.waitForText("Yes, and tell Tetris what to do next", TIMEOUT);
         await session.sendLiteralText(feedback);
         await session.waitForText(`Yes, ${feedback}`, TIMEOUT);
         await session.sendKeys("Enter");
@@ -3306,7 +3306,7 @@ describe("Vision route fake Gateway", () => {
       const firstMutatedPayload = writeMarkedImage(firstMutatedPath, "TMUX_PERMISSION_B");
       writeMarkedImage(secondImagePath, "TMUX_OUTAGE_A");
       writeFileSync(
-        join(root.home, ".fx", "settings.json"),
+        join(root.home, ".tetris", "settings.json"),
         JSON.stringify({ permission_mode: "ask", permission: {} }),
       );
       const gateway = startImageGateway([
@@ -3560,7 +3560,7 @@ describe("request size budget", () => {
         if (status !== 200) {
           return new Response(rejection.body, { status, headers: { "content-type": "application/json" } });
         }
-        if (!tools) return sseText("Summary: the user asked fx to read six images.");
+        if (!tools) return sseText("Summary: the user asked tetris to read six images.");
         if (answer === "describe") return sseText("done: described the images");
         if (issued < count) {
           issued += 1;

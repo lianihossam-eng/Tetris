@@ -1,5 +1,5 @@
 ---- MODULE UrlRetry ----
-\* How fx holds an MCP tool call that a 2025 server answered with
+\* How Tetris holds an MCP tool call that a 2025 server answered with
 \* URLElicitationRequiredError (-32042), for one server and one call that
 \* can ask.
 \*
@@ -166,7 +166,7 @@ SessionEnds ==
     /\ slotOf' = [j \in Js |-> IF slotOf[j] # NoSlot /\ eng[slotOf[j]] \in {"shown", "early"} THEN NoSlot ELSE slotOf[j]]
     /\ UNCHANGED <<calls, phase, seen, truly, signal, consented, said, retriedBy, proof, ended>>
 
-\* fx calls the tool again; `choice` is what the user chose last.
+\* Tetris calls the tool again; `choice` is what the user chose last.
 Again(why, choice) ==
     /\ calls' = calls + 1
     /\ phase' = "calling"
@@ -200,7 +200,7 @@ UserRefuses(how) ==
     /\ ended' = how
     /\ UNCHANGED <<calls, slotOf, seen, truly, signal, consented, said, retriedBy, proof>>
 
-\* The signal closed the waiting question: fx calls again on its own.
+\* The signal closed the waiting question: Tetris calls again on its own.
 AutoRetry ==
     /\ phase = "waiting"
     /\ signal = "completed"
@@ -252,7 +252,7 @@ SeenWhenDone == phase = "waiting" => \A j \in Js : (truly[j] /\ slotOf[j] # NoSl
 \* The signal completes only once every URL has come.
 SignalTruth == signal = "completed" => \A j \in Js : seen[j]
 
-\* fx calls again only after the user opened the URLs, and then only when
+\* Tetris calls again only after the user opened the URLs, and then only when
 \* every completion came or the user chose Retry.
 RetryOnlyAfterProof ==
     retriedBy # "none" =>
@@ -262,7 +262,7 @@ RetryOnlyAfterProof ==
         /\ retriedBy = "completions" => proof.all
 
 \* Stated for users: a call the server needs a URL for ends by the user's
-\* choice or the server's answer, never by fx alone.
+\* choice or the server's answer, never by Tetris alone.
 EndsByUserOrServer == ended # "fx"
 
 \* A held call ends: it calls again or it is over.

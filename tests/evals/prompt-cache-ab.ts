@@ -4,7 +4,7 @@
  * Each scenario is one saved fx session in its own profile and repository:
  * turn 1 reads every file to build a real history, then one event happens
  * (a branch switch, a permission change, folder rules, a restart, a named
- * skill), then more turns, each through `fx ask --resume last`. A recording
+ * skill), then more turns, each through `tetris ask --resume last`. A recording
  * proxy in front of AI Gateway keeps every request and the usage its stream
  * reports. Per run it reports:
  *
@@ -221,7 +221,7 @@ export const SCENARIOS: Scenario[] = [
   },
   {
     name: "permnote",
-    turns: ["Without running any tools, which fx permission mode applies right now? Reply with only the mode name."],
+    turns: ["Without running any tools, which tetris permission mode applies right now? Reply with only the mode name."],
     defaultAccess: [0],
     check: (run) => (run.turns[1]?.output ?? "").toLowerCase().includes("auto"),
   },
@@ -282,11 +282,11 @@ export function writeFixtureRepo(repo: string): void {
 }
 
 function writeProfile(home: string): void {
-  mkdirSync(join(home, ".fx", "skills", "pineapple-note"), { recursive: true, mode: 0o700 });
-  writeFileSync(join(home, ".fx", "settings.json"), JSON.stringify({ permission_mode: "auto" }) + "\n", { mode: 0o600 });
+  mkdirSync(join(home, ".tetris", "skills", "pineapple-note"), { recursive: true, mode: 0o700 });
+  writeFileSync(join(home, ".tetris", "settings.json"), JSON.stringify({ permission_mode: "auto" }) + "\n", { mode: 0o600 });
   // Every scenario has the same profile from turn 1, so only the event differs.
   writeFileSync(
-    join(home, ".fx", "skills", "pineapple-note", "SKILL.md"),
+    join(home, ".tetris", "skills", "pineapple-note", "SKILL.md"),
     "---\nname: pineapple-note\ndescription: Demo skill with a visible effect. Use when asked for a pineapple note.\n---\n\n" +
       "# Pineapple note\n\nWhen this skill is active, end every reply with the word PINEAPPLE.\n",
   );
@@ -344,6 +344,8 @@ export async function runScenario(
     FX_GATEWAY_CHAT_URL: `${proxy.url}/v4/ai/language-model`,
     FX_GATEWAY_BASE_URL: proxy.url,
   };
+  // The scenario profile lives at `home`; an ambient TETRIS_HOME must not move it.
+  delete env.TETRIS_HOME;
   const turn = async (prompt: string, resume: boolean, fullAccess: boolean) => {
     const args = ["ask", ...(fullAccess ? ["--full-access"] : []), "--json", ...(resume ? ["--resume", "last"] : []), "--", prompt];
     const result = await runAsk(opts.binary, args, { cwd: repo, env, timeoutMs: opts.timeoutMs });

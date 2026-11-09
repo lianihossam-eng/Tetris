@@ -36,12 +36,12 @@ const TIMEOUT = 30_000;
 const OUTER_MODEL = "openai/gpt-5";
 const APPROVAL_PROMPT = "Would you like to run the following command?";
 const DEFAULT_COMMAND_APPROVAL_REASON =
-  "Reason: fx needs your approval before running this shell command.";
+  "Reason: Tetris needs your approval before running this shell command.";
 const COMMAND_ALWAYS_CHOICE = "Yes, and don't ask again for this exact command";
 const COMMAND_YES_CHOICE = "Yes";
 const COMMAND_NO_CHOICE = "No";
-const COMMAND_YES_AMENDMENT = "Yes, and tell fx what to do next";
-const COMMAND_NO_AMENDMENT = "No, and tell fx what to do differently";
+const COMMAND_YES_AMENDMENT = "Yes, and tell Tetris what to do next";
+const COMMAND_NO_AMENDMENT = "No, and tell Tetris what to do differently";
 const QUESTION_PROMPT = "Choose next step?";
 const FORBIDDEN_TYPING = "typing a reply";
 const FORBIDDEN_TYPING_SUFFIX = "ping a reply";
@@ -56,7 +56,7 @@ const MALFORMED_LABEL_SENTINEL = "FX_MALFORMED_LABEL_SENTINEL";
 const MALFORMED_STREAMED_ARGUMENTS =
   `{"path":"${MALFORMED_LABEL_SENTINEL}",`;
 const LONG_QUESTION =
-  "When you ask fx to ask a question interactively, the question text must remain fully visible even when it wraps.";
+  "When you ask tetris to ask a question interactively, the question text must remain fully visible even when it wraps.";
 const LONG_QUESTION_ANSWER =
   "Run the complete verification suite before pushing this branch";
 const LONG_QUESTION_DESCRIPTION =
@@ -499,10 +499,10 @@ function createIsolatedRoot(
   const root = realpathSync(mkdtempSync(join(tmpdir(), "fx-decision-e2e-")));
   const home = join(root, "home");
   const workspace = join(root, "workspace");
-  mkdirSync(join(home, ".fx"), { recursive: true });
+  mkdirSync(join(home, ".tetris"), { recursive: true });
   mkdirSync(workspace, { recursive: true });
   writeFileSync(
-    join(home, ".fx", "settings.json"),
+    join(home, ".tetris", "settings.json"),
     JSON.stringify({ permission_mode: permissionMode, permission }),
   );
   roots.push(root);
@@ -1093,7 +1093,7 @@ describe.skipIf(SKIP)("tui: decision prompt input isolation", () => {
       await ctx.session.sendText("/quit");
       expect(await ctx.session.waitForSessionEnd(TIMEOUT)).toBe(true);
       const trace = readTrace(ctx.tracePath);
-      const sessions = readFilesRecursively(join(ctx.root.home, ".fx", "sessions"));
+      const sessions = readFilesRecursively(join(ctx.root.home, ".tetris", "sessions"));
       expect(readFileSync(ctx.stderrPath, "utf8")).toBe("");
       expect(trace).not.toContain(MALFORMED_ARGUMENTS);
       expect(sessions).not.toContain(MALFORMED_ARGUMENTS);
@@ -1165,7 +1165,7 @@ describe.skipIf(SKIP)("tui: decision prompt input isolation", () => {
       await ctx.session.sendText("/quit");
       expect(await ctx.session.waitForSessionEnd(TIMEOUT)).toBe(true);
       const trace = readTrace(ctx.tracePath);
-      const sessions = readFilesRecursively(join(ctx.root.home, ".fx", "sessions"));
+      const sessions = readFilesRecursively(join(ctx.root.home, ".tetris", "sessions"));
       expect(readFileSync(ctx.stderrPath, "utf8")).toBe("");
       expect(trace).not.toContain(MALFORMED_STREAMED_ARGUMENTS);
       expect(trace).not.toContain(MALFORMED_LABEL_SENTINEL);
@@ -1383,11 +1383,11 @@ describe.skipIf(SKIP)("tui: decision prompt input isolation", () => {
       const reports = [...stdout.matchAll(/\x1b\]7501;([^\x1b]*)\x1b\\/g)]
         .map((match) => match[1]!);
       expect(reports.map((report) => report.replace(/:msg=.*$/, ""))).toEqual([
-        "state=idle:app=fx",
-        "state=working:app=fx",
-        "state=blocked:kind=permission:app=fx",
-        "state=working:app=fx",
-        "state=done:app=fx",
+        "state=idle:app=tetris",
+        "state=working:app=tetris",
+        "state=blocked:kind=permission:app=tetris",
+        "state=working:app=tetris",
+        "state=done:app=tetris",
         "state=clear",
       ]);
       const encodedMessage = reports[2]!.split(":msg=")[1] ?? "";
@@ -2434,7 +2434,7 @@ describe.skipIf(SKIP)("tui: decision prompt input isolation", () => {
 
         // fx 2 answers at once while fx 1's turn is still out.
         await ctx.session.sendText("/launch");
-        await ctx.session.waitForPane((pane) => pane.includes("fx 2/2"), TIMEOUT);
+        await ctx.session.waitForPane((pane) => pane.includes("tetris 2/2"), TIMEOUT);
         await ctx.session.waitForComposer(TIMEOUT);
         await ctx.session.sendText("Answer right away.");
         await ctx.session.waitForText("HERDR_SECOND_DONE", TIMEOUT);
@@ -3010,7 +3010,7 @@ describe.skipIf(SKIP)("tui: decision prompt input isolation", () => {
         .find((line) => line.includes("remain fully visible even when it wraps."));
       const questionLead = pane
         .split("\n")
-        .find((line) => line.includes("When you ask fx to ask a question"));
+        .find((line) => line.includes("When you ask tetris to ask a question"));
       const labelContinuation = pane
         .split("\n")
         .find((line) => line.includes("verification suite before"));
@@ -3024,7 +3024,7 @@ describe.skipIf(SKIP)("tui: decision prompt input isolation", () => {
         .split("\n")
         .find((line) => line.includes("Keep the entire explanation"));
       expect(questionContinuation?.indexOf("remain fully visible even when it wraps.")).toBe(
-        questionLead?.indexOf("When you ask fx to ask a question"),
+        questionLead?.indexOf("When you ask tetris to ask a question"),
       );
       expect(labelContinuation?.indexOf("verification suite before")).toBe(
         labelLead?.indexOf("Run the complete"),
@@ -3046,7 +3046,7 @@ describe.skipIf(SKIP)("tui: decision prompt input isolation", () => {
       // in the transcript instead of trailing off with an ellipsis.
       const resolvedRows = stripAnsi(await ctx.session.captureFullScrollbackEscapes()).split("\n");
       const resolvedQuestionRow = resolvedRows.find((line) =>
-        line.includes("1) When you ask fx to ask a question"),
+        line.includes("1) When you ask tetris to ask a question"),
       );
       expect(resolvedQuestionRow).toBeDefined();
       expect(resolvedQuestionRow).not.toContain("…");
@@ -3353,7 +3353,7 @@ describe.skipIf(SKIP)("tui: decision prompt input isolation", () => {
   );
 
   test(
-    "a herdr socket that never answers leaves fx running",
+    "a herdr socket that never answers leaves tetris running",
     async () => {
       const socketRoot = createIsolatedRoot();
       const socketPath = join(socketRoot.root, "herdr.sock");

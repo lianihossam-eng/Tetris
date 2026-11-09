@@ -1,11 +1,11 @@
-"""Fail CI when fx's user-facing controls drift from the shape rules.
+"""Fail CI when Tetris's user-facing controls drift from the shape rules.
 
 The check reads the real source rather than a model of it:
 
-  env       every FX_* name in src/ is registered with a job and a stability,
-            test hooks and only test hooks start with FX_TEST_, every other
+  env       every FX_* and TETRIS_* name in src/ is registered with a job and a stability,
+            test hooks and only test hooks start with FX_TEST_ or TETRIS_TEST_, every other
             env var read by name is listed, nothing is stale, and the
-            overrides fx config list reports are stable
+            overrides tetris config list reports are stable
   flags     flags are kebab-case and carry no value inside their name
   parsing   CLI code reads flags through cli_flags and the option lists help
             renders, so no command compares an argument with a flag by hand
@@ -13,7 +13,7 @@ The check reads the real source rather than a model of it:
             src/core/config/settings_keys.zig marks exactly the keys
             parseProjectSafeFields reads as project-safe
   warnings  every key the profile parser reads is in the settings list as
-            profile-only, so fx doctor knows it and a project .fx.json that
+            profile-only, so tetris doctor knows it and a project .fx.json that
             sets it gets a warning
 
 Known exceptions live in scripts/cli_shape_registry.json, each with the reason
@@ -60,7 +60,7 @@ STABILITIES = {"stable", "experimental", "deprecated", "internal"}
 KEBAB_FLAG = re.compile(r"^--[a-z0-9]+(?:-[a-z0-9]+)*$")
 SHORT_FLAG = re.compile(r"^-[A-Za-z0-9]$")
 SNAKE_KEY = re.compile(r"^[a-z][a-z0-9_]*$")
-FX_LITERAL = re.compile(r'"(FX_[A-Z0-9_]+)"')
+PRODUCT_ENV_LITERAL = re.compile(r'"((?:FX|TETRIS)_[A-Z0-9_]+)"')
 GETENV_LITERAL = re.compile(r'getenv\("([A-Za-z_][A-Za-z0-9_]*)"\)')
 FLAG_LITERAL = re.compile(r'"(--?[A-Za-z0-9][A-Za-z0-9_<>-]*)=?"')
 KEY_READ = re.compile(r'\.(?:get|getPtr|contains)\("([^"]+)"\)')
@@ -243,11 +243,11 @@ class Checker:
         for source in sorted((self.root / "src").rglob("*.zig")):
             path = source.relative_to(self.root).as_posix()
             for line in self.lines(path):
-                for match in FX_LITERAL.finditer(line.text):
+                for match in PRODUCT_ENV_LITERAL.finditer(line.text):
                     seen.setdefault(match.group(1), line)
                 for match in GETENV_LITERAL.finditer(line.text):
                     name = match.group(1)
-                    if not name.startswith("FX_"):
+                    if not name.startswith(("FX_", "TETRIS_")):
                         seen_external.setdefault(name, line)
         for name in sorted(set(not_env) - set(seen)):
             self.report(None, "env", f"not_env lists {name}, which src/ no longer contains; remove it")
@@ -264,12 +264,12 @@ class Checker:
                 self.report(None, "env", f"{name} is registered but no longer appears in src/; remove it")
             if entry.get("job") not in JOBS:
                 self.report(None, "env", f"{name} has job {entry.get('job')!r}; use one of {sorted(JOBS)}")
-            if (entry.get("job") == "test") != name.startswith("FX_TEST_"):
+            if (entry.get("job") == "test") != name.startswith(("FX_TEST_", "TETRIS_TEST_")):
                 self.report(
                     None,
                     "env",
                     f"{name} has job {entry.get('job')!r}, but test hooks and only test hooks "
-                    "start with FX_TEST_; rename it or change its job",
+                    "start with FX_TEST_ or TETRIS_TEST_; rename it or change its job",
                 )
             if entry.get("stability") not in STABILITIES:
                 self.report(
@@ -282,8 +282,8 @@ class Checker:
                 self.report(
                     line,
                     "env",
-                    f"{name} is read but is neither an FX_* variable nor listed in "
-                    f"external_env in {REGISTRY}. fx's own variables use the FX_ prefix.",
+                    f"{name} is read but is neither an FX_* or TETRIS_* variable nor listed in "
+                    f"external_env in {REGISTRY}. Tetris-owned variables use the TETRIS_ prefix.",
                 )
         for name in sorted(external - set(seen_external)):
             self.report(None, "env", f"external_env lists {name}, which src/ no longer reads; remove it")
@@ -295,7 +295,7 @@ class Checker:
         registered = self.registry.get("env", {})
         overrides: dict[str, Line] = {}
         for line in function_body(self.lines(ENV_SETTINGS), "collect"):
-            for match in FX_LITERAL.finditer(line.text):
+            for match in PRODUCT_ENV_LITERAL.finditer(line.text):
                 overrides.setdefault(match.group(1), line)
         for name, line in sorted(overrides.items()):
             stability = registered.get(name, {}).get("stability")
@@ -389,7 +389,7 @@ class Checker:
                     "warnings",
                     f'"{key}" is profile-only, so a project .fx.json that sets it is '
                     f"ignored. List it in {SETTINGS_KEYS} with .where = .profile so the "
-                    "user is told and fx doctor knows the key.",
+                    "user is told and tetris doctor knows the key.",
                 )
         project_reads: set[str] = set()
         for line in project:
@@ -472,8 +472,8 @@ class Checker:
             self.report(None, "names", f'run_options names libfx model option "{field}", which FxModelOptions doesn\'t declare')
 
     def check_removal(self) -> None:
-        """Old spellings, such as `fx setup`, keep working with a warning until
-        old_spelling_removal; once fx reaches that version they must go."""
+        """Old spellings, such as `tetris setup`, keep working with a warning until
+        old_spelling_removal; once Tetris reaches that version they must go."""
         version = version_tuple(VERSION, (self.root / MAIN).read_text(), MAIN)
         removal = version_tuple(OLD_SPELLING_REMOVAL, (self.root / COMMAND_SPECS).read_text(), COMMAND_SPECS)
         if version >= removal:
@@ -481,7 +481,7 @@ class Checker:
             self.report(
                 None,
                 "removal",
-                f"fx {shown} drops the old spellings that warn they stop working in it: remove them, then old_spelling_removal "
+                f"Tetris {shown} drops the old spellings that warn they stop working in it: remove them, then old_spelling_removal "
                 f"(see decided-names.md in .fx/skills/fx-cli-shape/references)",
                 COMMAND_SPECS,
             )

@@ -1082,9 +1082,9 @@ async function runStartupScrollbackOverflow(
   writeReproScript(manifest);
 
   const fixture = createFixture(runId);
-  mkdirSync(join(fixture.home, ".fx"), { recursive: true });
+  mkdirSync(join(fixture.home, ".tetris"), { recursive: true });
   writeFileSync(
-    join(fixture.home, ".fx", "settings.json"),
+    join(fixture.home, ".tetris", "settings.json"),
     `${JSON.stringify({ startup_scrollback: startupScrollback })}\n`,
   );
   const gateway = startLocalGatewayFixture(promptTail);
@@ -2307,11 +2307,11 @@ function preflight(): void {
 
 function preflightBinaryOnly(): void {
   if (!existsSync(FX_BIN)) {
-    throw new Error(`fx binary not found at ${FX_BIN}. Run zig build first.`);
+    throw new Error(`tetris binary not found at ${FX_BIN}. Run zig build first.`);
   }
   const stat = statSync(FX_BIN);
   if (!stat.isFile() || (stat.mode & 0o111) === 0) {
-    throw new Error(`fx binary is not executable at ${FX_BIN}`);
+    throw new Error(`tetris binary is not executable at ${FX_BIN}`);
   }
 }
 
@@ -2343,11 +2343,11 @@ function createFixture(runId: string): Fixture {
     work: join(root, "w"),
     histfile: join(root, "hist"),
   };
-  mkdirSync(join(fixture.home, ".fx"), { recursive: true });
+  mkdirSync(join(fixture.home, ".tetris"), { recursive: true });
   mkdirSync(fixture.zdotdir, { recursive: true });
   mkdirSync(fixture.work, { recursive: true });
   writeFileSync(
-    join(fixture.home, ".fx", "settings.json"),
+    join(fixture.home, ".tetris", "settings.json"),
     `${JSON.stringify({})}\n`,
   );
   writeFileSync(join(fixture.work, "run-id.txt"), `${runId}\n`);
