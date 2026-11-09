@@ -200,7 +200,7 @@ The PR verification baseline is:
 
 | Check | What it runs |
 | --- | --- |
-| `Build & Test` | Formatting, PGSO corpus, public-surface and module-boundary checks, unit tests, and SDK package jobs |
+| `Build & Test` | Formatting, PGSO corpus, public-surface and module-boundary checks, unit tests, the Tetris agent, and SDK package jobs |
 | `E2E (deterministic)` | End-to-end files split across weighted shards plus the MCP conformance baseline |
 | `Shellcheck` | `bash -n` and `shellcheck` on workflow scripts |
 | `Startup Latency` | ReleaseSafe CLI startup benchmarks and the interactive performance test |
