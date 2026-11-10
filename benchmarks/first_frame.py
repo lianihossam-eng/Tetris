@@ -1,23 +1,24 @@
 #!/usr/bin/env python3
-"""Measure interactive launch latency: keypress to first fx frame.
+"""Measure interactive launch latency: keypress to first Tetris frame.
 
-Each run starts fx on a fresh pseudo-terminal, answers the terminal queries a
+Each run starts Tetris on a fresh pseudo-terminal, answers the terminal queries a
 fast emulator answers (background color, cursor position, color scheme,
 device attributes), and timestamps the output. After a fixed window it sends
 Ctrl+D and records exit latency plus the process's CPU time and peak RSS.
 
 Binaries are interleaved round-robin, after unrecorded warmup launches, so
 every candidate sees the same machine load. Results depend on the profile and
-working directory in use: by default fx runs with the caller's environment and
-HOME, which is what users feel. Pass --isolated-home for a reproducible empty
+working directory in use: by default Tetris runs with the caller's environment
+and HOME, which is what users feel. Pass --isolated-home for a reproducible empty
 profile. Auto-upgrade is disabled, and a binary that changes on disk during
 the run invalidates the results.
 
 Usage:
-  python3 benchmarks/first_frame.py                              # ./zig-out/bin/fx, 30 runs
-  python3 benchmarks/first_frame.py --binary /tmp/fx-base --binary ./zig-out/bin/fx
+  python3 benchmarks/first_frame.py                              # ./zig-out/bin/tetris, 30 runs
+  python3 benchmarks/first_frame.py --binary /tmp/fx-base --binary ./zig-out/bin/tetris
   python3 benchmarks/first_frame.py --isolated-home --cwd /tmp --runs 50 --json out.json
 """
+
 
 import argparse
 import fcntl
@@ -187,13 +188,13 @@ def print_table(names, summaries):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("--binary", action="append", help="fx binary to measure (repeatable)")
+    parser.add_argument("--binary", action="append", help="Tetris binary to measure (repeatable)")
     parser.add_argument("--runs", type=int, default=30, help="runs per binary")
     parser.add_argument("--warmup", type=int, default=2,
                         help="unrecorded launches per binary first; macOS scans a new binary on its first run")
     parser.add_argument("--window", type=float, default=2.0, help="seconds before Ctrl+D")
-    parser.add_argument("--cwd", default=os.getcwd(), help="working directory for fx")
-    parser.add_argument("--env", action="append", default=[], help="extra KEY=VALUE for fx")
+    parser.add_argument("--cwd", default=os.getcwd(), help="working directory for Tetris")
+    parser.add_argument("--env", action="append", default=[], help="extra KEY=VALUE for Tetris")
     parser.add_argument("--isolated-home", action="store_true", help="run with an empty temporary HOME")
     parser.add_argument("--marker", default=DEFAULT_MARKER, help="text that marks the first frame")
     parser.add_argument("--rows", type=int, default=50)

@@ -4,9 +4,9 @@ set -euo pipefail
 
 umask 077
 
-signing_identity="Developer ID Application: Vercel, Inc (JW6Y669B67)"
-signing_identifier="com.vercel.fx"
-signing_team_id="JW6Y669B67"
+signing_identity="${APPLE_DEVELOPER_IDENTITY:-}"
+signing_identifier="${TETRIS_SIGNING_IDENTIFIER:-}"
+signing_team_id="${APPLE_TEAM_ID:-}"
 
 openssl_bin="${FX_SIGNING_OPENSSL_BIN:-/usr/bin/openssl}"
 security_bin="${FX_SIGNING_SECURITY_BIN:-/usr/bin/security}"
@@ -33,6 +33,9 @@ if [[ "${signing_page_size}" == 16384 && "${binary_archs}" != arm64 ]]; then
     exit 1
 fi
 for required_name in \
+    APPLE_DEVELOPER_IDENTITY \
+    APPLE_TEAM_ID \
+    TETRIS_SIGNING_IDENTIFIER \
     APPLE_DEVELOPER_ID_P12_BASE64 \
     APPLE_DEVELOPER_ID_P12_PASSWORD \
     APPLE_NOTARY_KEY_P8_BASE64 \

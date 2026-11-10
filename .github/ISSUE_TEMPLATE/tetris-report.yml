@@ -1,5 +1,5 @@
-name: fx bug report
-description: Report a problem with fx
+name: Tetris bug report
+description: Report a problem with Tetris
 title: "Bug: "
 labels:
   - bug

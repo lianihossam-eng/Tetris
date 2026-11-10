@@ -12,7 +12,7 @@
 # and with failures, crashes, an unreadable cache, and clock correction
 # (Hostile, HostileSwitch). Each must pass.
 #
-# The planted bugs and the runs against real fx TUIs are in ../drivers/usage/:
+# The planted bugs and the runs against real Tetris TUIs are in ../drivers/usage/:
 #   bun ../drivers/usage/model/model.ts           # base configs and planted bugs
 #   bun test ../drivers/usage/model/              # replay TLC behaviors in tmux
 #   bun ../drivers/usage/lean/drive.ts --traces 4

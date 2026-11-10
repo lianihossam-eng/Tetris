@@ -13,7 +13,7 @@
 # commits, and how each tool result keeps the time it was made.
 # stream-holds.cfg must pass with every edge case on: results that lost their
 # stamp, compaction, recovery from a checkpoint, and faults. stream-before-
-# safe.cfg must pass for fx before results kept their stamps, and
+# safe.cfg must pass for Tetris before results kept their stamps, and
 # stream-before-reparses.cfg shows that design reparsed streamed pieces. Each
 # stream-mutant-*.cfg plants one bug that its property must catch, and each
 # stream-witness-*.cfg must be violated. stream-simulate*.cfg run random
@@ -22,7 +22,7 @@
 # SessionWrite models how a session's writes list the compactor's records
 # (D50) when they run on more than one thread. session-write.cfg must pass
 # with one write at a time and failed appends on. session-write-today*.cfg
-# show fx before the write lock: the second clear panics, a clear can drop a
+# show Tetris before the write lock: the second clear panics, a clear can drop a
 # record no batch listed, and two batches list the same record. Each
 # session-write-mutant-*.cfg plants one bug that its property must catch,
 # and each session-write-witness-*.cfg must be violated.

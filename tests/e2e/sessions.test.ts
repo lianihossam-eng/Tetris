@@ -37,7 +37,7 @@ import {
 } from "./tmux-helpers";
 import { childLines, childWork, compactionRecordPath, type LogLine, logLines, onlySessionId, rootSessionIds, savedSessionIds, sessionDir, storeRoot } from "./saved-sessions";
 
-// The session store: every `fx ask` entry and exit, the files it writes, and the faults a real disk and a real
+// The session store: every `tetris ask` entry and exit, the files it writes, and the faults a real disk and a real
 // crash produce: kills mid-stream and mid-tool, a torn tail, a flipped
 // byte, a second process, a read-only folder and a full disk.
 
@@ -210,7 +210,7 @@ function blocksJustPast(path: string) {
   return Math.ceil(statSync(path).size / SH_LIMIT_BLOCK) + 1;
 }
 
-/// `fx ask` under a file-size limit of `blocks` shell blocks with SIGXFSZ
+/// `tetris ask` under a file-size limit of `blocks` shell blocks with SIGXFSZ
 /// ignored, so a write past it fails with EFBIG the way a full disk fails
 /// with ENOSPC. The ignored signal survives the `exec`.
 function askWithSizeLimit(fixture: Fixture, gateway: any, blocks: number, args: string[]) {
@@ -242,9 +242,9 @@ function shape(lines: LogLine[]): string[] {
 /// The v1 sessions folder holds nothing but the v2 root: no dual writes.
 /// No v2 session ever makes a side folder either (D48).
 function expectNoV1Sessions(fixture: Fixture) {
-  const sessions = join(fixture.home, ".fx", "sessions");
+  const sessions = join(fixture.home, ".tetris", "sessions");
   expect(readdirSync(sessions).filter((name) => name !== "v2")).toEqual([]);
-  expect(existsSync(join(fixture.home, ".fx", "session-files"))).toBe(false);
+  expect(existsSync(join(fixture.home, ".tetris", "session-files"))).toBe(false);
 }
 
 /// The blob a v2 handle names: the hash at its end, in the session's own
@@ -264,7 +264,7 @@ function blobNames(fixture: Fixture, id: string): string[] {
   return names;
 }
 
-/// A local command such as `fx sessions`, run in the fixture's workspace.
+/// A local command such as `tetris sessions`, run in the fixture's workspace.
 function command(fixture: Fixture, gateway: any, args: string[], cwd = fixture.workspace) {
   return runFx(args, { cwd, env: env(fixture, gateway), timeoutMs: TIMEOUT });
 }
@@ -278,7 +278,7 @@ async function ask(fixture: Fixture, gateway: any, args: string[]) {
   return result;
 }
 
-test("fx ask saves to v2, resumes by id and by last, and never writes v1", async () => {
+test("tetris ask saves to v2, resumes by id and by last, and never writes v1", async () => {
   const fixture = createFixture("fx-v2-ask-");
   const gateway = startFakeGateway([
     fakeGatewayFinalText("V2_FIRST_ANSWER"),
@@ -360,7 +360,7 @@ test("an ask saves only to the store, and --no-save writes nothing", async () =>
   }
 }, TIMEOUT * 3);
 
-test("fx ask keeps the conversation language when a resumed turn has no language of its own", async () => {
+test("tetris ask keeps the conversation language when a resumed turn has no language of its own", async () => {
   const fixture = createFixture("fx-v2-language-");
   const gateway = startFakeGateway([
     fakeGatewayFinalText("こんにちは。"),
@@ -393,7 +393,7 @@ test("fx ask keeps the conversation language when a resumed turn has no language
 const sha256 = (bytes: Buffer) => createHash("sha256").update(bytes).digest("hex");
 
 for (const userHeavy of [false, true]) {
-  test(`fx ask compacts on its own, keeps what it summarized as blobs, and resumes from the summary, userHeavy=${userHeavy}`, async () => {
+  test(`tetris ask compacts on its own, keeps what it summarized as blobs, and resumes from the summary, userHeavy=${userHeavy}`, async () => {
     const fixture = createFixture("fx-v2-compaction-");
     const model = "fixture/compaction";
     const originalUser = "Keep café and the original constraint unchanged." +
@@ -603,7 +603,7 @@ test("a long command output is kept as one read-only blob, and the model pages i
   }
 }, TIMEOUT * 3);
 
-test("fx ask killed in the middle of a turn resumes with that turn interrupted", async () => {
+test("tetris ask killed in the middle of a turn resumes with that turn interrupted", async () => {
   const fixture = createFixture("fx-v2-kill-");
   let stalled: () => void = () => {};
   const reachedStall = new Promise<void>((resolve) => (stalled = resolve));
@@ -913,7 +913,7 @@ test.skipIf(!tmuxAvailable())("a flipped byte in a turn the newest compaction ke
     expect(await resumed.session.waitForSessionEnd(TIMEOUT)).toBe(true);
     await resumed.session.kill();
     expect(readFileSync(resumed.stderrPath, "utf8")).toBe(
-      "fx: saved session is unreadable. Run `fx doctor`; if it is recoverable, use `fx session recover <id>`.\n",
+      "tetris: saved session is unreadable. Run `tetris doctor`; if it is recoverable, use `tetris session recover <id>`.\n",
     );
 
     // An ACP client hears the session couldn't be loaded, not that it is missing.
@@ -1202,8 +1202,8 @@ test.skipIf(!tmuxAvailable())("an app quit before its first prompt leaves no ses
     const app = await startApp(fixture, gateway, []);
     await quitApp(app);
     expect(existsSync(storeRoot(fixture.home)) ? savedSessionIds(fixture.home) : []).toEqual([]);
-    expect(existsSync(join(fixture.home, ".fx", "session-files"))).toBe(false);
-    const terminals = join(fixture.home, ".fx", "terminal");
+    expect(existsSync(join(fixture.home, ".tetris", "session-files"))).toBe(false);
+    const terminals = join(fixture.home, ".tetris", "terminal");
     expect(existsSync(terminals) ? readdirSync(terminals) : []).toEqual([]);
   } finally {
     gateway.stop();
@@ -1297,10 +1297,10 @@ test.skipIf(!tmuxAvailable())("the picker lists v2 sessions, /rename sticks, and
   }
 }, TIMEOUT * 6);
 
-test.skipIf(!tmuxAvailable())("the picker shows a session open in another fx as busy at once, and opens it once the owner quits", async () => {
+test.skipIf(!tmuxAvailable())("the picker shows a session open in another Tetris as busy at once, and opens it once the owner quits", async () => {
   const fixture = createFixture("fx-v2-app-picker-busy-");
   const gateway = replyToLatest([["Hold this session open.", "PICKER_BUSY_SAVED"]]);
-  const busy = "This session is open in another fx. Close it there, then press enter to retry.";
+  const busy = "This session is open in another Tetris. Close it there, then press enter to retry.";
   let contender: TmuxSession | null = null;
   try {
     const owner = await startApp(fixture, gateway, []);
@@ -1368,7 +1368,7 @@ async function waitForForkNotice(session: TmuxSession, source: string, prompt: s
   return session.waitForPane((pane) => {
     const lines = pane.split("\n");
     const label = lines.lastIndexOf(FORK_RESUME_LABEL);
-    return label >= 0 && lines[label + 1] === `fx --resume ${source}` && lines[label + 2] === "" && composerContains(pane, prompt);
+    return label >= 0 && lines[label + 1] === `tetris --resume ${source}` && lines[label + 2] === "" && composerContains(pane, prompt);
   }, TIMEOUT);
 }
 
@@ -1382,10 +1382,10 @@ function expectForkNoticeAfterReplay(lines: string[], lastReplayed: string, titl
   expect(replayed).toBeGreaterThanOrEqual(0);
   expect(notice).toBeGreaterThan(replayed);
   expect(label).toBeGreaterThan(notice);
-  expect(lines[label + 1]).toBe(`fx --resume ${source}`);
+  expect(lines[label + 1]).toBe(`tetris --resume ${source}`);
   // A blank row keeps the command off the input box below it.
   expect(lines[label + 2]).toBe("");
-  expect(lines.some((line) => line.includes("original session fx --resume"))).toBe(false);
+  expect(lines.some((line) => line.includes("original session tetris --resume"))).toBe(false);
 }
 
 /// The fork menu's rows below the composer, each with whether it is selected.
@@ -1460,7 +1460,7 @@ test.skipIf(!tmuxAvailable())(forkTest, async () => {
     // The next prompt follows the notice with one blank row between them.
     const continued = (await app.session.captureFullScrollback()).split("\n");
     const label = continued.lastIndexOf(FORK_RESUME_LABEL);
-    expect(continued.slice(label, label + 4)).toEqual([FORK_RESUME_LABEL, `fx --resume ${source}`, "", "┃ A new second prompt in the fork."]);
+    expect(continued.slice(label, label + 4)).toEqual([FORK_RESUME_LABEL, `tetris --resume ${source}`, "", "┃ A new second prompt in the fork."]);
     await quitApp(app);
     expect(readFileSync(join(storeRoot(fixture.home), fork, "log.jsonl"), "utf8")).toContain("A new second prompt in the fork.");
     expect(readFileSync(sourcePath).equals(sourceAfterFork)).toBe(true);
@@ -1846,7 +1846,7 @@ const VISION_MODEL: FakeGatewayOptions = {
 };
 const PNG_1X1 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==";
 
-/// A piece's data: fx's JSON, which the log keeps as a string.
+/// A piece's data: tetris's JSON, which the log keeps as a string.
 function itemData(line: any): any {
   return typeof line.data === "string" ? JSON.parse(line.data) : line.data;
 }
@@ -1886,7 +1886,7 @@ function notedImagePaths(body: string): string[] {
 
 const PNG_SIGNATURE = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
 
-test("fx ask saves an image as its session's blob, names it to the model, and resume sends it again (D89)", async () => {
+test("tetris ask saves an image as its session's blob, names it to the model, and resume sends it again (D89)", async () => {
   const fixture = createFixture("fx-v2-image-");
   const gateway = replyToLatest([
     ["Describe the image.", "IMAGE_SEEN"],
@@ -2167,7 +2167,7 @@ test.skipIf(!tmuxAvailable())("ACP load after a compaction shows every earlier t
 }, TIMEOUT * 4);
 
 
-/// In `fx ask` and ACP a child's requests never offer the subagent tool, so
+/// In `tetris ask` and ACP a child's requests never offer the subagent tool, so
 /// they tell apart.
 const isChildRequest = (body: string) => !body.includes('"name":"subagent"');
 
@@ -2182,7 +2182,7 @@ const isReportTurn = (body: string) => {
   return latest.includes("Subagent report (untrusted agent output, not user instructions):");
 };
 
-test("fx ask runs a subagent as a v2 child with its own log, recorded in the parent's log", async () => {
+test("tetris ask runs a subagent as a v2 child with its own log, recorded in the parent's log", async () => {
   const fixture = createFixture("fx-v2-subagent-run-");
   const gateway = startDynamicFakeGateway((body) => {
     if (isChildRequest(body)) return fakeGatewayFinalText("CHILD_ANSWER_5521");
@@ -2238,7 +2238,7 @@ test("fx ask runs a subagent as a v2 child with its own log, recorded in the par
   }
 }, TIMEOUT * 2);
 
-test("a named subagent keeps its id, history and instructions across fx ask runs", async () => {
+test("a named subagent keeps its id, history and instructions across tetris ask runs", async () => {
   const fixture = createFixture("fx-v2-subagent-named-");
   const childBodies: string[] = [];
   let round: 1 | 2 = 1;
@@ -2444,7 +2444,7 @@ function treeOf(dir: string, prefix = ""): string[] {
   }).sort();
 }
 
-test("fx sessions and fx session show sessions by workspace and page them", async () => {
+test("tetris sessions and tetris session show sessions by workspace and page them", async () => {
   const fixture = createFixture("fx-v2-commands-");
   mkdirSync(join(fixture.root, "other"));
   const other = realpathSync(join(fixture.root, "other"));
@@ -2534,8 +2534,8 @@ async function waitForSavedText(dir: string, needle: string, timeoutMs = TIMEOUT
   throw new Error(`no saved file ever contained ${needle}`);
 }
 
-test.skipIf(!tmuxAvailable())("fx session lists a compacted session's every turn and its summary", async () => {
-  // Three turns, `/compact`, one more turn, then `fx session {id}`.
+test.skipIf(!tmuxAvailable())("tetris session lists a compacted session's every turn and its summary", async () => {
+  // Three turns, `/compact`, one more turn, then `tetris session {id}`.
   let shape: unknown[] = [];
   {
     const fixture = createFixture("fx-v2-detail-compacted-");
@@ -2568,7 +2568,7 @@ test.skipIf(!tmuxAvailable())("fx session lists a compacted session's every turn
         await session.waitForComposer(TIMEOUT);
       }
       await session.sendText("/compact");
-      await waitForSavedText(join(fixture.home, ".fx", "sessions"), "fx-compactor-v1");
+      await waitForSavedText(join(fixture.home, ".tetris", "sessions"), "fx-compactor-v1");
       await session.waitForComposer(TIMEOUT);
       await session.sendText("After detail request");
       await scrollbackContains(session, "DETAIL_AFTER");
@@ -2585,7 +2585,7 @@ test.skipIf(!tmuxAvailable())("fx session lists a compacted session's every turn
       expect(detail.stderr).toBe("");
       const shown = JSON.parse(detail.stdout);
       expect(shown.history_len).toBe(shown.history.length);
-      // The summary's text carries fx's own handles, so only its marker counts.
+      // The summary's text carries tetris's own handles, so only its marker counts.
       shape = shown.history.map((entry: any) =>
         entry.kind === "compacted_summary"
           ? ["summary", String(entry.summary).startsWith("fx-compactor-v1\n"), entry.removed_turn_count, entry.compaction_count]
@@ -2610,7 +2610,7 @@ test.skipIf(!tmuxAvailable())("fx session lists a compacted session's every turn
   ]);
 }, TIMEOUT * 8);
 
-test("fx session reads a session another process holds, and reads past a torn tail without cutting it", async () => {
+test("tetris session reads a session another process holds, and reads past a torn tail without cutting it", async () => {
   const fixture = createFixture("fx-v2-peek-");
   let stalled: () => void = () => {};
   const reachedStall = new Promise<void>((resolve) => (stalled = resolve));
@@ -2650,7 +2650,7 @@ test("fx session reads a session another process holds, and reads past a torn ta
   }
 }, TIMEOUT * 3);
 
-test("fx session recover copies the good turns and side files of a damaged session, which stays as it was", async () => {
+test("tetris session recover copies the good turns and side files of a damaged session, which stays as it was", async () => {
   const fixture = createFixture("fx-v2-recover-");
   const gateway = startFakeGateway([
     fakeShellRun("recover-shell", "echo RECOVER_TOOL_OUTPUT_4410"),
@@ -2727,7 +2727,7 @@ test("an older session moves off its side folder on its next open, and the model
     expect(created.code).toBe(0);
     const id = JSON.parse(created.stdout).session_id;
     // An older fx kept bodies and terminal state beside the log (D27).
-    const files = join(fixture.home, ".fx", "session-files");
+    const files = join(fixture.home, ".tetris", "session-files");
     const side = join(files, id);
     mkdirSync(join(side, "tool-results"), { recursive: true, mode: 0o700 });
     writeFileSync(join(side, "tool-results", oldHandle), "MOVED_OLD_BODY_3301", { mode: 0o600 });
@@ -2741,7 +2741,7 @@ test("an older session moves off its side folder on its next open, and the model
     expect(gateway.requests.at(-1)!.body).toContain("MOVED_OLD_BODY_3301");
     expect(existsSync(side)).toBe(false);
     expect(readdirSync(files)).toEqual([]);
-    expect(existsSync(join(fixture.home, ".fx", "terminal", id, "terminal", "state", "note.json"))).toBe(true);
+    expect(existsSync(join(fixture.home, ".tetris", "terminal", id, "terminal", "state", "note.json"))).toBe(true);
     const moved = logLines(fixture.home, id).filter((line) => line.kind === "set" && line.key === "moved_files");
     expect(moved).toHaveLength(1);
     expect(blobNames(fixture, id).length).toBeGreaterThanOrEqual(2);
@@ -2772,8 +2772,8 @@ test("doctor reports a damaged session and removes only old terminal and side fo
     writeFileSync(path, readFileSync(path, "utf8").replace("Doctor question two.", "Doctor question tw0."));
     const before = readFileSync(path);
     // A side folder an older fx left (D48), and terminal folders (D45).
-    const files = join(fixture.home, ".fx", "session-files");
-    const terminals = join(fixture.home, ".fx", "terminal");
+    const files = join(fixture.home, ".tetris", "session-files");
+    const terminals = join(fixture.home, ".tetris", "terminal");
     const old = join(files, "OldOrphan0001");
     const young = join(files, "NewOrphan0002");
     const oldTerminal = join(terminals, "OldOrphan0003");
@@ -2792,7 +2792,7 @@ test("doctor reports a damaged session and removes only old terminal and side fo
     const named = (name: string) => checks.filter((check) => check.name === name).map((check) => `${check.status}: ${check.detail}`);
     expect(named("state")).toEqual(["ok: sessions ready"]);
     expect(named("session")).toEqual([
-      `warn: session ${damaged} has a damaged log; \`fx session recover ${damaged}\` copies its good turns`,
+      `warn: session ${damaged} has a damaged log; \`tetris session recover ${damaged}\` copies its good turns`,
       "ok: removed 2 terminal or side folder(s) whose session is gone",
     ]);
     expect(named("sessions")).toEqual([`ok: 2 saved session(s); latest=${damaged}`]);
@@ -2832,7 +2832,7 @@ test("doctor reports a session whose blob went missing, and recover copies the t
     // The log is intact, but a turn it holds is not: doctor says so.
     const checks = JSON.parse((await command(fixture, gateway, ["doctor", "--json"])).stdout).checks;
     expect(checks.filter((check: any) => check.name === "session").map((check: any) => `${check.status}: ${check.detail}`)).toEqual([
-      `warn: session ${id} has a damaged log; \`fx session recover ${id}\` copies its good turns`,
+      `warn: session ${id} has a damaged log; \`tetris session recover ${id}\` copies its good turns`,
     ]);
 
     // Recover keeps the turn before the one whose blob is gone.
@@ -2861,7 +2861,7 @@ test("doctor reports a session whose blob went missing, and recover copies the t
 // Flows v1's suites check only through v1 files: a blob-sized piece, a
 // compacted app session, steering and cancelling an app turn.
 
-test("fx ask keeps a piece over 256 KB as a blob, and resume sends it whole", async () => {
+test("tetris ask keeps a piece over 256 KB as a blob, and resume sends it whole", async () => {
   const fixture = createFixture("fx-v2-blob-");
   const big = "BLOB_PIECE_START " + "blob-body ".repeat(30_000) + "BLOB_PIECE_END";
   const gateway = startFakeGateway([fakeGatewayFinalText(big), fakeGatewayFinalText("AFTER_BLOB_RESUME")]);
@@ -3275,7 +3275,7 @@ function flipMiddleByte(path: string) {
   writeFileSync(path, bytes);
 }
 
-/// Two saved `fx ask` turns, for a fault to damage.
+/// Two saved `tetris ask` turns, for a fault to damage.
 async function savedTwoTurns(fixture: Fixture, gateway: any) {
   const first = await ask(fixture, gateway, ["Fault question one."]);
   expect(first.code).toBe(0);
@@ -3377,7 +3377,7 @@ test.skipIf(!tmuxAvailable())("the app refuses a damaged session, a busy one and
     const flipped = await appExit(fixture, gateway, ["--resume", id]);
     expect(flipped.status).toBe(1);
     expect(flipped.stderr).toContain("saved session is unreadable");
-    expect(flipped.stderr).toContain(`fx session recover`);
+    expect(flipped.stderr).toContain(`tetris session recover`);
     expect(readFileSync(log)).toEqual(damaged);
     writeFileSync(log, good);
 
@@ -3387,7 +3387,7 @@ test.skipIf(!tmuxAvailable())("the app refuses a damaged session, a busy one and
     try {
       const readOnly = await appExit(fixture, gateway, ["--resume", id]);
       expect(readOnly.status).toBe(1);
-      expect(readOnly.stderr).toBe("fx: this session cannot be opened for writing: permission denied. Check the permissions under ~/.fx/sessions/v2, then resume again.\n");
+      expect(readOnly.stderr).toBe("tetris: this session cannot be opened for writing: permission denied. Check the permissions under ~/.tetris/sessions/v2, then resume again.\n");
     } finally {
       chmodSync(folder, 0o700);
       chmodSync(log, 0o600);
@@ -3397,7 +3397,7 @@ test.skipIf(!tmuxAvailable())("the app refuses a damaged session, a busy one and
     const owner = await startApp(fixture, gateway, ["--resume", id]);
     const busy = await appExit(fixture, gateway, ["--resume", id]);
     expect(busy.status).toBe(1);
-    expect(busy.stderr).toContain("another fx process may be using this session");
+    expect(busy.stderr).toContain("another Tetris process may be using this session");
     await quitApp(owner);
     expect(gateway.requests.length).toBe(requests);
     expectWholeLog(fixture, id);
@@ -3663,7 +3663,7 @@ test.skipIf(!tmuxAvailable())("an app killed after a named child finished resume
 
 /// Hosted terminal records for a v2 session: its terminal folder (D45).
 function terminalRecords(fixture: Fixture, id: string): Array<Record<string, unknown>> {
-  const root = join(fixture.home, ".fx", "terminal", id, "terminal", "state");
+  const root = join(fixture.home, ".tetris", "terminal", id, "terminal", "state");
   if (!existsSync(root)) return [];
   return readdirSync(root)
     .filter((name) => name.startsWith("record-") && name.endsWith(".json"))
@@ -3725,7 +3725,7 @@ test.skipIf(!tmuxAvailable())("a hosted terminal ends with an app crash, and the
     // Neither interact nor stop reattaches; both report why it is gone.
     for (const index of [3, 4]) {
       expect(gateway.requests[index]!.body).toContain("TerminalEnded");
-      expect(gateway.requests[index]!.body).toContain("ended when the fx process that started it exited");
+      expect(gateway.requests[index]!.body).toContain("ended when the Tetris process that started it exited");
     }
     expect(gateway.requests[3]!.body).not.toContain("TTY_ECHO:after the crash");
     await quitApp(resumed);
@@ -3962,7 +3962,7 @@ const REAL_FULL_DISK = process.platform === "darwin";
 const GRID_SAYS: Record<"damaged" | "denied" | "busy" | "full", Record<GridHost, RegExp>> = {
   damaged: { ask: /InvalidSessionFormat/, app: /saved session is unreadable/, acp: /^Session could not be loaded$/ },
   denied: { ask: /AccessDenied/, app: /permission denied|AccessDenied/, acp: /permission denied/ },
-  busy: { ask: /SessionBusy/, app: /another fx process may be using this session/, acp: /^Session is busy$/ },
+  busy: { ask: /SessionBusy/, app: /another Tetris process may be using this session/, acp: /^Session is busy$/ },
   full: REAL_FULL_DISK
     ? { ask: /NoSpaceLeft/, app: /NoSpaceLeft|the disk is full/, acp: /the disk is full/ }
     : { ask: /FileTooBig/, app: /FileTooBig|a file-size limit was reached/, acp: /a file-size limit was reached/ },
@@ -3972,7 +3972,7 @@ const GRID_SAYS: Record<"damaged" | "denied" | "busy" | "full", Record<GridHost,
 const GRID_BIG = `GRID_BIG_START ${"grid-body ".repeat(30_000)}GRID_BIG_END`;
 
 /// One saved home per exit and host, made once and copied into every case.
-/// The first turn is always `fx ask`'s; the app's `-c` continues only a
+/// The first turn is always `tetris ask`'s; the app's `-c` continues only a
 /// session the app has opened, so its bases end their second turn in the app.
 const gridBases = new Map<string, Promise<{ fixture: Fixture; id: string }>>();
 

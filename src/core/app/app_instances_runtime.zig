@@ -198,20 +198,20 @@ pub fn testHookCount() usize {
 fn failureText(err: anyerror) []const u8 {
     return switch (err) {
         error.SessionNotFound => "its saved session is gone",
-        error.SessionBusy => "another fx is using that session; close it there and try again",
-        error.SessionStoreUnavailable, error.SessionPersistenceUnavailable => "fx can't open its saved sessions right now",
-        error.OutOfMemory => "fx ran out of memory",
+        error.SessionBusy => "another Tetris is using that session; close it there and try again",
+        error.SessionStoreUnavailable, error.SessionPersistenceUnavailable => "Tetris can't open its saved sessions right now",
+        error.OutOfMemory => "Tetris ran out of memory",
         error.SystemResources,
         error.ThreadQuotaExceeded,
         error.LockedMemoryLimitExceeded,
         => "the system won't start another thread; close an instance and try again",
-        else => "something unexpected went wrong; run fx with FX_TRACE=1 to log why",
+        else => "something unexpected went wrong; run tetris with FX_TRACE=1 to log why",
     };
 }
 
 test "instance failures read as sentences, not error names" {
     try std.testing.expectEqualStrings("its saved session is gone", failureText(error.SessionNotFound));
-    try std.testing.expect(std.mem.find(u8, failureText(error.SessionBusy), "another fx") != null);
+    try std.testing.expect(std.mem.find(u8, failureText(error.SessionBusy), "another Tetris") != null);
     try std.testing.expect(std.mem.find(u8, failureText(error.Unexpected), "FX_TRACE=1") != null);
     try std.testing.expect(std.mem.find(u8, failureText(error.ThreadQuotaExceeded), "Thread") == null);
 }
@@ -500,7 +500,7 @@ pub fn Runtime(comptime App: type) type {
         pub fn launchAndShow(app: *App, profile_name: ?[]const u8) !void {
             const child = launch(app, profile_name) catch |err| {
                 debug_trace.logf("host", "instance launch failed profile={s} err={s}", .{ profile_name orelse "default", @errorName(err) });
-                writeFailure(app, .@"error", "Couldn't start another fx instance", profile_name, err);
+                writeFailure(app, .@"error", "Couldn't start another Tetris instance", profile_name, err);
                 return;
             };
             try AgentsRuntime.show(app, child);
@@ -519,10 +519,10 @@ pub fn Runtime(comptime App: type) type {
                 _ = launch(app, null) catch |err| {
                     debug_trace.logf("host", "startup instance launch failed index={d} err={s}", .{ app.instances.launched, @errorName(err) });
                     var prefix_buf: [128]u8 = undefined;
-                    const prefix = std.mem.print(&prefix_buf, "Started {d} of {d} fx instances", .{
+                    const prefix = std.mem.print(&prefix_buf, "Started {d} of {d} Tetris instances", .{
                         AgentsRuntime.openInstanceCount(app),
                         app.instances.startup_count + 1,
-                    }) catch "Couldn't start every fx instance";
+                    }) catch "Couldn't start every Tetris instance";
                     writeFailure(app, .@"error", prefix, null, err);
                     return;
                 };
@@ -535,7 +535,7 @@ pub fn Runtime(comptime App: type) type {
         /// host, as `/exit` does.
         pub fn closeOnScreen(app: *App) !void {
             if (app.agent_on_screen) |child| if (child.agent.role == .subagent) {
-                try app.writeDomainNotice(.{ .topic = "instances", .tone = .neutral, .body = "/close closes an fx instance. This screen is a subagent's." }, true);
+                try app.writeDomainNotice(.{ .topic = "instances", .tone = .neutral, .body = "/close closes a Tetris instance. This screen is a subagent's." }, true);
                 return;
             };
             if (AgentsRuntime.openInstanceCount(app) <= 1) {

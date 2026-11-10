@@ -73,10 +73,10 @@ describe.skipIf(!tmuxAvailable())("tui: skills command recovery", () => {
         );
         expect(session.isAlive()).toBe(true);
         expect(hasEmptyComposer(rejected)).toBe(true);
-        expect(existsSync(join(home, ".fx", "escape-attempt"))).toBe(false);
+        expect(existsSync(join(home, ".tetris", "escape-attempt"))).toBe(false);
 
         await session.sendText("/skills path");
-        const recovered = await session.waitForText("fx managed install root:", 5_000);
+        const recovered = await session.waitForText("Tetris managed install root:", 5_000);
         expect(hasEmptyComposer(recovered)).toBe(true);
         expect(readFileSync(stderrPath, "utf8")).toBe("");
       } finally {
@@ -367,9 +367,9 @@ describe.skipIf(SKIP)("tui: extra slash commands", () => {
       const workDir = mkdtempSync(join(tmpdir(), "fx-row03-clear-"));
       const homeDir = mkdtempSync(join(tmpdir(), "fx-row03-clear-home-"));
       const tracePath = join(workDir, "trace.log");
-      mkdirSync(join(homeDir, ".fx"), { recursive: true });
+      mkdirSync(join(homeDir, ".tetris"), { recursive: true });
       writeFileSync(
-        join(homeDir, ".fx", "settings.json"),
+        join(homeDir, ".tetris", "settings.json"),
         JSON.stringify({ permission: { ask_user_question: "deny" } }),
       );
       const gateway = startDynamicFakeGateway(() =>
@@ -477,11 +477,11 @@ describe.skipIf(!tmuxAvailable())("tui: MCP commands", () => {
       const root = mkdtempSync(join(tmpdir(), "fx-mcp-menu-empty-"));
       const home = join(root, "home");
       const stderrPath = join(root, "stderr.log");
-      mkdirSync(join(home, ".fx"), { recursive: true });
-      writeFileSync(join(home, ".fx", "settings.json"), "{}");
+      mkdirSync(join(home, ".tetris"), { recursive: true });
+      writeFileSync(join(home, ".tetris", "settings.json"), "{}");
       // Nothing listens on port 9, so the background start fails at once.
       writeFileSync(
-        join(home, ".fx", "mcp.json"),
+        join(home, ".tetris", "mcp.json"),
         JSON.stringify({ mcpServers: { docs: { type: "http", url: "http://127.0.0.1:9/mcp" } } }),
       );
 

@@ -76,14 +76,14 @@ function createRoot(
   cleanupRoot = root;
   const home = join(root, "home");
   const workspace = join(root, "workspace");
-  mkdirSync(join(home, ".fx"), { recursive: true });
+  mkdirSync(join(home, ".tetris"), { recursive: true });
   mkdirSync(workspace, { recursive: true });
   writeFileSync(
-    join(home, ".fx", "settings.json"),
+    join(home, ".tetris", "settings.json"),
     JSON.stringify({}),
   );
   writeFileSync(
-    join(home, ".fx", "mcp.json"),
+    join(home, ".tetris", "mcp.json"),
     JSON.stringify({
       mcp: {
         fixture: {
@@ -105,10 +105,10 @@ function createEmptyRoot(label: string) {
   cleanupRoot = root;
   const home = join(root, "home");
   const workspace = join(root, "workspace");
-  mkdirSync(join(home, ".fx"), { recursive: true });
+  mkdirSync(join(home, ".tetris"), { recursive: true });
   mkdirSync(workspace, { recursive: true });
-  writeFileSync(join(home, ".fx", "settings.json"), JSON.stringify({}));
-  writeFileSync(join(home, ".fx", "mcp.json"), JSON.stringify({ mcp: {} }));
+  writeFileSync(join(home, ".tetris", "settings.json"), JSON.stringify({}));
+  writeFileSync(join(home, ".tetris", "mcp.json"), JSON.stringify({ mcp: {} }));
   return { root, home, workspace, traceLogPath: join(root, "fx-trace.log") };
 }
 
@@ -183,7 +183,7 @@ function preserveHttpFailure(
       gatewayRequests: activeGateway.requests.map((request) => request.body),
     }, null, 2),
   );
-  throw new Error(`fx ${label} failed; retained artifacts: ${root.root}`);
+  throw new Error(`tetris ${label} failed; retained artifacts: ${root.root}`);
 }
 
 function assertModernWire(
@@ -232,7 +232,7 @@ describe("modern MCP Streamable HTTP", () => {
       },
     });
     const root = createRoot("oauth-server-failure", { url: `http://127.0.0.1:${failing.port}/mcp` });
-    writeFileSync(join(root.home, ".fx", "mcp.json"), JSON.stringify({
+    writeFileSync(join(root.home, ".tetris", "mcp.json"), JSON.stringify({
       mcp: {
         fixture: {
           type: "http",
@@ -337,7 +337,7 @@ describe("modern MCP Streamable HTTP", () => {
     ]);
   }, 25_000);
 
-  test("a plain-text discovery rejection fails closed without aborting fx", async () => {
+  test("a plain-text discovery rejection fails closed without aborting tetris", async () => {
     fixture = startModernMcpHttpFixture("legacy_plaintext_auth_rejection");
     const root = createRoot("plaintext-auth-rejection", fixture);
 
@@ -362,7 +362,7 @@ describe("modern MCP Streamable HTTP", () => {
     // With no WWW-Authenticate challenge there is no sign-in to offer.
     expect(result.code).toBe(1);
     expect(result.stdout).toContain("status     retrying");
-    expect(result.stdout).toContain("error      it refused or never answered fx's initialize request");
+    expect(result.stdout).toContain("error      it refused or never answered Tetris's initialize request");
     expect(result.stdout + result.stderr).not.toContain("InvalidJsonResponse");
     expect(result.stderr).not.toContain("panic");
     expect(fixture.requests.map((entry) => entry.message.method)).toEqual([
@@ -387,7 +387,7 @@ describe("modern MCP Streamable HTTP", () => {
       },
     );
     expect(added.code).toBe(0);
-    expect(added.stdout).toBe("Added fixture to ~/.fx/mcp.json.\n");
+    expect(added.stdout).toBe("Added fixture to ~/.tetris/mcp.json.\n");
     const methods = (from: number) => fixture!.requests.slice(from).map((entry) => entry.message.method).filter((method) => method !== "subscriptions/listen");
     // add connects once to see whether the server needs a login; this one doesn't.
     expect(methods(0)).toEqual(["server/discover", "tools/list"]);
@@ -899,7 +899,7 @@ describe("modern MCP Streamable HTTP", () => {
   }, 30_000);
 
   for (const mode of ["json", "sse"] as ModernHttpMode[]) {
-    test(`fresh fx ask calls the request-scoped ${mode.toUpperCase()} fixture`, async () => {
+    test(`fresh tetris ask calls the request-scoped ${mode.toUpperCase()} fixture`, async () => {
       fixture = startModernMcpHttpFixture(mode);
       const root = createRoot(`ask-${mode}`, fixture);
       gateway = startToolGateway(`${mode} MCP HTTP complete.`);
@@ -924,7 +924,7 @@ describe("modern MCP Streamable HTTP", () => {
     }, 30_000);
   }
 
-  test("fresh fx ask delegates unsupported input and output schema assertions", async () => {
+  test("fresh tetris ask delegates unsupported input and output schema assertions", async () => {
     fixture = startModernMcpHttpFixture("server_authoritative_schema");
     const root = createRoot("server-authoritative-schema", fixture, 5_000, true);
     gateway = startToolGateway("Server-authoritative schema complete.");
@@ -1046,7 +1046,7 @@ describe("modern MCP Streamable HTTP", () => {
     fixture = startModernMcpHttpFixture("json");
     const root = createRoot("environment-headers", fixture);
     writeFileSync(
-      join(root.home, ".fx", "mcp.json"),
+      join(root.home, ".tetris", "mcp.json"),
       JSON.stringify({
         mcp: {
           fixture: {
@@ -1088,7 +1088,7 @@ describe("modern MCP Streamable HTTP", () => {
     }
     expect(result.stdout).not.toContain("environment-bearer-secret");
     expect(result.stderr).not.toContain("environment-bearer-secret");
-    expect(readFileSync(join(root.home, ".fx", "mcp.json"), "utf8")).not
+    expect(readFileSync(join(root.home, ".tetris", "mcp.json"), "utf8")).not
       .toContain("environment-bearer-secret");
   }, 30_000);
 
@@ -1096,7 +1096,7 @@ describe("modern MCP Streamable HTTP", () => {
     fixture = startModernMcpHttpFixture("json");
     const root = createRoot("workspace-expanded-headers", fixture);
     writeFileSync(
-      join(root.home, ".fx", "mcp.json"),
+      join(root.home, ".tetris", "mcp.json"),
       JSON.stringify({ mcp: {} }),
     );
     writeFileSync(
@@ -1208,7 +1208,7 @@ describe("modern MCP Streamable HTTP", () => {
     expect(fixture.cancelledCalls).toBe(1);
   }, 30_000);
 
-  test("fx closes a held-open SSE response once its answer arrives", async () => {
+  test("tetris closes a held-open SSE response once its answer arrives", async () => {
     const heldOpen = startModernMcpHttpFixture("held_open_final");
     fixture = heldOpen;
     const root = createRoot("held-open-final-v2", heldOpen, 1_000);

@@ -208,7 +208,7 @@ pub const State = struct {
         self.reloadHost(alloc, workspace_root, registry) catch |err| {
             debug_trace.logf("mcp", "MCP reload failed err={s}", .{@errorName(err)});
             const sink = self.host_sink orelse return true;
-            sink.push(std.heap.c_allocator.print("The MCP config changed, but fx couldn't load it: {s}. Your current servers are still active.", .{mcp_verbs.describe(err)}) catch return true, true);
+            sink.push(std.heap.c_allocator.print("The MCP config changed, but Tetris couldn't load it: {s}. Your current servers are still active.", .{mcp_verbs.describe(err)}) catch return true, true);
         };
         return true;
     }
@@ -638,7 +638,7 @@ pub const State = struct {
             error.OutOfMemory => return err,
             else => {
                 const sink = self.host_sink orelse return;
-                sink.push(try a.dupe(u8, "/mcp: that command line has an unmatched quote or a character fx doesn't take here."), true);
+                sink.push(try a.dupe(u8, "/mcp: that command line has an unmatched quote or a character Tetris doesn't take here."), true);
                 return;
             },
         };
@@ -1039,7 +1039,7 @@ pub const State = struct {
             }
             var arena: std.heap.ArenaAllocator = .init(a);
             const tools = job.list(arena.allocator()) catch |err| switch (err) {
-                error.OutOfMemory => mcp_menu.Tools{ .failed = "fx ran out of memory" },
+                error.OutOfMemory => mcp_menu.Tools{ .failed = "Tetris ran out of memory" },
                 else => mcp_menu.Tools{ .failed = "the server stopped answering" },
             };
             const sink = self.host_sink orelse return arena.deinit();
@@ -1398,7 +1398,7 @@ test "the config stamp follows the MCP config files and project choices, and not
     const alloc = std.testing.allocator;
     var tmp = std.testing.tmpDir(.{});
     defer tmp.cleanup();
-    try tmp.dir.createDirPath(io_mod.getIo(), "home/.fx");
+    try tmp.dir.createDirPath(io_mod.getIo(), "home/.tetris");
     try tmp.dir.createDirPath(io_mod.getIo(), "workspace");
     const home = try io_mod.dirRealpathAlloc(alloc, tmp.dir, "home");
     defer alloc.free(home);
@@ -1408,10 +1408,10 @@ test "the config stamp follows the MCP config files and project choices, and not
     const none = configStamp(alloc, home, root);
     try std.testing.expectEqual(none, configStamp(alloc, home, root));
     // An empty file isn't a missing one.
-    try writeTestFile(&tmp, "home/.fx/mcp.json", "");
+    try writeTestFile(&tmp, "home/.tetris/mcp.json", "");
     const blank = configStamp(alloc, home, root);
     try std.testing.expect(blank != none);
-    try writeTestFile(&tmp, "home/.fx/mcp.json",
+    try writeTestFile(&tmp, "home/.tetris/mcp.json",
         \\{"mcp":{"linear":{"url":"https://mcp.linear.app/mcp"}}}
     );
     const profile = configStamp(alloc, home, root);
@@ -1426,12 +1426,12 @@ test "the config stamp follows the MCP config files and project choices, and not
     // leave it as it was.
     const unrelated = try alloc.print("{{\"permission_mode\":\"auto\",\"workspaces\":{{\"{s}\":{{\"max_agent_steps\":10}}}}}}", .{root});
     defer alloc.free(unrelated);
-    try writeTestFile(&tmp, "home/.fx/settings.json", unrelated);
+    try writeTestFile(&tmp, "home/.tetris/settings.json", unrelated);
     try std.testing.expectEqual(project, configStamp(alloc, home, root));
 
     const approved = try alloc.print("{{\"workspaces\":{{\"{s}\":{{\"" ++ @import("../mcp/project_config.zig").enabled_servers_key ++ "\":[\"p\"]}}}}}}", .{root});
     defer alloc.free(approved);
-    try writeTestFile(&tmp, "home/.fx/settings.json", approved);
+    try writeTestFile(&tmp, "home/.tetris/settings.json", approved);
     // The approval is read, so the change below is the approval's.
     var load = try config_runtime.loadProjectMcpChoicesFromHome(alloc, home, root);
     defer load.deinit(alloc);
@@ -1454,7 +1454,7 @@ test "the host loads again when its config files change outside the session, onc
     const alloc = std.testing.allocator;
     var tmp = std.testing.tmpDir(.{});
     defer tmp.cleanup();
-    try tmp.dir.createDirPath(io_mod.getIo(), "home/.fx");
+    try tmp.dir.createDirPath(io_mod.getIo(), "home/.tetris");
     try tmp.dir.createDirPath(io_mod.getIo(), "workspace");
     const home = try io_mod.dirRealpathAlloc(alloc, tmp.dir, "home");
     defer alloc.free(home);
@@ -1472,7 +1472,7 @@ test "the host loads again when its config files change outside the session, onc
 
     // `fx mcp add` in a shell writes the profile; only a check that reads the
     // files notices.
-    try writeTestFile(&tmp, "home/.fx/mcp.json",
+    try writeTestFile(&tmp, "home/.tetris/mcp.json",
         \\{"mcp":{"linear":{"url":"https://mcp.linear.app/mcp"}}}
     );
     try std.testing.expect(!state.refreshHost(alloc, home, root, registry, .requested));
@@ -1500,5 +1500,5 @@ test "the host loads again when its config files change outside the session, onc
     }
     try std.testing.expectEqual(@as(usize, 1), notices.len);
     try std.testing.expect(notices[0].warning);
-    try std.testing.expectEqualStrings("The MCP config changed, but fx couldn't load it: ~/.fx/mcp.json isn't valid JSON. Your current servers are still active.", notices[0].text);
+    try std.testing.expectEqualStrings("The MCP config changed, but Tetris couldn't load it: ~/.tetris/mcp.json isn't valid JSON. Your current servers are still active.", notices[0].text);
 }

@@ -26,9 +26,9 @@ function createFixtureRoot(label: string, settings: string = "{}"): FixtureRoot 
   const root = realpathSync(mkdtempSync(join(tmpdir(), `fx-session-title-${label}-`)));
   const home = join(root, "home");
   const workspace = join(root, "workspace");
-  mkdirSync(join(home, ".fx"), { recursive: true });
+  mkdirSync(join(home, ".tetris"), { recursive: true });
   mkdirSync(workspace, { recursive: true });
-  writeFileSync(join(home, ".fx", "settings.json"), settings);
+  writeFileSync(join(home, ".tetris", "settings.json"), settings);
   return { root, home, workspace: realpathSync(workspace) };
 }
 
@@ -72,7 +72,7 @@ function titleRequests(gateway: ReturnType<typeof startTitleAwareGateway>) {
   return gateway.titleRequests;
 }
 
-test("fx ask generates a model title for a fresh session", async () => {
+test("tetris ask generates a model title for a fresh session", async () => {
   const root = createFixtureRoot("ask");
   const gateway = startTitleAwareGateway();
   try {
@@ -103,7 +103,7 @@ test("fx ask generates a model title for a fresh session", async () => {
   }
 });
 
-test("fx ask keeps the derived title when session_titles is off", async () => {
+test("tetris ask keeps the derived title when session_titles is off", async () => {
   const root = createFixtureRoot("disabled", JSON.stringify({ session_titles: false }));
   const gateway = startTitleAwareGateway();
   try {
@@ -121,7 +121,7 @@ test("fx ask keeps the derived title when session_titles is off", async () => {
   }
 });
 
-test("fx ask keeps the derived title when the title model output is unusable", async () => {
+test("tetris ask keeps the derived title when the title model output is unusable", async () => {
   const root = createFixtureRoot("unusable");
   const gateway = startDynamicFakeGateway(_raw => fakeGatewayFinalText("MAIN_ANSWER_OK"), {
     models: [{ id: MAIN_MODEL, type: "language", tags: ["tool-use"] }],
@@ -144,7 +144,7 @@ test("fx ask keeps the derived title when the title model output is unusable", a
   }
 });
 
-test("fx ask exits soon after its answer while the title request never answers", async () => {
+test("tetris ask exits soon after its answer while the title request never answers", async () => {
   const root = createFixtureRoot("title-hang");
   let titleArrived = false;
   const gateway = startDynamicFakeGateway(_raw => fakeGatewayFinalText("MAIN_ANSWER_OK"), {
@@ -186,7 +186,7 @@ test("fx ask exits soon after its answer while the title request never answers",
   }
 }, 45_000);
 
-test("fx ask keeps a generated title that arrives soon after its answer", async () => {
+test("tetris ask keeps a generated title that arrives soon after its answer", async () => {
   const root = createFixtureRoot("title-late");
   const gateway = startDynamicFakeGateway(_raw => fakeGatewayFinalText("MAIN_ANSWER_OK"), {
     models: [{ id: MAIN_MODEL, type: "language", tags: ["tool-use"] }],
@@ -207,7 +207,7 @@ test("fx ask keeps a generated title that arrives soon after its answer", async 
   }
 }, 45_000);
 
-test("fx ask exits promptly on SIGINT while its title request never answers", async () => {
+test("tetris ask exits promptly on SIGINT while its title request never answers", async () => {
   const root = createFixtureRoot("interrupt");
   let chatArrived!: () => void;
   let titleArrived!: () => void;
@@ -373,7 +373,7 @@ test.skipIf(SKIP_TMUX)("tui generates a title in the fresh session an upgrade re
   const root = createFixtureRoot("tui-upgrade-title", JSON.stringify({ statusLine: { session: true } }));
   const installDir = join(root.root, "install");
   mkdirSync(installDir);
-  const installedFx = join(installDir, "fx");
+  const installedFx = join(installDir, "tetris");
   copyFileSync(FX_BIN, installedFx);
   chmodSync(installedFx, 0o755);
   const argvLogPath = join(root.root, "upgrade-argv.log");
@@ -389,7 +389,7 @@ test.skipIf(SKIP_TMUX)("tui generates a title in the fresh session an upgrade re
       env: {
         ...baseEnv(root, gateway),
         FX_AUTO_UPGRADE: "1",
-        FX_TEST_UPGRADE_BASE_URL: release.baseUrl,
+        TETRIS_TEST_UPGRADE_BASE_URL: release.baseUrl,
       },
     });
     await tui.waitForStableComposer(15000);
@@ -405,7 +405,7 @@ test.skipIf(SKIP_TMUX)("tui generates a title in the fresh session an upgrade re
       .map(line => line.split("\t"))
       .find(args => args[0] === installedFx && args[1] === "resume" && args[3] === "--upgrade-relaunch");
     expect(handed).toBeDefined();
-    await tui.waitForText("fx has been updated to ", 15000);
+    await tui.waitForText("Tetris has been updated to ", 15000);
 
     await tui.sendText("refactor the renderer loop to fix the crash");
     await tui.waitForText("MAIN_ANSWER_OK", 20000);

@@ -49,10 +49,10 @@ def startup_file(kind, marker, delay):
 
 
 def write_home(home, marker, delay):
-    (home / ".fx").mkdir(parents=True, mode=0o700)
+    (home / ".tetris").mkdir(parents=True, mode=0o700)
     # Background title generation would consume one fixture response and shift
     # the call accounting, so the fixture profile keeps titles off.
-    (home / ".fx/settings.json").write_text(json.dumps({"provider": "gateway", "model": "openai/gpt-5.5", "max_agent_steps": 0, "session_titles": False}))
+    (home / ".tetris/settings.json").write_text(json.dumps({"provider": "gateway", "model": "openai/gpt-5.5", "max_agent_steps": 0, "session_titles": False}))
     for index in range(PATH_EDITS):
         (home / f"bench-path/d{index:02d}").mkdir(parents=True)
     (home / marker).mkdir()
@@ -103,7 +103,7 @@ def summarize(values):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--binary", default="./zig-out/bin/fx")
+    parser.add_argument("--binary", default="./zig-out/bin/tetris")
     parser.add_argument("--output", required=True)
     parser.add_argument("--calls", type=int, default=100)
     parser.add_argument("--rc-delay", type=float, default=0.2, help="seconds each startup-file load sleeps")
@@ -118,7 +118,7 @@ def main():
     root = Path(args.output).resolve()
     root.mkdir(mode=0o700, parents=True, exist_ok=False)
     home, workspace = root / "home", root / "workspace"
-    marker = f"fx-bench-marker-{secrets.token_hex(4)}"
+    marker = f"tetris-bench-marker-{secrets.token_hex(4)}"
     marker_dir = str(home / marker)
     write_home(home, marker, args.rc_delay)
     workspace.mkdir()

@@ -141,7 +141,7 @@ fn entryProblem(err: anyerror) EntryProblem {
 }
 
 pub const WorkspaceDiagnostic = struct {
-    /// About `~/.fx/mcp.json` rather than `.mcp.json`.
+    /// About `~/.tetris/mcp.json` rather than `.mcp.json`.
     profile: bool = false,
     server_name: ?[]u8 = null,
     environment_variable: ?[]u8 = null,
@@ -192,7 +192,7 @@ pub fn renderWorkspaceDiagnostic(
         );
     }
     if (diagnostic.cause == .ignored_key) return alloc.print(
-        "{s} server '{s}' sets \"{s}\", which fx ignores; remove it.",
+        "{s} server '{s}' sets \"{s}\", which Tetris ignores; remove it.",
         .{ diagnosticFile(diagnostic), encoded_server.bytes, @tagName(diagnostic.ignored_key orelse .required) },
     );
     // Every reason is a constant, so this is the one `print` there is.
@@ -201,12 +201,12 @@ pub fn renderWorkspaceDiagnostic(
         .url_without_type => "it has a \"url\" but no \"type\"; add \"type\": \"http\"",
         .command => "it needs a \"command\", with any \"args\" as strings",
         .variable => "a ${...} in it isn't valid",
-        .name => "its name has a character fx won't print",
-        .authorization => "fx won't send its Authorization header; put the token in \"bearer_token_env\", or sign in with login",
-        .other => "fx can't read it",
+        .name => "its name has a character Tetris won't print",
+        .authorization => "Tetris won't send its Authorization header; put the token in \"bearer_token_env\", or sign in with login",
+        .other => "Tetris can't read it",
         inline else => |field| "its \"" ++ @tagName(field) ++ "\" isn't valid",
     } else if (diagnostic.cause == .ignored_alias)
-        "the file has both \"mcp\" and \"mcpServers\", and fx reads only \"mcp\"; merge them into one"
+        "the file has both \"mcp\" and \"mcpServers\", and Tetris reads only \"mcp\"; merge them into one"
     else
         @tagName(diagnostic.cause);
     return alloc.print(
@@ -236,7 +236,7 @@ pub fn noteIgnoredKeys(
 }
 
 fn diagnosticFile(diagnostic: WorkspaceDiagnostic) []const u8 {
-    return if (diagnostic.profile) profile_paths.displayText("~/.fx/mcp.json") else ".mcp.json";
+    return if (diagnostic.profile) profile_paths.displayText("~/.tetris/mcp.json") else ".mcp.json";
 }
 
 pub const WorkspaceParseResult = struct {
@@ -1475,10 +1475,10 @@ test "a server that sets required or a non-default restart_limit gets a note nam
     try std.testing.expectEqual(@as(usize, 2), notes.items.len);
     const first = try renderWorkspaceDiagnostic(alloc, notes.items[0]);
     defer alloc.free(first);
-    try std.testing.expectEqualStrings("~/.fx/mcp.json server 'gated' sets \"required\", which fx ignores; remove it.", first);
+    try std.testing.expectEqualStrings("~/.tetris/mcp.json server 'gated' sets \"required\", which Tetris ignores; remove it.", first);
     const second = try renderWorkspaceDiagnostic(alloc, notes.items[1]);
     defer alloc.free(second);
-    try std.testing.expectEqualStrings(".mcp.json server 'retry' sets \"restart_limit\", which fx ignores; remove it.", second);
+    try std.testing.expectEqualStrings(".mcp.json server 'retry' sets \"restart_limit\", which Tetris ignores; remove it.", second);
 }
 
 test "profile document accepts mcpServers alias and preserves strict entry parsing" {
@@ -1532,7 +1532,7 @@ test "profile servers note each one ignored under mcpServers beside mcp" {
     const text = try renderWorkspaceDiagnostic(alloc, notes.items[0]);
     defer alloc.free(text);
     try std.testing.expectEqualStrings(
-        "~/.fx/mcp.json server 'beta' was skipped: the file has both \"mcp\" and \"mcpServers\", and fx reads only \"mcp\"; merge them into one.",
+        "~/.tetris/mcp.json server 'beta' was skipped: the file has both \"mcp\" and \"mcpServers\", and Tetris reads only \"mcp\"; merge them into one.",
         text,
     );
 }
@@ -2064,8 +2064,8 @@ test "a profile entry fx can't read is skipped with a note naming it, and the re
     try std.testing.expectEqualStrings("ok", configs.items[0].name);
     try std.testing.expectEqual(@as(usize, 2), skipped.items.len);
     const expected = [_][]const u8{
-        "~/.fx/mcp.json server 'webonly' was skipped: it has a \"url\" but no \"type\"; add \"type\": \"http\".",
-        "~/.fx/mcp.json server 'bad' was skipped: its \"enabled\" isn't valid.",
+        "~/.tetris/mcp.json server 'webonly' was skipped: it has a \"url\" but no \"type\"; add \"type\": \"http\".",
+        "~/.tetris/mcp.json server 'bad' was skipped: its \"enabled\" isn't valid.",
     };
     for (skipped.items, expected) |note, words| {
         const said = try renderWorkspaceDiagnostic(alloc, note);

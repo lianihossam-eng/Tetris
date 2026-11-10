@@ -1,9 +1,9 @@
 ---- MODULE Credentials ----
-\* fx's MCP credential store (src/core/mcp_host/credentials.zig), file
+\* Tetris's MCP credential store (src/core/mcp_host/credentials.zig), file
 \* backend (FX_DISABLE_KEYCHAIN=1; the Keychain backend reads and writes the
 \* same document through native_keychain).
 \*
-\* One document, `~/.fx/mcp-credentials/credentials-v3.json`:
+\* One document, `~/.tetris/mcp-credentials/credentials-v3.json`:
 \*   {"version":2, "servers":[{name,url,credential}]}, version 1 still read.
 \* Older builds' `credentials-v2.json` is never read or written here; how
 \* the two stores live side by side is MixedBuilds.tla's.
@@ -16,7 +16,7 @@
 \* seeing the other's saves, would sign it out.
 \* Operations: get (Store.snapshot from Runtime.restoreCredentials, one read
 \* for every HTTP server, on the owner thread whenever a host starts:
-\* `fx mcp list`, `fx ask`, the shell),
+\* `tetris mcp list`, `tetris ask`, the shell),
 \* put (a `credential` event after a sign-in or refresh), remove (logout:
 \* runtime.zig `.logout`; verbs.zig remove and logout).
 \*
@@ -36,7 +36,7 @@ Kinds == {"absent", "ok", "unreadable"}
 VARIABLES
     kind,        \* the document: missing, readable, or unreadable
     entries,     \* what it holds (an unreadable one still holds it, for a reader that can read it)
-    v1,          \* v1's logins (`credentials.json`), never changed by this fx
+    v1,          \* v1's logins (`credentials.json`), never changed by this Tetris
     loggedOut,   \* ghost: names signed out of and not signed in to since
     kept,        \* ghost: names signed in to and not signed out of since
     taken,       \* ghost: a write added a v1 login no sign-in here made
@@ -60,7 +60,7 @@ Init ==
     /\ kept = entries
     /\ taken = FALSE /\ overwritten = FALSE
 
-\* Store.read: what this fx reads.
+\* Store.read: what this Tetris reads.
 Unread == kind = "unreadable"
 SavedEntries == IF kind = "ok" THEN entries ELSE {}
 
@@ -97,7 +97,7 @@ Remove(n) ==
     /\ kept' = kept \ {n}
     /\ UNCHANGED v1
 
-\* Environment: the document stops being readable by this fx (a newer fx
+\* Environment: the document stops being readable by this Tetris (a newer Tetris
 \* wrote another version, a hand edit, a damaged file); what it holds stays.
 Unreadable ==
     /\ "unreadable" \in Faults /\ kind = "ok"
@@ -135,7 +135,7 @@ Spec == Init /\ [][Next]_vars
 
 \* ---- Safety ----
 
-\* fx never takes a v1 login; each server signs in on its own.
+\* Tetris never takes a v1 login; each server signs in on its own.
 NoV1LoginTaken == ~taken
 
 \* What was signed in to, and not signed out of since, is kept.

@@ -494,7 +494,7 @@ pub const Runtime = struct {
         for (r.tools_epochs) |*e| e.* = .init(0);
         // The engine copies what it keeps, so the rest of the config goes.
         try r.engine.init(io, gpa, .{ .context = r, .allow = allow, .log = log }, .{
-            .client = .{ .info = .{ .name = "fx", .version = options.client_version }, .capabilities = declaredCapabilities(options.questions) },
+            .client = .{ .info = .{ .name = "tetris", .version = options.client_version }, .capabilities = declaredCapabilities(options.questions) },
         }, resolved.engine);
         errdefer r.engine.deinit();
         try r.publish();
@@ -1220,9 +1220,9 @@ pub const Runtime = struct {
                     const s = r.resolved.servers[i];
                     debug_trace.logf("mcp", "MCP call reply dropped server={s} transport={s} reason=too_large", .{ s.name, @tagName(s.transport) });
                     result.ended.why = if (s.transport == .stdio)
-                        "its reply was larger than fx reads in one message, so fx restarted the server"
+                        "its reply was larger than Tetris reads in one message, so Tetris restarted the server"
                     else
-                        "its reply was larger than fx reads in one message, so fx dropped it";
+                        "its reply was larger than Tetris reads in one message, so Tetris dropped it";
                 }
                 if (result == .ended and result.ended.outcome == .transport_failed) {
                     const down = if (r.enginePhase(i)) |p| p == .backoff or p == .failed else false;
@@ -1714,7 +1714,7 @@ pub const Runtime = struct {
                 .outcome = .cancelled,
                 .maybe_ran = r.engine.callSent(waiting.handle),
                 .timed_out = false,
-                .why = "the MCP config changed, and fx stopped the server",
+                .why = "the MCP config changed, and Tetris stopped the server",
             } } });
         }
         var k: usize = 0;
@@ -1757,7 +1757,7 @@ pub const Runtime = struct {
                 k += 1;
                 continue;
             }
-            r.endHeld(req, .{ .call = .{ .ended = .{ .outcome = .cancelled, .maybe_ran = false, .timed_out = false, .why = "the MCP config changed, and fx stopped the server" } } });
+            r.endHeld(req, .{ .call = .{ .ended = .{ .outcome = .cancelled, .maybe_ran = false, .timed_out = false, .why = "the MCP config changed, and Tetris stopped the server" } } });
         }
         k = 0;
         while (k < r.required.items.len) {
@@ -2251,15 +2251,15 @@ fn declaredCapabilities(questions: elicitation.Capabilities) []const u8 {
 /// it gave some.
 fn signInFailure(buffer: []u8, why: mcp.auth.client.Failure, message: ?[]const u8) []const u8 {
     const what = switch (why) {
-        .discovery => "fx couldn't find how to sign in to it",
-        .registration => "it didn't register fx as a client; set oauth.client_id for it in mcp.json",
+        .discovery => "Tetris couldn't find how to sign in to it",
+        .registration => "it didn't register Tetris as a client; set oauth.client_id for it in mcp.json",
         .response => "the sign-in page returned an error",
         .mismatch => "the answer that came back wasn't for this sign-in",
         .redemption => "it didn't accept the sign-in",
         .cancelled => "the sign-in was cancelled",
-        .refused => "fx has tried to sign in to it too many times; restart fx to try again",
+        .refused => "Tetris has tried to sign in to it too many times; restart Tetris to try again",
         .insecure_endpoint => "its sign-in server uses plain HTTP, not HTTPS",
-        .internal_endpoint => "its sign-in server points at an internal address fx won't contact",
+        .internal_endpoint => "its sign-in server points at an internal address Tetris won't contact",
         .metadata_not_json => "its sign-in metadata isn't JSON",
     };
     var said = std.mem.trimEnd(u8, message orelse return what, ". \t\r\n");
@@ -2277,7 +2277,7 @@ test "a failed sign-in says why in words, with the server's own" {
     var buffer: [512]u8 = undefined;
     try std.testing.expectEqualStrings("it didn't accept the sign-in (invalid_grant: The code expired)", signInFailure(&buffer, .redemption, "invalid_grant: The code expired."));
     try std.testing.expectEqualStrings("the sign-in was cancelled", signInFailure(&buffer, .cancelled, null));
-    try std.testing.expectEqualStrings("it didn't register fx as a client; set oauth.client_id for it in mcp.json", signInFailure(&buffer, .registration, null));
+    try std.testing.expectEqualStrings("it didn't register Tetris as a client; set oauth.client_id for it in mcp.json", signInFailure(&buffer, .registration, null));
     try std.testing.expectEqualStrings("the sign-in page returned an error", signInFailure(&buffer, .response, " . "));
     try std.testing.expectEqualStrings("the answer that came back wasn't for this sign-in", signInFailure(&buffer, .mismatch, null));
     const long = text_utils.repeat("\xc3\xa9", 200);
@@ -2302,15 +2302,15 @@ fn writeFailure(w: *std.Io.Writer, why: []const u8, exit: ?mcp.stdio.Exit, stray
 /// such as an HTTP failure's own text, is shown as it is.
 fn describeFailure(why: []const u8) []const u8 {
     const known = [_]struct { []const u8, []const u8 }{
-        .{ "no_shared_version", "it supports no MCP version fx speaks" },
-        .{ "rejected", "it refused fx's MCP version" },
+        .{ "no_shared_version", "it supports no MCP version Tetris speaks" },
+        .{ "rejected", "it refused Tetris's MCP version" },
         .{ "went_quiet", "it stopped answering while starting" },
-        .{ "unsupported_version", "it answered with an MCP version fx doesn't support (fx speaks 2025-03-26 and newer)" },
-        .{ "initialize_failed", "it refused or never answered fx's initialize request" },
+        .{ "unsupported_version", "it answered with an MCP version Tetris doesn't support (Tetris speaks 2025-03-26 and newer)" },
+        .{ "initialize_failed", "it refused or never answered Tetris's initialize request" },
         .{ "session", "its session ended" },
-        .{ "initialized_timed_out", "it never answered fx's initialized notification" },
+        .{ "initialized_timed_out", "it never answered Tetris's initialized notification" },
         .{ "needs_auth", "it needs a login" },
-        .{ "auth_unavailable", "its login couldn't be renewed: the sign-in server didn't answer; fx tries again" },
+        .{ "auth_unavailable", "its login couldn't be renewed: the sign-in server didn't answer; Tetris tries again" },
         .{ "process", "its process exited" },
         .{ "FileNotFound", "its command was not found" },
         .{ "AccessDenied", "its command could not be run (permission denied)" },
@@ -2739,7 +2739,7 @@ test "a reload ends a call on a server it drops, and a call on a server it keeps
     try testing.expectEqual(engine.Outcome.cancelled, gone.ended.?.outcome);
     // It reached the server, so it may have run there.
     try testing.expect(gone.ended.?.maybe_ran);
-    try testing.expectEqualStrings("the MCP config changed, and fx stopped the server", gone.why[0..gone.why_len]);
+    try testing.expectEqualStrings("the MCP config changed, and Tetris stopped the server", gone.why[0..gone.why_len]);
     // The kept server's call is still out; only its cancel ends it.
     std.Io.sleep(testing.io, .fromMilliseconds(200), .awake) catch {};
     try testing.expect(!kept.done.load(.acquire));
@@ -2808,7 +2808,7 @@ test "a failure says how the process ended, what it wrote instead of MCP, and it
     try testing.expectEqualStrings("its process exited with code 7; its last stderr lines: \"npm error code E401 / npm error Incorrect or missing password.\"", w.buffered());
     w = .fixed(&buf);
     try writeFailure(&w, "initialize_failed", .{ .signal = 15 }, "not json", null);
-    try testing.expectEqualStrings("it refused or never answered fx's initialize request; its process exited on signal 15; it wrote \"not json\" instead of MCP", w.buffered());
+    try testing.expectEqualStrings("it refused or never answered Tetris's initialize request; its process exited on signal 15; it wrote \"not json\" instead of MCP", w.buffered());
     w = .fixed(&buf);
     try writeFailure(&w, "FileNotFound", null, null, null);
     try testing.expectEqualStrings("its command was not found", w.buffered());

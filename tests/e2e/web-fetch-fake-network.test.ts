@@ -114,14 +114,14 @@ function createIsolatedRoot(args: {
   const root = realpathSync(mkdtempSync(join(tmpdir(), "fx-web-fetch-e2e-")));
   const home = join(root, "home");
   const workspace = join(root, "workspace");
-  mkdirSync(join(home, ".fx"), { recursive: true });
+  mkdirSync(join(home, ".tetris"), { recursive: true });
   mkdirSync(workspace, { recursive: true });
 
   const permission: Record<string, Record<string, string>> = {};
   if (args.webFetchPermission) {
     permission.web_fetch = { "domain:example.com": args.webFetchPermission };
   }
-  writeFileSync(join(home, ".fx", "settings.json"), JSON.stringify({ permission }));
+  writeFileSync(join(home, ".tetris", "settings.json"), JSON.stringify({ permission }));
   return { root, home, workspace: realpathSync(workspace) };
 }
 
@@ -425,7 +425,7 @@ describe("web_fetch Gateway fixture", () => {
   );
 
   test(
-    "default fx ask validates malformed web_fetch before transport",
+    "default tetris ask validates malformed web_fetch before transport",
     async () => {
       const root = createIsolatedRoot();
       const gateway = startFakeGateway([

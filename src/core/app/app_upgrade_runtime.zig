@@ -75,7 +75,7 @@ pub fn Runtime(comptime App: type) type {
 
             app.prepareResumeHandoffForUpgrade(agent) catch |err| {
                 const notice = try app.alloc.print(
-                    "upgrade paused because this conversation is not safely resumable: {s}; run `fx doctor` for recovery guidance",
+                    "upgrade paused because this conversation is not safely resumable: {s}; run `tetris doctor` for recovery guidance",
                     .{@errorName(err)},
                 );
                 defer app.alloc.free(notice);
@@ -89,7 +89,7 @@ pub fn Runtime(comptime App: type) type {
                 &executable_buf,
             ) catch |err| {
                 const notice = try app.alloc.print(
-                    "upgrade installed, but the executable path could not be resolved: {s}; restart fx manually",
+                    "upgrade installed, but the executable path could not be resolved: {s}; restart Tetris manually",
                     .{@errorName(err)},
                 );
                 defer app.alloc.free(notice);
@@ -99,7 +99,7 @@ pub fn Runtime(comptime App: type) type {
 
             app.requestUpgradeRelaunch(executable_path) catch |err| {
                 const notice = try app.alloc.print(
-                    "upgrade installed, but relaunch could not be prepared: {s}; restart fx manually",
+                    "upgrade installed, but relaunch could not be prepared: {s}; restart Tetris manually",
                     .{@errorName(err)},
                 );
                 defer app.alloc.free(notice);

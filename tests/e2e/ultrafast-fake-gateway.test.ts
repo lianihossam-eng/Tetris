@@ -77,7 +77,7 @@ function solCatalogModel() {
 
 function writeProfileSettings(root: IsolatedRoot, settings: Record<string, unknown>) {
   writeFileSync(
-    join(root.home, ".fx", "settings.json"),
+    join(root.home, ".tetris", "settings.json"),
     `${JSON.stringify({ session_titles: false, ...settings })}\n`,
     { mode: 0o600 },
   );
@@ -87,7 +87,7 @@ function createIsolatedRoot(settings: Record<string, unknown> = {}): IsolatedRoo
   const root = realpathSync(mkdtempSync(join(tmpdir(), "fx-ultrafast-e2e-")));
   const home = join(root, "home");
   const workspace = join(root, "workspace");
-  mkdirSync(join(home, ".fx"), { recursive: true, mode: 0o700 });
+  mkdirSync(join(home, ".tetris"), { recursive: true, mode: 0o700 });
   mkdirSync(workspace, { recursive: true, mode: 0o700 });
   const isolated = { root, home, workspace: realpathSync(workspace) };
   writeProfileSettings(isolated, settings);
@@ -376,7 +376,7 @@ describe("ultrafast fake Gateway", () => {
             workspaces: { [root.workspace]: { ultrafast_mode: scenario.workspace } },
           });
         }
-        const settingsPath = join(root.home, ".fx", "settings.json");
+        const settingsPath = join(root.home, ".tetris", "settings.json");
         const settingsBefore = readFileSync(settingsPath, "utf8");
         const gateway = startFakeGateway(
           [finishWithServiceTier(`response for ${scenario.name}`, scenario.ultrafast ? "ultrafast" : "standard")],
@@ -520,7 +520,7 @@ describe("ultrafast fake Gateway", () => {
         expect(disabledResume.stderr).toBe("");
         expect(gateway.requests).toHaveLength(3);
         expectStandardRequest(gateway.requests[2]!.body);
-        expect(JSON.parse(readFileSync(join(root.home, ".fx", "settings.json"), "utf8")))
+        expect(JSON.parse(readFileSync(join(root.home, ".tetris", "settings.json"), "utf8")))
           .toMatchObject({ ultrafast_mode: false, models: { gateway: ULTRA_MODEL } });
       } finally {
         gateway.stop();
@@ -575,7 +575,7 @@ describe("ultrafast fake Gateway", () => {
           expect(resumed.stderr).toBe("");
           expect(gateway.requests).toHaveLength(2);
           expectStandardRequest(gateway.requests[1]!.body);
-          expect(JSON.parse(readFileSync(join(root.home, ".fx", "settings.json"), "utf8")))
+          expect(JSON.parse(readFileSync(join(root.home, ".tetris", "settings.json"), "utf8")))
             .toMatchObject({ ultrafast_mode: false, models: { gateway: ULTRA_MODEL } });
         } finally {
           gateway.stop();
@@ -786,7 +786,7 @@ describe("ultrafast fake Gateway", () => {
           expect(gateway.requests).toHaveLength(1);
           if (scenario.ultrafast) expectUltrafastRequest(gateway.requests[0]!.body);
           else expectStandardRequest(gateway.requests[0]!.body);
-          expect(JSON.parse(readFileSync(join(root.home, ".fx", "settings.json"), "utf8")))
+          expect(JSON.parse(readFileSync(join(root.home, ".tetris", "settings.json"), "utf8")))
             .toMatchObject(scenario.settings);
         } finally {
           try {
@@ -859,7 +859,7 @@ describe("ultrafast fake Gateway", () => {
         expect(JSON.stringify(standard)).toContain("ACP resumed standard");
         expect(gateway.requests).toHaveLength(3);
         expectStandardRequest(gateway.requests[2]!.body);
-        expect(JSON.parse(readFileSync(join(root.home, ".fx", "settings.json"), "utf8")))
+        expect(JSON.parse(readFileSync(join(root.home, ".tetris", "settings.json"), "utf8")))
           .toMatchObject({ ultrafast_mode: true });
       } finally {
         try {
@@ -977,12 +977,12 @@ describe("ultrafast fake Gateway", () => {
           expect(body).toContain("ULTRA_CHILD_1");
         }
         expect(childBodies[2]).toContain("ULTRA_CHILD_2");
-        const log = readFileSync(join(root.home, ".fx", "sessions", "v2", sessionId!, "log.jsonl"), "utf8")
+        const log = readFileSync(join(root.home, ".tetris", "sessions", "v2", sessionId!, "log.jsonl"), "utf8")
           .trimEnd().split("\n").map((line) => JSON.parse(line));
         const spawned = log.filter((line) => line.kind === "child_spawned");
         expect(spawned).toHaveLength(3);
         expect(new Set(spawned.map((line) => line.child)).size).toBe(1);
-        expect(JSON.parse(readFileSync(join(root.home, ".fx", "settings.json"), "utf8")))
+        expect(JSON.parse(readFileSync(join(root.home, ".tetris", "settings.json"), "utf8")))
           .toMatchObject({ ultrafast_mode: true });
       } finally {
         gateway.stop();
@@ -1029,7 +1029,7 @@ describe("ultrafast fake Gateway", () => {
             expect(gateway.requests).toHaveLength(1);
             if (scenario.ultrafast) expectUltrafastRequest(gateway.requests[0]!.body);
             else expectStandardRequest(gateway.requests[0]!.body);
-            expect(JSON.parse(readFileSync(join(root.home, ".fx", "settings.json"), "utf8")))
+            expect(JSON.parse(readFileSync(join(root.home, ".tetris", "settings.json"), "utf8")))
               .toMatchObject({ ultrafast_mode: scenario.profile });
             expect(session.paneStatus()).toEqual({ dead: false, status: null });
             await session.sendText("/quit");
@@ -1069,7 +1069,7 @@ describe("ultrafast fake Gateway", () => {
           await session.waitForText("←→ change", TIMEOUT);
           await session.sendLiteral("ultra");
           await session.waitForPane((pane) => /Ultrafast mode\s+off\s+on/.test(pane), TIMEOUT);
-          expect(JSON.parse(readFileSync(join(root.home, ".fx", "settings.json"), "utf8")))
+          expect(JSON.parse(readFileSync(join(root.home, ".tetris", "settings.json"), "utf8")))
             .toMatchObject({ ultrafast_mode: false });
           expect(gateway.requests).toEqual([]);
           await session.sendKeys("Right");
@@ -1077,7 +1077,7 @@ describe("ultrafast fake Gateway", () => {
             (pane) => /Ultrafast mode\s+off\s+on/.test(pane) && pane.includes("* ultrafast: requested on"),
             TIMEOUT,
           );
-          expect(JSON.parse(readFileSync(join(root.home, ".fx", "settings.json"), "utf8")))
+          expect(JSON.parse(readFileSync(join(root.home, ".tetris", "settings.json"), "utf8")))
             .toMatchObject({ ultrafast_mode: true });
           await session.sendKeys("Escape");
           await session.waitForPane((pane) => hasEmptyComposer(pane) && !pane.includes("←→ change"), TIMEOUT);
@@ -1105,14 +1105,14 @@ describe("ultrafast fake Gateway", () => {
           await session.waitForText("←→ change", TIMEOUT);
           await session.sendLiteral("ultra");
           await session.waitForPane((pane) => /Ultrafast mode\s+off\s+on/.test(pane), TIMEOUT);
-          expect(JSON.parse(readFileSync(join(root.home, ".fx", "settings.json"), "utf8")))
+          expect(JSON.parse(readFileSync(join(root.home, ".tetris", "settings.json"), "utf8")))
             .toMatchObject({ ultrafast_mode: true });
           await session.sendKeys("Left");
           await session.waitForPane(
             (pane) => /Ultrafast mode\s+off\s+on/.test(pane) && pane.includes("* ultrafast: requested off"),
             TIMEOUT,
           );
-          expect(JSON.parse(readFileSync(join(root.home, ".fx", "settings.json"), "utf8")))
+          expect(JSON.parse(readFileSync(join(root.home, ".tetris", "settings.json"), "utf8")))
             .toMatchObject({ ultrafast_mode: false });
           await session.sendKeys("Escape");
           await session.waitForPane((pane) => hasEmptyComposer(pane) && !pane.includes("←→ change"), TIMEOUT);
@@ -1178,7 +1178,7 @@ describe("ultrafast fake Gateway", () => {
           await session.waitForText("gpt-6-astra · xhigh · ⚡︎", TIMEOUT);
           expect(await session.capturePaneEscapes()).toContain("\x1b[38;2;255;204;0m⚡︎");
           expect((await session.captureFullScrollback()).replace(/\s+/g, " ")).toContain(switched);
-          expect(JSON.parse(readFileSync(join(root.home, ".fx", "settings.json"), "utf8")))
+          expect(JSON.parse(readFileSync(join(root.home, ".tetris", "settings.json"), "utf8")))
             .toMatchObject({ ultrafast_mode: true, models: { gateway: ULTRA_MODEL }, effort: "xhigh" });
           expect(gateway.requests).toEqual([]);
           await session.sendText("Return the model picker marker.");
@@ -1231,12 +1231,12 @@ describe("ultrafast fake Gateway", () => {
           await session.waitForText("requested on", TIMEOUT);
           await session.sendText("/ultrafast status");
           await session.waitForText("requested: on", TIMEOUT);
-          expect(JSON.parse(readFileSync(join(root.home, ".fx", "settings.json"), "utf8")))
+          expect(JSON.parse(readFileSync(join(root.home, ".tetris", "settings.json"), "utf8")))
             .toMatchObject({ ultrafast_mode: true });
 
           await session.sendText("/ultrafast off");
           await session.waitForText("requested off", TIMEOUT);
-          expect(JSON.parse(readFileSync(join(root.home, ".fx", "settings.json"), "utf8")))
+          expect(JSON.parse(readFileSync(join(root.home, ".tetris", "settings.json"), "utf8")))
             .toMatchObject({ ultrafast_mode: false });
           expect(session.paneStatus()).toEqual({ dead: false, status: null });
           expect(gateway.requests).toEqual([]);

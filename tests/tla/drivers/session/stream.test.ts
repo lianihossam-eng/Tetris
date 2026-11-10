@@ -1,7 +1,7 @@
-// Runs the real fx binary along tests/tla/session/TurnStream.tla: one agent
-// turn of `fx ask` against a local gateway fixture, which answers each
+// Runs the real tetris binary along tests/tla/session/TurnStream.tla: one agent
+// turn of `tetris ask` against a local gateway fixture, which answers each
 // request with the tool calls of the scenario's next step until it ends the
-// turn. fx's session trace names every stream and commit decision
+// turn. Tetris's session trace names every stream and commit decision
 // (`sessions_v2_stream`), and the session log it leaves holds the live
 // turn's tool results and any superseded marker. TLC replays both through
 // the model as the adapter is designed now (TurnStreamTrace.tla), in which
@@ -11,7 +11,7 @@
 // output full of escapes and non-ASCII text, unchanged output, file writes
 // and edits, a turn that compacts in the middle, and a long turn
 // (FX_TLA_STRESS_STEPS, default 200). Every saved result's stamp must fall
-// between when the fixture sent its call and when fx wrote its line.
+// between when the fixture sent its call and when Tetris wrote its line.
 // Random walks fuzz the binary along the model: FX_TLA_WALKS turns (default
 // 3) of FX_TLA_WALK_STEPS steps (default 10) from FX_TLA_SEED (default 1),
 // each step one to three calls of every kind above, and about one walk in
@@ -42,10 +42,10 @@ type Call = { name: string; input: Record<string, unknown>; fails?: boolean };
 type Scenario = {
   name: string;
   steps: number;
-  /// The model's context window. A small one makes fx compact mid-turn,
+  /// The model's context window. A small one makes Tetris compact mid-turn,
   /// since the fixture reports a request's size as its input tokens.
   contextWindow?: number;
-  /// Past `steps`, the turn goes on until a request shrinks, which means fx
+  /// Past `steps`, the turn goes on until a request shrinks, which means Tetris
   /// just compacted, and this many more steps follow it, up to `steps` more.
   /// The final request then comes while the context is small, so no last cut
   /// empties the live turn, however large each request is.
@@ -122,7 +122,7 @@ const scenarios: Scenario[] = [
   },
 ];
 
-/// Large reads against a small window, so fx compacts in the middle of the turn.
+/// Large reads against a small window, so Tetris compacts in the middle of the turn.
 const compaction: Scenario = {
   name: "compaction",
   steps: 80,
@@ -198,7 +198,7 @@ type Run = {
   issued: Array<{ id: string; fails: boolean; at: number }>;
   /// Summary requests the fixture answered.
   summaries: number;
-  /// At each model request: the decisions fx had traced and the calls the
+  /// At each model request: the decisions Tetris had traced and the calls the
   /// fixture had issued, which bounds the results any decision can count.
   progress: Array<{ decisions: number; issued: number }>;
   trace: string;
@@ -214,16 +214,16 @@ function sse(events: unknown[], reason: string, inputTokens = 3): Response {
   return new Response(body, { headers: { "Content-Type": "text/event-stream" } });
 }
 
-/// One `fx ask` turn of `scenario` on `bin`, in a fresh profile and
-/// workspace. `traced` turns on fx's session trace.
+/// One `tetris ask` turn of `scenario` on `bin`, in a fresh profile and
+/// workspace. `traced` turns on Tetris's session trace.
 async function runTurn(scenario: Scenario, bin: string, traced: boolean): Promise<Run> {
   const root = mkdtempSync(join(artifacts, `${scenario.name}-`));
   const home = join(root, "home");
   const workspace = join(root, "workspace");
-  mkdirSync(join(home, ".fx"), { recursive: true });
+  mkdirSync(join(home, ".tetris"), { recursive: true });
   mkdirSync(workspace);
   // Titles off: a title request would take a fixture answer.
-  writeFileSync(join(home, ".fx", "settings.json"), JSON.stringify({ provider: "gateway", model: MODEL, max_agent_steps: 0, session_titles: false }));
+  writeFileSync(join(home, ".tetris", "settings.json"), JSON.stringify({ provider: "gateway", model: MODEL, max_agent_steps: 0, session_titles: false }));
   scenario.prepare(workspace);
 
   const issued: Run["issued"] = [];
@@ -243,7 +243,7 @@ async function runTurn(scenario: Scenario, bin: string, traced: boolean): Promis
       if (request.method === "GET") {
         return Response.json({ object: "list", data: [{ id: MODEL, type: "language", tags: ["tool-use"], context_window: scenario.contextWindow ?? 1_000_000 }] });
       }
-      // fx writes each decision before its next request, so the trace so far
+      // Tetris writes each decision before its next request, so the trace so far
       // holds every decision made before this one.
       if (traced) {
         const sofar = existsSync(tracePath) ? decisions(readFileSync(tracePath, "utf8")).length : 0;
@@ -314,13 +314,13 @@ async function runTurn(scenario: Scenario, bin: string, traced: boolean): Promis
   return run;
 }
 
-/// What every turn must show, whatever the scenario: fx finished the turn,
+/// What every turn must show, whatever the scenario: Tetris finished the turn,
 /// ran every call the fixture issued, and kept them all, once, in order.
 function expectFinishedTurn(run: Run) {
   expect(run.code).toBe(0);
   expect(run.stderr).not.toMatch(/panic|reached unreachable|Segmentation fault|error\(/);
   expect(run.result?.final_output).toBe(DONE);
-  // `fx ask --json` names no call ids, and lists a step's parallel calls in
+  // `tetris ask --json` names no call ids, and lists a step's parallel calls in
   // its own order, so its statuses are compared as counts; the log's order
   // is checked by call id below.
   const calls = run.result?.tool_calls ?? [];
@@ -334,8 +334,8 @@ function expectFinishedTurn(run: Run) {
   expectStampsAreMadeTimes(run);
 }
 
-/// Each saved result's stamp is a time fx made it: after the fixture sent
-/// its call, and before fx wrote the result's line.
+/// Each saved result's stamp is a time Tetris made it: after the fixture sent
+/// its call, and before Tetris wrote the result's line.
 function expectStampsAreMadeTimes(run: Run) {
   const sent = new Map(run.issued.map((call) => [call.id, call.at]));
   const disk = diskTurn(run.folder);
@@ -354,7 +354,7 @@ function logShape(run: Run) {
   return { superseded: disk.superseded, calls: disk.calls, ended: disk.ended, compacted, summaries: run.summaries, tools: run.result?.tool_calls?.length, final: run.result?.final_output };
 }
 
-/// The run's decisions, then the session log fx left. fx sends a request
+/// The run's decisions, then the session log Tetris left. Tetris sends a request
 /// only after every call issued before it has its result, so a decision made
 /// after a request counts at least those results (`least`), and at most the
 /// calls issued before the request that followed it (`arrived`).
@@ -447,7 +447,7 @@ test(`a ${STRESS_STEPS}-step turn is a behavior of TurnStream, and no rebuild re
 }, TIMEOUT);
 
 // A turn that compacts: TLC replays it with each compaction as a hidden
-// step, and fx's own trace must also show that a stream stops standing only
+// step, and Tetris's own trace must also show that a stream stops standing only
 // right after a compaction cut the turn's tool steps, each of those leaves one
 // superseded marker, the live turn holds the newest results in order, and
 // nothing is reparsed. With FX_TLA_BASE_BIN set, that binary must leave the

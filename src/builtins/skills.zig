@@ -56,7 +56,7 @@ pub fn loadVisibleSkillsForTool(
 }
 
 fn homeFromSkillsDir(skills_dir: []const u8) ?[]const u8 {
-    const suffix = "/.fx/skills";
+    const suffix = "/.tetris/skills";
     if (!std.mem.endsWith(u8, skills_dir, suffix)) return null;
     return skills_dir[0 .. skills_dir.len - suffix.len];
 }
@@ -134,8 +134,8 @@ fn executeCommand(alloc: Allocator, command: Command, request: CommandRequest) !
         .remove => |name| removeCommandResult(alloc, request, name),
         .path => noticeFmt(
             alloc,
-            "fx workspace roots are auto-discovered from .fx/skills and skills/.\n" ++
-                "fx managed install root: {s}\n" ++
+            "Tetris workspace roots are auto-discovered from .fx/skills and skills/.\n" ++
+                "Tetris managed install root: {s}\n" ++
                 "compatibility roots are auto-discovered from workspace and home (.opencode/.codex/.claude/.agents/.claw).",
             .{request.skills_dir},
             false,
@@ -183,7 +183,7 @@ fn removeCommandResult(alloc: Allocator, request: CommandRequest, name: []const 
     };
 
     if (!skill.managed_install) {
-        return noticeFmt(alloc, "Skill '{s}' comes from {s}, not the fx managed install root. Remove it from {s}.", .{ name, skill.source_label, skill.path }, false);
+        return noticeFmt(alloc, "Skill '{s}' comes from {s}, not the Tetris managed install root. Remove it from {s}.", .{ name, skill.source_label, skill.path }, false);
     }
 
     removeSkill(request.skills_dir, std.Io.Dir.path.basename(skill.path)) catch {
@@ -1979,8 +1979,8 @@ test "built-in skills path reports native workspace roots" {
 
     switch (result) {
         .notice => |notice| try std.testing.expectEqualStrings(
-            "fx workspace roots are auto-discovered from .fx/skills and skills/.\n" ++
-                "fx managed install root: /tmp/skills\n" ++
+            "Tetris workspace roots are auto-discovered from .fx/skills and skills/.\n" ++
+                "Tetris managed install root: /tmp/skills\n" ++
                 "compatibility roots are auto-discovered from workspace and home (.opencode/.codex/.claude/.agents/.claw).",
             notice.text,
         ),
@@ -2117,7 +2117,7 @@ test "built-in skills command creates and removes managed skills" {
         .name = "exact-skill",
         .info = .{
             .path = skill_dir,
-            .source_label = "global ~/.fx/skills",
+            .source_label = "global ~/.tetris/skills",
             .managed_install = true,
         },
     }};
@@ -2167,7 +2167,7 @@ test "built-in skills command creates a missing managed parent root" {
 
     const root = try io_mod.dirRealpathAlloc(alloc, tmp.dir, ".");
     defer alloc.free(root);
-    const skills_dir = try std.Io.Dir.path.join(alloc, &.{ root, "home", ".fx", "skills" });
+    const skills_dir = try std.Io.Dir.path.join(alloc, &.{ root, "home", ".tetris", "skills" });
     defer alloc.free(skills_dir);
 
     var empty_ctx = StaticSkillCtx{ .skills = &.{} };
@@ -2206,7 +2206,7 @@ test "built-in skills command refuses to remove compatibility roots" {
 
     switch (result) {
         .notice => |notice| {
-            try std.testing.expect(std.mem.find(u8, notice.text, "not the fx managed install root") != null);
+            try std.testing.expect(std.mem.find(u8, notice.text, "not the Tetris managed install root") != null);
             try std.testing.expect(!notice.reload);
         },
         else => return error.TestExpectedEqual,

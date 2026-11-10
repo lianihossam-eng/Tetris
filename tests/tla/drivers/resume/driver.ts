@@ -1,22 +1,22 @@
-// Walks the real fx TUI along tests/tla/recovery/Resume.tla, one fx process at
+// Walks the real Tetris TUI along tests/tla/recovery/Resume.tla, one Tetris process at
 // a time.
 //
 // TLC writes Resume.tla's state graph for the proposed design, and the driver
 // keeps the states in which process 2 never runs. Between quiet states, where
-// process 1 is off, idle, asking, or has a request on the wire, fx's own steps
+// process 1 is off, idle, asking, or has a request on the wire, Tetris's own steps
 // (saving and sending, committing, running the tools, retrying) are collapsed.
 // What is left are the driver's steps, each one thing a user or the system
-// does: launch fx (`fx`, then `fx -c`), send a message, let the response
+// does: launch Tetris (`tetris`, then `tetris -c`), send a message, let the response
 // finish, answer it with a tool call, cut the stream short, close the window
-// (SIGHUP), kill fx (SIGKILL), quit, press Esc or Enter, or send "continue".
+// (SIGHUP), kill Tetris (SIGKILL), quit, press Esc or Enter, or send "continue".
 // A day passing is left out: a log line's time is under its checksum, and the
 // recovery module's own tests cover the day-old question.
 //
 // The driver covers every step from every observable class of quiet state
 // along a shortest path. It runs each walk against the built binary in tmux,
 // with a fake gateway that holds every response until the walk releases it.
-// After every step, what fx keeps in the session log, whether a request is on
-// the wire, and the question fx shows must match one of the model states that
+// After every step, what Tetris keeps in the session log, whether a request is on
+// the wire, and the question Tetris shows must match one of the model states that
 // step can reach. The driver then follows only those. From the log it reads
 // how the newest turn ended and that turn's newest `recovery` piece, decoded
 // as `src/core/recovery/recovery.zig` encodes it: the phase, the clean flag,
@@ -128,7 +128,7 @@ const holds = (s: Model, p: number) => (Array.isArray(s.lock) ? s.lock.includes(
 const onlyFirst = (s: Model) => proc(s, 2).pc === "off" && !holds(s, 2) && s.wall === 0;
 const quiet = (s: Model) => ["off", "idle", "ask", "flight", "need"].includes(proc(s, 1).pc);
 
-// fx's own steps between two quiet states.
+// Tetris's own steps between two quiet states.
 const internal = new Set(["Save", "Finish", "ToolsDone", "Retry"]);
 
 // The model actions each driver step starts with, and which of its first
@@ -166,7 +166,7 @@ function successors(graph: Graph, id: string, label: string): string[] {
     .map((edge) => edge.to);
 }
 
-// The quiet states fx's own steps reach from `ids`.
+// The quiet states Tetris's own steps reach from `ids`.
 function settle(graph: Graph, ids: Set<string>): Set<string> {
   const reached = new Set<string>();
   const seen = new Set<string>(ids);
@@ -204,7 +204,7 @@ function stepTargets(graph: Graph, id: string, step: Step): Set<string> {
   return frontier;
 }
 
-// What fx should show and keep in a quiet state. A record counts only in a
+// What Tetris should show and keep in a quiet state. A record counts only in a
 // turn that a crash or a close left unended.
 function expected(s: Model): Obs {
   const p = proc(s, 1);
@@ -271,7 +271,7 @@ function planWalks(graph: Graph): Step[][] {
     .map((walk) => walk.split(" ") as Step[]);
 }
 
-// The real fx.
+// The real Tetris.
 
 type Hold = {
   state: "open" | "released" | "cancelled";
@@ -297,10 +297,10 @@ class Run {
     const base = join(this.root, `walk-${index}`);
     this.home = join(base, "home");
     this.workspace = join(base, "workspace");
-    mkdirSync(join(this.home, ".fx"), { recursive: true });
+    mkdirSync(join(this.home, ".tetris"), { recursive: true });
     mkdirSync(this.workspace, { recursive: true });
     writeFileSync(
-      join(this.home, ".fx", "settings.json"),
+      join(this.home, ".tetris", "settings.json"),
       JSON.stringify({ sandbox: "none", permission_mode: "auto", permission: {} }),
     );
     this.gateway = helpers.startDynamicFakeGateway((body: string) => this.heldResponse(body));
@@ -351,7 +351,7 @@ class Run {
   }
 
   logPath(): string | null {
-    const store = join(this.home, ".fx", "sessions", "v2");
+    const store = join(this.home, ".tetris", "sessions", "v2");
     if (!existsSync(store)) return null;
     const ids = readdirSync(store).filter((name) => !name.startsWith(".") && !name.startsWith("index"));
     if (ids.length === 0) return null;
@@ -429,7 +429,7 @@ class Run {
   async question(): Promise<string> {
     if (!this.running()) return "none";
     const screen = (await this.session.capturePane()).replaceAll(/\s+/g, " ");
-    if (screen.includes("crashed fx twice")) return "crash";
+    if (screen.includes("crashed Tetris twice")) return "crash";
     if (screen.includes("more than a day ago")) return "old";
     return "none";
   }
@@ -545,7 +545,7 @@ function matches(model: Obs, real: Obs): boolean {
   return (Object.keys(model) as (keyof Obs)[]).every((key) => model[key] === real[key]);
 }
 
-// One walk: every step must reach a model state that matches fx.
+// One walk: every step must reach a model state that matches Tetris.
 async function walk(graph: Graph, helpers: any, index: number, steps: Step[]): Promise<string | null> {
   const run = new Run(helpers, index);
   let tracked = settle(graph, new Set([graph.init]));
@@ -558,7 +558,7 @@ async function walk(graph: Graph, helpers: any, index: number, steps: Step[]): P
       const next = new Set([...candidates].filter((id) => matches(expected(graph.states.get(id)!), real)));
       if (next.size === 0) {
         const allowedObs = [...new Set([...candidates].map((id) => JSON.stringify(expected(graph.states.get(id)!))))];
-        return `step ${at + 1} (${step}) of [${steps.join(", ")}]: fx showed ${JSON.stringify(real)}; the model allows ${allowedObs.join(" or ")}`;
+        return `step ${at + 1} (${step}) of [${steps.join(", ")}]: Tetris showed ${JSON.stringify(real)}; the model allows ${allowedObs.join(" or ")}`;
       }
       tracked = next;
     }
@@ -590,7 +590,7 @@ for (const [index, steps] of walks.entries()) {
 if (selfCheck) {
   const probe = planned.filter((steps) => steps.includes("close") && steps.at(-1) === "launch")
     .sort((a, b) => a.length - b.length)[0] ?? planned.find((steps) => steps.includes("close"));
-  if (!probe) fail(2, "self-check: no planned walk closes fx");
+  if (!probe) fail(2, "self-check: no planned walk closes Tetris");
   tampered = true;
   const result = await walk(graph, helpers, walks.length, probe).catch((err) => `${err}`);
   tampered = false;
@@ -604,7 +604,7 @@ if (selfCheck) {
 writeFileSync(join(out, "walks.json"), JSON.stringify({ walks, mismatches }, null, 2));
 const seconds = Math.round((performance.now() - started) / 1000);
 if (mismatches.length > 0) {
-  console.log(`${mismatches.length} of ${walks.length} walks did not match fx (${seconds} s); output in ${out}`);
+  console.log(`${mismatches.length} of ${walks.length} walks did not match Tetris (${seconds} s); output in ${out}`);
   process.exit(1);
 }
-console.log(`ok: ${walks.length} walks matched fx in ${seconds} s; output in ${out}`);
+console.log(`ok: ${walks.length} walks matched Tetris in ${seconds} s; output in ${out}`);

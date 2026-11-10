@@ -17,8 +17,8 @@
 //! - large bodies (tool results, tool images, command replay, web-fetch
 //!   downloads) are blobs of the session, each named by its hash (D44); an
 //!   ACP client's prompt and tool identities are settings (D46); hosted
-//!   terminal state lives in `~/.fx/terminal/{id}/` (D45). An older session
-//!   with a `~/.fx/session-files/{id}/` side folder moves on its first
+//!   terminal state lives in `~/.tetris/terminal/{id}/` (D45). An older session
+//!   with a `~/.tetris/session-files/{id}/` side folder moves on its first
 //!   writable open (D47, `tests/tla/session_manager/MoveSideFiles.tla`).
 //!
 //! Models of the sessions v2 rollout, one per step that changed this file:
@@ -70,12 +70,12 @@ const Allocator = std.mem.Allocator;
 const Event = session_event.ConversationEvent;
 const PieceKind = std.meta.Tag(Event);
 
-/// Folder of the side files older v2 sessions kept, under `~/.fx`; a
+/// Folder of the side files older v2 sessions kept, under `~/.tetris`; a
 /// session moves out of it on its first writable open (D47).
 pub const files_dir_name = profile_paths.session_files_dir_name;
-/// Folder of v2 sessions' hosted terminal state, under `~/.fx` (D45).
+/// Folder of v2 sessions' hosted terminal state, under `~/.tetris` (D45).
 pub const terminal_dir_name = profile_paths.terminal_dir_name;
-/// The profile's home folder, opened for listing: creating `~/.fx` in it
+/// The profile's home folder, opened for listing: creating `~/.tetris` in it
 /// syncs it, and Linux cannot sync a folder opened any other way (`O_PATH`).
 fn openHome(home: []const u8) !io_mod.VerifiedDir {
     return .{ .dir = try std.Io.Dir.openDirAbsolute(io_mod.getIo(), home, .{ .iterate = true, .follow_symlinks = false }) };
@@ -152,7 +152,7 @@ fn processId() i64 {
 
 pub const Store = struct {
     manager: *sm.Manager,
-    /// `$HOME`, owned: the base of `~/.fx/sessions/v2` and of the side folders.
+    /// `$HOME`, owned: the base of `~/.tetris/sessions/v2` and of the side folders.
     home: []u8,
     /// Read once, for the wiring trace: not a call per append.
     pid: i64,
@@ -195,12 +195,12 @@ pub const Store = struct {
         return .{ .manager = manager, .home = owned_home, .pid = pid };
     }
 
-    /// Refuses, before any session is asked for, a `~/.fx`, `~/.fx/sessions`
+    /// Refuses, before any session is asked for, a `~/.tetris`, `~/.tetris/sessions`
     /// or `v2` folder that is not a real folder, such as a file or a symlink
     /// (D67): every write would fail on it. One that is missing is made by
     /// the first write; one that others can read converts (D61).
     fn checkSessionsPath(home: []const u8) !void {
-        // Start from the folder that holds fx's folder, so FX_HOME is checked.
+        // Start from the folder that holds fx's folder, so TETRIS_HOME is checked.
         var parent = openHome(profile_paths.rootParent(home)) catch |err| switch (err) {
             error.FileNotFound => return,
             else => return err,
@@ -229,8 +229,8 @@ pub const Store = struct {
         store.* = undefined;
     }
 
-    /// `~/.fx/{name}`, or null when nothing has made it yet.
-    /// Every caller is about to change the folder, so an existing `~/.fx` is
+    /// `~/.tetris/{name}`, or null when nothing has made it yet.
+    /// Every caller is about to change the folder, so an existing `~/.tetris` is
     /// made `0700` as every other fx writer makes it: one made by hand or an
     /// install script keeps the default mode, and refusing it would refuse
     /// every resume.
@@ -246,7 +246,7 @@ pub const Store = struct {
         return io_mod.openVerifiedPrivateDirIfPresent(&fx, name);
     }
 
-    /// `~/.fx/{name}`, made `0700` when missing; `~/.fx` too, as v1's
+    /// `~/.tetris/{name}`, made `0700` when missing; `~/.tetris` too, as v1's
     /// writable root makes it.
     fn makeProfileFolder(store: *Store, name: []const u8) !io_mod.VerifiedDir {
         var home = try openHome(profile_paths.rootParent(store.home));
@@ -1237,7 +1237,7 @@ pub const Session = struct {
     alloc: Allocator,
     store: *Store,
     handle: sm.Session,
-    /// `~/.fx/session-files/{id}`, owned: where an older session kept its
+    /// `~/.tetris/session-files/{id}`, owned: where an older session kept its
     /// side files, read once by the move (D47).
     files_path: []u8,
     /// The session's blobs, shared with every capability over it (D44).
@@ -1548,7 +1548,7 @@ pub const Session = struct {
         return self.handle.onDisk();
     }
 
-    /// The session's folder under `~/.fx/sessions/v2`, for display. Caller owns it.
+    /// The session's folder under `~/.tetris/sessions/v2`, for display. Caller owns it.
     pub fn folderPath(self: *const Session, alloc: Allocator) ![]u8 {
         return profile_paths.rootPath(alloc, self.store.home, &.{ profile_paths.sessions_dir_name, session_layout.sessions_v2_dir, self.id() });
     }
@@ -1626,7 +1626,7 @@ pub const Session = struct {
     // -- bodies --------------------------------------------------------------
 
     /// The capability over this session's blobs (D44): it stores and reads
-    /// large bodies, routes terminal state to `~/.fx/terminal/{id}` (D45),
+    /// large bodies, routes terminal state to `~/.tetris/terminal/{id}` (D45),
     /// and has no side folder. Borrowed until `close`.
     pub fn childCapability(self: *Session) !*session_child_store.SessionChildCapability {
         self.mutex.lockUncancelable(io_mod.getIo());
@@ -2788,7 +2788,7 @@ pub const Session = struct {
     /// in the side folder becomes a blob, the map from each old name to its
     /// blob is one more blob, and one batch records the map, every moved
     /// blob, and the client's settings from the old files.
-    /// Then the terminal folder moves to `~/.fx/terminal/{id}` and the side
+    /// Then the terminal folder moves to `~/.tetris/terminal/{id}` and the side
     /// folder goes. Each step can be repeated, so a crash at any point
     /// redoes the move on the next open.
     fn openMoved(self: *Session) !void {
@@ -2829,7 +2829,7 @@ pub const Session = struct {
         return lines.bodies;
     }
 
-    /// Renames `side/terminal` to `~/.fx/terminal/{id}/terminal`, the layout
+    /// Renames `side/terminal` to `~/.tetris/terminal/{id}/terminal`, the layout
     /// the terminal store keeps (D45). A terminal folder already there was
     /// moved by an earlier try.
     fn moveTerminalFolder(self: *Session, side: *io_mod.VerifiedDir) !void {
@@ -3310,8 +3310,8 @@ pub const LeftOut = struct {
         const why = try entry.reason(alloc);
         defer alloc.free(why);
         if (std.mem.eql(u8, entry.member, root_id))
-            return alloc.print("This session was converted without {s} because {s}. Its earlier folder ~/.fx/sessions/{s} keeps it.", .{ entry.file, why, entry.member });
-        return alloc.print("This session was converted without {s} of its subagent {s} because {s}. Its earlier folder ~/.fx/sessions/{s} keeps it.", .{ entry.file, entry.member, why, entry.member });
+            return alloc.print("This session was converted without {s} because {s}. Its earlier folder ~/.tetris/sessions/{s} keeps it.", .{ entry.file, why, entry.member });
+        return alloc.print("This session was converted without {s} of its subagent {s} because {s}. Its earlier folder ~/.tetris/sessions/{s} keeps it.", .{ entry.file, entry.member, why, entry.member });
     }
 
     /// Why the copy left it out, as a clause. Caller owns it.
@@ -3507,7 +3507,7 @@ const Conversion = struct {
         };
     }
 
-    /// Copies `<v1>/terminal` to `~/.fx/terminal/{id}/terminal` (D45), over
+    /// Copies `<v1>/terminal` to `~/.tetris/terminal/{id}/terminal` (D45), over
     /// what a crashed try left there, whatever its folders' modes, as v1
     /// opened them (it made each private). An entry the copy can't take is
     /// left out, and the member's v1 folder keeps it (D56, D62). A copy, not
@@ -4244,20 +4244,20 @@ fn strayReason(store: *Store, alloc: Allocator, stray: v1_conversion.Stray) !Str
     } else |err| switch (err) {
         error.NotFound, error.InvalidArgument => {},
         error.OutOfMemory => return err,
-        else => return .{ .reason = try alloc.print("fx can't read its converted copy ({s}), so this folder stays as it is", .{@errorName(err)}) },
+        else => return .{ .reason = try alloc.print("Tetris can't read its converted copy ({s}), so this folder stays as it is", .{@errorName(err)}) },
     }
-    const parent = stray.parent orelse return .{ .reason = try alloc.dupe(u8, "it names no parent session, so no fx opens it") };
+    const parent = stray.parent orelse return .{ .reason = try alloc.dupe(u8, "it names no parent session, so no Tetris opens it") };
     return .{ .reason = try switch (stray.parent_kind) {
-        .child => alloc.print("it is a subagent of the earlier subagent {s}, which no fx opens", .{parent}),
+        .child => alloc.print("it is a subagent of the earlier subagent {s}, which no Tetris opens", .{parent}),
         .unreadable => alloc.print("its parent session {s} can't be read, so it stays with it", .{parent}),
         .absent => if (store.manager.peek(alloc, parent)) |peeked_value| blk: {
             var peeked = peeked_value;
             defer peeked.deinit(alloc);
             break :blk switch (peeked.role) {
-                .child => alloc.print("it is a subagent of the earlier subagent {s}, which no fx opens", .{parent}),
-                .root => alloc.print("its parent {s} does not list it, so no fx opens it", .{parent}),
+                .child => alloc.print("it is a subagent of the earlier subagent {s}, which no Tetris opens", .{parent}),
+                .root => alloc.print("its parent {s} does not list it, so no Tetris opens it", .{parent}),
             };
-        } else |_| alloc.print("its parent session {s} is gone, so no fx opens it", .{parent}),
+        } else |_| alloc.print("its parent session {s} is gone, so no Tetris opens it", .{parent}),
     } };
 }
 
@@ -4266,9 +4266,9 @@ fn strayReason(store: *Store, alloc: Allocator, stray: v1_conversion.Stray) !Str
 fn convertedReason(alloc: Allocator, source: ?V1Source) ![]u8 {
     const known = source orelse V1Source{};
     const count = known.leftOutCount();
-    if (count == 1 and known.left_out.len == 1) return alloc.print("fx converted it already without {s}, so this folder keeps it", .{known.left_out[0].file});
-    if (count > 0) return alloc.print("fx converted it already without {d} of its files, so this folder keeps them", .{count});
-    return alloc.dupe(u8, "fx converted it already, so anything an older fx added since stays only in this folder");
+    if (count == 1 and known.left_out.len == 1) return alloc.print("Tetris converted it already without {s}, so this folder keeps it", .{known.left_out[0].file});
+    if (count > 0) return alloc.print("Tetris converted it already without {d} of its files, so this folder keeps them", .{count});
+    return alloc.dupe(u8, "Tetris converted it already, so anything an older Tetris added since stays only in this folder");
 }
 
 const ConversionStorageError = error{ NoSpaceLeft, AccessDenied, ReadOnlyFileSystem, FileTooBig, SessionStoreUnavailable };
@@ -5174,7 +5174,7 @@ fn attachFileReview(src: Source, a: Allocator, builder: *session_log.Conversatio
     }
 }
 /// What the model reads for a call that was running when its turn ended.
-pub const unfinished_tool_output = "fx stopped while this tool was running, so it may have partly run. Check its effects before running it again.";
+pub const unfinished_tool_output = "Tetris stopped while this tool was running, so it may have partly run. Check its effects before running it again.";
 const blob_ref_key = "$blob";
 const blob_ref_prefix = "{\"" ++ blob_ref_key ++ "\":\"";
 
@@ -5617,7 +5617,7 @@ const TestHome = struct {
 
     fn init(t: *TestHome) !void {
         // Iterable, so Linux gives a real descriptor that `fsync` accepts
-        // when a test makes `.fx` here (`io_mod.syncVerifiedDir`).
+        // when a test makes `.tetris` here (`io_mod.syncVerifiedDir`).
         t.tmp = testing.tmpDir(.{ .iterate = true });
         errdefer t.tmp.cleanup();
         t.home = try io_mod.dirRealpathAlloc(testing.allocator, t.tmp.dir, ".");
@@ -5642,13 +5642,13 @@ test "the store refuses a sessions folder that is a file or a symlink, and opens
     var missing = try Store.open(testing.allocator, home);
     missing.deinit(testing.allocator);
 
-    try tmp.dir.createDirPath(io, ".fx");
-    try tmp.dir.writeFile(io, .{ .sub_path = ".fx/sessions", .data = "not a folder" });
+    try tmp.dir.createDirPath(io, ".tetris");
+    try tmp.dir.writeFile(io, .{ .sub_path = ".tetris/sessions", .data = "not a folder" });
     try testing.expectError(error.SessionPathUnsafe, Store.open(testing.allocator, home));
 
-    try tmp.dir.deleteFile(io, ".fx/sessions");
+    try tmp.dir.deleteFile(io, ".tetris/sessions");
     try tmp.dir.createDirPath(io, "elsewhere");
-    try tmp.dir.symLink(io, "../elsewhere", ".fx/sessions", .{ .is_directory = true });
+    try tmp.dir.symLink(io, "../elsewhere", ".tetris/sessions", .{ .is_directory = true });
     try testing.expectError(error.SessionPathUnsafe, Store.open(testing.allocator, home));
 }
 
@@ -5739,7 +5739,7 @@ test "a result the model saw whole comes back whole after a resume, or says its 
     for ([_]bool{ false, true }) |lost| {
         if (lost) {
             // Its blob gone, the result says so rather than show a preview.
-            const path = try std.mem.concat(testing.allocator, u8, &.{ ".fx/sessions/v2/", id, "/blobs/", artifact_digest.blobHash(handle).? });
+            const path = try std.mem.concat(testing.allocator, u8, &.{ ".tetris/sessions/v2/", id, "/blobs/", artifact_digest.blobHash(handle).? });
             defer testing.allocator.free(path);
             try t.tmp.dir.deleteFile(io_mod.getIo(), path);
         }
@@ -6589,7 +6589,7 @@ test "a damaged line in a compaction cycle shows that cycle's turns before it an
     // One byte of cycle 1's second prompt changes while the session is open,
     // so that line's checksum fails.
     const io = io_mod.getIo();
-    const log_path = try std.Io.Dir.path.join(testing.allocator, &.{ ".fx", "sessions", "v2", s.id(), "log.jsonl" });
+    const log_path = try std.Io.Dir.path.join(testing.allocator, &.{ ".tetris", "sessions", "v2", s.id(), "log.jsonl" });
     defer testing.allocator.free(log_path);
     const bytes = try t.tmp.dir.readFileAlloc(io, log_path, testing.allocator, .limited(1 << 20));
     defer testing.allocator.free(bytes);
@@ -7318,7 +7318,7 @@ test "a turn's context notes come back on resume at their boundaries, before tha
     // Each note is its own `context_note` item, written before the steering
     // at its boundary.
     const io = io_mod.getIo();
-    const log_path = try std.Io.Dir.path.join(testing.allocator, &.{ ".fx", "sessions", "v2", id, "log.jsonl" });
+    const log_path = try std.Io.Dir.path.join(testing.allocator, &.{ ".tetris", "sessions", "v2", id, "log.jsonl" });
     defer testing.allocator.free(log_path);
     const bytes = try t.tmp.dir.readFileAlloc(io, log_path, testing.allocator, .limited(1 << 20));
     defer testing.allocator.free(bytes);
@@ -7376,7 +7376,7 @@ test "a turn's runtime context comes back on resume, saved once right after its 
     s.close();
 
     const io = io_mod.getIo();
-    const log_path = try std.Io.Dir.path.join(testing.allocator, &.{ ".fx", "sessions", "v2", id, "log.jsonl" });
+    const log_path = try std.Io.Dir.path.join(testing.allocator, &.{ ".tetris", "sessions", "v2", id, "log.jsonl" });
     defer testing.allocator.free(log_path);
     const bytes = try t.tmp.dir.readFileAlloc(io, log_path, testing.allocator, .limited(1 << 20));
     defer testing.allocator.free(bytes);
@@ -7427,7 +7427,7 @@ test "a turn's model call records come back on resume at their steps, each saved
     s.close();
 
     const io = io_mod.getIo();
-    const log_path = try std.Io.Dir.path.join(testing.allocator, &.{ ".fx", "sessions", "v2", id, "log.jsonl" });
+    const log_path = try std.Io.Dir.path.join(testing.allocator, &.{ ".tetris", "sessions", "v2", id, "log.jsonl" });
     defer testing.allocator.free(log_path);
     const bytes = try t.tmp.dir.readFileAlloc(io, log_path, testing.allocator, .limited(1 << 20));
     defer testing.allocator.free(bytes);
@@ -7481,7 +7481,7 @@ test "steering delivered after a saved call at the same step goes after it, so t
     defer testing.allocator.free(id);
     s.close();
     const io = io_mod.getIo();
-    const log_path = try std.Io.Dir.path.join(testing.allocator, &.{ ".fx", "sessions", "v2", id, "log.jsonl" });
+    const log_path = try std.Io.Dir.path.join(testing.allocator, &.{ ".tetris", "sessions", "v2", id, "log.jsonl" });
     defer testing.allocator.free(log_path);
     const bytes = try t.tmp.dir.readFileAlloc(io, log_path, testing.allocator, .limited(1 << 20));
     defer testing.allocator.free(bytes);
@@ -7592,7 +7592,7 @@ test "resume refuses a session whose compaction line is damaged" {
     // One byte of the summary changes, so its line fails its check. Open
     // reads past it: a snapshot follows every compaction.
     const io = io_mod.getIo();
-    const log_path = try std.Io.Dir.path.join(testing.allocator, &.{ ".fx", "sessions", "v2", id, "log.jsonl" });
+    const log_path = try std.Io.Dir.path.join(testing.allocator, &.{ ".tetris", "sessions", "v2", id, "log.jsonl" });
     defer testing.allocator.free(log_path);
     const bytes = try t.tmp.dir.readFileAlloc(io, log_path, testing.allocator, .limited(1 << 20));
     defer testing.allocator.free(bytes);
@@ -7839,7 +7839,7 @@ test "a v2 session keeps its bodies as blobs its items list, and never makes a s
     defer testing.allocator.free(id);
     s.close();
 
-    try testing.expect(!pathExists(&t, &.{ ".fx", files_dir_name }));
+    try testing.expect(!pathExists(&t, &.{ ".tetris", files_dir_name }));
     const hash = artifact_digest.blobHash(handle).?;
     const body = try t.store.manager.getBlob(testing.allocator, id, hash);
     defer testing.allocator.free(body);
@@ -7898,7 +7898,7 @@ test "a session that never reached the disk takes its terminal folder, and a sav
     try t.init();
     defer t.deinit();
     var model = "m".*;
-    var fx = try io_mod.openOrCreateVerifiedPrivateDirFromDir(t.tmp.dir, ".fx");
+    var fx = try io_mod.openOrCreateVerifiedPrivateDirFromDir(t.tmp.dir, ".tetris");
     defer fx.close();
     var terminal_root = try io_mod.openOrCreateVerifiedPrivateDir(&fx, terminal_dir_name);
     defer terminal_root.close();
@@ -7909,7 +7909,7 @@ test "a session that never reached the disk takes its terminal folder, and a sav
     var made = try io_mod.openOrCreateVerifiedPrivateDir(&terminal_root, unsaved_id);
     made.close();
     unsaved.close();
-    try testing.expect(!pathExists(&t, &.{ ".fx", terminal_dir_name, unsaved_id }));
+    try testing.expect(!pathExists(&t, &.{ ".tetris", terminal_dir_name, unsaved_id }));
 
     const saved = try Session.create(testing.allocator, &t.store, "/w", .ask, testSeed(&model));
     const saved_id = try testing.allocator.dupe(u8, saved.id());
@@ -7918,7 +7918,7 @@ test "a session that never reached the disk takes its terminal folder, and a sav
     kept.close();
     try saved.commitTurn(assistantTurn("q", "a"), types.ConversationLanguage.default());
     saved.close();
-    try testing.expect(pathExists(&t, &.{ ".fx", terminal_dir_name, saved_id }));
+    try testing.expect(pathExists(&t, &.{ ".tetris", terminal_dir_name, saved_id }));
 
     // A first write that landed although the adapter never saw it succeed
     // keeps its folder.
@@ -7929,7 +7929,7 @@ test "a session that never reached the disk takes its terminal folder, and a sav
     landed_dir.close();
     _ = try landed.handle.append(&.{ .turn_started, .turn_committed });
     landed.close();
-    try testing.expect(pathExists(&t, &.{ ".fx", terminal_dir_name, landed_id }));
+    try testing.expect(pathExists(&t, &.{ ".tetris", terminal_dir_name, landed_id }));
 }
 
 test "recover copies the folders outside the manager, never a link, and says when it left one out" {
@@ -7944,7 +7944,7 @@ test "recover copies the folders outside the manager, never a link, and says whe
     defer testing.allocator.free(id);
     s.close();
     {
-        var fx = try io_mod.openOrCreateVerifiedPrivateDirFromDir(t.tmp.dir, ".fx");
+        var fx = try io_mod.openOrCreateVerifiedPrivateDirFromDir(t.tmp.dir, ".tetris");
         defer fx.close();
         var root = try io_mod.openOrCreateVerifiedPrivateDir(&fx, terminal_dir_name);
         defer root.close();
@@ -7961,7 +7961,7 @@ test "recover copies the folders outside the manager, never a link, and says whe
     defer recovered.deinit(testing.allocator);
     try testing.expect(!recovered.files_complete);
     try testing.expectEqual(@as(usize, 1), recovered.history_len);
-    const copy = try std.Io.Dir.path.join(testing.allocator, &.{ ".fx", terminal_dir_name, recovered.id });
+    const copy = try std.Io.Dir.path.join(testing.allocator, &.{ ".tetris", terminal_dir_name, recovered.id });
     defer testing.allocator.free(copy);
     var dir = try t.tmp.dir.openDir(io, copy, .{});
     defer dir.close(io);
@@ -7982,7 +7982,7 @@ test "recover copies the folders outside the manager, never a link, and says whe
     try testing.expectError(error.SessionNotFound, recover(&t.store, testing.allocator, "NoSuchSession1"));
 }
 
-test "a resume makes a hand-made ~/.fx private instead of refusing the session" {
+test "a resume makes a hand-made ~/.tetris private instead of refusing the session" {
     var t: TestHome = undefined;
     try t.init();
     defer t.deinit();
@@ -7992,11 +7992,11 @@ test "a resume makes a hand-made ~/.fx private instead of refusing the session" 
     defer testing.allocator.free(id);
     try OldSideFolder.commitTurn(&t, s);
     s.close();
-    try t.tmp.dir.setFilePermissions(io_mod.getIo(), ".fx", .fromMode(0o755), .{});
+    try t.tmp.dir.setFilePermissions(io_mod.getIo(), ".tetris", .fromMode(0o755), .{});
 
     const r = try Session.resumeSession(testing.allocator, &t.store, .{ .id = id }, "/w", .ask);
     r.close();
-    const stat = try t.tmp.dir.statFile(io_mod.getIo(), ".fx", .{ .follow_symlinks = false });
+    const stat = try t.tmp.dir.statFile(io_mod.getIo(), ".tetris", .{ .follow_symlinks = false });
     try testing.expectEqual(@as(u32, 0o700), @as(u32, @intCast(stat.permissions.toMode() & 0o777)));
 }
 
@@ -8010,7 +8010,7 @@ const OldSideFolder = struct {
 
     fn write(t: *TestHome, id: []const u8) !void {
         const io = io_mod.getIo();
-        var fx = try io_mod.openOrCreateVerifiedPrivateDirFromDir(t.tmp.dir, ".fx");
+        var fx = try io_mod.openOrCreateVerifiedPrivateDirFromDir(t.tmp.dir, ".tetris");
         defer fx.close();
         var files = try io_mod.openOrCreateVerifiedPrivateDir(&fx, files_dir_name);
         defer files.close();
@@ -8035,7 +8035,7 @@ const OldSideFolder = struct {
         var digest: [32]u8 = undefined;
         std.crypto.hash.sha2.Sha256.hash(&png, &digest, .{});
         var digest_hex = std.fmt.bytesToHex(digest, .lower);
-        const snapshot_path = try std.Io.Dir.path.join(testing.allocator, &.{ t.home, ".fx", files_dir_name, s.id(), "images", image_name });
+        const snapshot_path = try std.Io.Dir.path.join(testing.allocator, &.{ t.home, ".tetris", files_dir_name, s.id(), "images", image_name });
         defer testing.allocator.free(snapshot_path);
         var images = [_]types.ImageAttachment{.{
             .id = 1,
@@ -8076,8 +8076,8 @@ test "an older session moves off its side folder on its first writable open, and
     const r = try Session.resumeSession(testing.allocator, &t.store, .{ .id = id }, "/w", .acp);
     defer r.close();
     // One manager folder, and terminal state where the terminal store looks.
-    try testing.expect(!pathExists(&t, &.{ ".fx", files_dir_name, id }));
-    try testing.expect(pathExists(&t, &.{ ".fx", terminal_dir_name, id, "terminal", "state", "terminal-1.json" }));
+    try testing.expect(!pathExists(&t, &.{ ".tetris", files_dir_name, id }));
+    try testing.expect(pathExists(&t, &.{ ".tetris", terminal_dir_name, id, "terminal", "state", "terminal-1.json" }));
     // Old handles resolve through the map.
     const capability = try r.childCapability();
     const body = try capability.readBlob(testing.allocator, .tool_results, OldSideFolder.result_handle, 1024);
@@ -8371,7 +8371,7 @@ test "compactor records on v2 are recorded by one setting with the next write, a
     const id = try testing.allocator.dupe(u8, s.id());
     defer testing.allocator.free(id);
     s.close();
-    try testing.expect(!pathExists(&t, &.{ ".fx", files_dir_name }));
+    try testing.expect(!pathExists(&t, &.{ ".tetris", files_dir_name }));
     try testing.expectEqual(@as(u64, 0), (try t.store.manager.verify(id)).bad_blobs);
 
     // A new process reads them back by name, and lists them.
@@ -8423,7 +8423,7 @@ test "a web-fetch download on v2 is a read-only blob the model opens by its path
     try testing.expectEqualStrings("%PDF-1.7 a download", buffer[0..len]);
     const stat = try file.stat(io_mod.getIo());
     try testing.expectEqual(@as(u32, 0o400), @as(u32, @intCast(stat.permissions.toMode() & 0o777)));
-    try testing.expect(!pathExists(&t, &.{ ".fx", files_dir_name }));
+    try testing.expect(!pathExists(&t, &.{ ".tetris", files_dir_name }));
 }
 
 test "a move cut short is redone on the next open, and old names still resolve (D47)" {
@@ -8447,14 +8447,14 @@ test "a move cut short is redone on the next open, and old names still resolve (
         try testing.expectEqual(@as(usize, 4), try s.moveOut(&side));
     }
     s.close();
-    try testing.expect(pathExists(&t, &.{ ".fx", files_dir_name, id }));
+    try testing.expect(pathExists(&t, &.{ ".tetris", files_dir_name, id }));
     try testing.expectEqual(@as(usize, 1), try countSettings(t.store.manager, id, .moved_files));
 
     const r = try Session.resumeSession(testing.allocator, &t.store, .{ .id = id }, "/w", .ask);
     defer r.close();
-    try testing.expect(!pathExists(&t, &.{ ".fx", files_dir_name, id }));
+    try testing.expect(!pathExists(&t, &.{ ".tetris", files_dir_name, id }));
     try testing.expectEqual(@as(usize, 2), try countSettings(t.store.manager, id, .moved_files));
-    try testing.expect(pathExists(&t, &.{ ".fx", terminal_dir_name, id, "terminal", "state", "terminal-1.json" }));
+    try testing.expect(pathExists(&t, &.{ ".tetris", terminal_dir_name, id, "terminal", "state", "terminal-1.json" }));
     const body = try (try r.childCapability()).readBlob(testing.allocator, .tool_results, OldSideFolder.result_handle, 1024);
     defer testing.allocator.free(body);
     try testing.expectEqualStrings("an old result body", body);
@@ -8699,7 +8699,7 @@ test "a prompt image the store does not save keeps its bytes inline and gets no 
     var images = [_]types.ImageAttachment{
         .{ .id = 1, .path = @constCast("/Users/example/a.png"), .media_type = @constCast("image/png"), .snapshot_sha256 = &wrong, .inline_data = @constCast(&bytes) },
         // Bytes the session does not hold are not its to save.
-        .{ .id = 2, .path = @constCast("/Users/example/b.png"), .media_type = @constCast("image/png"), .snapshot_path = @constCast("/Users/example/.fx/sessions/s/images/image-2.bin") },
+        .{ .id = 2, .path = @constCast("/Users/example/b.png"), .media_type = @constCast("image/png"), .snapshot_path = @constCast("/Users/example/.tetris/sessions/s/images/image-2.bin") },
     };
     var arena = std.heap.ArenaAllocator.init(testing.allocator);
     defer arena.deinit();
@@ -8746,7 +8746,7 @@ test "a turn the store cannot start keeps its prompt images inline and does not 
     // which a read-only store refuses.
     const io = io_mod.getIo();
     try std.Io.Dir.cwd().createDirPath(io, t.store.manager.root_path);
-    var root = try std.Io.Dir.openDirAbsolute(io, t.store.manager.root_path, .{});
+    var root = try std.Io.Dir.openDirAbsolute(io, t.store.manager.root_path, .{ .iterate = true });
     defer root.close(io);
     root.setPermissions(io, .fromMode(0o500)) catch return error.SkipZigTest;
     defer root.setPermissions(io, .fromMode(0o700)) catch {};
@@ -8766,7 +8766,7 @@ test "an image that arrives with another session's blob path is saved here or wr
     var digest_hex = std.fmt.bytesToHex(digest, .lower);
     const other_digest: [32]u8 = @splat(0xcd);
     var other_hex = std.fmt.bytesToHex(other_digest, .lower);
-    const elsewhere = "/Users/example/.fx/sessions/v2/other/blobs/elsewhere";
+    const elsewhere = "/Users/example/.tetris/sessions/v2/other/blobs/elsewhere";
     const original = [_]types.ImageAttachment{
         .{ .id = 1, .path = @constCast("/Users/example/a.png"), .media_type = @constCast("image/png"), .snapshot_sha256 = &digest_hex, .inline_data = @constCast(&bytes), .blob_path = @constCast(elsewhere) },
         // No bytes here to save, only another session's blob.
@@ -8838,7 +8838,7 @@ const V1Home = struct {
     }
 
     /// Copies the first `count` sessions of the fixture `kind`, root first,
-    /// into the home's `~/.fx`, private as v1 left them, with what the kind
+    /// into the home's `~/.tetris`, private as v1 left them, with what the kind
     /// keeps outside its sessions, and returns their ids.
     fn fixture(v1: *V1Home, kind: []const u8, count: usize) ![]const []const u8 {
         const io = io_mod.getIo();
@@ -8919,7 +8919,7 @@ const V1Home = struct {
     /// v1's `session.json` of `id`. The arena's.
     fn metadata(v1: *V1Home, id: []const u8) !std.json.ObjectMap {
         const a = v1.arena.allocator();
-        const path = try std.Io.Dir.path.join(a, &.{ ".fx", "sessions", id, "session.json" });
+        const path = try std.Io.Dir.path.join(a, &.{ ".tetris", "sessions", id, "session.json" });
         const bytes = try v1.t.tmp.dir.readFileAlloc(io_mod.getIo(), path, a, .limited(1 << 20));
         return (try std.json.parseFromSliceLeaky(std.json.Value, a, bytes, .{})).object;
     }
@@ -8927,7 +8927,7 @@ const V1Home = struct {
     /// When v1 logged each prompt of `id`: the times its turns start.
     fn promptTimes(v1: *V1Home, id: []const u8) ![]const u64 {
         const a = v1.arena.allocator();
-        const path = try std.Io.Dir.path.join(a, &.{ ".fx", "sessions", id, "events.jsonl" });
+        const path = try std.Io.Dir.path.join(a, &.{ ".tetris", "sessions", id, "events.jsonl" });
         const bytes = try v1.t.tmp.dir.readFileAlloc(io_mod.getIo(), path, a, .limited(1 << 24));
         var times: std.ArrayList(u64) = .empty;
         var lines = std.mem.splitScalar(u8, bytes, '\n');
@@ -8942,7 +8942,7 @@ const V1Home = struct {
     /// The one file in `folder` of v1's `id`. The arena's.
     fn only(v1: *V1Home, id: []const u8, folder: []const u8) ![]const u8 {
         const a = v1.arena.allocator();
-        var dir = try v1.t.tmp.dir.openDir(io_mod.getIo(), try std.Io.Dir.path.join(a, &.{ ".fx", "sessions", id, folder }), .{ .iterate = true });
+        var dir = try v1.t.tmp.dir.openDir(io_mod.getIo(), try std.Io.Dir.path.join(a, &.{ ".tetris", "sessions", id, folder }), .{ .iterate = true });
         defer dir.close(io_mod.getIo());
         var entries = dir.iterate();
         const first = (try entries.next(io_mod.getIo())) orelse return error.FileNotFound;
@@ -8953,7 +8953,7 @@ const V1Home = struct {
     /// The bytes of `{folder}/{name}` in v1's `id`. The arena's.
     fn file(v1: *V1Home, id: []const u8, folder: []const u8, name: []const u8) ![]const u8 {
         const a = v1.arena.allocator();
-        return v1.t.tmp.dir.readFileAlloc(io_mod.getIo(), try std.Io.Dir.path.join(a, &.{ ".fx", "sessions", id, folder, name }), a, .limited(1 << 24));
+        return v1.t.tmp.dir.readFileAlloc(io_mod.getIo(), try std.Io.Dir.path.join(a, &.{ ".tetris", "sessions", id, folder, name }), a, .limited(1 << 24));
     }
 
     /// Every file under `folder` of v1's `id`, by its path there, with its
@@ -8961,7 +8961,7 @@ const V1Home = struct {
     fn tree(v1: *V1Home, id: []const u8, folder: []const u8) !std.array_hash_map.String([]const u8) {
         const io = io_mod.getIo();
         const a = v1.arena.allocator();
-        var dir = try v1.t.tmp.dir.openDir(io, try std.Io.Dir.path.join(a, &.{ ".fx", "sessions", id, folder }), .{ .iterate = true });
+        var dir = try v1.t.tmp.dir.openDir(io, try std.Io.Dir.path.join(a, &.{ ".tetris", "sessions", id, folder }), .{ .iterate = true });
         defer dir.close(io);
         var files: std.array_hash_map.String([]const u8) = .empty;
         var walker = try dir.walk(a);
@@ -8972,14 +8972,14 @@ const V1Home = struct {
         return files;
     }
 
-    /// `.fx/sessions/{id}/{rest}`, relative to the home. The arena's.
+    /// `.tetris/sessions/{id}/{rest}`, relative to the home. The arena's.
     fn sessionPath(v1: *V1Home, id: []const u8, rest: []const u8) ![]const u8 {
-        return std.Io.Dir.path.join(v1.arena.allocator(), &.{ ".fx", "sessions", id, rest });
+        return std.Io.Dir.path.join(v1.arena.allocator(), &.{ ".tetris", "sessions", id, rest });
     }
 
     fn exists(t: *TestHome, id: []const u8) bool {
         var buffer: [64]u8 = undefined;
-        const path = std.mem.print(&buffer, ".fx/sessions/{s}", .{id}) catch unreachable;
+        const path = std.mem.print(&buffer, ".tetris/sessions/{s}", .{id}) catch unreachable;
         _ = t.tmp.dir.statFile(io_mod.getIo(), path, .{}) catch return false;
         return true;
     }
@@ -9004,7 +9004,7 @@ const V1Copy = struct {
         var copy: V1Copy = .{};
         errdefer copy.deinit();
         var buffer: [64]u8 = undefined;
-        var dir = try t.tmp.dir.openDir(io, try std.mem.print(&buffer, ".fx/sessions/{s}", .{id}), .{ .iterate = true });
+        var dir = try t.tmp.dir.openDir(io, try std.mem.print(&buffer, ".tetris/sessions/{s}", .{id}), .{ .iterate = true });
         defer dir.close(io);
         var it = dir.iterate();
         while (try it.next(io)) |entry| {
@@ -9166,7 +9166,7 @@ test "a converted v1 session's hosted terminal state lands where v2 keeps it (D4
     const s = try openConverted(&t, id);
     defer s.close();
     for (saved.keys(), saved.values()) |path, bytes| {
-        const moved = try std.Io.Dir.path.join(alloc, &.{ ".fx", terminal_dir_name, id, terminal_dir_name, path });
+        const moved = try std.Io.Dir.path.join(alloc, &.{ ".tetris", terminal_dir_name, id, terminal_dir_name, path });
         defer alloc.free(moved);
         const state = try V1Home.read(&t, moved);
         defer alloc.free(state);
@@ -9189,7 +9189,7 @@ test "a v1 session's hosted terminal folders an old fx left readable by others c
     for ([_][]const u8{ "", "/state", "/proofs" }) |sub| {
         const path = try alloc.print("{s}/{s}{s}", .{ try v1.sessionPath(id, ""), terminal_dir_name, sub });
         defer alloc.free(path);
-        var dir = try t.tmp.dir.openDir(io, path, .{});
+        var dir = try t.tmp.dir.openDir(io, path, .{ .iterate = true });
         defer dir.close(io);
         dir.setPermissions(io, .fromMode(0o755)) catch return error.SkipZigTest;
     }
@@ -9197,13 +9197,13 @@ test "a v1 session's hosted terminal folders an old fx left readable by others c
     const s = try openConverted(&t, id);
     defer s.close();
     for (saved.keys(), saved.values()) |path, bytes| {
-        const moved = try std.Io.Dir.path.join(alloc, &.{ ".fx", terminal_dir_name, id, terminal_dir_name, path });
+        const moved = try std.Io.Dir.path.join(alloc, &.{ ".tetris", terminal_dir_name, id, terminal_dir_name, path });
         defer alloc.free(moved);
         const state = try V1Home.read(&t, moved);
         defer alloc.free(state);
         try testing.expectEqualSlices(u8, bytes, state);
     }
-    const moved = try std.Io.Dir.path.join(alloc, &.{ ".fx", terminal_dir_name, id, terminal_dir_name, "state" });
+    const moved = try std.Io.Dir.path.join(alloc, &.{ ".tetris", terminal_dir_name, id, terminal_dir_name, "state" });
     defer alloc.free(moved);
     const stat = try t.tmp.dir.statFile(io, moved, .{ .follow_symlinks = false });
     try testing.expectEqual(@as(u32, 0o700), @as(u32, @intCast(stat.permissions.toMode() & 0o777)));
@@ -9232,8 +9232,8 @@ test "a v1 session whose hosted terminal state holds an entry the copy can't tak
     try testing.expectEqualStrings("terminal/state/stray-link", left.file);
     try testing.expectEqual(LeftOut.Cause.not_regular, left.cause);
     // The rest of its terminal state is copied, the link is not.
-    try testing.expect(pathExists(&t, &.{ ".fx", terminal_dir_name, id, "terminal", "state", "record-shell-P1Rx7ZvNXwWFA8DxO1uT2w.json" }));
-    try testing.expect(!pathExists(&t, &.{ ".fx", terminal_dir_name, id, "terminal", "state", "stray-link" }));
+    try testing.expect(pathExists(&t, &.{ ".tetris", terminal_dir_name, id, "terminal", "state", "record-shell-P1Rx7ZvNXwWFA8DxO1uT2w.json" }));
+    try testing.expect(!pathExists(&t, &.{ ".tetris", terminal_dir_name, id, "terminal", "state", "stray-link" }));
 
     // Its v1 folder keeps the link, and a later run's cleanup keeps the
     // folder by what the copy recorded, even once the link is gone.
@@ -9285,7 +9285,7 @@ test "a v1 turn left open comes back unfinished exactly as v1 shows it (D56)" {
         const id = (try v1.fixture(if (variant == .stale) "plain" else "unfinished", 1))[0];
         switch (variant) {
             .checkpoint => {},
-            .open => try t.tmp.dir.deleteFile(io_mod.getIo(), try std.Io.Dir.path.join(v1.arena.allocator(), &.{ ".fx", "sessions", id, "recovery.json" })),
+            .open => try t.tmp.dir.deleteFile(io_mod.getIo(), try std.Io.Dir.path.join(v1.arena.allocator(), &.{ ".tetris", "sessions", id, "recovery.json" })),
             // v1 drops a checkpoint inside a turn that ended at seq 3.
             .stale => try writeRecovery(&v1, id, 2, "CONV_FIRST 1", "never shown"),
         }
@@ -9403,7 +9403,7 @@ test "an unreadable v1 session is refused with its file and reason, and nothing 
     try testing.expectEqualStrings(try std.mem.print(&buffer, "events.jsonl line {d} is not valid JSON", .{line}), t.store.conversionProblem().?);
     try testing.expectError(error.NotFound, t.store.manager.peek(alloc, v1_torn_id));
     // No staging left behind, if any was made.
-    if (t.tmp.dir.openDir(io_mod.getIo(), ".fx/sessions/v2/.tmp", .{ .iterate = true })) |opened_staging| {
+    if (t.tmp.dir.openDir(io_mod.getIo(), ".tetris/sessions/v2/.tmp", .{ .iterate = true })) |opened_staging| {
         var staging = opened_staging;
         defer staging.close(io_mod.getIo());
         var it = staging.iterate();
@@ -9535,7 +9535,7 @@ test "recover leaves out a kept side file that is gone or not the bytes its name
     changed[0] ^= 1;
     for ([_]bool{ false, true }) |gone| {
         if (gone) {
-            const path = try std.mem.concat(alloc, u8, &.{ ".fx/sessions/", id, "/tool-results/", artifact });
+            const path = try std.mem.concat(alloc, u8, &.{ ".tetris/sessions/", id, "/tool-results/", artifact });
             defer alloc.free(path);
             try t.tmp.dir.deleteFile(io_mod.getIo(), path);
         } else try v1.put(id, "tool-results", artifact, changed);
@@ -10017,7 +10017,7 @@ test "fx sessions convert keeps a v1 subagent's own subagent as it is, and fx do
     defer report.deinit(alloc);
     try testing.expectEqual(@as(usize, 1), report.converted);
     try testing.expectEqual(@as(usize, 0), report.skipped.items.len);
-    const reason = try a.print("it is a subagent of the earlier subagent {s}, which no fx opens", .{family[1]});
+    const reason = try a.print("it is a subagent of the earlier subagent {s}, which no Tetris opens", .{family[1]});
     try testing.expectEqual(@as(usize, 1), report.kept_children.len);
     try testing.expectEqualStrings(family[2], report.kept_children[0].id);
     try testing.expectEqualStrings(reason, report.kept_children[0].reason);
@@ -10101,7 +10101,7 @@ test "fx sessions convert says a converted v1 child whose folder a cleanup kept 
     defer report.deinit(alloc);
     try testing.expectEqual(@as(usize, 1), report.kept_children.len);
     try testing.expectEqualStrings(child, report.kept_children[0].id);
-    try testing.expectEqualStrings("fx converted it already, so anything an older fx added since stays only in this folder", report.kept_children[0].reason);
+    try testing.expectEqualStrings("Tetris converted it already, so anything an older Tetris added since stays only in this folder", report.kept_children[0].reason);
 }
 
 test "a kept subagent's reason names what its copy left out, one file by name and more by count (D62)" {
@@ -10109,13 +10109,13 @@ test "a kept subagent's reason names what its copy left out, one file by name an
     const one = [_]V1Source.Record{.{ .file = "logs/commands/replay.bin", .cause = .too_large }};
     const two = [_]V1Source.Record{ one[0], .{ .file = "terminal/state/link", .cause = .not_regular } };
     const cases = [_]struct { source: ?V1Source, reason: []const u8 }{
-        .{ .source = null, .reason = "fx converted it already, so anything an older fx added since stays only in this folder" },
-        .{ .source = .{ .fingerprint = "f" }, .reason = "fx converted it already, so anything an older fx added since stays only in this folder" },
-        .{ .source = .{ .left_out = &one, .left_out_total = 1 }, .reason = "fx converted it already without logs/commands/replay.bin, so this folder keeps it" },
-        .{ .source = .{ .left_out = &two, .left_out_total = 2 }, .reason = "fx converted it already without 2 of its files, so this folder keeps them" },
+        .{ .source = null, .reason = "Tetris converted it already, so anything an older Tetris added since stays only in this folder" },
+        .{ .source = .{ .fingerprint = "f" }, .reason = "Tetris converted it already, so anything an older Tetris added since stays only in this folder" },
+        .{ .source = .{ .left_out = &one, .left_out_total = 1 }, .reason = "Tetris converted it already without logs/commands/replay.bin, so this folder keeps it" },
+        .{ .source = .{ .left_out = &two, .left_out_total = 2 }, .reason = "Tetris converted it already without 2 of its files, so this folder keeps them" },
         // A copy names the first files only; the count is all of them.
-        .{ .source = .{ .left_out = &two, .left_out_total = 33 }, .reason = "fx converted it already without 33 of its files, so this folder keeps them" },
-        .{ .source = .{ .left_out_total = 1 }, .reason = "fx converted it already without 1 of its files, so this folder keeps them" },
+        .{ .source = .{ .left_out = &two, .left_out_total = 33 }, .reason = "Tetris converted it already without 33 of its files, so this folder keeps them" },
+        .{ .source = .{ .left_out_total = 1 }, .reason = "Tetris converted it already without 1 of its files, so this folder keeps them" },
     };
     for (cases) |case| {
         const reason = try convertedReason(alloc, case.source);
@@ -10213,7 +10213,7 @@ test "fx sessions convert says when it can't read a kept v1 child's converted co
     try copy.restore(&v1, child);
     try v1.put(child, "subagent", "owner.json", owner);
     // The converted copy is damaged since.
-    var copied = try t.tmp.dir.openDir(io, try std.Io.Dir.path.join(v1.arena.allocator(), &.{ ".fx", "sessions", "v2", child }), .{});
+    var copied = try t.tmp.dir.openDir(io, try std.Io.Dir.path.join(v1.arena.allocator(), &.{ ".tetris", "sessions", "v2", child }), .{});
     defer copied.close(io);
     try copied.writeFile(io, .{ .sub_path = "log.jsonl", .data = "not a log\n" });
 
@@ -10221,7 +10221,7 @@ test "fx sessions convert says when it can't read a kept v1 child's converted co
     defer report.deinit(alloc);
     try testing.expectEqual(@as(usize, 1), report.kept_children.len);
     try testing.expectEqualStrings(child, report.kept_children[0].id);
-    try testing.expect(std.mem.startsWith(u8, report.kept_children[0].reason, "fx can't read its converted copy ("));
+    try testing.expect(std.mem.startsWith(u8, report.kept_children[0].reason, "Tetris can't read its converted copy ("));
 }
 
 test "fx sessions convert converts every v1 family, and counts what it skipped (D61)" {
@@ -10266,8 +10266,8 @@ test "a v1 profile an old release left readable by others converts (D61)" {
     defer v1.deinit();
     const roots = try v1.fixture("plain", 1);
     const v1_open_id = roots[0];
-    for ([_][]const u8{ ".fx", ".fx/sessions", try v1.sessionPath(v1_open_id, "") }) |path| {
-        var dir = try t.tmp.dir.openDir(io, path, .{});
+    for ([_][]const u8{ ".tetris", ".tetris/sessions", try v1.sessionPath(v1_open_id, "") }) |path| {
+        var dir = try t.tmp.dir.openDir(io, path, .{ .iterate = true });
         defer dir.close(io);
         dir.setPermissions(io, .fromMode(0o755)) catch return error.SkipZigTest;
     }
@@ -10454,7 +10454,7 @@ test "a child an earlier try published keeps its v1 folder when that try left a 
     defer report.deinit(alloc);
     try testing.expectEqual(@as(usize, 1), report.kept_children.len);
     try testing.expectEqualStrings(child, report.kept_children[0].id);
-    try testing.expectEqualStrings("fx converted it already without logs/commands/replay.bin, so this folder keeps it", report.kept_children[0].reason);
+    try testing.expectEqualStrings("Tetris converted it already without logs/commands/replay.bin, so this folder keeps it", report.kept_children[0].reason);
     // fx doctor counts that folder, though its root's folder is gone.
     var doctor_report = try doctor(&t.store, alloc, 64, 0);
     defer doctor_report.deinit(alloc);
@@ -10525,7 +10525,7 @@ test "the sweep drops what an earlier try staged for a child whose folder is gon
     _ = try staging.putBlob("staged before the folder went");
     staging.release();
     try t.tmp.dir.deleteTree(io_mod.getIo(), try v1.sessionPath(went, ""));
-    const staged = try std.Io.Dir.path.join(v1.arena.allocator(), &.{ ".fx", "sessions", "v2", ".tmp", went });
+    const staged = try std.Io.Dir.path.join(v1.arena.allocator(), &.{ ".tetris", "sessions", "v2", ".tmp", went });
     _ = try t.tmp.dir.statFile(io_mod.getIo(), staged, .{});
 
     (try openConverted(&t, parent)).close();
@@ -10651,8 +10651,8 @@ test "a new session never takes an id v1's folder could not be checked for (D61)
     try t.init();
     defer t.deinit();
     const io = io_mod.getIo();
-    try t.tmp.dir.createDirPath(io, ".fx/sessions");
-    var sessions = try t.tmp.dir.openDir(io, ".fx/sessions", .{});
+    try t.tmp.dir.createDirPath(io, ".tetris/sessions");
+    var sessions = try t.tmp.dir.openDir(io, ".tetris/sessions", .{ .iterate = true });
     defer sessions.close(io);
     sessions.setPermissions(io, .fromMode(0o000)) catch return error.SkipZigTest;
     defer sessions.setPermissions(io, .fromMode(0o700)) catch {};
@@ -10750,7 +10750,7 @@ test "a v1 side file larger than one v2 blob is left out and named, its v1 folde
     const s = try openConverted(&t, roots[0]);
     defer s.close();
     var expected: [320]u8 = undefined;
-    try testing.expectEqualStrings(try std.mem.print(&expected, "This session was converted without logs/commands/replay.bin because it is {d} bytes, more than the {d} the new store keeps in one file. Its earlier folder ~/.fx/sessions/{s} keeps it.", .{ sm.max_blob_bytes + 1, sm.max_blob_bytes, roots[0] }), told.items);
+    try testing.expectEqualStrings(try std.mem.print(&expected, "This session was converted without logs/commands/replay.bin because it is {d} bytes, more than the {d} the new store keeps in one file. Its earlier folder ~/.tetris/sessions/{s} keeps it.", .{ sm.max_blob_bytes + 1, sm.max_blob_bytes, roots[0] }), told.items);
     try testing.expect(s.host.moved.get("logs/commands/small.bin") != null);
     try testing.expect(s.host.moved.get("logs/commands/replay.bin") == null);
     try s.commitTurn(assistantTurn("next", "reply"), types.ConversationLanguage.default());

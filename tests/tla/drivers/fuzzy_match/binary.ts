@@ -1,4 +1,4 @@
-// The binary stage: drives the built fx's Models menu and skills menu in
+// The binary stage: drives the built tetris's Models menu and skills menu in
 // tmux, reads the rows each query shows, and has TLC judge them against
 // FuzzyMatch!Listing: each menu must list exactly what the model lists, in
 // the same order, with the same count.
@@ -24,9 +24,9 @@ export const MODEL_QUERIES = [
 // (`skillSourceShortLabel`, src/core/skills/skill_runtime.zig:1158). Six,
 // because the skills menu shows six rows at most.
 export const SKILLS = [
-  { root: ".fx", label: "global .fx", dir: "fx-commit", name: "fx-commit", description: "Land work with a signed commit" },
-  { root: ".fx", label: "global .fx", dir: "zig-best-practices", name: "zig-best-practices", description: "Write robust Zig code" },
-  { root: ".fx", label: "global .fx", dir: "zqdir", name: "deploy-check", description: "Check a deploy before release" },
+  { root: ".tetris", label: "global .tetris", dir: "fx-commit", name: "fx-commit", description: "Land work with a signed commit" },
+  { root: ".tetris", label: "global .tetris", dir: "zig-best-practices", name: "zig-best-practices", description: "Write robust Zig code" },
+  { root: ".tetris", label: "global .tetris", dir: "zqdir", name: "deploy-check", description: "Check a deploy before release" },
   { root: ".codex", label: "global .codex", dir: "workflow-helper", name: "workflow-helper", description: "Simplify workflows" },
   { root: ".codex", label: "global .codex", dir: "create-issue", name: "create-issue", description: "Open a ticket in the tracker" },
   { root: ".agents", label: "global .agents", dir: "release-notes", name: "release-notes", description: "Draft the changelog" },
@@ -126,9 +126,9 @@ export async function binaryStage(dir: string): Promise<BinaryResult> {
   const root = realpathSync(mkdtempSync(join(tmpdir(), "fzm-")));
   const home = join(root, "h");
   const workspace = join(root, "w");
-  mkdirSync(join(home, ".fx"), { recursive: true });
+  mkdirSync(join(home, ".tetris"), { recursive: true });
   mkdirSync(workspace, { recursive: true });
-  writeFileSync(join(home, ".fx", "settings.json"), "{}\n");
+  writeFileSync(join(home, ".tetris", "settings.json"), "{}\n");
   const skillFields = new Map<string, Field[]>();
   for (const skill of SKILLS) {
     const folder = join(home, skill.root, "skills", skill.dir);

@@ -806,7 +806,7 @@ fn prepare(arena: Allocator, turn: Turn, continued: ?checkpoint.OpenTurn, is_ope
         .assistant => |message| if (message.len > 0) {
             try text.print(arena, "{s}:\n{s}\n\n", .{ if (index == final_index) "Assistant, final reply" else "Assistant", message });
         },
-        .note => |message| try text.print(arena, "From fx, not the user:\n{s}\n\n", .{message}),
+        .note => |message| try text.print(arena, "From Tetris, not the user:\n{s}\n\n", .{message}),
         .tool_call => |call| {
             const index_line = try indexLine(arena, call.arguments);
             try text.print(arena, "[T{d} {s}{s}{s}]\n\n", .{ number, call.name, if (index_line.len > 0) ": " else "", index_line });
@@ -1270,7 +1270,7 @@ fn renderTranscript(alloc: Allocator, plan: Plan, clip: usize, earlier_clip: usi
             switch (item) {
                 .user => |added| try text.print(alloc, "[User, added while the assistant worked]\n{s}\n\n", .{try clipped(alloc, added, clip, turn_id)}),
                 .assistant => |assistant| if (assistant.len > 0) try text.print(alloc, "[Assistant]\n{s}\n\n", .{try clipped(alloc, assistant, clip, turn_id)}),
-                .note => |note| try text.print(alloc, "[From fx, not the user]\n{s}\n\n", .{try clipped(alloc, note, clip, turn_id)}),
+                .note => |note| try text.print(alloc, "[From Tetris, not the user]\n{s}\n\n", .{try clipped(alloc, note, clip, turn_id)}),
                 .tool_call => |call| try text.print(alloc, "[Tool call T{d}: {s}]\n{s}\n\n", .{ number, call.name, try clipped(alloc, call.arguments, clip, tool_id) }),
                 .tool_result => |result| {
                     try text.print(alloc, "[Tool result T{d}: {s}]\n{s}\n", .{ number, result.name, try clipped(alloc, result.output, clip, tool_id) });
@@ -1505,7 +1505,7 @@ test "after the conversation the model reads only the request, with every turn f
     try testing.expect(std.mem.find(u8, seen, "missing semicolon") == null);
     try testing.expect(std.mem.find(u8, seen, "Answer with text only and call no tools.") != null);
     // Read as the user's next message, the request could end up in the notes.
-    try testing.expect(std.mem.find(u8, seen, "This request comes from fx, not from the user") != null);
+    try testing.expect(std.mem.find(u8, seen, "This request comes from Tetris, not from the user") != null);
     // Turn 2 has nothing in between but is listed for its number.
     try testing.expect(std.mem.find(u8, seen, "each followed by its notes:\n\n" ++
         "Turn 1 (T1), which begins \u{201c}Fix the build. It fails on main.\u{201d}\n  T1 shell: zig build\n" ++

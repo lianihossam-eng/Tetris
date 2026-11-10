@@ -2,14 +2,14 @@
 (***************************************************************************)
 (* Step: agentic resumption.                                             *)
 (*                                                                         *)
-(* fx never asks the user to continue a session; it tells the agent.     *)
+(* Tetris never asks the user to continue a session; it tells the agent.     *)
 (* When a process reopens a session whose last turn was cut off          *)
-(* by a crash, fx continues that turn on its own and tells the model     *)
+(* by a crash, Tetris continues that turn on its own and tells the model     *)
 (* "Resuming from unexpected session interruption". It never asks, and   *)
 (* there is no crash-loop guard. A turn the user                       *)
 (* stopped, or a committed turn, is never resumed automatically. Reopen  *)
 (* covers `agent.resume()`, the queue waking a function through          *)
-(* libfx/workflow's route, and `fx -c`.                                  *)
+(* libfx/workflow's route, and `tetris -c`.                                  *)
 (*                                                                         *)
 (* A turn ends in three steps: its final reply is saved with the turn's  *)
 (* progress, then its end is sent, then the end lands. A crash in        *)
@@ -31,7 +31,7 @@ VARIABLES
     turns,          \* turns started (bound)
     crashesInTurn,  \* durable: unclean exits while this turn was open
     autoResumes,    \* durable: automatic resumptions of this turn
-    asked,          \* fx asked the user what to do with this turn
+    asked,          \* Tetris asked the user what to do with this turn
     notices,        \* resume notices given to the model for this turn
     delivered,      \* resumptions that delivered the turn's saved reply
     badResume,      \* history: an automatic resume of a turn that was not cut off
@@ -189,7 +189,7 @@ CleanExit ==
                    delivered, badResume, crashes, reply, ending, resolved,
                    replySaved, askedAgain, earlyResult>>
 
-\* agent.resume(), the queue waking a function, or fx -c. A turn with a
+\* agent.resume(), the queue waking a function, or tetris -c. A turn with a
 \* saved reply is delivered and asks the model nothing; any other open turn
 \* tells the model in its next request.
 Reopen ==
@@ -225,7 +225,7 @@ Spec == Init /\ [][Next]_vars
 -----------------------------------------------------------------------------
 (* Invariants *)
 
-\* fx never asks the user to continue.
+\* Tetris never asks the user to continue.
 NeverAsks == ~asked
 
 \* Every crash of an open turn was answered by an automatic resume by the

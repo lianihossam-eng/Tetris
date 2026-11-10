@@ -2784,7 +2784,7 @@ fn expectReminderOnLastToolResult(alloc: std.mem.Allocator, body: []const u8, ru
     try std.testing.expectEqualStrings("tool", last.get("role").?.string);
     const parts = last.get("content").?.array.items;
     const output = parts[parts.len - 1].object.get("output").?.object.get("value").?.string;
-    const line = try arena.print("<scoped-rules-reminder from=\"{s}\" scope=\"{s}\">The rules fx added earlier for this folder still apply.</scoped-rules-reminder>", .{ rules, scope });
+    const line = try arena.print("<scoped-rules-reminder from=\"{s}\" scope=\"{s}\">The rules Tetris added earlier for this folder still apply.</scoped-rules-reminder>", .{ rules, scope });
     try std.testing.expect(std.mem.endsWith(u8, output, line));
 }
 
@@ -3011,7 +3011,7 @@ test "a resumed turn carries the stale shell handles note on its own message, no
         try std.testing.expectEqual(@as(usize, 1), users.items.len);
         try std.testing.expectEqualStrings(carried, users.items[0]);
         for ((try leadingSystemContents(arena, body)).items) |instruction| {
-            try std.testing.expect(std.mem.find(u8, instruction, "fx restarted since this session") == null);
+            try std.testing.expect(std.mem.find(u8, instruction, "Tetris restarted since this session") == null);
         }
     }
     try expectSameInstructions(alloc, first_gateway.request_bodies.items[0], first_gateway.request_bodies.items[1]);
@@ -3176,7 +3176,7 @@ test "a named skill's text rides on its turn's message and the turn saves a shor
     try std.testing.expectEqual(@as(usize, 1), saved.context_notes.len);
     try std.testing.expectEqual(@as(usize, 0), saved.context_notes[0].after_tool_step_count);
     try std.testing.expectEqualStrings(
-        "<fx-skill-used>\nFor that turn the user named the skill requested-workflow, and fx sent its full text with that message. If it still applies, load it again with the skill tool, using its location from the skill catalog.\n</fx-skill-used>",
+        "<fx-skill-used>\nFor that turn the user named the skill requested-workflow, and Tetris sent its full text with that message. If it still applies, load it again with the skill tool, using its location from the skill catalog.\n</fx-skill-used>",
         saved.context_notes[0].text,
     );
 
@@ -3197,7 +3197,7 @@ test "a named skill's text rides on its turn's message and the turn saves a shor
     const users = try userMessageTexts(arena, body);
     try std.testing.expectEqual(@as(usize, 3), users.items.len);
     try std.testing.expect(std.mem.startsWith(u8, users.items[1], "Session file evidence from previous tool execution."));
-    try std.testing.expectEqualStrings("Use $requested-workflow.\n\n" ++ "<fx-skill-used>\nFor that turn the user named the skill requested-workflow, and fx sent its full text with that message. If it still applies, load it again with the skill tool, using its location from the skill catalog.\n</fx-skill-used>", users.items[0]);
+    try std.testing.expectEqualStrings("Use $requested-workflow.\n\n" ++ "<fx-skill-used>\nFor that turn the user named the skill requested-workflow, and Tetris sent its full text with that message. If it still applies, load it again with the skill tool, using its location from the skill catalog.\n</fx-skill-used>", users.items[0]);
     try std.testing.expectEqualStrings("Thanks.", users.items[2]);
     try std.testing.expectEqual(@as(usize, 0), second_hooks.history_turns.items[0].assistant.execution.context_notes.len);
 

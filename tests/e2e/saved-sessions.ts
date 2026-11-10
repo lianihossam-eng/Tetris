@@ -5,7 +5,7 @@ import { chmodSync, cpSync, existsSync, mkdirSync, readdirSync, readFileSync, st
 import { join } from "node:path";
 import { runFx } from "../evals/eval-helpers";
 
-/// A saved session as `fx session --id <id> --json` shows it, whatever the
+/// A saved session as `tetris session --id <id> --json` shows it, whatever the
 /// store keeps on disk.
 export type SavedSession = {
   kind: "session_detail";
@@ -23,13 +23,13 @@ export async function savedSession(home: string, id: string): Promise<SavedSessi
     cwd: home,
     env: { HOME: home, FX_SOUND: "0", FX_AUTO_UPGRADE: "0" },
   });
-  if (result.code !== 0) throw new Error(`fx session --id ${id} exited ${result.code}: ${result.stderr}`);
+  if (result.code !== 0) throw new Error(`tetris session --id ${id} exited ${result.code}: ${result.stderr}`);
   return JSON.parse(result.stdout);
 }
 
 /// The folder holding every saved session.
 export function storeRoot(home: string): string {
-  return join(home, ".fx", "sessions", "v2");
+  return join(home, ".tetris", "sessions", "v2");
 }
 
 /// One session's folder.
@@ -83,7 +83,7 @@ export function rootSessionIds(home: string): string[] {
   });
 }
 
-/// The parent's lines about its children, with fx's data parsed.
+/// The parent's lines about its children, with tetris's data parsed.
 export function childLines(home: string, id: string): any[] {
   return (readLog(home, id) as any[])
     .filter((line) => line.kind === "child_spawned" || line.kind === "child_finished")
@@ -143,7 +143,7 @@ export function savedToolResults(history: any[]): any[] {
 const V1_FIXTURES = join(import.meta.dirname, "..", "fixtures", "v1-sessions");
 
 /// Copies the first `count` sessions an older fx (v0.0.14) saved for fixture
-/// `kind` (`tests/fixtures/v1-sessions/generate.ts`) into `home`'s `~/.fx`,
+/// `kind` (`tests/fixtures/v1-sessions/generate.ts`) into `home`'s `~/.tetris`,
 /// private as that release left them, and returns their ids. With
 /// `workspace`, each copy is saved there instead, so the latest session of
 /// that workspace can be resumed.
@@ -151,7 +151,7 @@ export function copyV1Fixture(home: string, kind: string, count = 1, workspace?:
   const manifest = JSON.parse(readFileSync(join(V1_FIXTURES, "manifest.json"), "utf8"));
   const ids: string[] = manifest.kinds[kind].slice(0, count);
   expect(ids).toHaveLength(count);
-  const sessions = join(home, ".fx", "sessions");
+  const sessions = join(home, ".tetris", "sessions");
   mkdirSync(sessions, { recursive: true, mode: 0o700 });
   for (const id of ids) {
     const to = join(sessions, id);
@@ -177,13 +177,13 @@ export function copyV1Fixture(home: string, kind: string, count = 1, workspace?:
   return ids;
 }
 
-/// What `fx ask` writes first when converting a session an older fx saved
+/// What `tetris ask` writes first when converting a session an older fx saved
 /// takes over 150 ms (`slow_conversion_text` in
 /// `src/core/session/session_adapter.zig`). A busy runner can make any
 /// conversion that slow.
-const SLOW_CONVERSION_NOTICE = "fx ask: Converting this session from the previous session format…\n";
+const SLOW_CONVERSION_NOTICE = "tetris ask: Converting this session from the previous session format…\n";
 
-/// `stderr` from an `fx ask` that opened a copied v1 session, without the one
+/// `stderr` from an `tetris ask` that opened a copied v1 session, without the one
 /// slow-conversion notice it may start with.
 export function withoutConversionNotice(stderr: string): string {
   return stderr.startsWith(SLOW_CONVERSION_NOTICE) ? stderr.slice(SLOW_CONVERSION_NOTICE.length) : stderr;

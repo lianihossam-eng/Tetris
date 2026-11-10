@@ -3345,7 +3345,7 @@ test "semantic notice glyph grid regression locks tone markers and lowercase top
     }{
         .{ .tone = .neutral, .topic = "session", .body = "renamed to \"custom models\"", .row_text = "* session: renamed to \"custom models\"", .label_fg = 7 },
         .{ .tone = .information, .topic = "background", .body = "command #7 started", .row_text = "i background: command #7 started", .label_fg = 6 },
-        .{ .tone = .success, .topic = "upgrade", .body = "fx has been updated to v9.9.9", .row_text = "✓ upgrade: fx has been updated to v9.9.9", .label_fg = 2 },
+        .{ .tone = .success, .topic = "upgrade", .body = "Tetris has been updated to v9.9.9", .row_text = "✓ upgrade: Tetris has been updated to v9.9.9", .label_fg = 2 },
         .{ .tone = .warning, .topic = "skills", .body = "1 discovery issue", .row_text = "! skills: 1 discovery issue", .label_fg = 3 },
         .{ .tone = .@"error", .topic = "session", .body = "usage: /rename <title>", .row_text = "✗ session: usage: /rename <title>", .label_fg = 1 },
         .{ .tone = .cancelled, .topic = "system", .body = "cancelled", .row_text = "⊘ system: cancelled", .label_fg = 8 },
@@ -3402,7 +3402,7 @@ test "semantic notice topics never render the tool-activity bullet or forced cap
 
 test "semantic notice keeps an OSC 8 target hidden, clickable, and underlined" {
     const alloc = std.testing.allocator;
-    const url = "https://fx.sh/feedback";
+    const url = "https://github.com/lianihossam-eng/Tetris/issues/new/choose";
     const body = try alloc.print(
         "\x1b]8;;{s}\x1b\\Open feedback form\x1b]8;;\x1b\\.",
         .{url},
@@ -5425,7 +5425,7 @@ test "a preparation resumed after any prefix equals the full preparation" {
     const alloc = std.testing.allocator;
     var entries: std.ArrayList(TranscriptEntry) = .empty;
     defer deinitTestEntries(&entries, alloc);
-    try appendRawTestEntry(&entries, alloc, 1, "fx v0 · Run /help for commands\n", .welcome);
+    try appendRawTestEntry(&entries, alloc, 1, "tetris v0 · Run /help for commands\n", .welcome);
     try appendUserTestEntry(&entries, alloc, 2, "Read the notes");
     try appendRawTestEntry(&entries, alloc, 3, "● Read notes.txt\n", .tool_status);
     try appendAssistantTestEntry(&entries, alloc, 4, "Here is **a** summary with a long line that wraps across the narrow width used here.");

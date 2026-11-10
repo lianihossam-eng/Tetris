@@ -711,9 +711,9 @@ pub const Catalog = struct {
             .needs_login => try needsLoginText(alloc, s.name, signIn(c.runtime.options.slash_commands, s.source)),
             .failed => try alloc.print("MCP server '{s}' is unavailable: {s}", .{ s.name, l.failure orelse "it did not start" }),
             else => if (s.held == .missing_env)
-                try alloc.print("MCP server '{s}' needs {s} set before fx starts.", .{ s.name, s.missing orelse "a variable" })
+                try alloc.print("MCP server '{s}' needs {s} set before Tetris starts.", .{ s.name, s.missing orelse "a variable" })
             else if (s.held == .invalid_env)
-                try alloc.print("MCP server '{s}' can't use {s}: its value holds a line break or another character a header can't carry. Fix it, then restart fx.", .{ s.name, s.missing orelse "a variable" })
+                try alloc.print("MCP server '{s}' can't use {s}: its value holds a line break or another character a header can't carry. Fix it, then restart Tetris.", .{ s.name, s.missing orelse "a variable" })
             else
                 null,
         };
@@ -867,14 +867,14 @@ fn ended(arena: Allocator, server: []const u8, name: []const u8, e: @FieldType(r
         .transport_failed, .http_failure => "the connection failed",
         .malformed => "the server's answer was malformed",
         .rounds_exceeded => "the server asked for input too many times",
-        .unsupported_input => "the server asked for input fx can't give",
-        .denied => "fx's permission refused it",
+        .unsupported_input => "the server asked for input Tetris can't give",
+        .denied => "Tetris's permission refused it",
         else => @tagName(e.outcome),
     };
     // fx ended a call that ran out of time, so it says so and names the
     // setting that waits longer. A server the editor supplied has none.
     const text = if (e.timed_out) try arena.print(
-        "fx stopped waiting for MCP server '{s}': it did not answer within its operation timeout.{s}{s}",
+        "Tetris stopped waiting for MCP server '{s}': it did not answer within its operation timeout.{s}{s}",
         .{
             server,
             if (e.maybe_ran) " The tool may have run." else "",
@@ -908,7 +908,7 @@ fn signIn(slash_commands: bool, source: mcp_contract.ConfigSource) SignIn {
 fn signInStep(alloc: Allocator, server: []const u8, how: SignIn) ![]u8 {
     return switch (how) {
         .shell => alloc.print("run /mcp login {s}", .{server}),
-        .terminal => alloc.print("run fx mcp login {s} in a terminal", .{server}),
+        .terminal => alloc.print("run tetris mcp login {s} in a terminal", .{server}),
         .editor => alloc.print("add an Authorization header for {s} in the editor's MCP server settings", .{server}),
     };
 }
@@ -1147,24 +1147,24 @@ test "a search says why a server it names has no tools, and calls that end say h
     const query = try lexical_relevance.prepare("issues");
     const keyed = try c.searchTools(a, .{ .query = &query, .kind = .mcp, .server = "keyed" }, .{}, .{}, .unrestricted, null);
     try testing.expectEqualStrings(
-        "{\"tools\":[],\"count\":0,\"authentication_required\":{\"server\":\"keyed\",\"interactive\":false,\"environment\":\"FX_MCP_HOST_TEST_UNSET\",\"message\":\"Set this environment variable before starting fx.\"}}",
+        "{\"tools\":[],\"count\":0,\"authentication_required\":{\"server\":\"keyed\",\"interactive\":false,\"environment\":\"FX_MCP_HOST_TEST_UNSET\",\"message\":\"Set this environment variable before starting Tetris.\"}}",
         keyed.model_output,
     );
     // A search that names no server and finds nothing says why each server
     // has no tools, one held on a missing variable too.
     const open = try c.searchTools(a, .{ .query = &query, .kind = .mcp }, .{}, .{}, .unrestricted, null);
-    try testing.expect(std.mem.find(u8, open.model_output, "MCP server 'keyed' needs FX_MCP_HOST_TEST_UNSET set before fx starts.") != null);
+    try testing.expect(std.mem.find(u8, open.model_output, "MCP server 'keyed' needs FX_MCP_HOST_TEST_UNSET set before Tetris starts.") != null);
     const missing = try c.searchTools(a, .{ .query = &query, .kind = .mcp, .server = "nope" }, .{}, .{}, .unrestricted, null);
     try testing.expect(std.mem.find(u8, missing.model_output, "\"state\":\"server_not_found\"") != null);
 
     const login = try ended(a, "linear", "mcp_linear_list", .{ .outcome = .needs_auth, .maybe_ran = false, .timed_out = false }, 4096, .terminal);
     try testing.expectEqual(tool_mcp_runtime.CallStatus.tool_failure, login.status);
-    try testing.expect(std.mem.find(u8, login.model_output, "Ask the user to run fx mcp login linear in a terminal, then try again.") != null);
+    try testing.expect(std.mem.find(u8, login.model_output, "Ask the user to run tetris mcp login linear in a terminal, then try again.") != null);
     // The shell takes slash commands, so the user signs in without leaving it.
     const in_shell = try ended(a, "linear", "mcp_linear_list", .{ .outcome = .needs_auth, .maybe_ran = false, .timed_out = false }, 4096, .shell);
     try testing.expect(std.mem.find(u8, in_shell.model_output, "Ask the user to run /mcp login linear, then try again.") != null);
     try testing.expect(std.mem.find(u8, in_shell.model_output, "terminal") == null);
-    // A server the editor supplied isn't in fx's config: its credentials go
+    // A server the editor supplied isn't in Tetris's config: its credentials go
     // in the editor's settings, wherever the session runs.
     try testing.expectEqual(SignIn.editor, signIn(true, .acp));
     try testing.expectEqual(SignIn.editor, signIn(false, .acp));
@@ -1172,7 +1172,7 @@ test "a search says why a server it names has no tools, and calls that end say h
     try testing.expectEqual(SignIn.terminal, signIn(false, .profile));
     const in_editor = try ended(a, "linear", "mcp_linear_list", .{ .outcome = .needs_auth, .maybe_ran = false, .timed_out = false }, 4096, .editor);
     try testing.expect(std.mem.find(u8, in_editor.model_output, "Ask the user to add an Authorization header for linear in the editor's MCP server settings, then try again.") != null);
-    try testing.expect(std.mem.find(u8, in_editor.model_output, "fx mcp login") == null);
+    try testing.expect(std.mem.find(u8, in_editor.model_output, "tetris mcp login") == null);
     const lost = try ended(a, "linear", "mcp_linear_list", .{ .outcome = .lost, .maybe_ran = true, .timed_out = false }, 4096, .terminal);
     try testing.expectEqual(tool_mcp_runtime.CallStatus.protocol_failure, lost.status);
     try testing.expect(std.mem.find(u8, lost.model_output, "the server went away. The tool may have run.") != null);
@@ -1184,9 +1184,9 @@ test "a search says why a server it names has no tools, and calls that end say h
     // hears that fx stopped waiting, and how to wait longer.
     const slow = try ended(a, "aside", "mcp_aside_repl", .{ .outcome = .cancelled, .maybe_ran = true, .timed_out = true }, 4096, .terminal);
     try testing.expectEqual(tool_mcp_runtime.CallStatus.protocol_failure, slow.status);
-    try testing.expect(std.mem.find(u8, slow.model_output, "fx stopped waiting for MCP server 'aside': it did not answer within its operation timeout. The tool may have run. Raise operation_timeout_ms for this server in its MCP config if it needs longer.") != null);
+    try testing.expect(std.mem.find(u8, slow.model_output, "Tetris stopped waiting for MCP server 'aside': it did not answer within its operation timeout. The tool may have run. Raise operation_timeout_ms for this server in its MCP config if it needs longer.") != null);
     // An editor's server has no timeout setting to raise.
     const slow_in_editor = try ended(a, "aside", "mcp_aside_repl", .{ .outcome = .cancelled, .maybe_ran = false, .timed_out = true }, 4096, .editor);
-    try testing.expect(std.mem.find(u8, slow_in_editor.model_output, "fx stopped waiting for MCP server 'aside': it did not answer within its operation timeout.") != null);
+    try testing.expect(std.mem.find(u8, slow_in_editor.model_output, "Tetris stopped waiting for MCP server 'aside': it did not answer within its operation timeout.") != null);
     try testing.expect(std.mem.find(u8, slow_in_editor.model_output, "operation_timeout_ms") == null);
 }

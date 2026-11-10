@@ -76,7 +76,7 @@ function fakeShellStop(callId: string, sessionId: string): Response {
 /// The line fx prints above the resume command when it exits.
 const RESUME_LABEL = "Resume this session with:";
 /// The command fx prints to continue a session.
-const RESUME_COMMAND = "fx --resume";
+const RESUME_COMMAND = "tetris --resume";
 
 function sessionIdFromHome(home: string): string {
   return onlySessionId(home);
@@ -327,9 +327,9 @@ test.skipIf(!tmuxAvailable())(
     const launchGate = join(root, "launch-gate");
     const stderrPath = join(root, "stderr.log");
     const tapePath = join(root, "resume.fxtape");
-    mkdirSync(join(home, ".fx"), { recursive: true });
+    mkdirSync(join(home, ".tetris"), { recursive: true });
     mkdirSync(workspace);
-    writeFileSync(join(home, ".fx", "settings.json"), JSON.stringify({ startup_scrollback: false }));
+    writeFileSync(join(home, ".tetris", "settings.json"), JSON.stringify({ startup_scrollback: false }));
     const labels = Array.from({ length: 67 }, (_, i) => `RESUME_ROW_${String(i).padStart(3, "0")}`);
     const gateway = startFakeGateway([
       fakeGatewayFinalText(labels.join("\n\n")),
@@ -519,7 +519,7 @@ function hasSemanticSymbol(
   return text.includes("\ud83d\udc69");
 }
 
-// `fx replay --frames` draws each captured row between `|` edges.
+// `tetris replay --frames` draws each captured row between `|` edges.
 function semanticTextLines(text: string): string[] {
   return text.split("\n").map((line) => {
     const plain = stripAnsi(line);
@@ -870,7 +870,7 @@ test.skipIf(!tmuxAvailable())(
     const home = join(root, "home");
     const workspace = join(root, "workspace");
     const sessionId = "internal-handoff-resume";
-    const sessionDir = join(home, ".fx", "sessions", sessionId);
+    const sessionDir = join(home, ".tetris", "sessions", sessionId);
     mkdirSync(sessionDir, { recursive: true, mode: 0o700 });
     mkdirSync(workspace);
     const summary = "<context_handoff>\n## Authoritative continuation state\n" +
@@ -996,21 +996,21 @@ test("volatile status rows normalize before stable-grid comparison", () => {
 });
 
 test.skipIf(!tmuxAvailable())(
-  "saved fx ask metadata appears after interactive Ctrl-O resume",
+  "saved tetris ask metadata appears after interactive Ctrl-O resume",
   async () => {
     const root = realpathSync(mkdtempSync(join(tmpdir(), "fx-ask-metadata-resume-")));
     const home = join(root, "home");
     const workspace = join(root, "workspace");
     const stderrPath = join(root, "stderr.log");
-    mkdirSync(join(home, ".fx"), { recursive: true });
+    mkdirSync(join(home, ".tetris"), { recursive: true });
     mkdirSync(workspace);
     writeFileSync(
-      join(home, ".fx", "settings.json"),
+      join(home, ".tetris", "settings.json"),
       JSON.stringify({ sandbox: "none", permission_mode: "auto", permission: {} }),
     );
     writeFileSync(stderrPath, "");
 
-    const prompt = "Persist this fx ask metadata.";
+    const prompt = "Persist this tetris ask metadata.";
     const answer = "FX_ASK_METADATA_COMPLETE";
     const askGateway = startFakeGateway([fakeGatewayFinalText(answer)]);
     let active: TmuxSession | null = null;
@@ -1175,10 +1175,10 @@ test.skipIf(!tmuxAvailable())(
     const trailingMarker = "BOUNDARY_TRAILING";
     const literalClose = "LITERAL_CLOSE_</stdout>";
     const doneMarker = "CONTROL_OUTPUT_DONE";
-    mkdirSync(join(home, ".fx"), { recursive: true });
+    mkdirSync(join(home, ".tetris"), { recursive: true });
     mkdirSync(workspace);
     writeFileSync(
-      join(home, ".fx", "settings.json"),
+      join(home, ".tetris", "settings.json"),
       JSON.stringify({ sandbox: "none", permission_mode: "auto", permission: {} }),
     );
     writeFileSync(stderrPath, "");
@@ -1390,10 +1390,10 @@ test.skipIf(!tmuxAvailable())(
     const workspace = join(root, "workspace");
     const stderrPath = join(root, "stderr.txt");
     const resumedStderrPath = join(root, "resumed-stderr.txt");
-    mkdirSync(join(home, ".fx"), { recursive: true });
+    mkdirSync(join(home, ".tetris"), { recursive: true });
     mkdirSync(workspace);
     writeFileSync(
-      join(home, ".fx", "settings.json"),
+      join(home, ".tetris", "settings.json"),
       JSON.stringify({ sandbox: "none", permission_mode: "auto", permission: {} }),
     );
 
@@ -1490,10 +1490,10 @@ test.skipIf(!tmuxAvailable())(
     const workspace = join(root, "workspace");
     const stderrPath = join(root, "stderr.txt");
     const resumedStderrPath = join(root, "resumed-stderr.txt");
-    mkdirSync(join(home, ".fx"), { recursive: true });
+    mkdirSync(join(home, ".tetris"), { recursive: true });
     mkdirSync(workspace);
     writeFileSync(
-      join(home, ".fx", "settings.json"),
+      join(home, ".tetris", "settings.json"),
       JSON.stringify({ sandbox: "none", permission_mode: "auto", permission: {} }),
     );
 
@@ -1587,10 +1587,10 @@ test.skipIf(!tmuxAvailable())(
     const root = realpathSync(mkdtempSync(join(tmpdir(), "fx-resume-session-label-")));
     const home = join(root, "home");
     const workspace = join(root, "workspace");
-    mkdirSync(join(home, ".fx"), { recursive: true });
+    mkdirSync(join(home, ".tetris"), { recursive: true });
     mkdirSync(workspace);
     writeFileSync(
-      join(home, ".fx", "settings.json"),
+      join(home, ".tetris", "settings.json"),
       JSON.stringify({ sandbox: "none", permission_mode: "full-access", permission: {} }),
     );
 
@@ -1677,10 +1677,10 @@ test.skipIf(!tmuxAvailable())(
     const root = realpathSync(mkdtempSync(join(tmpdir(), "fx-resume-stale-handles-")));
     const home = join(root, "home");
     const workspace = join(root, "workspace");
-    mkdirSync(join(home, ".fx"), { recursive: true });
+    mkdirSync(join(home, ".tetris"), { recursive: true });
     mkdirSync(workspace);
     writeFileSync(
-      join(home, ".fx", "settings.json"),
+      join(home, ".tetris", "settings.json"),
       JSON.stringify({ sandbox: "none", permission_mode: "full-access", permission: {} }),
     );
 
@@ -1758,10 +1758,10 @@ test.skipIf(!tmuxAvailable())(
     const root = realpathSync(mkdtempSync(join(tmpdir(), "fx-resume-live-handles-")));
     const home = join(root, "home");
     const workspace = join(root, "workspace");
-    mkdirSync(join(home, ".fx"), { recursive: true });
+    mkdirSync(join(home, ".tetris"), { recursive: true });
     mkdirSync(workspace);
     writeFileSync(
-      join(home, ".fx", "settings.json"),
+      join(home, ".tetris", "settings.json"),
       JSON.stringify({ sandbox: "none", permission_mode: "full-access", permission: {} }),
     );
 
@@ -1825,10 +1825,10 @@ test.skipIf(!tmuxAvailable())(
     const workspace = join(root, "workspace");
     const stderrPath = join(root, "stderr.log");
     const tapePath = join(root, "ctrl-o.fxtape");
-    mkdirSync(join(home, ".fx"), { recursive: true });
+    mkdirSync(join(home, ".tetris"), { recursive: true });
     mkdirSync(workspace);
     writeFileSync(
-      join(home, ".fx", "settings.json"),
+      join(home, ".tetris", "settings.json"),
       JSON.stringify({ sandbox: "none", permission_mode: "auto", permission: {} }),
     );
     writeFileSync(stderrPath, "");
@@ -1971,10 +1971,10 @@ test.skipIf(!tmuxAvailable())(
     const stderrPath = join(root, "stderr.log");
     const tracePath = join(root, "trace.log");
     const tapePath = join(root, "command-output-cap.fxtape");
-    mkdirSync(join(home, ".fx"), { recursive: true });
+    mkdirSync(join(home, ".tetris"), { recursive: true });
     mkdirSync(workspace);
     writeFileSync(
-      join(home, ".fx", "settings.json"),
+      join(home, ".tetris", "settings.json"),
       JSON.stringify({ sandbox: "none", permission_mode: "auto", permission: {} }),
     );
     writeFileSync(stderrPath, "");
@@ -2086,10 +2086,10 @@ test.skipIf(!tmuxAvailable())(
     const tailMarker = "ACTIVE_OVERFLOW_TAIL";
     const doneMarker = "ACTIVE_OVERFLOW_DONE";
     const futureMarker = "    … full output available when command finishes";
-    mkdirSync(join(home, ".fx"), { recursive: true });
+    mkdirSync(join(home, ".tetris"), { recursive: true });
     mkdirSync(workspace);
     writeFileSync(
-      join(home, ".fx", "settings.json"),
+      join(home, ".tetris", "settings.json"),
       JSON.stringify({ sandbox: "none", permission_mode: "auto", permission: {} }),
     );
     writeFileSync(stderrPath, "");
@@ -2285,10 +2285,10 @@ test.skipIf(!tmuxAvailable())(
     const nextMarker = "CANCEL_CAP_UNRELATED_TURN_DONE";
     const callId = "cancelled-cap-command";
     const readyPath = join(workspace, ".cancel-cap-ready");
-    mkdirSync(join(home, ".fx"), { recursive: true });
+    mkdirSync(join(home, ".tetris"), { recursive: true });
     mkdirSync(workspace);
     writeFileSync(
-      join(home, ".fx", "settings.json"),
+      join(home, ".tetris", "settings.json"),
       JSON.stringify({ sandbox: "none", permission_mode: "auto", permission: {} }),
     );
     writeFileSync(stderrPath, "");
@@ -2524,10 +2524,10 @@ test.skipIf(!tmuxAvailable())(
     const headMarker = "CANCEL_BELOW_CAP_HEAD";
     const tailMarker = "CANCEL_BELOW_CAP_TERM_TAIL_ONLY";
     const readyPath = join(workspace, ".cancel-below-ready");
-    mkdirSync(join(home, ".fx"), { recursive: true });
+    mkdirSync(join(home, ".tetris"), { recursive: true });
     mkdirSync(workspace);
     writeFileSync(
-      join(home, ".fx", "settings.json"),
+      join(home, ".tetris", "settings.json"),
       JSON.stringify({ sandbox: "none", permission_mode: "auto", permission: {} }),
     );
     writeFileSync(stderrPath, "");
@@ -2660,11 +2660,11 @@ test.skipIf(!tmuxAvailable())(
     const ctrlOScrollbackPath = join(root, "ctrl-o-scrollback.txt");
     const ctrlOAnsiPath = join(root, "ctrl-o-scrollback.ansi.txt");
     const replayJsonPath = join(root, "replay.json");
-    mkdirSync(join(home, ".fx"), { recursive: true });
+    mkdirSync(join(home, ".tetris"), { recursive: true });
     mkdirSync(workspaceDir);
     const workspace = realpathSync(workspaceDir);
     writeFileSync(
-      join(home, ".fx", "settings.json"),
+      join(home, ".tetris", "settings.json"),
       JSON.stringify({ sandbox: "none", permission_mode: "auto", permission: {} }),
     );
     writeFileSync(stderrPath, "");
@@ -2866,7 +2866,7 @@ test.skipIf(!tmuxAvailable())(
     const tapePath = join(root, "ctrl-o-draft.fxtape");
     const sentinel = "CTRL_O_DRAFT_SCROLLBACK_SENTINEL";
     const draft = "CTRL_O_UNSENT_DRAFT";
-    mkdirSync(join(home, ".fx"), { recursive: true });
+    mkdirSync(join(home, ".tetris"), { recursive: true });
     mkdirSync(workspace);
     writeFileSync(stderrPath, "");
 
@@ -2941,7 +2941,7 @@ test.skipIf(!tmuxAvailable())(
     const stderrPath = join(root, "stderr.log");
     const saved = "CMD_R_SAVED_SESSION";
     const draft = "CMD_R_UNSENT_DRAFT";
-    mkdirSync(join(home, ".fx"), { recursive: true });
+    mkdirSync(join(home, ".tetris"), { recursive: true });
     mkdirSync(workspace);
     writeFileSync(stderrPath, "");
 
@@ -3010,10 +3010,10 @@ test.skipIf(!tmuxAvailable())(
     const firstDone = "CTRL_O_INPUT_FIRST_DONE";
     const followUpDone = "CTRL_O_INPUT_FOLLOW_UP_DONE";
     const fullViewDraft = "CTRL_O_FULL_VIEW_COMPOSER_DRAFT";
-    mkdirSync(join(home, ".fx"), { recursive: true });
+    mkdirSync(join(home, ".tetris"), { recursive: true });
     mkdirSync(workspace);
     writeFileSync(
-      join(home, ".fx", "settings.json"),
+      join(home, ".tetris", "settings.json"),
       JSON.stringify({ sandbox: "none", permission_mode: "auto", permission: {} }),
     );
     writeFileSync(stderrPath, "");
@@ -3093,10 +3093,10 @@ test.skipIf(!tmuxAvailable())(
     const stderrPath = join(root, "stderr.log");
     const tapePath = join(root, "ctrl-o-cancel.fxtape");
     const streamMarker = "CTRL_O_CANCEL_STREAM";
-    mkdirSync(join(home, ".fx"), { recursive: true });
+    mkdirSync(join(home, ".tetris"), { recursive: true });
     mkdirSync(workspace);
     writeFileSync(
-      join(home, ".fx", "settings.json"),
+      join(home, ".tetris", "settings.json"),
       JSON.stringify({ sandbox: "none", permission_mode: "auto", permission: {} }),
     );
     writeFileSync(stderrPath, "");
@@ -3157,10 +3157,10 @@ test.skipIf(!tmuxAvailable())(
     const home = join(root, "home");
     const workspace = join(root, "workspace");
     const stderrPath = join(root, "stderr.log");
-    mkdirSync(join(home, ".fx"), { recursive: true });
+    mkdirSync(join(home, ".tetris"), { recursive: true });
     mkdirSync(workspace);
     writeFileSync(
-      join(home, ".fx", "settings.json"),
+      join(home, ".tetris", "settings.json"),
       JSON.stringify({ sandbox: "none", permission_mode: "auto", permission: {} }),
     );
     writeFileSync(stderrPath, "");
@@ -3223,10 +3223,10 @@ test.skipIf(!tmuxAvailable())(
     const tapePath = join(root, "stream-scroll.fxtape");
     const tracePath = join(root, "trace.log");
     const phaseTwoComplete = join(workspace, "phase-two.complete");
-    mkdirSync(join(home, ".fx"), { recursive: true });
+    mkdirSync(join(home, ".tetris"), { recursive: true });
     mkdirSync(workspace);
     writeFileSync(
-      join(home, ".fx", "settings.json"),
+      join(home, ".tetris", "settings.json"),
       JSON.stringify({ sandbox: "none", permission_mode: "auto", permission: {} }),
     );
     writeFileSync(stderrPath, "");
@@ -3391,10 +3391,10 @@ test.skipIf(!tmuxAvailable())(
     const home = join(root, "home");
     const workspace = join(root, "workspace");
     const stderrPath = join(root, "stderr.log");
-    mkdirSync(join(home, ".fx"), { recursive: true });
+    mkdirSync(join(home, ".tetris"), { recursive: true });
     mkdirSync(workspace);
     writeFileSync(
-      join(home, ".fx", "settings.json"),
+      join(home, ".tetris", "settings.json"),
       JSON.stringify({ sandbox: "none", permission_mode: "auto", permission: {} }),
     );
     writeFileSync(stderrPath, "");
@@ -3470,10 +3470,10 @@ test.skipIf(!tmuxAvailable())(
     const workspace = join(root, "workspace");
     const stderrPath = join(root, "stderr.log");
     const tapePath = join(root, "ctrl-o-question.fxtape");
-    mkdirSync(join(home, ".fx"), { recursive: true });
+    mkdirSync(join(home, ".tetris"), { recursive: true });
     mkdirSync(workspace);
     writeFileSync(
-      join(home, ".fx", "settings.json"),
+      join(home, ".tetris", "settings.json"),
       JSON.stringify({ sandbox: "none", permission_mode: "auto", permission: {} }),
     );
     writeFileSync(stderrPath, "");
@@ -3549,10 +3549,10 @@ test.skipIf(!tmuxAvailable())(
     const home = join(root, "home");
     const workspace = join(root, "workspace");
     const stderrPath = join(root, "stderr.log");
-    mkdirSync(join(home, ".fx"), { recursive: true });
+    mkdirSync(join(home, ".tetris"), { recursive: true });
     mkdirSync(workspace);
     writeFileSync(
-      join(home, ".fx", "settings.json"),
+      join(home, ".tetris", "settings.json"),
       JSON.stringify({ sandbox: "none", permission_mode: "auto", permission: {} }),
     );
     writeFileSync(stderrPath, "");
@@ -3667,10 +3667,10 @@ test.skipIf(!tmuxAvailable())(
     const home = join(root, "home");
     const workspace = join(root, "workspace");
     const stderrPath = join(root, "stderr.log");
-    mkdirSync(join(home, ".fx"), { recursive: true });
+    mkdirSync(join(home, ".tetris"), { recursive: true });
     mkdirSync(workspace);
     writeFileSync(
-      join(home, ".fx", "settings.json"),
+      join(home, ".tetris", "settings.json"),
       JSON.stringify({ sandbox: "none", permission_mode: "auto", permission: {} }),
     );
     writeFileSync(stderrPath, "");
@@ -3741,7 +3741,7 @@ test.skipIf(!tmuxAvailable())(
         const home = join(root, String(width), "home");
         const workspace = join(root, String(width), "workspace");
         const stderrPath = join(root, String(width), "stderr.log");
-        mkdirSync(join(home, ".fx"), { recursive: true });
+        mkdirSync(join(home, ".tetris"), { recursive: true });
         mkdirSync(workspace);
         const gateway = startFakeGateway([fakeGatewayFinalText(response)]);
         let active: TmuxSession | null = null;
@@ -3800,7 +3800,7 @@ test.skipIf(!tmuxAvailable())(
           await active.sendText("/quit");
           await waitForCondition(
             () => active?.paneStatus().dead === true,
-            "fx to exit after resized transcript restoration",
+            "tetris to exit after resized transcript restoration",
           );
           expect(paneExitMatches(active.paneStatus(), 0)).toBe(true);
           expect(readFileSync(stderrPath, "utf8")).toBe("");
@@ -3823,10 +3823,10 @@ test.skipIf(!tmuxAvailable())(
     const home = join(root, "home");
     const workspace = join(root, "workspace");
     const stderrPath = join(root, "stderr.log");
-    mkdirSync(join(home, ".fx"), { recursive: true });
+    mkdirSync(join(home, ".tetris"), { recursive: true });
     mkdirSync(workspace);
     writeFileSync(
-      join(home, ".fx", "settings.json"),
+      join(home, ".tetris", "settings.json"),
       JSON.stringify({ sandbox: "none", permission_mode: "auto", permission: {} }),
     );
     writeFileSync(
@@ -3884,10 +3884,10 @@ test.skipIf(!tmuxAvailable())(
     const home = join(root, "home");
     const workspace = join(root, "workspace");
     const stderrPath = join(root, "stderr.log");
-    mkdirSync(join(home, ".fx"), { recursive: true });
+    mkdirSync(join(home, ".tetris"), { recursive: true });
     mkdirSync(workspace);
     writeFileSync(
-      join(home, ".fx", "settings.json"),
+      join(home, ".tetris", "settings.json"),
       JSON.stringify({ sandbox: "none", permission_mode: "auto", permission: {} }),
     );
     writeFileSync(join(workspace, "README.md"), "READ_FULL_DETAIL_MARKER\n");
@@ -3950,10 +3950,10 @@ test.skipIf(!tmuxAvailable())(
     const workspace = join(root, "workspace");
     const stderrPath = join(root, "stderr.log");
     const tapePath = join(root, "ctrl-o-file-approval.fxtape");
-    mkdirSync(join(home, ".fx"), { recursive: true });
+    mkdirSync(join(home, ".tetris"), { recursive: true });
     mkdirSync(workspace);
     writeFileSync(
-      join(home, ".fx", "settings.json"),
+      join(home, ".tetris", "settings.json"),
       JSON.stringify({
         sandbox: "none",
         permission_mode: "ask",
@@ -4088,10 +4088,10 @@ test.skipIf(!tmuxAvailable())(
     const home = join(root, "home");
     const workspace = join(root, "workspace");
     const stderrPath = join(root, "stderr.log");
-    mkdirSync(join(home, ".fx"), { recursive: true });
+    mkdirSync(join(home, ".tetris"), { recursive: true });
     mkdirSync(workspace);
     writeFileSync(
-      join(home, ".fx", "settings.json"),
+      join(home, ".tetris", "settings.json"),
       JSON.stringify({ sandbox: "none", permission_mode: "ask", permission: {} }),
     );
     writeFileSync(stderrPath, "");
@@ -4151,10 +4151,10 @@ test.skipIf(!tmuxAvailable())(
     const stderrPath = join(root, "stderr.log");
     const actionTimeout = 8_000;
     const transcriptTimeout = 90_000;
-    mkdirSync(join(home, ".fx"), { recursive: true });
+    mkdirSync(join(home, ".tetris"), { recursive: true });
     mkdirSync(workspace);
     writeFileSync(
-      join(home, ".fx", "settings.json"),
+      join(home, ".tetris", "settings.json"),
       JSON.stringify({ sandbox: "none", permission_mode: "ask", permission: {} }),
     );
     writeFileSync(stderrPath, "");
@@ -4326,10 +4326,10 @@ test.skipIf(!tmuxAvailable())(
     const scrollbackPath = join(root, "scrollback.txt");
     const ansiScrollbackPath = join(root, "scrollback.ansi.txt");
     const releasePath = join(workspace, ".ctrl-o-pressure-release");
-    mkdirSync(join(home, ".fx"), { recursive: true });
+    mkdirSync(join(home, ".tetris"), { recursive: true });
     mkdirSync(workspace);
     writeFileSync(
-      join(home, ".fx", "settings.json"),
+      join(home, ".tetris", "settings.json"),
       JSON.stringify({ sandbox: "none", permission_mode: "ask", permission: {} }),
     );
     writeFileSync(stderrPath, "");
@@ -4662,7 +4662,7 @@ test.skipIf(!tmuxAvailable())(
       await active.sendText("/quit");
       await waitForCondition(
         () => active?.paneStatus().dead === true,
-        "fx to exit after /quit",
+        "tetris to exit after /quit",
       );
       expect(paneExitMatches(active.paneStatus(), 0)).toBe(true);
       expect(readFileSync(stderrPath, "utf8")).toBe("");
@@ -4765,7 +4765,7 @@ test.skipIf(!tmuxAvailable())(
 
       expect(paneExitMatches(contender.paneStatus(), 1)).toBe(true);
       expect(readFileSync(contenderStderrPath, "utf8")).toBe(
-        "fx: another fx process may be using this session (running or suspended); check other terminals or run jobs, then use fg or quit that process\n",
+        "tetris: another Tetris process may be using this session (running or suspended); check other terminals or run jobs, then use fg or quit that process\n",
       );
       expect(owner.isPaneAlive()).toBe(true);
       const contenderScrollback = await contender.captureFullScrollback();
@@ -4889,7 +4889,7 @@ test.skipIf(!tmuxAvailable())(
       await contender.sendKeys("Enter");
       await contender.waitForPane(
         (pane) => stripAnsi(pane).includes(
-          "This session is open in another fx. Close it there, then press enter to retry.",
+          "This session is open in another Tetris. Close it there, then press enter to retry.",
         ),
         1_000,
       );
@@ -4898,7 +4898,7 @@ test.skipIf(!tmuxAvailable())(
       const contendedPicker = stripAnsi(await contender.capturePane());
       expect(contendedPicker).toContain(savedTitle);
       expect(contendedPicker).toContain(
-        "This session is open in another fx. Close it there, then press enter to retry.",
+        "This session is open in another Tetris. Close it there, then press enter to retry.",
       );
       expect(contendedPicker).not.toContain("SessionBusy");
       const contendedEntries = visibleSessionPickerEntries(
@@ -4949,10 +4949,10 @@ test.skipIf(!tmuxAvailable())(
     const nested = join(workspace, "nested");
     const liveStderrPath = join(root, "live-stderr.log");
     const resumeStderrPath = join(root, "resume-stderr.log");
-    mkdirSync(join(home, ".fx"), { recursive: true });
+    mkdirSync(join(home, ".tetris"), { recursive: true });
     mkdirSync(nested, { recursive: true });
     writeFileSync(
-      join(home, ".fx", "settings.json"),
+      join(home, ".tetris", "settings.json"),
       JSON.stringify({ sandbox: "none", permission_mode: "auto", permission: {} }),
     );
     writeFileSync(join(workspace, "AGENTS.md"), "DEFERRED_TOOL_ROOT_SCOPE\n");
@@ -5238,7 +5238,7 @@ test.skipIf(!tmuxAvailable())(
     mkdirSync(home);
     mkdirSync(workspace);
     mkdirSync(binDir);
-    symlinkSync(FX_BIN, join(binDir, "fx"));
+    symlinkSync(FX_BIN, join(binDir, "tetris"));
     writeFileSync(stderrPath, "");
     writeFileSync(resumedStderrPath, "");
     const initialGateway = startFakeGateway([fakeGatewayFinalText(marker)]);
@@ -5787,10 +5787,10 @@ test.skipIf(!tmuxAvailable())(
       const toolWorkspace = join(root, "tool-workspace");
       const toolStderrPath = join(root, "tool-stderr.log");
       const toolWorkspaceMarker = "tool-workspace";
-      mkdirSync(join(toolHome, ".fx"), { recursive: true });
+      mkdirSync(join(toolHome, ".tetris"), { recursive: true });
       mkdirSync(toolWorkspace);
       writeFileSync(
-        join(toolHome, ".fx", "settings.json"),
+        join(toolHome, ".tetris", "settings.json"),
         JSON.stringify({}),
       );
       const toolWorkspaceRoot = realpathSync(toolWorkspace);
@@ -5877,7 +5877,7 @@ test.skipIf(!tmuxAvailable())(
 test("manual upgrade output links stable notes and dev changes", async () => {
   const root = realpathSync(mkdtempSync(join(tmpdir(), "fx-upgrade-links-")));
   const argvLogPath = join(root, "upgrade-argv.log");
-  const installedFx = join(root, "fx");
+  const installedFx = join(root, "tetris");
   const home = join(root, "home");
   mkdirSync(home);
   const currentRevision = (await runFx(["status", "--json"], {
@@ -5890,20 +5890,20 @@ test("manual upgrade output links stable notes and dev changes", async () => {
 
   try {
     const stable = Bun.spawn([installedFx, "upgrade", "--channel", "stable"], {
-      env: { ...process.env, HOME: home, FX_TEST_UPGRADE_BASE_URL: release.baseUrl },
+      env: { ...process.env, HOME: home, TETRIS_TEST_UPGRADE_BASE_URL: release.baseUrl },
       stdout: "pipe",
       stderr: "pipe",
     });
     const stableExitCode = await stable.exited;
     expect(stableExitCode).toBe(0);
     expect(await new Response(stable.stdout).text()).toContain(
-      "notes: https://fx.sh/changelog#v9.9.9",
+      "notes: https://github.com/lianihossam-eng/Tetris/releases/tag/v9.9.9",
     );
 
     copyFileSync(FX_BIN, installedFx);
     chmodSync(installedFx, 0o755);
     const dev = Bun.spawn([installedFx, "upgrade", "--channel", "dev"], {
-      env: { ...process.env, HOME: home, FX_TEST_UPGRADE_BASE_URL: release.baseUrl },
+      env: { ...process.env, HOME: home, TETRIS_TEST_UPGRADE_BASE_URL: release.baseUrl },
       stdout: "pipe",
       stderr: "pipe",
     });
@@ -5912,10 +5912,10 @@ test("manual upgrade output links stable notes and dev changes", async () => {
     const buildRevision = JSON.parse(currentRevision).build_revision;
     const devStdout = await new Response(dev.stdout).text();
     expect(devStdout).toContain(
-      `changes: https://github.com/vercel-labs/fx/compare/${buildRevision}...${revision}`,
+      `changes: https://github.com/lianihossam-eng/Tetris/compare/${buildRevision}...${revision}`,
     );
-    expect(devStdout.startsWith("Release channel set to dev in ~/.fx/settings.json.\n")).toBe(true);
-    expect(JSON.parse(readFileSync(join(home, ".fx", "settings.json"), "utf8")).update_channel).toBe("dev");
+    expect(devStdout.startsWith("Release channel set to dev in ~/.tetris/settings.json.\n")).toBe(true);
+    expect(JSON.parse(readFileSync(join(home, ".tetris", "settings.json"), "utf8")).update_channel).toBe("dev");
   } finally {
     release.stop();
     rmSync(root, { recursive: true, force: true });
@@ -5925,7 +5925,7 @@ test("manual upgrade output links stable notes and dev changes", async () => {
 test("update runs the manual upgrade", async () => {
   const root = realpathSync(mkdtempSync(join(tmpdir(), "fx-update-alias-")));
   const argvLogPath = join(root, "upgrade-argv.log");
-  const installedFx = join(root, "fx");
+  const installedFx = join(root, "tetris");
   const home = join(root, "home");
   mkdirSync(home);
   const release = startUpgradeServer(root, argvLogPath);
@@ -5934,14 +5934,14 @@ test("update runs the manual upgrade", async () => {
 
   try {
     const update = Bun.spawn([installedFx, "update", "--channel", "stable"], {
-      env: { ...process.env, HOME: home, FX_TEST_UPGRADE_BASE_URL: release.baseUrl },
+      env: { ...process.env, HOME: home, TETRIS_TEST_UPGRADE_BASE_URL: release.baseUrl },
       stdout: "pipe",
       stderr: "pipe",
     });
     const exitCode = await update.exited;
     expect(exitCode).toBe(0);
     expect(await new Response(update.stdout).text()).toContain(
-      "notes: https://fx.sh/changelog#v9.9.9",
+      "notes: https://github.com/lianihossam-eng/Tetris/releases/tag/v9.9.9",
     );
     expect(readFileSync(installedFx, "utf8")).toStartWith("#!/bin/sh");
   } finally {
@@ -5967,7 +5967,7 @@ test.skipIf(!tmuxAvailable())(
     mkdirSync(workspace);
     mkdirSync(installDir);
     const workspaceRoot = realpathSync(workspace);
-    const installedFx = join(installDir, "fx");
+    const installedFx = join(installDir, "tetris");
     copyFileSync(FX_BIN, installedFx);
     chmodSync(installedFx, 0o755);
 
@@ -6001,7 +6001,7 @@ test.skipIf(!tmuxAvailable())(
         env: {
           ...gatewayEnv(home, gateway),
           FX_AUTO_UPGRADE: "1",
-          FX_TEST_UPGRADE_BASE_URL: release.baseUrl,
+          TETRIS_TEST_UPGRADE_BASE_URL: release.baseUrl,
           FX_TRACE_LOG: tracePath,
           FX_TRACE_SCOPES: "core,session",
         },
@@ -6047,7 +6047,7 @@ test.skipIf(!tmuxAvailable())(
       const version = (await runFx(["--version"])).stdout.trim();
       await active.sendHexBytes(["07"]);
 
-      const updatedNotice = `✓ fx has been updated to v${version} (notes)`;
+      const updatedNotice = `✓ Tetris has been updated to v${version} (notes)`;
       // The notice comes before the replayed conversation, which is taller
       // than the pane, so it is in the scrollback rather than on screen.
       await waitForScrollback(active, updatedNotice);
@@ -6071,7 +6071,7 @@ test.skipIf(!tmuxAvailable())(
       expect(countOccurrences(resumed, updatedNotice)).toBe(1);
       const noticeEscapes = await active.captureFullScrollbackEscapes();
       expect(noticeEscapes).toContain(
-        `(\x1b[4m\x1b]8;;https://fx.sh/changelog#v${version}\x1b\\notes\x1b[0m`,
+        `(\x1b[4m\x1b]8;;https://github.com/lianihossam-eng/Tetris/releases/tag/v${version}\x1b\\notes\x1b[0m`,
       );
       expect(noticeEscapes).toContain("\x1b]8;;\x1b\\)");
       expect(resumed).not.toContain("* session resumed:");
@@ -6124,7 +6124,7 @@ test.skipIf(!tmuxAvailable())(
     mkdirSync(workspace);
     mkdirSync(installDir);
     const workspaceRoot = realpathSync(workspace);
-    const installedFx = join(installDir, "fx");
+    const installedFx = join(installDir, "tetris");
     copyFileSync(FX_BIN, installedFx);
     chmodSync(installedFx, 0o755);
 
@@ -6141,7 +6141,7 @@ test.skipIf(!tmuxAvailable())(
         env: {
           ...gatewayEnv(home, gateway),
           FX_AUTO_UPGRADE: "1",
-          FX_TEST_UPGRADE_BASE_URL: release.baseUrl,
+          TETRIS_TEST_UPGRADE_BASE_URL: release.baseUrl,
         },
         stderrPath,
         width: 110,
@@ -6152,7 +6152,7 @@ test.skipIf(!tmuxAvailable())(
       expect(countOccurrences(await active.captureFullScrollback(), welcome)).toBe(1);
 
       const version = (await runFx(["--version"])).stdout.trim();
-      const updatedNotice = `✓ fx has been updated to v${version} (notes)`;
+      const updatedNotice = `✓ Tetris has been updated to v${version} (notes)`;
       await active.sendHexBytes(["07"]);
       await active.waitForText(updatedNotice, TIMEOUT);
       await active.waitForComposer(TIMEOUT);
@@ -6192,7 +6192,7 @@ test.skipIf(!tmuxAvailable())(
 );
 
 /// The screen the pane bytes draw, rebuilt on fx's own terminal engine
-/// through `fx replay`, one row per string with trailing blanks removed.
+/// through `tetris replay`, one row per string with trailing blanks removed.
 function replayPaneBytes(
   root: string,
   home: string,
@@ -6221,7 +6221,7 @@ function replayPaneBytes(
     stderr: "pipe",
   });
   if (replay.exitCode !== 0) {
-    throw new Error(`fx replay ${name} failed: ${replay.stderr.toString()}`);
+    throw new Error(`tetris replay ${name} failed: ${replay.stderr.toString()}`);
   }
   const rows = readFileSync(gridPath, "utf8").split("\n")
     .filter((line) => line.startsWith("|") && line.endsWith("|"))
@@ -6282,15 +6282,15 @@ async function captureCtrlGRelaunch(options: {
   mkdirSync(workspace);
   mkdirSync(installDir);
   if (options.startupScrollback !== undefined) {
-    mkdirSync(join(home, ".fx"), { mode: 0o700 });
+    mkdirSync(join(home, ".tetris"), { mode: 0o700 });
     writeFileSync(
-      join(home, ".fx", "settings.json"),
+      join(home, ".tetris", "settings.json"),
       JSON.stringify({ startup_scrollback: options.startupScrollback }) + "\n",
       { mode: 0o600 },
     );
   }
   const workspaceRoot = realpathSync(workspace);
-  const installedFx = join(installDir, "fx");
+  const installedFx = join(installDir, "tetris");
   copyFileSync(FX_BIN, installedFx);
   chmodSync(installedFx, 0o755);
 
@@ -6308,7 +6308,7 @@ async function captureCtrlGRelaunch(options: {
       env: {
         ...gatewayEnv(home, gateway),
         FX_AUTO_UPGRADE: "1",
-        FX_TEST_UPGRADE_BASE_URL: release.baseUrl,
+        TETRIS_TEST_UPGRADE_BASE_URL: release.baseUrl,
       },
       stderrPath,
       width: size.cols,
@@ -6328,7 +6328,7 @@ async function captureCtrlGRelaunch(options: {
     const beforeLength = await settledCaptureLength(capturePath);
 
     const version = (await runFx(["--version"])).stdout.trim();
-    const updatedNotice = `✓ fx has been updated to v${version} (notes)`;
+    const updatedNotice = `✓ Tetris has been updated to v${version} (notes)`;
     await active.sendHexBytes(["07"]);
     await waitForScrollback(active, updatedNotice);
     await active.waitForComposer(TIMEOUT);
@@ -6452,7 +6452,7 @@ test.skipIf(!tmuxAvailable())(
     mkdirSync(workspace);
     mkdirSync(installDir);
     const workspaceRoot = realpathSync(workspace);
-    const installedFx = join(installDir, "fx");
+    const installedFx = join(installDir, "tetris");
     copyFileSync(FX_BIN, installedFx);
     chmodSync(installedFx, 0o755);
 
@@ -6485,7 +6485,7 @@ test.skipIf(!tmuxAvailable())(
         env: {
           ...gatewayEnv(home, gateway),
           FX_AUTO_UPGRADE: "1",
-          FX_TEST_UPGRADE_BASE_URL: release.baseUrl,
+          TETRIS_TEST_UPGRADE_BASE_URL: release.baseUrl,
           FX_PERMISSION_MODE: "full-access",
         },
         stderrPath,
@@ -6512,7 +6512,7 @@ test.skipIf(!tmuxAvailable())(
       await active.waitForComposer(TIMEOUT);
       const version = (await runFx(["--version"])).stdout.trim();
       await active.sendHexBytes(["07"]);
-      await active.waitForText(`✓ fx has been updated to v${version} (notes)`, TIMEOUT);
+      await active.waitForText(`✓ Tetris has been updated to v${version} (notes)`, TIMEOUT);
       expect(relaunched()).toBe(true);
       expect(readFileSync(stderrPath, "utf8")).not.toContain("relaunch failed");
 
@@ -6911,10 +6911,10 @@ test.skipIf(!tmuxAvailable())(
     );
     const firstCompletion = "RESUMED_FIRST_FILE_COMPLETE";
     const secondCompletion = "RESUMED_SECOND_FILE_COMPLETE";
-    mkdirSync(join(home, ".fx"), { recursive: true });
+    mkdirSync(join(home, ".tetris"), { recursive: true });
     mkdirSync(workspace);
     writeFileSync(
-      join(home, ".fx", "settings.json"),
+      join(home, ".tetris", "settings.json"),
       JSON.stringify({ sandbox: "none", permission_mode: "ask", permission: {} }),
     );
     writeFileSync(stderrPath, "");
@@ -7050,10 +7050,10 @@ test.skipIf(!tmuxAvailable())(
     const home = join(root, "home");
     const workspace = join(root, "workspace");
     const stderrPath = join(root, "stderr.log");
-    mkdirSync(join(home, ".fx"), { recursive: true });
+    mkdirSync(join(home, ".tetris"), { recursive: true });
     mkdirSync(workspace);
     writeFileSync(
-      join(home, ".fx", "settings.json"),
+      join(home, ".tetris", "settings.json"),
       JSON.stringify({ sandbox: "none", permission_mode: "ask", permission: {} }),
     );
     writeFileSync(stderrPath, "");
@@ -7155,9 +7155,9 @@ test.skipIf(!tmuxAvailable())(
     mkdirSync(home);
     mkdirSync(workspace);
     const workspaceRoot = realpathSync(workspace);
-    mkdirSync(join(home, ".fx"), { recursive: true });
+    mkdirSync(join(home, ".tetris"), { recursive: true });
     writeFileSync(
-      join(home, ".fx", "settings.json"),
+      join(home, ".tetris", "settings.json"),
       JSON.stringify({ sandbox: "none", permission_mode: "ask", permission: {} }),
     );
     const lineCount = 40;
@@ -7406,7 +7406,7 @@ test.skipIf(!tmuxAvailable())(
       const currentPicker = stripAnsi(await active.capturePane());
       expect(currentPicker).toContain("Sessions 1");
       expect(currentPicker).toContain("[Current workspace]");
-      expect(currentPicker).toContain("𝒇x");
+      expect(currentPicker).toContain("tetris");
       expect(currentPicker).toContain("Save the workspace A transcript.");
       expect(currentPicker).not.toContain("Save the workspace B transcript.");
 
@@ -7817,7 +7817,7 @@ test.skipIf(!tmuxAvailable())(
 );
 
 test.skipIf(!tmuxAvailable())(
-  "new and resumed sessions preserve native terminal scrollback while fx is active",
+  "new and resumed sessions preserve native terminal scrollback while tetris is active",
   async () => {
     const root = realpathSync(mkdtempSync(join(tmpdir(), "fx-tui-direct-resume-scroll-")));
     const home = join(root, "home");
@@ -7977,7 +7977,7 @@ test.skipIf(!tmuxAvailable())(
         height: 40,
       });
       await active.waitForComposer(TIMEOUT);
-      await active.waitForText("What can fx do differently?", TIMEOUT);
+      await active.waitForText("What can Tetris do differently?", TIMEOUT);
       const resumedGrid = await active.capturePaneGrid();
       const footer = findFooterBlocks(resumedGrid).at(-1);
       const cancelledRow = resumedGrid.findIndex((row) => row.includes("▪ Cancelled"));
@@ -8021,10 +8021,10 @@ test.skipIf(!tmuxAvailable())(
     const bufferedTailMarker = "INTERRUPT_BUFFERED_TAIL";
     const artifactTailMarker = "INTERRUPT_TERM_TAIL";
     const followUpMarker = "INTERRUPT_FOLLOW_UP_DONE";
-    mkdirSync(join(home, ".fx"), { recursive: true });
+    mkdirSync(join(home, ".tetris"), { recursive: true });
     mkdirSync(workspace);
     writeFileSync(
-      join(home, ".fx", "settings.json"),
+      join(home, ".tetris", "settings.json"),
       JSON.stringify({ sandbox: "none", permission_mode: "auto", permission: {} }),
     );
     writeFileSync(initialStderrPath, "");
@@ -8189,10 +8189,10 @@ test.skipIf(!tmuxAvailable())(
     const tracePath = join(root, "trace.log");
     const readyPath = join(workspace, ".zero-ready");
     const scriptPath = join(workspace, "z.sh");
-    mkdirSync(join(home, ".fx"), { recursive: true });
+    mkdirSync(join(home, ".tetris"), { recursive: true });
     mkdirSync(workspace);
     writeFileSync(
-      join(home, ".fx", "settings.json"),
+      join(home, ".tetris", "settings.json"),
       JSON.stringify({ sandbox: "none", permission_mode: "auto", permission: {} }),
     );
     writeFileSync(initialStderrPath, "");
@@ -8254,13 +8254,13 @@ test.skipIf(!tmuxAvailable())(
       await active.waitForComposer(TIMEOUT);
       const resumed = stripAnsi(await waitForScrollback(
         active,
-        "What can fx do differently?",
+        "What can Tetris do differently?",
         timeout,
       ));
       const cancelledIndex = resumed.indexOf("Cancelled");
       expect(cancelledIndex).toBeGreaterThanOrEqual(0);
       expect(resumed).toContain("▪ Cancelled");
-      expect(countOccurrences(resumed, "What can fx do differently?")).toBe(1);
+      expect(countOccurrences(resumed, "What can Tetris do differently?")).toBe(1);
       expect(resumed).not.toContain("system: cancelled");
       expect(resumed).not.toContain("Cancelling");
       expect(resumed).not.toContain("Interrupted by user after completing");
@@ -8323,7 +8323,7 @@ test.skipIf(!tmuxAvailable())(
       expect(seed.code).toBe(0);
       const id = JSON.parse(seed.stdout).session_id;
       // v1 folders a crash left mid-creation, where the converter looks.
-      const sessions = join(home, ".fx", "sessions");
+      const sessions = join(home, ".tetris", "sessions");
       const eventsPath = logOf(home, id);
       const before = readFileSync(eventsPath);
       const metadata = { schema_version: 4, created_at_ms: 1, updated_at_ms: 2, workspace_root: workspace };
@@ -8470,9 +8470,9 @@ test.skipIf(!tmuxAvailable())(
     const home = join(root, "home");
     const workspace = join(root, "workspace");
     const stderrPath = join(root, "stderr.log");
-    mkdirSync(join(home, ".fx"), { recursive: true });
+    mkdirSync(join(home, ".tetris"), { recursive: true });
     mkdirSync(workspace);
-    writeFileSync(join(home, ".fx", "settings.json"), JSON.stringify({ max_tool_result_bytes: 2 * 1024 * 1024 }));
+    writeFileSync(join(home, ".tetris", "settings.json"), JSON.stringify({ max_tool_result_bytes: 2 * 1024 * 1024 }));
     writeFileSync(join(workspace, "result.txt"), Array.from({ length: 400 }, (_, index) =>
       `SAVED_OUTPUT_ROW_${String(index).padStart(4, "0")} ${"local-fixture-".repeat(7)}`
     ).join("\n") + "\n");
@@ -8524,9 +8524,9 @@ for (const inspectDetails of [false, true]) {
       const workspace = join(root, "workspace");
       const tracePath = join(root, "trace.log");
       const stderrPath = join(root, "stderr.log");
-      mkdirSync(join(home, ".fx"), { recursive: true });
+      mkdirSync(join(home, ".tetris"), { recursive: true });
       mkdirSync(workspace);
-      writeFileSync(join(home, ".fx", "settings.json"), JSON.stringify({
+      writeFileSync(join(home, ".tetris", "settings.json"), JSON.stringify({
         sound: false, permission_mode: "auto", sandbox: "none",
       }));
       const ledger = Array.from({ length: 420 }, (_, i) => `ROW_${i + 1} café 東京`).join("\n") + "\n";
@@ -8686,7 +8686,7 @@ test.skipIf(!tmuxAvailable())("remembered continuation restores the selected con
     other = await open(["--continue"], "busy");
     await other.waitForPane(() => other!.paneStatus().dead, TIMEOUT);
     expect(other.paneStatus().status).toBe(1);
-    expect(readFileSync(join(root, "busy.stderr"), "utf8")).toContain("another fx process");
+    expect(readFileSync(join(root, "busy.stderr"), "utf8")).toContain("another Tetris process");
     await other.kill(); other = null;
     await active.sendText("/resume");
     await active.waitForText("enter resume", TIMEOUT);
@@ -8707,8 +8707,8 @@ test.skipIf(!tmuxAvailable())("remembered continuation restores the selected con
     // A v1 bookmark fx cannot read, in a profile the new store remembers
     // nothing for, is named as such (D86).
     const unread = join(root, "unread-home");
-    const bookmark = join(unread, ".fx", "continue", createHash("sha256").update(workspace).digest("hex"));
-    mkdirSync(join(unread, ".fx", "continue"), { recursive: true, mode: 0o700 });
+    const bookmark = join(unread, ".tetris", "continue", createHash("sha256").update(workspace).digest("hex"));
+    mkdirSync(join(unread, ".tetris", "continue"), { recursive: true, mode: 0o700 });
     const fifo = Bun.spawnSync(["mkfifo", bookmark]);
     expect(fifo.exitCode).toBe(0);
     active = await open(["-c"], "invalid-bookmark", unread);
@@ -8731,7 +8731,7 @@ test.skipIf(!tmuxAvailable())("resumed command rows reclip to live width after t
   mkdirSync(workspacePath, { recursive: true });
   const workspace = realpathSync(workspacePath);
   const sessionId = "moved-workspace-reclip";
-  const sessionDir = join(home, ".fx", "sessions", sessionId);
+  const sessionDir = join(home, ".tetris", "sessions", sessionId);
   mkdirSync(sessionDir, { recursive: true, mode: 0o700 });
 
   // The session was created in a workspace that no longer applies, then later
@@ -8859,10 +8859,10 @@ function resumeFixture(prefix: string) {
   const root = realpathSync(mkdtempSync(join(tmpdir(), prefix)));
   const home = join(root, "home");
   const workspace = join(root, "workspace");
-  mkdirSync(join(home, ".fx"), { recursive: true });
+  mkdirSync(join(home, ".tetris"), { recursive: true });
   mkdirSync(workspace);
   writeFileSync(
-    join(home, ".fx", "settings.json"),
+    join(home, ".tetris", "settings.json"),
     JSON.stringify({ sandbox: "none", permission_mode: "auto", permission: {} }),
   );
   return { root, home, workspace: realpathSync(workspace) };
@@ -8905,7 +8905,7 @@ async function endFx(session: TmuxSession, signal: "SIGKILL" | "SIGHUP") {
 }
 
 test.skipIf(!tmuxAvailable())(
-  "a request fx was killed during goes out again on the next -c",
+  "a request tetris was killed during goes out again on the next -c",
   async () => {
     const fixture = resumeFixture("fx-auto-resume-kill-");
     let reached: () => void = () => {};
@@ -8933,7 +8933,7 @@ test.skipIf(!tmuxAvailable())(
       const pane = await active.waitForText("RESUMED_ANSWER_7310", TIMEOUT);
       expect(pane).toContain("Resuming the interrupted request");
       // The killed turn reads as stopped, not as a failure.
-      expect(pane).toContain("system: fx stopped before this turn finished");
+      expect(pane).toContain("system: Tetris stopped before this turn finished");
       expect(pane).not.toContain("system: failed");
       // The note is for the model; the transcript never shows it.
       expect(pane).not.toContain(RESUME_NOTE);
@@ -8979,7 +8979,7 @@ function holdingGateway(prompt: string) {
 }
 
 test.skipIf(!tmuxAvailable())(
-  "plain fx points at a turn a crash left unfinished, but not at one another fx is working on",
+  "plain tetris points at a turn a crash left unfinished, but not at one another Tetris is working on",
   async () => {
     const fixture = resumeFixture("fx-auto-resume-hint-");
     const { gateway, heldAtLeast, held } = holdingGateway("Map the route.");
@@ -9056,7 +9056,7 @@ test.skipIf(!tmuxAvailable())(
 );
 
 test.skipIf(!tmuxAvailable())(
-  "a request that crashed fx twice asks first, and Esc there ends it for good",
+  "a request that crashed tetris twice asks first, and Esc there ends it for good",
   async () => {
     const fixture = resumeFixture("fx-auto-resume-loop-");
     const { gateway, heldAtLeast, held } = holdingGateway("Crash me.");
@@ -9073,7 +9073,7 @@ test.skipIf(!tmuxAvailable())(
 
       // The second crash with the send in flight asks before sending.
       active = (await launchFx(fixture, gateway, "-c", "third")).session;
-      await active.waitForText("This request crashed fx twice", TIMEOUT);
+      await active.waitForText("This request crashed tetris twice", TIMEOUT);
       await Bun.sleep(300);
       expect(held()).toBe(2);
       await active.sendKeys("Escape");
@@ -9119,9 +9119,9 @@ test.skipIf(!tmuxAvailable())(
       active = third.session;
       await heldAtLeast(3);
       const pane = await active.capturePane();
-      expect(pane).not.toContain("crashed fx twice");
+      expect(pane).not.toContain("crashed tetris twice");
       // A closed window reads as stopped, not as cancelled.
-      expect(pane).toContain("system: fx stopped before this turn finished");
+      expect(pane).toContain("system: Tetris stopped before this turn finished");
       expect(pane).not.toContain("system: cancelled");
       expect(readFileSync(third.stderrPath, "utf8")).toBe("");
     } finally {
@@ -9163,7 +9163,7 @@ test.skipIf(!tmuxAvailable())(
       expect(resumed).toBeTruthy();
       // The call that was running is answered as possibly run, so the model
       // decides whether running it again is safe.
-      expect(resumed!.body).toContain("fx stopped while this tool was running");
+      expect(resumed!.body).toContain("Tetris stopped while this tool was running");
       // With a tool in flight the note keeps its caveat.
       expect(resumed!.body).toContain("A tool that was running may have partly run.");
       expect(readFileSync(second.stderrPath, "utf8")).toBe("");

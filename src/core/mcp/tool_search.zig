@@ -453,7 +453,7 @@ pub fn writeAuthenticationRequired(alloc: Allocator, server_name: []const u8, re
         .bearer_environment => |variable| {
             try out.writer.writeAll(",\"interactive\":false,\"environment\":");
             try writeEncodedJsonScalar(alloc, &out.writer, variable);
-            try out.writer.writeAll(",\"message\":\"Set this environment variable before starting fx.\"");
+            try out.writer.writeAll(",\"message\":\"Set this environment variable before starting Tetris.\"");
         },
     }
     try out.writer.writeAll("}}");

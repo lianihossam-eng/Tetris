@@ -22,12 +22,19 @@ const FindGenericPasswordFn = *const fn (
     item_ref: ?*?*anyopaque,
 ) callconv(.c) i32;
 
-pub const service_name = "FX_AI_GATEWAY_API_KEY";
+/// Keychain service names are Tetris's own (`TETRIS_*`). Fx and older builds
+/// read and write their credentials under the `FX_*` names; this build never
+/// reads, overwrites, or deletes those items, so one macOS account can hold
+/// both products' credentials without either seeing the other's. The names
+/// were shared before this split, so there is no safe migration: the old items
+/// are left untouched, and Tetris asks for its credentials again.
+pub const service_name = "TETRIS_AI_GATEWAY_API_KEY";
 /// The sign-in credentials the MCP engine hands fx to keep, a different format.
-/// Not `FX_MCP_OAUTH_CREDENTIALS_V2`: fx builds that still run read and
-/// rewrite that item (`mcp_host/credentials.zig` says why).
-pub const mcp_host_credentials_service_name = "FX_MCP_OAUTH_CREDENTIALS_V3";
-pub const oauth_session_service_name = "FX_OAUTH_SESSION_V1";
+/// Not `FX_MCP_OAUTH_CREDENTIALS_V2` or Fx's `FX_MCP_OAUTH_CREDENTIALS_V3`:
+/// builds that still run read and rewrite those items
+/// (`mcp_host/credentials.zig` says why).
+pub const mcp_host_credentials_service_name = "TETRIS_MCP_OAUTH_CREDENTIALS_V3";
+pub const oauth_session_service_name = "TETRIS_OAUTH_SESSION_V1";
 
 /// Backing store for a resolved account name. Must outlive any argv built from it.
 pub const AccountBuffer = [256]u8;
@@ -839,7 +846,7 @@ fn deleteServiceItem(
     return error.KeychainDeleteFailed;
 }
 
-const test_service_name = "FX_TEST_AI_GATEWAY_API_KEY";
+const test_service_name = "TETRIS_TEST_AI_GATEWAY_API_KEY";
 
 fn deleteTestServiceItem(alloc: std.mem.Allocator) void {
     _ = deleteServiceItem(alloc, test_service_name) catch {};
@@ -882,7 +889,7 @@ test "MCP Keychain storage round-trips values beyond the security prompt limit" 
     if (isDisabled()) return error.SkipZigTest;
 
     const alloc = std.testing.allocator;
-    const test_mcp_service = "FX_TEST_MCP_OAUTH_CREDENTIALS_V1";
+    const test_mcp_service = "TETRIS_TEST_MCP_OAUTH_CREDENTIALS_V1";
     const written = text_utils.repeat("mcp-credential-section-", 32);
 
     storeMcpValueMac(test_mcp_service, written) catch return error.SkipZigTest;
@@ -897,6 +904,16 @@ test "MCP Keychain storage round-trips values beyond the security prompt limit" 
         error.KeychainItemNotFound,
         loadMcpValueMac(alloc, test_mcp_service),
     );
+}
+
+test "Keychain service names are Tetris's own, not Fx's" {
+    for ([_][]const u8{
+        service_name,
+        mcp_host_credentials_service_name,
+        oauth_session_service_name,
+    }) |name| {
+        try std.testing.expect(std.mem.startsWith(u8, name, "TETRIS_"));
+    }
 }
 
 test "Keychain store command has no secret argument" {

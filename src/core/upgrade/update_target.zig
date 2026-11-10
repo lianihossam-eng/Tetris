@@ -84,7 +84,7 @@ pub const Target = union(Channel) {
         errdefer alloc.free(owned_version);
         const owned_revision = try alloc.dupe(u8, manifest_revision);
         errdefer alloc.free(owned_revision);
-        const artifact_ref = try alloc.print("dev/{s}", .{manifest_revision});
+        const artifact_ref = try alloc.print("dev-{s}", .{manifest_revision});
         return .{ .dev = .{
             .version = owned_version,
             .revision = owned_revision,
@@ -218,7 +218,7 @@ test "dev manifest creates a bounded immutable target" {
     try std.testing.expectEqual(Channel.dev, target.channel());
     try std.testing.expectEqualStrings("0.3.62", target.version());
     try std.testing.expectEqualStrings(
-        "dev/0123456789abcdef0123456789abcdef01234567",
+        "dev-0123456789abcdef0123456789abcdef01234567",
         target.artifactRef(),
     );
     var label_buf: [32]u8 = undefined;

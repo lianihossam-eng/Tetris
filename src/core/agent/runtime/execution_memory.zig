@@ -525,7 +525,7 @@ test "retained standalone cut rebuilds exactly the selected execution suffix" {
                     .parts_json = "[{\"type\":\"reasoning\",\"text\":\"private\"}]",
                 } else null,
             },
-            .{ .role = .user, .content = "Continue the turn. fx hook context:\nverify" },
+            .{ .role = .user, .content = "Continue the turn. Tetris hook context:\nverify" },
             .{ .role = .assistant, .tool_calls = &.{call} },
             .{ .role = .tool, .content = "result", .tool_call_id = call.id, .tool_name = call.name, .tool_result_status = .success },
         };

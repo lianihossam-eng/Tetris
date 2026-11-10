@@ -1,6 +1,6 @@
-// Drives the real fx binary with every shell call the TLA+ model covers and
-// records what fx actually did. No model calls: a local fake Gateway serves
-// exact argument bytes, so shapes such as invalid JSON reach fx unchanged.
+// Drives the real tetris binary with every shell call the TLA+ model covers and
+// records what Tetris actually did. No model calls: a local fake Gateway serves
+// exact argument bytes, so shapes such as invalid JSON reach Tetris unchanged.
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import type { ObservedCall, ObservedTurn } from "./bridge";
@@ -25,7 +25,7 @@ const EQ_BASH_LINES = ["before", "=====", "a", "after"];
 const TYPED = "FXT_TYPED\n";
 const BASH = { kind: "executable", path: "/bin/bash" };
 
-/** fx's current advertised fields, with action. */
+/** Tetris's current advertised fields, with action. */
 function today(intent: string, sid: string): Record<string, unknown> {
   switch (intent) {
     case "run": return { action: "run", command: MARK };
@@ -104,7 +104,7 @@ function parts(body: string): any[] {
   return prompt.flatMap((m: any) => Array.isArray(m.content) ? m.content : []);
 }
 
-/** What fx did, read from the tool result body. */
+/** What Tetris did, read from the tool result body. */
 export function interpret(body: string, sid: string | null): Pick<ObservedCall, "executed" | "decoded" | "outcome"> {
   let value: any;
   try { value = JSON.parse(body); } catch { return { executed: null, decoded: "unknown", outcome: "unknown" }; }
@@ -128,7 +128,7 @@ export function interpret(body: string, sid: string | null): Pick<ObservedCall, 
   }
   const shell = /FXT:(bash|zsh)\b/.exec(output)?.[1];
   if (!shell) return { executed: true, decoded: "unknown", outcome: "ok" };
-  // Inside a fx TTY run the command's stdout is not a terminal, so read the backend.
+  // Inside a Tetris TTY run the command's stdout is not a terminal, so read the backend.
   const tty = value.backend === "tty";
   const decoded = shell === "bash" ? (tty ? "run_bash_tty" : "run_bash") : (tty ? "run_tty" : "run");
   return { executed: true, decoded, outcome: "ok" };
@@ -136,7 +136,7 @@ export function interpret(body: string, sid: string | null): Pick<ObservedCall, 
 
 function sessionResults(home: string): Map<string, string> {
   const results = new Map<string, string>();
-  const root = join(home, ".fx", "sessions", "v2");
+  const root = join(home, ".tetris", "sessions", "v2");
   for (const id of existsSync(root) ? readdirSync(root) : []) {
     const log = join(root, id, "log.jsonl");
     if (!existsSync(log)) continue;
@@ -160,7 +160,7 @@ export async function runTurn(ctx: RunContext, spec: TurnSpec): Promise<Observed
   const slug = spec.name.replace(/[^a-z0-9]+/gi, "-").toLowerCase();
   const root = mkdtempSync(join(ctx.artifacts, `${slug}-`));
   const home = join(root, "home"), cwd = join(root, "workspace");
-  mkdirSync(join(home, ".fx"), { recursive: true, mode: 0o700 });
+  mkdirSync(join(home, ".tetris"), { recursive: true, mode: 0o700 });
   mkdirSync(cwd);
   const needsSession = spec.calls.some((c) => SESSION_INTENTS.has(c.intent) || c.shape.startsWith("both_"));
   const offset = needsSession ? 1 : 0;
@@ -221,13 +221,13 @@ export async function runTurn(ctx: RunContext, spec: TurnSpec): Promise<Observed
       resultBody,
     } as ObservedCall;
   });
-  // final: fx asked again after the last served call and got the final text.
-  // guard: fx stopped after the last served call and reported its loop guard.
+  // final: Tetris asked again after the last served call and got the final text.
+  // guard: Tetris stopped after the last served call and reported its loop guard.
   const askedAfterLast = requests.length > offset + sent.length;
-  // fx ask --json reports the stop as a stderr notice.
+  // tetris ask --json reports the stop as a stderr notice.
   const guardReported = stderr.includes(LOOP_STOP) || stdout.includes(LOOP_STOP) ||
-    existsSync(join(home, ".fx", "sessions")) && readdirSync(join(home, ".fx", "sessions")).some((id) => {
-      const events = join(home, ".fx", "sessions", id, "events.jsonl");
+    existsSync(join(home, ".tetris", "sessions")) && readdirSync(join(home, ".tetris", "sessions")).some((id) => {
+      const events = join(home, ".tetris", "sessions", id, "events.jsonl");
       return existsSync(events) && readFileSync(events, "utf8").includes(LOOP_STOP);
     });
   const ended: ObservedTurn["ended"] = expired || exitCode === null ? "unknown"

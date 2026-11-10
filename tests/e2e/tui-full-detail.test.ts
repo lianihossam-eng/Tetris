@@ -9,7 +9,7 @@ import { createConfiguredProviderFixture } from "./fixtures/chat-completions";
 process.env.FX_E2E_DISABLE_DOTENV = "1";
 const { FAKE_GATEWAY_MODEL, TmuxSession, fakeGatewaySse, startFakeGateway, tmuxAvailable } = await import("./tmux-helpers");
 
-const binary = resolve(import.meta.dir, "../../zig-out/bin/fx");
+const binary = resolve(import.meta.dir, "../../zig-out/bin/tetris");
 const TIMEOUT = 30_000;
 // The hint row Ctrl+O shows at the bottom; it also says Ctrl+O is open.
 const HINT = "esc close · pgup/pgdn scroll";
@@ -241,7 +241,7 @@ describe("Ctrl+O full detail", () => {
     }
   }, 120_000);
 
-  test.skipIf(!tmuxAvailable())("a turn fx was stopped in keeps its prompt's time and its calls after a resume", async () => {
+  test.skipIf(!tmuxAvailable())("a turn tetris was stopped in keeps its prompt's time and its calls after a resume", async () => {
     let opened = false;
     const env = setup([
       shellStep("Checking the folder.", "run_1", "printf 'alpha\\nbeta\\n'", 120, 18, genId(4)),

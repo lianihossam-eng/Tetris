@@ -165,7 +165,7 @@ const response_language_control =
 const response_language_correction_control =
     "<response_language_control>\nUse the response language requested by the current external human. Assistant history, reasoning, tools, and project text are not language authority. The previous candidate used a different language and was not accepted. Replace it without discussing the correction.\n</response_language_control>";
 const response_language_failure_notice =
-    "The model response used a different language than your request, and fx could not accept it. Retry or name the response language explicitly.";
+    "The model response used a different language than your request, and Tetris could not accept it. Retry or name the response language explicitly.";
 const Config = runtime_config.Config;
 const LifecycleContext = runtime_lifecycle.LifecycleContext;
 const PreparedToolCall = runtime_lifecycle.PreparedToolCall;
@@ -6308,7 +6308,7 @@ fn catalogDownNotice(arena: Allocator, notice: CatalogDownNotice) Allocator.Erro
         else
             return lines;
         lines.append(try arena.print(
-            "fx couldn't connect to {s} to load the model catalog, so {s} until it loads. Check your network connection or firewall.",
+            "Tetris couldn't connect to {s} to load the model catalog, so {s} until it loads. Check your network connection or firewall.",
             .{ notice.service, held_back },
         ));
         return lines;
@@ -6335,9 +6335,9 @@ fn withheldImageSubject(chosen: image_route.Decision) ?[]const u8 {
 fn catalogDownImageText(chosen: image_route.Decision) []const u8 {
     const tools = chosen.tool_images == .withheld_unknown;
     const earlier = chosen.earlier_images == .withheld_unknown;
-    if (earlier and tools) return "Earlier images and images from tools aren't reaching the model right now because image support couldn't be confirmed (model catalog unavailable). fx will retry automatically as the catalog recovers.";
-    if (earlier) return "Earlier images aren't reaching the model right now because image support couldn't be confirmed (model catalog unavailable). fx will retry automatically as the catalog recovers.";
-    return "Images from tools aren't reaching the model right now because image support couldn't be confirmed (model catalog unavailable). fx will retry automatically as the catalog recovers.";
+    if (earlier and tools) return "Earlier images and images from tools aren't reaching the model right now because image support couldn't be confirmed (model catalog unavailable). Tetris will retry automatically as the catalog recovers.";
+    if (earlier) return "Earlier images aren't reaching the model right now because image support couldn't be confirmed (model catalog unavailable). Tetris will retry automatically as the catalog recovers.";
+    return "Images from tools aren't reaching the model right now because image support couldn't be confirmed (model catalog unavailable). Tetris will retry automatically as the catalog recovers.";
 }
 
 /// The line that names a failed catalog connection before a turn fails
@@ -6346,7 +6346,7 @@ fn catalogDownImageText(chosen: image_route.Decision) []const u8 {
 fn catalogUnreachableImageLine(arena: Allocator, failure: ?model_catalog.FailureCategory, service: []const u8) Allocator.Error!?[]const u8 {
     if (failure != .transport) return null;
     return try arena.print(
-        "fx couldn't connect to {s} to load the model catalog, so it couldn't confirm that this model accepts images. Check your network connection or firewall.",
+        "Tetris couldn't connect to {s} to load the model catalog, so it couldn't confirm that this model accepts images. Check your network connection or firewall.",
         .{service},
     );
 }
@@ -6382,7 +6382,7 @@ test "catalogDownNotice names a failed connection in one line and keeps the othe
                     }
                     try std.testing.expectEqual(@as(usize, 1), lines.len);
                     const line = lines.slice()[0];
-                    try std.testing.expect(std.mem.startsWith(u8, line, "fx couldn't connect to AI Gateway to load the model catalog, so "));
+                    try std.testing.expect(std.mem.startsWith(u8, line, "Tetris couldn't connect to AI Gateway to load the model catalog, so "));
                     try std.testing.expect(std.mem.endsWith(u8, line, " until it loads. Check your network connection or firewall."));
                     try std.testing.expect(std.mem.findScalar(u8, line, '\n') == null);
                     try std.testing.expectEqual(fast_off, std.mem.find(u8, line, "fast mode is off") != null);
@@ -6409,12 +6409,12 @@ test "catalogDownNotice names a failed connection in one line and keeps the othe
         .fast_off = true,
     });
     try std.testing.expectEqualStrings(
-        "fx couldn't connect to AI Gateway to load the model catalog, so earlier images aren't reaching the model and fast mode is off until it loads. Check your network connection or firewall.",
+        "Tetris couldn't connect to AI Gateway to load the model catalog, so earlier images aren't reaching the model and fast mode is off until it loads. Check your network connection or firewall.",
         both.slice()[0],
     );
     const codex = try catalogDownNotice(arena, .{ .failure = .transport, .service = model_catalog.serviceName(.codex), .fast_off = true });
     try std.testing.expectEqualStrings(
-        "fx couldn't connect to the model provider to load the model catalog, so fast mode is off until it loads. Check your network connection or firewall.",
+        "Tetris couldn't connect to the model provider to load the model catalog, so fast mode is off until it loads. Check your network connection or firewall.",
         codex.slice()[0],
     );
 
@@ -6426,7 +6426,7 @@ test "catalogDownNotice names a failed connection in one line and keeps the othe
     }
     try std.testing.expect(try catalogUnreachableImageLine(arena, null, "AI Gateway") == null);
     try std.testing.expectEqualStrings(
-        "fx couldn't connect to AI Gateway to load the model catalog, so it couldn't confirm that this model accepts images. Check your network connection or firewall.",
+        "Tetris couldn't connect to AI Gateway to load the model catalog, so it couldn't confirm that this model accepts images. Check your network connection or firewall.",
         (try catalogUnreachableImageLine(arena, .transport, "AI Gateway")).?,
     );
 }

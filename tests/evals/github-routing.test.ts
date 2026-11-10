@@ -156,7 +156,7 @@ describe("eval: GitHub and repo routing", () => {
       seedFxHistoryRepo(workDir);
 
       const result = await runEval(
-        "look for changes/last commits in the fx",
+        "look for changes/last commits in the tetris",
         {
           cwd: workDir,
           timeoutSec: 180,

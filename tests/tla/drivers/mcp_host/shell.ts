@@ -1,4 +1,4 @@
-// The real fx shell in tmux for the mcp-v2-model scenarios: start it with a
+// The real Tetris shell in tmux for the mcp-v2-model scenarios: start it with a
 // fake gateway, read its status line once it settles, type `/mcp` verbs, quit.
 import { join } from "node:path";
 import { binary, shellQuote, targetHelpers } from "../lib/context";

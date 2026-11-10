@@ -172,10 +172,13 @@ const exitCode = await Promise.race([
 ]);
 globalThis.setTimeout = originalSetTimeout;
 const text = new TextDecoder().decode(Buffer.concat(output.map((chunk) => Buffer.from(chunk))));
+// The welcome frame styles its name and build label separately, so the brand
+// and version only read as one string without the SGR sequences.
+const welcomeText = text.replace(/\x1b\[[0-9;]*m/g, "");
 
 if (exitCode !== 0) throw new Error(`fx-term exited with code ${exitCode}`);
-if (!text.includes("𝒇x")) throw new Error("shared fx welcome frame was not observed");
-if (!text.includes("Run /help for commands")) throw new Error("shared fx welcome guidance was not observed");
+if (!welcomeText.includes("tetris v")) throw new Error("shared tetris welcome frame was not observed");
+if (!text.includes("Run /help for commands")) throw new Error("shared tetris welcome guidance was not observed");
 if (requestedModel !== "sdk/term-model") throw new Error(`terminal prompt did not use the host-restored model: ${requestedModel}`);
 if (!(streamStartedAt < secondRequestAt)) throw new Error("terminal started steering before the active response");
 if (!(draftVisibleAt < steeringSubmittedAt)) throw new Error("terminal did not render the steering draft before submission");

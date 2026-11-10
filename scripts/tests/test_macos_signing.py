@@ -29,7 +29,9 @@ PGSO_LINUX_X86_64_WORKFLOW_PATH = (
 )
 DEV_RELEASE_WORKFLOW_PATH = REPO_ROOT / ".github" / "workflows" / "dev-release.yml"
 PGSO_SETUP_ACTION_PATH = REPO_ROOT / ".github" / "actions" / "setup-pgso" / "action.yml"
-SIGNING_IDENTITY = "Developer ID Application: Vercel, Inc (JW6Y669B67)"
+SIGNING_IDENTITY = "Developer ID Application: Tetris Test (TESTTEAM01)"
+SIGNING_IDENTIFIER = "com.example.tetris"
+SIGNING_TEAM_ID = "TESTTEAM01"
 TEST_CDHASH = "0123456789abcdef0123456789abcdef01234567"
 SECRET_NAMES = (
     "APPLE_DEVELOPER_ID_P12_BASE64",
@@ -134,8 +136,8 @@ if "--force" in args:
     binary = pathlib.Path(args[-1])
     binary.write_bytes(binary.read_bytes() + b"signed\\n")
 if "--display" in args:
-    identifier = os.environ.get("FX_SIGNING_TEST_IDENTIFIER", "com.vercel.fx")
-    team_id = os.environ.get("FX_SIGNING_TEST_TEAM_ID", "JW6Y669B67")
+    identifier = os.environ.get("FX_SIGNING_TEST_IDENTIFIER", "{SIGNING_IDENTIFIER}")
+    team_id = os.environ.get("FX_SIGNING_TEST_TEAM_ID", "{SIGNING_TEAM_ID}")
     print(f"Identifier={{identifier}}", file=sys.stderr)
     print(f"TeamIdentifier={{team_id}}", file=sys.stderr)
     print("CDHash={TEST_CDHASH}", file=sys.stderr)
@@ -215,6 +217,9 @@ else:
             {
                 "RUNNER_TEMP": str(runner_temp),
                 "FX_SIGNING_TEST_LOG": str(event_log),
+                "APPLE_DEVELOPER_IDENTITY": SIGNING_IDENTITY,
+                "APPLE_TEAM_ID": SIGNING_TEAM_ID,
+                "TETRIS_SIGNING_IDENTIFIER": SIGNING_IDENTIFIER,
                 "APPLE_DEVELOPER_ID_P12_BASE64": base64.b64encode(
                     b"p12-private-material"
                 ).decode(),
@@ -308,7 +313,7 @@ else:
             self.assertIn("security import", events)
             self.assertIn("security delete-keychain", events)
             self.assertIn("codesign --force", events)
-            self.assertIn("--identifier com.vercel.fx", events)
+            self.assertIn(f"--identifier {SIGNING_IDENTIFIER}", events)
             self.assertIn("--options runtime", events)
             self.assertIn("--timestamp", events)
             self.assertIn("xcrun notarytool submit", events)
@@ -450,6 +455,32 @@ else:
             self.assertNotIn("p12-password", output)
             self.assertNotIn("p8-private-material", output)
             self.assertEqual([], list(runner_temp.iterdir()))
+
+    def test_requires_fork_owned_signing_configuration_before_import(self) -> None:
+        for variable in (
+            "APPLE_DEVELOPER_IDENTITY",
+            "APPLE_TEAM_ID",
+            "TETRIS_SIGNING_IDENTIFIER",
+        ):
+            with self.subTest(variable=variable):
+                with tempfile.TemporaryDirectory(
+                    prefix="tetris-macos-signing-test-"
+                ) as tmp:
+                    result, _, runner_temp, event_log = self.run_script(
+                        pathlib.Path(tmp), {variable: ""}
+                    )
+
+                    output = result.stdout + result.stderr
+                    self.assertNotEqual(0, result.returncode, output)
+                    self.assertIn(
+                        f"Missing required environment variable: {variable}",
+                        output,
+                    )
+                    self.assertNotIn(
+                        "security import",
+                        event_log.read_text(encoding="utf-8"),
+                    )
+                    self.assertEqual([], list(runner_temp.iterdir()))
 
     def test_rejects_a_signature_from_the_wrong_apple_team(self) -> None:
         self.assertTrue(SCRIPT_PATH.is_file(), "macOS signing helper is missing")
@@ -617,7 +648,7 @@ class MacosSigningWorkflowTests(unittest.TestCase):
         self.assertIn("runs-on: macos-15-intel", release)
         self.assertIn("sign-macos-arm64:", release)
         self.assertEqual(2, release.count("environment: apple-signing"))
-        self.assertIn("scripts/sign-and-notarize-macos.sh zig-out/bin/fx", release)
+        self.assertIn("scripts/sign-and-notarize-macos.sh zig-out/bin/tetris", release)
         self.assertNotIn("sign-stable-release:", pgso)
         self.assertNotIn("package_release", pgso)
         self.assertNotIn("environment: apple-signing", pgso)
@@ -762,8 +793,8 @@ class LinuxReleaseWorkflowTests(unittest.TestCase):
         self.assertLess(report, digest)
         self.assertLess(digest, smoke)
         self.assertLess(smoke, archive)
-        self.assertIn("ARCHIVE: fx-${{ matrix.name }}.tar.gz", package)
-        self.assertIn("          name: fx-${{ matrix.name }}\n", package)
+        self.assertIn("ARCHIVE: tetris-${{ matrix.name }}.tar.gz", package)
+        self.assertIn("          name: tetris-${{ matrix.name }}\n", package)
 
     def test_the_evidence_artifact_keeps_the_candidate_at_its_root(self) -> None:
         # upload-artifact roots an artifact at the deepest directory its paths

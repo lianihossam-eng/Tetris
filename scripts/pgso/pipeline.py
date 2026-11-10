@@ -111,7 +111,7 @@ ARTIFACT_LAYOUTS = {
     ),
     # Linux only: scripts/pgso/unit_tests.py runs the unit tests on
     # transformed code.
-    "unit_tests": ("install-test", "fx-test", "unit-tests.bc"),
+    "unit_tests": ("install-test", "tetris-test", "unit-tests.bc"),
 }
 
 
@@ -426,7 +426,7 @@ def profile_use_argv(
 ) -> tuple[str, ...]:
     # A benchmark trained on its own workload uses the higher cold cutoff, so
     # its IR keeps the functions that workload runs speed-shaped. The measured
-    # benchmark candidates pass `production_flags` to build the way fx does.
+    # benchmark candidates pass `production_flags` to build the way Tetris does.
     profile = profile_path or paths.merged_profile
     production = production_flags or paths.selector == "fx"
     flags = USE_FLAGS if production else BENCHMARK_USE_FLAGS
@@ -486,7 +486,7 @@ def candidate_object_argv(
     # AArch64, each size-optimized function also saves and restores its
     # callee-saved registers through a shared frame helper instead of inline.
     # The measured benchmark candidates pass `production_flags` so the heavy
-    # gates measure the code generation fx ships. A benchmark trained on its
+    # gates measure the code generation Tetris ships. A benchmark trained on its
     # own workload keeps the default code generation.
     production = production_flags or paths.selector == "fx"
     codegen_flags = FX_CODEGEN_FLAGS if production else ()
@@ -502,7 +502,7 @@ def candidate_object_argv(
     )
 
 
-# A ReleaseSafe build of fx takes about 7 minutes on the PGSO runners and the
+# A ReleaseSafe build of Tetris takes about 7 minutes on the PGSO runners and the
 # unit test executable up to about 13, so this only ends a build that hangs.
 ZIG_BUILD_TIMEOUT_S = 1800
 
@@ -522,6 +522,13 @@ def build_control(
         timeout_s=ZIG_BUILD_TIMEOUT_S,
         log_path=paths.logs / "build-control.json",
     )
+    # The PGSO selector and release workflow retain the internal `fx` artifact
+    # filename. Tetris builds install `tetris`; stage it under that pipeline-only
+    # name so the existing qualification and release paths remain stable.
+    if paths.selector == "fx":
+        product_binary = paths.control_prefix / "bin" / "tetris"
+        if product_binary.is_file():
+            shutil.copy2(product_binary, paths.control_binary)
     _require_nonempty_file(paths.control_binary, "ReleaseSafe control")
     toolchain.platform.record_control_build(toolchain, result, paths)
     return paths.control_binary
@@ -979,7 +986,7 @@ def exempt_cold_startup_functions(
     """Keep profile use from compiling the cold startup functions for size.
 
     Profile use marks the functions it judges cold `minsize`, and that slows
-    short commands such as `fx help`. This applies the production profile
+    short commands such as `tetris help`. This applies the production profile
     once, then removes from `paths.merged_profile` the records of the startup
     functions that came out `minsize`, so the real profile use and the
     benchmark relinks treat them as unprofiled. Hot startup functions, those

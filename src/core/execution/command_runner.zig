@@ -51,7 +51,7 @@ pub const EnvironmentVariable = struct {
 };
 
 const ai_agent_env = "AI_AGENT";
-const ai_agent_name = "fx";
+const ai_agent_name = "tetris";
 
 pub fn applyAgentEnvironment(environment: *std.process.Environ.Map) !void {
     try environment.put(ai_agent_env, ai_agent_name);
@@ -797,7 +797,7 @@ fn approvalResetResult(
         cwd,
         .{ .exit_code = 126 },
         "",
-        "fx did not run this command: the shell startup files changed after it was approved. Request it again to ask for approval.\n",
+        "Tetris did not run this command: the shell startup files changed after it was approved. Request it again to ask for approval.\n",
         null,
         false,
     );
@@ -4023,7 +4023,7 @@ test "raw process execution returns foreground output" {
     try std.testing.expect(!command_result.truncated);
 }
 
-test "commands receive fx agent environment" {
+test "commands receive tetris agent environment" {
     const result = try executeCommand(
         .{ .max_command_output_bytes = 4096 },
         std.testing.allocator,
@@ -4035,7 +4035,7 @@ test "commands receive fx agent environment" {
     try std.testing.expect(std.mem.find(
         u8,
         result.output,
-        "<stdout>\nfx\n</stdout>",
+        "<stdout>\ntetris\n</stdout>",
     ) != null);
 }
 
@@ -4058,7 +4058,7 @@ test "agent environment preserves the supplied environment without mutating it" 
         &environment,
     );
 
-    try std.testing.expectEqualStrings("fx:retained", result.stdout);
+    try std.testing.expectEqualStrings("tetris:retained", result.stdout);
     try std.testing.expectEqualStrings("", result.stderr);
     try std.testing.expectEqualStrings("other-agent", environment.get("AI_AGENT").?);
 }

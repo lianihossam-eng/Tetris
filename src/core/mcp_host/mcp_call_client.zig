@@ -100,14 +100,14 @@ fn readArguments(arena: Allocator, io: std.Io, err: *Writer, arguments: ?[]const
         var stdin = std.Io.File.stdin().reader(io, &stdin_buffer);
         break :blk stdin.interface.allocRemaining(arena, .limited(wire.max_request_bytes)) catch |e| switch (e) {
             error.StreamTooLong => {
-                try err.print("fx mcp call: the arguments on stdin are larger than {d} bytes.\n", .{wire.max_request_bytes});
+                try err.print("tetris mcp call: the arguments on stdin are larger than {d} bytes.\n", .{wire.max_request_bytes});
                 return null;
             },
             else => return e,
         };
     };
     if (!isJsonObject(arena, arguments_json)) {
-        try err.writeAll("fx mcp call: the arguments must be one JSON object, such as '{\"team\":\"ENG\"}'.\n");
+        try err.writeAll("tetris mcp call: the arguments must be one JSON object, such as '{\"team\":\"ENG\"}'.\n");
         return null;
     }
     return arguments_json;
@@ -131,11 +131,11 @@ pub fn run(arena: Allocator, io: std.Io, out: *Writer, err: *Writer, command: Co
     const reply = call(arena, io, socket_path, token, operation) catch |e| switch (e) {
         error.OutOfMemory => return e,
         error.UnsupportedReply => {
-            try err.writeAll("fx mcp call: the running fx session is another fx version. Run the fx that started the session, or restart the session with this one.\n");
+            try err.writeAll("tetris mcp call: the running Tetris session is another Tetris version. Run the tetris executable that started the session, or restart the session with this one.\n");
             return exit.unavailable;
         },
         error.ConnectionLost, error.MalformedReply => {
-            try err.print("fx mcp call: the connection to fx was lost ({s}). The call may have run; check its effect before running it again.\n", .{@errorName(e)});
+            try err.print("tetris mcp call: the connection to Tetris was lost ({s}). The call may have run; check its effect before running it again.\n", .{@errorName(e)});
             return exit.failed;
         },
         else => return unavailable(err),
@@ -145,27 +145,27 @@ pub fn run(arena: Allocator, io: std.Io, out: *Writer, err: *Writer, command: Co
             try out.writeAll(reply.bytes);
             // A lookup's text is already meant to be read.
             if (operation == .call and !stdoutIsTerminal(io)) {
-                try err.print("fx mcp call: {s}\n", .{try shapeSummary(arena, reply.bytes)});
+                try err.print("tetris mcp call: {s}\n", .{try shapeSummary(arena, reply.bytes)});
             }
             return exit.ok;
         },
         .tool_error => {
-            try err.print("fx mcp call: {s} returned an error:\n", .{tool});
+            try err.print("tetris mcp call: {s} returned an error:\n", .{tool});
             try writeLine(err, reply.bytes);
             return exit.tool_error;
         },
         .failed => {
-            try err.writeAll("fx mcp call: ");
+            try err.writeAll("tetris mcp call: ");
             try writeLine(err, reply.bytes);
             return exit.failed;
         },
         .denied => {
-            try err.print("fx mcp call: {s} did not run. ", .{tool});
+            try err.print("tetris mcp call: {s} did not run. ", .{tool});
             try writeLine(err, reply.bytes);
             return exit.denied;
         },
         .refused => {
-            try err.writeAll("fx mcp call: ");
+            try err.writeAll("tetris mcp call: ");
             try writeLine(err, reply.bytes);
             return if (reply.header.reason == .busy) exit.busy else if (reply.header.reason == .malformed or reply.header.reason == .too_large) exit.usage else exit.unavailable;
         },
@@ -287,7 +287,7 @@ fn repeatedValues(items: []const std.json.Value, key: []const u8, out: *[max_hin
 }
 
 fn unavailable(err: *Writer) !u8 {
-    try err.writeAll("fx mcp call: no running fx shell call to reach. It works only in a command that fx's shell tool runs, while that call runs.\n");
+    try err.writeAll("tetris mcp call: no running tetris shell call to reach. It works only in a command that Tetris's shell tool runs, while that call runs.\n");
     return exit.unavailable;
 }
 
@@ -309,7 +309,7 @@ test "fx mcp call outside a shell call reports it is unavailable" {
     if (io_mod.getenv(wire.socket_env) != null) return error.SkipZigTest;
     try std.testing.expectEqual(exit.unavailable, try run(arena_state.allocator(), std.testing.io, &out.writer, &err.writer, .{ .call = .{ .tool = "mcp_s_t", .arguments = null } }));
     try std.testing.expectEqual(@as(usize, 0), out.written().len);
-    try std.testing.expect(std.mem.find(u8, err.written(), "no running fx shell call") != null);
+    try std.testing.expect(std.mem.find(u8, err.written(), "no running tetris shell call") != null);
     try std.testing.expectEqual(exit.usage, try run(arena_state.allocator(), std.testing.io, &out.writer, &err.writer, .{ .call = .{ .tool = "mcp_s_t", .arguments = "[1]" } }));
     // A lookup outside a shell call is unavailable too.
     try std.testing.expectEqual(exit.unavailable, try run(arena_state.allocator(), std.testing.io, &out.writer, &err.writer, .{ .list = "linear" }));

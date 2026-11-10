@@ -86,7 +86,7 @@ test "a runtime resuming after its frozen prefix prepares what a full render pre
     var runtime = testRuntime();
     defer runtime.deinit(alloc);
     var metrics: types.Metrics = .{};
-    _ = try runtime.appendRawTranscriptEntryClassified(alloc, "fx v0 · Run /help for commands\n", .welcome);
+    _ = try runtime.appendRawTranscriptEntryClassified(alloc, "tetris v0 · Run /help for commands\n", .welcome);
     try finishTurn(alloc, &runtime, &metrics, "Read the notes", "Here is **a** summary of the notes.");
     const first_tool = runtime.notebook.entries.items[2].id();
     try finishTurn(alloc, &runtime, &metrics, "Run a command", "TURN_TWO_DONE with a line long enough to wrap at sixty columns.");

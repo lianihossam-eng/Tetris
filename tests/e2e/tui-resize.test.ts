@@ -72,8 +72,8 @@ async function createResizeSession(
     env.HOME = home;
   }
 
-  const settingsPath = join(home, ".fx", "settings.json");
-  mkdirSync(join(home, ".fx"), { recursive: true });
+  const settingsPath = join(home, ".tetris", "settings.json");
+  mkdirSync(join(home, ".tetris"), { recursive: true });
   const settings = existsSync(settingsPath)
     ? JSON.parse(readFileSync(settingsPath, "utf8")) as Record<string, unknown>
     : {};
@@ -124,7 +124,7 @@ async function launchRecordedSurfaceSession(
   const home = join(root, "home");
   const workspace = join(root, "workspace");
   const stderrPath = join(root, "stderr.log");
-  mkdirSync(join(home, ".fx"), { recursive: true });
+  mkdirSync(join(home, ".tetris"), { recursive: true });
   mkdirSync(workspace, { recursive: true });
   writeFileSync(join(workspace, "AGENTS.md"), "# Test workspace\n");
   writeFileSync(stderrPath, "");
@@ -291,7 +291,7 @@ function selectedSlashRow(escapes: string): string | null {
 }
 
 test("selected slash row ignores the welcome header help hint", () => {
-  const header = `${SELECTED_COMPLETION_SGR}𝒇x\x1b[0m\x1b[38;5;245m v0.3.27 · Run /help for commands`;
+  const header = `${SELECTED_COMPLETION_SGR}tetris\x1b[0m\x1b[38;5;245m v0.3.27 · Run /help for commands`;
   const command = `${SELECTED_COMPLETION_SGR}  /clear\x1b[38;5;245m start a fresh session and keep background processes`;
 
   expect(selectedSlashRow(`${header}\n${command}`)).toBe(command);
@@ -572,7 +572,7 @@ async function waitForLiveScrollbackText(
     const status = s.paneStatus();
     if (status.dead) {
       throw new Error(
-        `fx exited with status ${status.status} while waiting for ${JSON.stringify(needle)}.\nScrollback:\n${last}`,
+        `tetris exited with status ${status.status} while waiting for ${JSON.stringify(needle)}.\nScrollback:\n${last}`,
       );
     }
     last = await s.captureFullScrollback();
@@ -641,15 +641,21 @@ function expectSkillsMenuGrid(
   grid: string[],
   count: number,
   names: string[],
+  options: { fullHeader?: boolean } = {},
 ): void {
   const text = grid.join("\n");
   expect(text).toContain(`Skills ${count}`);
   expect(text).toContain("[All]");
-  expect(text).toContain("fx");
-  expect(text).not.toContain("[Fx]");
-  expect(text).toContain("Workspace");
-  expect(text).toContain("Codex");
-  expect(text).toContain("fx · Global");
+  expect(text).toContain("tetris");
+  expect(text).not.toContain("[Tetris]");
+  if (options.fullHeader === false) {
+    // A narrow pane drops the other source tabs and names the active one.
+    expect(text).toContain("Source ");
+  } else {
+    expect(text).toContain("Workspace");
+    expect(text).toContain("Codex");
+  }
+  expect(text).toContain("tetris · Global");
   expect(names.some((name) => text.includes(name))).toBe(true);
   expect(text).not.toContain("Visible skills (");
   expect(findInlineSkillsPicker(grid)).not.toBeNull();
@@ -711,7 +717,7 @@ function createSkillFixture(
   );
   const home = join(root, "home");
   const workspace = join(root, "workspace");
-  const skillsRoot = join(home, ".fx", "skills");
+  const skillsRoot = join(home, ".tetris", "skills");
   mkdirSync(skillsRoot, { recursive: true });
   mkdirSync(workspace, { recursive: true });
   if (!KEEP_LARGE_SKILL_ARTIFACTS) tempDirs.push(root);
@@ -1005,10 +1011,10 @@ function createFileApprovalRoot() {
   const root = realpathSync(mkdtempSync(join(tmpdir(), "fx-resize-file-approval-")));
   const home = join(root, "home");
   const workspace = join(root, "workspace");
-  mkdirSync(join(home, ".fx"), { recursive: true });
+  mkdirSync(join(home, ".tetris"), { recursive: true });
   mkdirSync(workspace, { recursive: true });
   writeFileSync(
-    join(home, ".fx", "settings.json"),
+    join(home, ".tetris", "settings.json"),
     JSON.stringify({ sandbox: "none", permission_mode: "ask", permission: {} }),
   );
   tempDirs.push(root);
@@ -1208,7 +1214,7 @@ async function runLargeSkillResizeAttempt(attempt: number): Promise<string> {
     );
     expect(attemptLine(shrinkAttempt, "tmux_clear_history_complete")).toBeUndefined();
     const shrinkGrid = await waitForSkillsMenuGrid(s, LARGE_SKILL_COUNT);
-    expectSkillsMenuGrid(shrinkGrid, LARGE_SKILL_COUNT, fixture.names);
+    expectSkillsMenuGrid(shrinkGrid, LARGE_SKILL_COUNT, fixture.names, { fullHeader: false });
     const shrinkScrollback = await s.captureFullScrollback();
     writeFileSync(paneAfterShrinkPath, (await s.capturePane()) + "\n");
     writeFileSync(scrollbackAfterShrinkPath, shrinkScrollback);
@@ -1240,7 +1246,7 @@ async function runLargeSkillResizeAttempt(attempt: number): Promise<string> {
     const restoredPane = await s.waitForPane((pane) => {
       const grid = pane.split("\n");
       return (
-        pane.includes("𝒇x") &&
+        pane.includes("tetris") &&
         !pane.includes("↑↓ navigate") &&
         findFooter(grid) !== null
       );
@@ -1417,7 +1423,7 @@ async function runRapidSkillResizeAttempt(
     const dismissed = await s.waitForPane(
       (pane) => {
         const grid = pane.replace(/\n$/, "").split("\n");
-        return pane.includes("𝒇x") &&
+        return pane.includes("tetris") &&
           !pane.includes("↑↓ navigate") &&
           findFooter(grid) !== null;
       },
@@ -1643,7 +1649,7 @@ describe.skipIf(SKIP)("tui: resize", () => {
       session = await launchAt(120, 40);
 
       const grid = await session.capturePaneGrid();
-      const headerRow = grid.findIndex((line) => line.includes("𝒇x v"));
+      const headerRow = grid.findIndex((line) => line.includes("tetris v"));
       expect(headerRow).toBe(0);
     },
     TIMEOUT,
@@ -1710,7 +1716,7 @@ describe.skipIf(SKIP)("tui: resize", () => {
       const stderrPath = join(root, "stderr.log");
       const tracePath = join(root, "trace.log");
       tempDirs.push(root);
-      mkdirSync(join(home, ".fx"), { recursive: true });
+      mkdirSync(join(home, ".tetris"), { recursive: true });
       mkdirSync(workspace, { recursive: true });
       writeFileSync(stderrPath, "");
 
@@ -1765,7 +1771,7 @@ describe.skipIf(SKIP)("tui: resize", () => {
         session,
         "PRE_FX_MARKER_",
       );
-      expect(scrollback.match(/𝒇x v\d+\.\d+\.\d+\b/g)).toHaveLength(1);
+      expect(scrollback.match(/tetris v\d+\.\d+\.\d+\b/g)).toHaveLength(1);
       expect(scrollback.match(/Run \/help for commands/g)).toHaveLength(1);
       expectOrderedMarkersWithoutBlankHole(scrollback, markers);
       const grid = await waitForSettledFooter(session);
@@ -1790,10 +1796,10 @@ describe.skipIf(SKIP)("tui: resize", () => {
       const preFxMarker = "PRE_FX_RESIZE_STREAM_MARKER";
       const finalResponse = "RESIZE_STREAM_FINAL_RESPONSE";
       tempDirs.push(root);
-      mkdirSync(join(home, ".fx"), { recursive: true });
+      mkdirSync(join(home, ".tetris"), { recursive: true });
       mkdirSync(workspace, { recursive: true });
       writeFileSync(
-        join(home, ".fx", "settings.json"),
+        join(home, ".tetris", "settings.json"),
         JSON.stringify({ sandbox: "none", permission_mode: "auto", permission: {} }),
       );
       writeFileSync(stderrPath, "");
@@ -1842,7 +1848,7 @@ describe.skipIf(SKIP)("tui: resize", () => {
       await waitForLiveScrollbackText(session, finalResponse, TIMEOUT);
 
       const scrollback = await session.captureFullScrollback();
-      expect(scrollback.match(/𝒇x v\d+\.\d+\.\d+\b/g)).toHaveLength(1);
+      expect(scrollback.match(/tetris v\d+\.\d+\.\d+\b/g)).toHaveLength(1);
       expect(scrollback.match(/Run \/help for commands/g)).toHaveLength(1);
       expect(scrollback).toContain("stream the resize marker command");
       expect(scrollback).not.toContain(preFxMarker);
@@ -1871,9 +1877,9 @@ describe.skipIf(SKIP)("tui: resize", () => {
       const workspace = join(root, "workspace");
       const tracePath = join(root, "trace.log");
       const stderrPath = join(root, "stderr.log");
-      mkdirSync(join(home, ".fx"), { recursive: true });
+      mkdirSync(join(home, ".tetris"), { recursive: true });
       mkdirSync(workspace);
-      writeFileSync(join(home, ".fx", "settings.json"), JSON.stringify({ collapse_tool_calls: true }));
+      writeFileSync(join(home, ".tetris", "settings.json"), JSON.stringify({ collapse_tool_calls: true }));
       const children = ["collapsed-child-one.txt", "collapsed-child-two.txt", "collapsed-child-three.txt"];
       for (const path of children) writeFileSync(join(workspace, path), "retained tool fixture\n");
       const streams: ReadableStreamDefaultController<Uint8Array>[] = [];
@@ -2017,9 +2023,9 @@ describe.skipIf(SKIP)("tui: resize", () => {
         const stderrPath = join(root, "stderr.log");
         const tapePath = join(root, "terminal.fxtape");
         const releasePath = join(workspace, "release");
-        mkdirSync(join(home, ".fx"), { recursive: true });
+        mkdirSync(join(home, ".tetris"), { recursive: true });
         mkdirSync(workspace);
-        writeFileSync(join(home, ".fx", "settings.json"), "{}");
+        writeFileSync(join(home, ".tetris", "settings.json"), "{}");
         writeFileSync(stderrPath, "");
         // Keep geometry and logical rows identical; only the old retained payload differs.
         writeFileSync(join(workspace, "old.txt"), "S".repeat(large ? 1_040_000 : 8_000) + "\n");
@@ -2272,10 +2278,10 @@ describe.skipIf(SKIP)("tui: resize", () => {
       const workspace = join(root, "workspace");
       const stderrPath = join(root, "stderr.log");
       tempDirs.push(root);
-      mkdirSync(join(home, ".fx"), { recursive: true });
+      mkdirSync(join(home, ".tetris"), { recursive: true });
       mkdirSync(workspace, { recursive: true });
       writeFileSync(
-        join(home, ".fx", "settings.json"),
+        join(home, ".tetris", "settings.json"),
         JSON.stringify({ sandbox: "none", permission_mode: "auto", permission: {} }),
       );
       writeFileSync(stderrPath, "");
@@ -2411,10 +2417,10 @@ describe.skipIf(SKIP)("tui: resize", () => {
       const approvalQuestion = "Would you like to run the following command?";
       const stableCommitTrace = "transcript_transition_commit state=stable";
       if (!KEEP_LARGE_SKILL_ARTIFACTS) tempDirs.push(root);
-      mkdirSync(join(home, ".fx"), { recursive: true });
+      mkdirSync(join(home, ".tetris"), { recursive: true });
       mkdirSync(workspace, { recursive: true });
       writeFileSync(
-        join(home, ".fx", "settings.json"),
+        join(home, ".tetris", "settings.json"),
         JSON.stringify({ sandbox: "none", permission_mode: "ask", permission: {} }),
       );
       writeFileSync(stderrPath, "");
@@ -2537,7 +2543,7 @@ describe.skipIf(SKIP)("tui: resize", () => {
       const afterCancelScrollback = await captureScrollback("after-cancel");
 
       const transcriptCopyCounts = (scrollback: string) => ({
-        startup: scrollback.match(/𝒇x v\d+\.\d+\.\d+\b/g)?.length ?? 0,
+        startup: scrollback.match(/tetris v\d+\.\d+\.\d+\b/g)?.length ?? 0,
         help: countOccurrences(scrollback, "Run /help for commands"),
         recording: countOccurrences(
           scrollback,
@@ -2588,7 +2594,7 @@ describe.skipIf(SKIP)("tui: resize", () => {
       const workspace = join(root, "workspace");
       const stderrPath = join(root, "stderr.log");
       tempDirs.push(root);
-      mkdirSync(join(home, ".fx"), { recursive: true });
+      mkdirSync(join(home, ".tetris"), { recursive: true });
       mkdirSync(workspace, { recursive: true });
       writeFileSync(stderrPath, "");
 
@@ -2675,7 +2681,7 @@ describe.skipIf(SKIP)("tui: resize", () => {
       const tracePath = join(root, "trace.log");
       const tapePath = join(root, "session.fxtape");
       tempDirs.push(root);
-      mkdirSync(join(home, ".fx"), { recursive: true });
+      mkdirSync(join(home, ".tetris"), { recursive: true });
       mkdirSync(workspace, { recursive: true });
       writeFileSync(stderrPath, "");
 
@@ -2840,7 +2846,7 @@ describe.skipIf(SKIP)("tui: resize", () => {
       const stderrPath = join(root, "stderr.log");
       const tracePath = join(root, "trace.log");
       tempDirs.push(root);
-      mkdirSync(join(home, ".fx"), { recursive: true });
+      mkdirSync(join(home, ".tetris"), { recursive: true });
       mkdirSync(workspace, { recursive: true });
       writeFileSync(stderrPath, "");
 
@@ -2925,7 +2931,7 @@ describe.skipIf(SKIP)("tui: resize", () => {
         roots.push(await runLargeSkillResizeAttempt(attempt));
       }
       if (KEEP_LARGE_SKILL_ARTIFACTS) {
-        console.log(`fx resize artifacts:\n${roots.join("\n")}`);
+        console.log(`tetris resize artifacts:\n${roots.join("\n")}`);
         console.log(
           `Cleanup: rm -rf ${roots.map(quoteShellPath).join(" ")}`,
         );
@@ -2945,7 +2951,7 @@ describe.skipIf(SKIP)("tui: resize", () => {
       results.push(await runRapidSkillResizeAttempt(125, 1));
       if (KEEP_LARGE_SKILL_ARTIFACTS) {
         console.log(
-          `fx rapid resize artifacts:\n${results.map(({ root }) => root).join("\n")}`,
+          `tetris rapid resize artifacts:\n${results.map(({ root }) => root).join("\n")}`,
         );
       }
     },
@@ -2963,9 +2969,9 @@ describe.skipIf(SKIP)("tui: resize", () => {
       const tracePath = join(root, "trace.log");
       const stderrPath = join(root, "stderr.log");
       const tapePath = join(root, "session.fxtape");
-      mkdirSync(join(home, ".fx"), { recursive: true });
+      mkdirSync(join(home, ".tetris"), { recursive: true });
       mkdirSync(workspace, { recursive: true });
-      writeFileSync(join(home, ".fx", "settings.json"), "{}");
+      writeFileSync(join(home, ".tetris", "settings.json"), "{}");
       writeFileSync(stderrPath, "");
       if (!KEEP_LARGE_SKILL_ARTIFACTS) tempDirs.push(root);
 
@@ -3089,7 +3095,7 @@ describe.skipIf(SKIP)("tui: resize", () => {
         )}\n`,
       );
       if (KEEP_LARGE_SKILL_ARTIFACTS) {
-        console.log(`fx gated stream resize artifact:\n${root}`);
+        console.log(`tetris gated stream resize artifact:\n${root}`);
       }
     },
     60_000,
@@ -3106,9 +3112,9 @@ describe.skipIf(SKIP)("tui: resize", () => {
       const tracePath = join(root, "trace.log");
       const stderrPath = join(root, "stderr.log");
       const tapePath = join(root, "session.fxtape");
-      mkdirSync(join(home, ".fx"), { recursive: true });
+      mkdirSync(join(home, ".tetris"), { recursive: true });
       mkdirSync(workspace, { recursive: true });
-      writeFileSync(join(home, ".fx", "settings.json"), "{}");
+      writeFileSync(join(home, ".tetris", "settings.json"), "{}");
       writeFileSync(stderrPath, "");
       if (!KEEP_LARGE_SKILL_ARTIFACTS) tempDirs.push(root);
       writeFileSync(
@@ -3239,7 +3245,7 @@ describe.skipIf(SKIP)("tui: resize", () => {
         )}\n`,
       );
       if (KEEP_LARGE_SKILL_ARTIFACTS) {
-        console.log(`fx open picker resize artifact:\n${root}`);
+        console.log(`tetris open picker resize artifact:\n${root}`);
       }
     },
     60_000,
@@ -3254,7 +3260,7 @@ describe.skipIf(SKIP)("tui: resize", () => {
       const home = join(root, "home");
       const workspace = join(root, "workspace");
       const stderrPath = join(root, "stderr.log");
-      mkdirSync(join(home, ".fx"), { recursive: true });
+      mkdirSync(join(home, ".tetris"), { recursive: true });
       mkdirSync(workspace, { recursive: true });
       writeFileSync(stderrPath, "");
       tempDirs.push(root);
@@ -3605,7 +3611,7 @@ describe.skipIf(SKIP)("tui: resize", () => {
       expect(existsSync(tapePath)).toBe(true);
       expect(readFileSync(tapePath).byteLength).toBeGreaterThan(0);
       if (KEEP_LARGE_SKILL_ARTIFACTS) {
-        console.log(`fx wide-user resize artifact:\n${root}`);
+        console.log(`tetris wide-user resize artifact:\n${root}`);
       }
     },
     TIMEOUT,
@@ -4193,7 +4199,7 @@ describe.skipIf(SKIP)("tui: resize", () => {
         5_000,
       );
       const restored = captureScrollback();
-      expect(restored.match(/𝒇x v\d+\.\d+\.\d+\b/g)).toHaveLength(1);
+      expect(restored.match(/tetris v\d+\.\d+\.\d+\b/g)).toHaveLength(1);
       expect(restored.match(/Run \/help for commands/g)).toHaveLength(1);
       expect(restored).not.toContain("Commands 40");
       expect(findFooter(await session.capturePaneGrid())).not.toBeNull();
@@ -4218,7 +4224,7 @@ describe.skipIf(SKIP)("tui: resize", () => {
       const secondMarker = "RESIZE_PREPAINT_TURN_B_COMPLETE";
       const launchCommand =
         `printf ${quoteShellPath(`${preFxMarker}\n`)}; exec ${quoteShellPath(FX_BIN)}`;
-      mkdirSync(join(home, ".fx"), { recursive: true });
+      mkdirSync(join(home, ".tetris"), { recursive: true });
       mkdirSync(workspace, { recursive: true });
       tempDirs.push(root);
       const gateway = startFakeGateway([
@@ -4709,10 +4715,10 @@ describe.skipIf(SKIP)("tui: resize", () => {
         const home = join(root, "home");
         const workspace = join(root, "workspace");
         const marker = `PRE_FX_MARKER_${startupScrollback ? "ON" : "OFF"}_6179`;
-        mkdirSync(join(home, ".fx"), { recursive: true });
+        mkdirSync(join(home, ".tetris"), { recursive: true });
         mkdirSync(workspace, { recursive: true });
         writeFileSync(
-          join(home, ".fx", "settings.json"),
+          join(home, ".tetris", "settings.json"),
           JSON.stringify({ startup_scrollback: startupScrollback }),
         );
         tempDirs.push(root);
@@ -4762,9 +4768,9 @@ describe.skipIf(SKIP)("tui: resize", () => {
       const stderrPath = join(root, "stderr.log");
       const tapePath = join(root, "theme-reset.fxtape");
       tempDirs.push(root);
-      mkdirSync(join(home, ".fx"), { recursive: true });
+      mkdirSync(join(home, ".tetris"), { recursive: true });
       mkdirSync(workspace, { recursive: true });
-      writeFileSync(join(home, ".fx", "settings.json"), "{}");
+      writeFileSync(join(home, ".tetris", "settings.json"), "{}");
       writeFileSync(stderrPath, "");
 
       const inlineMarker = "THEME_RESET_INLINE_CODE";

@@ -1,5 +1,5 @@
 {
-  "_about": "Registry for scripts/check_cli_shape.py. env lists every FX_* environment variable fx reads, with its job and stability (Env vars in .fx/skills/fx-cli-shape/references/rules.md). external_env lists the non-fx variables fx reads by name. not_env lists FX_* string literals that are not environment variables. exceptions maps known shape violations to the reason and the finding that removes them; delete an entry when its finding lands. hand_parsed_flags and hand_parsed_files list the flag comparisons that stay hand-written, by flag and by file, with the reason.",
+  "_about": "Registry for scripts/check_cli_shape.py. env lists every FX_* and TETRIS_* environment variable the Tetris executable reads, with its job and stability (Env vars in .fx/skills/fx-cli-shape/references/rules.md). external_env lists the non-Tetris variables it reads by name. not_env lists FX_* and TETRIS_* string literals that are not environment variables. exceptions maps known shape violations to the reason and the finding that removes them; delete an entry when its finding lands. hand_parsed_flags and hand_parsed_files list the flag comparisons that stay hand-written, by flag and by file, with the reason.",
   "env": {
     "FX_AUTH_MODE": {
       "job": "internal",
@@ -53,7 +53,7 @@
       "job": "integration",
       "stability": "stable"
     },
-    "FX_HOME": {
+    "TETRIS_HOME": {
       "job": "location",
       "stability": "stable"
     },
@@ -289,7 +289,7 @@
       "job": "test",
       "stability": "internal"
     },
-    "FX_TEST_UPGRADE_BASE_URL": {
+    "TETRIS_TEST_UPGRADE_BASE_URL": {
       "job": "test",
       "stability": "internal"
     },
@@ -343,11 +343,11 @@
     }
   },
   "not_env": {
-    "FX_AI_GATEWAY_API_KEY": "Keychain service name for the AI Gateway API key, not an env var",
-    "FX_MCP_OAUTH_CREDENTIALS_V3": "Keychain service name for MCP OAuth credentials, not an env var",
-    "FX_OAUTH_SESSION_V1": "Keychain service name for the fx OAuth session, not an env var",
     "FX_PARITY_LOG": "Set for the fake shell in a unit test; fx never reads it",
-    "FX_TEST_AI_GATEWAY_API_KEY": "Keychain service name used by keychain tests, not an env var"
+    "TETRIS_AI_GATEWAY_API_KEY": "Keychain service name for the AI Gateway API key, not an env var",
+    "TETRIS_MCP_OAUTH_CREDENTIALS_V3": "Keychain service name for MCP OAuth credentials, not an env var",
+    "TETRIS_OAUTH_SESSION_V1": "Keychain service name for the Tetris OAuth session, not an env var",
+    "TETRIS_TEST_AI_GATEWAY_API_KEY": "Keychain service name used by keychain tests, not an env var"
   },
   "external_env": [
     "AI_GATEWAY_API_KEY",
@@ -394,12 +394,12 @@
     "--resume=": "The fixed resume grammar: --resume with its operand inline.",
     "--resume-last": "Removed resume spelling, matched only to name its replacement.",
     "--resume-": "Removed --resume-<id> spellings, matched only to name the replacement.",
-    "--upgrade-relaunch": "The internal word fx upgrade passes when it restarts fx into the new version.",
-    "--id": "Removed fx session resume --id spelling, matched only to name its replacement.",
-    "--golden": "Maps a missing-value failure onto fx replay's own error.",
-    "-p": "Other agents' one-shot flag. fx doesn't accept it; it is matched only to point to fx ask.",
-    "--print": "Long form of -p, matched only to point to fx ask.",
-    "--print=": "Inline form of --print, matched only to point to fx ask.",
+    "--upgrade-relaunch": "The internal word tetris upgrade passes when it restarts Tetris into the new version.",
+    "--id": "Removed tetris session resume --id spelling, matched only to name its replacement.",
+    "--golden": "Maps a missing-value failure onto Tetris replay's own error.",
+    "-p": "Other agents' one-shot flag. Tetris doesn't accept it; it is matched only to point to tetris ask.",
+    "--print": "Long form of -p, matched only to point to tetris ask.",
+    "--print=": "Inline form of --print, matched only to point to tetris ask.",
     "--no-": "Pairs each --x with --no-x at compile time to build the launch usage line from launch_options; no argument is read."
   },
   "run_options": {

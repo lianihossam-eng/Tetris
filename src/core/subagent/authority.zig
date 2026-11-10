@@ -985,10 +985,10 @@ test "a subagent's profile narrows its tools, integrations, MCP view, and mode, 
     const alloc = std.testing.allocator;
     var tmp = std.testing.tmpDir(.{});
     defer tmp.cleanup();
-    try tmp.dir.createDirPath(io_mod.getIo(), "fxhome/.fx/agents/reviewer");
+    try tmp.dir.createDirPath(io_mod.getIo(), "fxhome/.tetris/agents/reviewer");
     const writeProfile = struct {
         fn run(dir: std.Io.Dir, json: []const u8) !void {
-            var file = try dir.createFile(io_mod.getIo(), "fxhome/.fx/agents/reviewer/profile.json", .{});
+            var file = try dir.createFile(io_mod.getIo(), "fxhome/.tetris/agents/reviewer/profile.json", .{});
             defer file.close(io_mod.getIo());
             try file.writeStreamingAll(io_mod.getIo(), json);
         }
@@ -1085,7 +1085,7 @@ test "a profile that sets tools or MCP servers decides them from fx's own, and o
     };
     for (profiles_json) |entry| {
         var path_buf: [96]u8 = undefined;
-        const dir_path = try std.mem.print(&path_buf, "fxhome/.fx/agents/{s}", .{entry.name});
+        const dir_path = try std.mem.print(&path_buf, "fxhome/.tetris/agents/{s}", .{entry.name});
         try tmp.dir.createDirPath(io_mod.getIo(), dir_path);
         var file_buf: [128]u8 = undefined;
         const file_path = try std.mem.print(&file_buf, "{s}/profile.json", .{dir_path});
@@ -1156,9 +1156,9 @@ test "a turn no work started is limited by the child's profile and the user's mo
     const alloc = std.testing.allocator;
     var tmp = std.testing.tmpDir(.{});
     defer tmp.cleanup();
-    try tmp.dir.createDirPath(io_mod.getIo(), "fxhome/.fx/agents/reviewer");
+    try tmp.dir.createDirPath(io_mod.getIo(), "fxhome/.tetris/agents/reviewer");
     {
-        var file = try tmp.dir.createFile(io_mod.getIo(), "fxhome/.fx/agents/reviewer/profile.json", .{});
+        var file = try tmp.dir.createFile(io_mod.getIo(), "fxhome/.tetris/agents/reviewer/profile.json", .{});
         defer file.close(io_mod.getIo());
         try file.writeStreamingAll(io_mod.getIo(), "{\"description\": \"Reviewer\", \"tools\": [\"read_file\"], \"permission_mode\": \"auto\"}");
     }
@@ -1239,9 +1239,9 @@ test "a child with no mode of its own follows its parent's current mode, under i
     const alloc = std.testing.allocator;
     var tmp = std.testing.tmpDir(.{});
     defer tmp.cleanup();
-    try tmp.dir.createDirPath(io_mod.getIo(), "fxhome/.fx/agents/reviewer");
+    try tmp.dir.createDirPath(io_mod.getIo(), "fxhome/.tetris/agents/reviewer");
     {
-        var file = try tmp.dir.createFile(io_mod.getIo(), "fxhome/.fx/agents/reviewer/profile.json", .{});
+        var file = try tmp.dir.createFile(io_mod.getIo(), "fxhome/.tetris/agents/reviewer/profile.json", .{});
         defer file.close(io_mod.getIo());
         try file.writeStreamingAll(io_mod.getIo(), "{\"description\": \"Reviewer\", \"permission_mode\": \"auto\"}");
     }

@@ -28,7 +28,7 @@ FX_SOUND=0 npm test
 
 `npm ci` must leave `package-lock.json` unchanged. Update the lock only when the
 pinned conformance package changes intentionally. The runner also fails before
-starting scenarios when the freshly built `zig-out/bin/fx` is missing.
+starting scenarios when the freshly built `zig-out/bin/tetris` is missing.
 
 `expected-failures.yml` lists individual check IDs rather than whole scenarios.
 The runner exits nonzero when a new check fails or a listed check starts
@@ -39,4 +39,4 @@ Gateway tool calls and requested protocol. It opts into the newer discovery
 lifecycle for the `2026-07-28` suite. For the `2025-11-25` scenarios it puts a
 proxy in front of the test server that answers fx's `server/discover` probe with
 404, as a 2025 server does, so fx falls back to `initialize`. It then launches
-`./zig-out/bin/fx` without implementing MCP messages or transport behavior.
+`./zig-out/bin/tetris` without implementing MCP messages or transport behavior.

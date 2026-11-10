@@ -21,7 +21,7 @@ import time
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--binary", default="./zig-out/bin/fx")
+    parser.add_argument("--binary", default="./zig-out/bin/tetris")
     parser.add_argument("--output", required=True)
     parser.add_argument("--steps", type=int, default=1000)
     parser.add_argument("--bytes", type=int, default=1024)
@@ -35,11 +35,11 @@ def main():
     root = Path(args.output).resolve()
     root.mkdir(mode=0o700, parents=True, exist_ok=False)
     home, workspace = root / "home", root / "workspace"
-    (home / ".fx").mkdir(parents=True, mode=0o700)
+    (home / ".tetris").mkdir(parents=True, mode=0o700)
     workspace.mkdir()
     # Background title generation would consume one fixture response and shift
     # the step accounting, so the fixture profile keeps titles off.
-    (home / ".fx/settings.json").write_text(json.dumps({"provider": "gateway", "model": "openai/gpt-5.5", "max_agent_steps": 0, "session_titles": False}))
+    (home / ".tetris/settings.json").write_text(json.dumps({"provider": "gateway", "model": "openai/gpt-5.5", "max_agent_steps": 0, "session_titles": False}))
     count = 0
     request_bytes = 0
 
@@ -106,7 +106,7 @@ def main():
     server.shutdown()
     # What the session kept: its log and blobs, and each step's tool result.
     retained = {"session_bytes": 0, "tool_output_bytes": 0, "tool_steps": 0}
-    for log in (home / ".fx/sessions/v2").glob("*/log.jsonl"):
+    for log in (home / ".tetris/sessions/v2").glob("*/log.jsonl"):
         retained["session_bytes"] += sum(path.stat().st_size for path in log.parent.rglob("*") if path.is_file())
         result_count = 0
         output_bytes = 0

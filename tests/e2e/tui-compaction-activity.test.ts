@@ -13,7 +13,7 @@ const {
   hasEmptyComposer, tmuxAvailable,
 } = await import("./tmux-helpers");
 
-const binary = resolve(import.meta.dir, "../../zig-out/bin/fx");
+const binary = resolve(import.meta.dir, "../../zig-out/bin/tetris");
 const HEAD = "HISTORY_HEAD_29b7";
 const TAIL = "HISTORY_TAIL_16d3";
 // A fact entry, which the compacted conversation keeps whatever the turn
@@ -62,10 +62,10 @@ async function fixture(trigger: Trigger, outcome: Outcome = "success", longResum
   const root = mkdtempSync(join(tmpdir(), "fx-activity-"));
   const home = join(root, "home");
   const workspace = join(root, "workspace");
-  mkdirSync(join(home, ".fx"), { recursive: true });
+  mkdirSync(join(home, ".tetris"), { recursive: true });
   mkdirSync(workspace);
   writeFileSync(join(workspace, "seed-notes.txt"), "seed notes\n");
-  writeFileSync(join(home, ".fx/settings.json"), JSON.stringify({
+  writeFileSync(join(home, ".tetris/settings.json"), JSON.stringify({
     model: FAKE_GATEWAY_MODEL, auto_upgrade: false, startup_scrollback: false,
   }));
   // Failure attempts need an older exchange outside the retained suffix, but
@@ -571,7 +571,7 @@ describe.skipIf(!tmuxAvailable())("tui: compaction activity", () => {
     let passed = false;
     try {
       const terminal = await f.launch(true);
-      const authMessage = "fx needs access to Vercel AI Gateway";
+      const authMessage = "Tetris needs access to Vercel AI Gateway";
       async function authNotices(label: string) {
         await terminal.sendKeys("C-o");
         await terminal.waitForText("esc close · pgup/pgdn scroll", 5000);
@@ -625,9 +625,9 @@ describe.skipIf(!tmuxAvailable())("tui: compaction activity", () => {
     const home = join(root, "home");
     const workspace = join(root, "workspace");
     const stderrPath = join(root, "stderr");
-    mkdirSync(join(home, ".fx"), { recursive: true });
+    mkdirSync(join(home, ".tetris"), { recursive: true });
     mkdirSync(workspace);
-    writeFileSync(join(home, ".fx/settings.json"), JSON.stringify({
+    writeFileSync(join(home, ".tetris/settings.json"), JSON.stringify({
       model: FAKE_GATEWAY_MODEL, auto_upgrade: false, startup_scrollback: false,
     }));
     for (let n = 1; n <= 30; n++) {

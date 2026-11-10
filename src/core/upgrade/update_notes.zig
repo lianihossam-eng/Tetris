@@ -16,7 +16,7 @@ pub const Destination = struct {
     pub fn writeUrl(self: Destination, writer: *std.Io.Writer) !void {
         switch (self.channel) {
             .stable => try writer.print(
-                "https://fx.sh/changelog#v{s}",
+                "https://github.com/lianihossam-eng/Tetris/releases/tag/v{s}",
                 .{update_target.normalizeVersion(self.version)},
             ),
             .dev => {
@@ -26,14 +26,14 @@ pub const Destination = struct {
                     if (!update_target.isValidRevision(previous)) return error.InvalidRevision;
                     if (!update_target.revisionsEqual(previous, revision)) {
                         try writer.print(
-                            "https://github.com/vercel-labs/fx/compare/{s}...{s}",
+                            "https://github.com/lianihossam-eng/Tetris/compare/{s}...{s}",
                             .{ previous, revision },
                         );
                         return;
                     }
                 }
                 try writer.print(
-                    "https://github.com/vercel-labs/fx/commit/{s}",
+                    "https://github.com/lianihossam-eng/Tetris/commit/{s}",
                     .{revision},
                 );
             },
@@ -88,7 +88,7 @@ test "stable destination uses normalized changelog anchor" {
     try std.testing.expectEqual(Kind.notes, value.kind);
     try value.writeUrl(&out.writer);
     try std.testing.expectEqualStrings(
-        "https://fx.sh/changelog#v0.0.8",
+        "https://github.com/lianihossam-eng/Tetris/releases/tag/v0.0.8",
         out.writer.buffered(),
     );
 }
@@ -106,7 +106,7 @@ test "dev destination uses compare range when both revisions are valid" {
     try std.testing.expectEqual(Kind.changes, value.kind);
     try value.writeUrl(&out.writer);
     try std.testing.expectEqualStrings(
-        "https://github.com/vercel-labs/fx/compare/1111111111111111111111111111111111111111...abcdef0123456789abcdef0123456789abcdef01",
+        "https://github.com/lianihossam-eng/Tetris/compare/1111111111111111111111111111111111111111...abcdef0123456789abcdef0123456789abcdef01",
         out.writer.buffered(),
     );
 }
@@ -123,7 +123,7 @@ test "dev destination falls back to the installed commit" {
     ) orelse return error.TestExpectedDestination;
     try value.writeUrl(&out.writer);
     try std.testing.expectEqualStrings(
-        "https://github.com/vercel-labs/fx/commit/abcdef0123456789abcdef0123456789abcdef01",
+        "https://github.com/lianihossam-eng/Tetris/commit/abcdef0123456789abcdef0123456789abcdef01",
         out.writer.buffered(),
     );
 }
@@ -140,7 +140,7 @@ test "dev destination treats a short previous revision as the same commit" {
     ) orelse return error.TestExpectedDestination;
     try value.writeUrl(&out.writer);
     try std.testing.expectEqualStrings(
-        "https://github.com/vercel-labs/fx/commit/abcdef0123456789abcdef0123456789abcdef01",
+        "https://github.com/lianihossam-eng/Tetris/commit/abcdef0123456789abcdef0123456789abcdef01",
         out.writer.buffered(),
     );
 }
@@ -161,12 +161,12 @@ test "destination links only the label, not its parentheses" {
     }{
         .{
             .value = stable,
-            .expected = "(\x1b]8;;https://fx.sh/changelog#v0.0.8\x1b\\" ++
+            .expected = "(\x1b]8;;https://github.com/lianihossam-eng/Tetris/releases/tag/v0.0.8\x1b\\" ++
                 "\x1b[4mnotes\x1b[24m\x1b]8;;\x1b\\)",
         },
         .{
             .value = dev,
-            .expected = "(\x1b]8;;https://github.com/vercel-labs/fx/compare/1111111111111111111111111111111111111111...abcdef0123456789abcdef0123456789abcdef01\x1b\\" ++
+            .expected = "(\x1b]8;;https://github.com/lianihossam-eng/Tetris/compare/1111111111111111111111111111111111111111...abcdef0123456789abcdef0123456789abcdef01\x1b\\" ++
                 "\x1b[4mchanges\x1b[24m\x1b]8;;\x1b\\)",
         },
     };

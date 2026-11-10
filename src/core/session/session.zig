@@ -44,7 +44,7 @@ pub const failed_turn_notice: core_types.SemanticNotice = .{
 pub const stopped_turn_notice: core_types.SemanticNotice = .{
     .topic = "system",
     .tone = .warning,
-    .body = "fx stopped before this turn finished",
+    .body = "Tetris stopped before this turn finished",
 };
 
 pub fn interruptedTurnNotice(entry: InterruptedHistoryTurn) core_types.SemanticNotice {
@@ -67,7 +67,7 @@ pub const interrupted_turn_context =
 /// possibly run.
 pub const resumed_request_prompt =
     "<session_resumed>\n" ++
-    "fx stopped before the previous turn finished, because it crashed or its window was closed. " ++
+    "Tetris stopped before the previous turn finished, because it crashed or its window was closed. " ++
     "A tool that was running may have partly run. Check what finished, rerun only what is safe to repeat, " ++
     "and continue the previous request.\n" ++
     "</session_resumed>";
@@ -77,7 +77,7 @@ pub const resumed_request_prompt =
 /// there is nothing to check and nothing to say no to.
 pub const resumed_request_note_no_tool =
     "<session_resumed>\n" ++
-    "fx stopped before it answered the message above, because it crashed or its window was closed. " ++
+    "Tetris stopped before it answered the message above, because it crashed or its window was closed. " ++
     "Nothing ran. Answer that message now.\n" ++
     "</session_resumed>";
 
@@ -665,7 +665,7 @@ fn make_owned_legacy_image_turn(
 
 test "a turn fx stopped by crashing or closing reads as stopped, not failed or cancelled" {
     const stopped: InterruptedHistoryTurn = .{ .user = .{ .text = @constCast("go") }, .terminal_reason = .failed, .stopped_by_exit = true };
-    try std.testing.expectEqualStrings("fx stopped before this turn finished", interruptedTurnNotice(stopped).body);
+    try std.testing.expectEqualStrings("Tetris stopped before this turn finished", interruptedTurnNotice(stopped).body);
     try std.testing.expectEqual(core_types.NoticeTone.warning, interruptedTurnNotice(stopped).tone);
     // Esc and a turn that failed keep their own notices.
     const cancelled: InterruptedHistoryTurn = .{ .user = .{ .text = @constCast("go") }, .terminal_reason = .cancelled };
@@ -1441,7 +1441,7 @@ fn collectShellIdsFromExecution(
 /// note at the start of that turn (D93): the instructions stay as they were
 /// cached.
 pub const stale_shell_handles_note =
-    "Runtime context: fx restarted since this session was last active, so earlier shell session_id handles no longer exist; stopping or interacting with them fails with ExecutionNotFound. Their processes are normally terminated when fx exits but can survive an unclean exit, so check for a survivor before starting a duplicate. Otherwise start fresh shell sessions instead of reusing earlier handles.";
+    "Runtime context: Tetris restarted since this session was last active, so earlier shell session_id handles no longer exist; stopping or interacting with them fails with ExecutionNotFound. Their processes are normally terminated when Tetris exits but can survive an unclean exit, so check for a survivor before starting a duplicate. Otherwise start fresh shell sessions instead of reusing earlier handles.";
 
 pub fn detectStaleShellHandles(
     alloc: Allocator,
@@ -4569,7 +4569,7 @@ test "the image catalog keeps each image's handle and bytes, so Vision can read 
         .path = @constCast("/Users/example/old.png"),
         .media_type = @constCast("image/png"),
         .snapshot_sha256 = @constCast(digest),
-        .blob_path = @constCast("/Users/example/.fx/sessions/v2/s/blobs/" ++ digest),
+        .blob_path = @constCast("/Users/example/.tetris/sessions/v2/s/blobs/" ++ digest),
     }};
     const history = [_]HistoryTurn{.{ .assistant = .{
         .user = .{ .text = @constCast("old image"), .images = &resumed },

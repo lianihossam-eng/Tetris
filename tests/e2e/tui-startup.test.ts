@@ -33,7 +33,7 @@ afterEach(async () => {
 
 describe.skipIf(SKIP)("tui: startup and exit", () => {
   test(
-    "fx launches and shows prompt",
+    "tetris launches and shows prompt",
     async () => {
       session = await TmuxSession.create();
       const pane = await session.waitForComposer(10_000);
@@ -181,12 +181,12 @@ describe.skipIf(SKIP_TMUX)("tui: fresh-session commands", () => {
       const workspace = join(repository, "packages", "status-root");
       const headPath = join(repository, ".git", "HEAD");
       const stderrPath = join(root, "stderr.log");
-      mkdirSync(join(home, ".fx"), { recursive: true });
+      mkdirSync(join(home, ".tetris"), { recursive: true });
       mkdirSync(join(repository, ".git"), { recursive: true });
       mkdirSync(workspace, { recursive: true });
       writeFileSync(headPath, "ref: refs/heads/initial-branch\n");
       writeFileSync(
-        join(home, ".fx", "settings.json"),
+        join(home, ".tetris", "settings.json"),
         `${JSON.stringify({ statusLine: { workspace: true }, fast_mode: false })}\n`,
       );
       writeFileSync(stderrPath, "");
@@ -256,7 +256,7 @@ describe.skipIf(SKIP_TMUX)("tui: fresh-session commands", () => {
       writeFileSync(stderrPath, "");
 
       const version = execFileSync(FX_BIN, ["--version"], { encoding: "utf8" }).trim();
-      const banner = `𝒇x v${version} · Run /help for commands`;
+      const banner = `tetris v${version} · Run /help for commands`;
 
       try {
         session = await TmuxSession.create({
@@ -316,7 +316,7 @@ describe.skipIf(SKIP_TMUX)("tui: fresh-session commands", () => {
       mkdirSync(home, { recursive: true });
       writeFileSync(stderrPath, "");
       const version = execFileSync(FX_BIN, ["--version"], { encoding: "utf8" }).trim();
-      const banner = `𝒇x v${version} · Run /help for commands`;
+      const banner = `tetris v${version} · Run /help for commands`;
 
       try {
         session = await TmuxSession.create({
@@ -376,7 +376,7 @@ describe.skipIf(SKIP_TMUX)("tui: fresh-session commands", () => {
       writeFileSync(stderrPath, "");
       const gateway = startDynamicFakeGateway(() => fakeGatewayFinalText("FIXTURE_REPLY_OK"));
       const version = execFileSync(FX_BIN, ["--version"], { encoding: "utf8" }).trim();
-      const banner = `𝒇x v${version} · Run /help for commands`;
+      const banner = `tetris v${version} · Run /help for commands`;
 
       try {
         session = await TmuxSession.create({
@@ -423,7 +423,7 @@ describe.skipIf(SKIP_TMUX)("tui: fresh-session commands", () => {
   );
 
   test(
-    "a quoted prompt after fx is sent as the first message",
+    "a quoted prompt after tetris is sent as the first message",
     async () => {
       const root = realpathSync(mkdtempSync(join(tmpdir(), "fx-e2e-launch-prompt-")));
       const home = join(root, "home");
@@ -473,7 +473,7 @@ describe.skipIf(SKIP_TMUX)("tui: fresh-session commands", () => {
   );
 
   test(
-    "fx -c with a quoted prompt sends it in the remembered session",
+    "tetris -c with a quoted prompt sends it in the remembered session",
     async () => {
       const root = realpathSync(mkdtempSync(join(tmpdir(), "fx-e2e-continue-prompt-")));
       const home = join(root, "home");
@@ -554,7 +554,7 @@ describe.skipIf(SKIP_TMUX)("tui: fresh-session commands", () => {
       mkdirSync(home, { recursive: true });
       writeFileSync(stderrPath, "");
       const version = execFileSync(FX_BIN, ["--version"], { encoding: "utf8" }).trim();
-      const banner = `𝒇x v${version} · Run /help for commands`;
+      const banner = `tetris v${version} · Run /help for commands`;
 
       try {
         session = await TmuxSession.create({
@@ -675,7 +675,7 @@ describe.skipIf(SKIP_TMUX)("tui: MCP startup", () => {
     async () => {
       const root = realpathSync(mkdtempSync(join(tmpdir(), "fx-e2e-mcp-startup-")));
       const home = join(root, "home");
-      mkdirSync(join(home, ".fx"), { recursive: true });
+      mkdirSync(join(home, ".tetris"), { recursive: true });
 
       let requests = 0;
       const server = Bun.serve({
@@ -688,7 +688,7 @@ describe.skipIf(SKIP_TMUX)("tui: MCP startup", () => {
         },
       });
       writeFileSync(
-        join(home, ".fx", "mcp.json"),
+        join(home, ".tetris", "mcp.json"),
         JSON.stringify({
           mcp: {
             pending: {
@@ -736,12 +736,12 @@ describe.skipIf(SKIP_TMUX)("tui: MCP startup", () => {
     async () => {
       const root = realpathSync(mkdtempSync(join(tmpdir(), "fx-e2e-mcp-store-busy-")));
       const home = join(root, "home");
-      const store = join(home, ".fx", "mcp-credentials");
+      const store = join(home, ".tetris", "mcp-credentials");
       mkdirSync(store, { recursive: true, mode: 0o700 });
       const lock = join(store, "credentials-v3.lock");
       writeFileSync(lock, "", { mode: 0o600 });
       writeFileSync(
-        join(home, ".fx", "mcp.json"),
+        join(home, ".tetris", "mcp.json"),
         JSON.stringify({ mcp: { remote: { type: "http", url: "http://127.0.0.1:9/mcp", enabled: true } } }),
       );
       const tracePath = join(root, "trace.log");
@@ -791,12 +791,12 @@ describe.skipIf(SKIP_TMUX)("tui: MCP startup", () => {
     async () => {
       const root = realpathSync(mkdtempSync(join(tmpdir(), "fx-e2e-mcp-menu-busy-")));
       const home = join(root, "home");
-      const store = join(home, ".fx", "mcp-credentials");
+      const store = join(home, ".tetris", "mcp-credentials");
       mkdirSync(store, { recursive: true, mode: 0o700 });
       const lock = join(store, "credentials-v3.lock");
       writeFileSync(lock, "", { mode: 0o600 });
       writeFileSync(
-        join(home, ".fx", "mcp.json"),
+        join(home, ".tetris", "mcp.json"),
         JSON.stringify({ mcp: { remote: { type: "http", url: "http://127.0.0.1:9/mcp", enabled: true } } }),
       );
       const tracePath = join(root, "trace.log");
@@ -875,7 +875,7 @@ describe.skipIf(SKIP_TMUX)("tui: standard terminal variables", () => {
   );
 
   test(
-    "TERM=dumb refuses the interactive session and points to fx ask",
+    "TERM=dumb refuses the interactive session and points to tetris ask",
     async () => {
       // The session needs cursor movement, which a dumb terminal lacks.
       const home = realpathSync(mkdtempSync(join(tmpdir(), "fx-e2e-dumb-term-")));
@@ -885,8 +885,11 @@ describe.skipIf(SKIP_TMUX)("tui: standard terminal variables", () => {
       });
       await session.waitForPane(() => session!.paneStatus().dead === true, TIMEOUT);
       expect(session.paneStatus().status).toBe(1);
-      expect(await session.captureFullScrollback()).toContain(
-        "fx: TERM=dumb can't show the interactive session; use fx ask, or run fx in a terminal that supports cursor movement",
+      // The pane is 120 columns wide, narrower than the message, so joining
+      // its rows keeps the check about the text rather than where it wrapped.
+      const scrollback = await session.captureFullScrollback();
+      expect(scrollback.replace(/\n/g, "")).toContain(
+        "tetris: TERM=dumb can't show the interactive session; use tetris ask, or run tetris in a terminal that supports cursor movement",
       );
     },
     TIMEOUT,
@@ -903,8 +906,8 @@ describe.skipIf(SKIP_TMUX)("tui: startup errors", () => {
       const home = join(root, "home");
       const stderrPath = join(root, "stderr.log");
       const tracePath = join(root, "trace.log");
-      mkdirSync(join(home, ".fx", "sessions"), { recursive: true });
-      writeFileSync(join(home, ".fx", "sessions", "v2"), "not a folder\n");
+      mkdirSync(join(home, ".tetris", "sessions"), { recursive: true });
+      writeFileSync(join(home, ".tetris", "sessions", "v2"), "not a folder\n");
       writeFileSync(stderrPath, "");
       const quotedFx = `'${FX_BIN.replaceAll("'", "'\\''")}'`;
 
@@ -924,7 +927,7 @@ describe.skipIf(SKIP_TMUX)("tui: startup errors", () => {
         });
         await session.waitForPane(() => session!.paneStatus().dead === true, TIMEOUT);
         expect(session.paneStatus().status).toBe(1);
-        expect(readFileSync(stderrPath, "utf8")).toBe("fx: session path unsafe\n");
+        expect(readFileSync(stderrPath, "utf8")).toBe("tetris: session path unsafe\n");
         expect(readFileSync(tracePath, "utf8")).toContain("interactive error err=SessionPathUnsafe");
       } finally {
         if (session) {
@@ -968,7 +971,7 @@ describe.skipIf(SKIP_TMUX)("tui: credential onboarding", () => {
       expect(picker).not.toContain("Credential source");
       // `/setup` is the deprecated alias of `/provider`. The full notice wraps,
       // so check the part that names the release.
-      expect(await session.captureFullScrollback()).toContain("/setup is deprecated and stops working in fx 0.0.18; use /login");
+      expect(await session.captureFullScrollback()).toContain("/setup is deprecated and stops working in Tetris 0.1.1; use /login");
 
       await session.sendKeys("Enter");
       await session.waitForPane(
@@ -1005,7 +1008,7 @@ describe.skipIf(SKIP_TMUX)("tui: credential onboarding", () => {
 
       session = await TmuxSession.create({ env });
 
-      const initial = await session.waitForText("Welcome to fx", TIMEOUT);
+      const initial = await session.waitForText("Welcome to Tetris", TIMEOUT);
       expect(initial).toContain("Sign in with Vercel");
       expect(initial).toContain("Add an API key");
       expect(initial).toContain("esc to set up later");
@@ -1015,14 +1018,14 @@ describe.skipIf(SKIP_TMUX)("tui: credential onboarding", () => {
 
       await session.sendKeys("Escape");
       const skipped = await session.waitForPane(
-        (pane) => !pane.includes("Welcome to fx") && !pane.includes("Sign in with Vercel"),
+        (pane) => !pane.includes("Welcome to Tetris") && !pane.includes("Sign in with Vercel"),
         TIMEOUT,
       );
       expect(skipped).not.toContain("Add an API key");
 
       await session.kill();
       session = await TmuxSession.create({ env });
-      const restarted = await session.waitForText("Welcome to fx", TIMEOUT);
+      const restarted = await session.waitForText("Welcome to Tetris", TIMEOUT);
       expect(restarted).toContain("Sign in with Vercel");
       expect(restarted).toContain("Add an API key");
     },
@@ -1038,13 +1041,13 @@ describe.skipIf(SKIP_TMUX)("tui: custom themes", () => {
   ): Promise<{ pane: string; escapes: string; stderrPath: string }> {
     const home = join(root, "home");
     const stderrPath = join(root, "stderr.log");
-    mkdirSync(join(home, ".fx", "themes"), { recursive: true });
+    mkdirSync(join(home, ".tetris", "themes"), { recursive: true });
     for (const [file, contents] of Object.entries(themeFiles)) {
-      writeFileSync(join(home, ".fx", "themes", file), JSON.stringify(contents));
+      writeFileSync(join(home, ".tetris", "themes", file), JSON.stringify(contents));
     }
     if (options.settingsTheme) {
       writeFileSync(
-        join(home, ".fx", "settings.json"),
+        join(home, ".tetris", "settings.json"),
         JSON.stringify({ theme: options.settingsTheme }),
       );
     }
@@ -1074,14 +1077,14 @@ describe.skipIf(SKIP_TMUX)("tui: custom themes", () => {
   }
 
   test(
-    "FX_THEME loads a VS Code theme file from ~/.fx/themes",
+    "FX_THEME loads a VS Code theme file from ~/.tetris/themes",
     async () => {
       const root = realpathSync(mkdtempSync(join(tmpdir(), "fx-e2e-theme-")));
       const home = join(root, "home");
       const stderrPath = join(root, "stderr.log");
-      mkdirSync(join(home, ".fx", "themes"), { recursive: true });
+      mkdirSync(join(home, ".tetris", "themes"), { recursive: true });
       writeFileSync(
-        join(home, ".fx", "themes", "e2e-accent.json"),
+        join(home, ".tetris", "themes", "e2e-accent.json"),
         JSON.stringify({
           name: "E2E Accent",
           colors: { "editor.foreground": "#FF0000" },

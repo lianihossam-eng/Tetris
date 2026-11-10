@@ -1075,7 +1075,7 @@ fn appendProjectMcpConfigs(
         );
     }
     // Project servers run in the session's workspace, which a client `cwd`
-    // may have moved away from the directory fx was launched in.
+    // may have moved away from the directory Tetris was launched in.
     for (workspace.configs.items) |*config| {
         if (config.transport != .stdio or config.cwd != null) continue;
         config.cwd = try alloc.dupe(u8, workspace_root);
@@ -1305,7 +1305,7 @@ test "a v2 storage fault reads as its cause, and other errors have no such messa
 }
 
 /// A v2 store's notice that converting a v1 session is slow, sent to the
-/// client as the session's agent text, as fx's other notices are.
+/// client as the session's agent text, as Tetris's other notices are.
 const ConversionNotice = struct {
     state: *server.ServerState,
     alloc: Allocator,
@@ -1600,7 +1600,7 @@ fn sendUserHistoryTurn(
     user: types.UserTurn,
 ) !void {
     // A turn the terminal app sent to resume an interrupted request replays
-    // as the line it showed, not as fx's note to the model.
+    // as the line it showed, not as Tetris's note to the model.
     if (std.mem.eql(u8, user.text, session_runtime.resumed_request_prompt)) {
         return sendAgentHistoryChunk(state, alloc, session_id, session_runtime.resumed_request_notice.body);
     }
@@ -1865,7 +1865,7 @@ fn planExecutionReplay(
     // Entries past the last step still replay, in order, rather than vanish.
     _ = try appendSteeringReplay(arena, &frames, execution.steering, steering_index, null);
     // `execution.context_notes` and `execution.runtime_context` never replay:
-    // they are fx's context for the model, not messages of the conversation
+    // they are Tetris's context for the model, not messages of the conversation
     // (D93, D94).
     return frames.toOwnedSlice(arena);
 }
@@ -2456,7 +2456,7 @@ test "ACP interrupted history replay hides model-only abort context" {
     try std.testing.expect(std.mem.find(u8, captured, "<turn_aborted>") == null);
 }
 
-test "ACP history replays a resumed request as its line, not fx's note" {
+test "ACP history replays a resumed request as its line, not Tetris's note" {
     const alloc = std.testing.allocator;
     var tmp = std.testing.tmpDir(.{});
     defer tmp.cleanup();
@@ -2949,7 +2949,7 @@ test "ACP project MCP loading expands workspace environment templates" {
     const alloc = std.testing.allocator;
     var tmp = std.testing.tmpDir(.{});
     defer tmp.cleanup();
-    try tmp.dir.createDirPath(io_mod.getIo(), "home/.fx");
+    try tmp.dir.createDirPath(io_mod.getIo(), "home/.tetris");
     try tmp.dir.createDirPath(io_mod.getIo(), "workspace");
     try tmp.dir.writeFile(io_mod.getIo(), .{
         .sub_path = "workspace/.mcp.json",
@@ -2989,7 +2989,7 @@ test "ACP ultrafast new load and resume preserve configured baselines" {
     const alloc = std.testing.allocator;
     var tmp = std.testing.tmpDir(.{});
     defer tmp.cleanup();
-    try tmp.dir.createDirPath(io_mod.getIo(), "home/.fx");
+    try tmp.dir.createDirPath(io_mod.getIo(), "home/.tetris");
     try tmp.dir.createDirPath(io_mod.getIo(), "workspace");
     const home_path = try io_mod.dirRealpathAlloc(alloc, tmp.dir, "home");
     defer alloc.free(home_path);
@@ -3051,7 +3051,7 @@ test "ACP host-disabled new load and resume skip project MCP effects" {
     var arena_state = std.heap.ArenaAllocator.init(alloc);
     defer arena_state.deinit();
     const arena = arena_state.allocator();
-    try tmp.dir.createDirPath(io_mod.getIo(), "home/.fx");
+    try tmp.dir.createDirPath(io_mod.getIo(), "home/.tetris");
     try tmp.dir.createDirPath(io_mod.getIo(), "workspace");
 
     const home_path = try io_mod.dirRealpathAlloc(alloc, tmp.dir, "home");
@@ -3077,7 +3077,7 @@ test "ACP host-disabled new load and resume skip project MCP effects" {
         .data = project_json,
     });
     try tmp.dir.writeFile(io_mod.getIo(), .{
-        .sub_path = "home/.fx/settings.json",
+        .sub_path = "home/.tetris/settings.json",
         .data = "{}",
     });
     const test_home = try AcpSessionTestHome.install(alloc, home_path);
@@ -3183,7 +3183,7 @@ test "ACP new and loaded sessions provide a writable subagent host" {
     var arena_state = std.heap.ArenaAllocator.init(alloc);
     defer arena_state.deinit();
     const arena = arena_state.allocator();
-    try tmp.dir.createDirPath(io_mod.getIo(), "home/.fx");
+    try tmp.dir.createDirPath(io_mod.getIo(), "home/.tetris");
     try tmp.dir.createDirPath(io_mod.getIo(), "workspace");
 
     const home_path = try io_mod.dirRealpathAlloc(alloc, tmp.dir, "home");

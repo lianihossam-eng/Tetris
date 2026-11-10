@@ -61,7 +61,7 @@ pub const Asked = struct {
 
 /// A request that follows the conversation reads like the user's next
 /// message, so the model is told not to note it.
-const from_fx = " This request comes from fx, not from the user, so leave it and the writing of these notes out of every note and entry.";
+const from_fx = " This request comes from Tetris, not from the user, so leave it and the writing of these notes out of every note and entry.";
 
 /// Appends the request for the notes. It lists the exact headings to write,
 /// since a model given an example heading may copy it instead.

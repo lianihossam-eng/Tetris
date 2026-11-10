@@ -1,5 +1,5 @@
 // What the mcp-v2-model scenarios share: private fixture folders outside
-// every repository, the real fx binary with a scratch HOME, fixture logs,
+// every repository, the real tetris binary with a scratch HOME, fixture logs,
 // the credential files, loopback probes, and evidence files.
 import { appendFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
@@ -17,12 +17,12 @@ export function fixture(root: string, name: string): Fixture {
   const home = join(base, "home");
   const workspace = join(base, "workspace");
   const control = join(base, "control");
-  for (const dir of [join(home, ".fx"), workspace, control]) mkdirSync(dir, { recursive: true, mode: 0o700 });
-  writeFileSync(join(home, ".fx", "settings.json"), "{}");
+  for (const dir of [join(home, ".tetris"), workspace, control]) mkdirSync(dir, { recursive: true, mode: 0o700 });
+  writeFileSync(join(home, ".tetris", "settings.json"), "{}");
   return { base, home, workspace, control, serverLog: join(base, "servers.jsonl"), traceLog: join(base, "fx-trace.log") };
 }
 
-/** fx's environment: scratch HOME, no Keychain, no browser, no sound, a fake gateway key. */
+/** Tetris's environment: scratch HOME, no Keychain, no browser, no sound, a fake gateway key. */
 export function fxEnv(f: Fixture, extra: Record<string, string> = {}): Record<string, string> {
   return {
     PATH: process.env.PATH ?? "/usr/bin:/bin",
@@ -46,7 +46,7 @@ export function stdioServer(f: Fixture, name: string, extra: Record<string, stri
 }
 
 export function writeProfile(f: Fixture, servers: Record<string, unknown>) {
-  writeFileSync(join(f.home, ".fx", "mcp.json"), JSON.stringify({ mcpServers: servers }, null, 2), { mode: 0o600 });
+  writeFileSync(join(f.home, ".tetris", "mcp.json"), JSON.stringify({ mcpServers: servers }, null, 2), { mode: 0o600 });
 }
 export function writeProject(f: Fixture, servers: Record<string, unknown>) {
   writeFileSync(join(f.workspace, ".mcp.json"), JSON.stringify({ mcpServers: servers }, null, 2));
@@ -83,7 +83,7 @@ export async function startFake(f: Fixture, server: Record<string, unknown> = {}
 export const redemptions = (entries: ReturnType<Awaited<ReturnType<typeof startFake>>["entries"]>) =>
   entries.filter((e) => e.dir === "auth" && e.path?.endsWith("/token") && e.form?.grant_type === "authorization_code");
 
-/** `fx mcp login --no-browser web` with stdin left open, its output read as it comes. */
+/** `tetris mcp login --no-browser web` with stdin left open, its output read as it comes. */
 export async function cliLogin(binary: string, f: Fixture) {
   const child = Bun.spawn([binary, "mcp", "login", "--no-browser", "web"], { cwd: f.workspace, env: fxEnv(f), stdin: "pipe", stdout: "pipe", stderr: "pipe" });
   let out = "", err = "";
@@ -146,7 +146,7 @@ export async function probe(port: number, path = "/favicon.ico"): Promise<{ resu
 
 // ---- credentials ----
 
-export const credDir = (f: Fixture) => join(f.home, ".fx", "mcp-credentials");
+export const credDir = (f: Fixture) => join(f.home, ".tetris", "mcp-credentials");
 export const storePath = (f: Fixture) => join(credDir(f), "credentials-v3.json");
 /** The store older builds keep, which this one never opens (MixedBuilds.tla). */
 export const olderStorePath = (f: Fixture) => join(credDir(f), "credentials-v2.json");

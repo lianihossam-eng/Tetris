@@ -54,7 +54,7 @@ export interface Scenario {
   speed: SpeedReq;
   effort: EffortReq;
   catalog: CatalogMode;
-  /** Capabilities of the model fx would send. */
+  /** Capabilities of the model Tetris would send. */
   fastCap: boolean;
   ultraCap: boolean;
   /** Interactive only: submit before the catalog arrives (slow catalog). */
@@ -66,12 +66,12 @@ const none = { fastCap: false, ultraCap: false };
 const base = { speed: "none", effort: "none", catalog: "authenticated", early: false } as const;
 
 export const SCENARIOS: Scenario[] = [
-  // fx ask, ideal
+  // tetris ask, ideal
   { id: "ask-exact", kind: "ideal", path: "ask", model: "exact", raw: FULL.id, canonical: FULL.id, ...base, ...full },
   { id: "ask-exact-fast", kind: "ideal", path: "ask", model: "exact", raw: FULL.id, canonical: FULL.id, ...base, speed: "fast", ...full },
   { id: "ask-exact-ultrafast", kind: "ideal", path: "ask", model: "exact", raw: FULL.id, canonical: FULL.id, ...base, speed: "ultrafast", ...full },
   { id: "ask-exact-effort", kind: "ideal", path: "ask", model: "exact", raw: FULL.id, canonical: FULL.id, ...base, effort: "supported", ...full },
-  // fx ask, non-ideal
+  // tetris ask, non-ideal
   { id: "ask-unknown", kind: "nonideal", path: "ask", model: "unknown", raw: "totally/not-a-real-model", ...base, ...none },
   { id: "ask-partial-unique", kind: "nonideal", path: "ask", model: "partial_unique", raw: "mfv-plain", canonical: PLAIN.id, ...base, ...none },
   { id: "ask-partial-ambiguous", kind: "nonideal", path: "ask", model: "partial_ambiguous", raw: "mfv-terra", ...base, ...none },
@@ -104,7 +104,7 @@ export function flagArgs(s: Scenario): string[] {
   return args;
 }
 
-/** LaunchSelection's model-name class for a model ID fx actually sent. */
+/** LaunchSelection's model-name class for a model ID Tetris actually sent. */
 /** No scenario passes CONFIGURED as --model, so the order below is unambiguous. */
 export function nameClass(s: Scenario, sent: string): "configured" | "canonical" | "raw" | "other" {
   if (sent === CONFIGURED) return "configured";
@@ -114,14 +114,14 @@ export function nameClass(s: Scenario, sent: string): "configured" | "canonical"
 }
 
 /**
- * Classifies an `fx ask` failure that sent no request from its stderr. Launch
+ * Classifies a `tetris ask` failure that sent no request from its stderr. Launch
  * rejections name the model; the turn-time Ultrafast failure does not.
  */
 export function askRejection(stderr: string): Outcome | null {
-  if (/^fx ask: (Unknown model "|Model "[^"]*" matches several catalog models)/m.test(stderr)) return "rejected_model";
-  if (/^fx ask: Fast mode is not available for model "/m.test(stderr)) return "rejected_fast";
-  if (/^fx ask: Ultrafast mode is not available for model "/m.test(stderr)) return "rejected_ultrafast";
-  if (/^fx ask: Reasoning effort (is unavailable|"[^"]*" is not available)/m.test(stderr)) return "rejected_effort";
+  if (/^tetris ask: (Unknown model "|Model "[^"]*" matches several catalog models)/m.test(stderr)) return "rejected_model";
+  if (/^tetris ask: Fast mode is not available for model "/m.test(stderr)) return "rejected_fast";
+  if (/^tetris ask: Ultrafast mode is not available for model "/m.test(stderr)) return "rejected_ultrafast";
+  if (/^tetris ask: Reasoning effort (is unavailable|"[^"]*" is not available)/m.test(stderr)) return "rejected_effort";
   return null;
 }
 

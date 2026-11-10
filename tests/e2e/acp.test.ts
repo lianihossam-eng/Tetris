@@ -323,7 +323,7 @@ function acpLatestPromptText(body: string): string {
 }
 
 function writeSeededFxAuth(home: string, teamId?: string): void {
-  const fxDir = join(home, ".fx");
+  const fxDir = join(home, ".tetris");
   mkdirSync(fxDir, { recursive: true, mode: 0o700 });
   chmodSync(fxDir, 0o700);
   const authPath = join(fxDir, "auth.json");
@@ -356,7 +356,7 @@ function acpChatGptAccessToken(
 }
 
 function writeSeededAcpChatGptLogin(home: string, accessToken: string): void {
-  const fxDir = join(home, ".fx");
+  const fxDir = join(home, ".tetris");
   mkdirSync(fxDir, { recursive: true, mode: 0o700 });
   chmodSync(fxDir, 0o700);
   const authPath = join(fxDir, "chatgpt-auth.json");
@@ -468,7 +468,7 @@ function startAcpFakeCodex(options: {
 }
 
 function writeSeededAcpGrokLogin(home: string, accessToken: string): void {
-  const fxDir = join(home, ".fx");
+  const fxDir = join(home, ".tetris");
   mkdirSync(fxDir, { recursive: true, mode: 0o700 });
   chmodSync(fxDir, 0o700);
   const authPath = join(fxDir, "grok-auth.json");
@@ -1213,7 +1213,7 @@ function createIsolatedRoot(prefix: string) {
   const home = join(root, "home");
   const workspace = join(root, "workspace");
   const external = join(root, "external");
-  mkdirSync(join(home, ".fx"), { recursive: true });
+  mkdirSync(join(home, ".tetris"), { recursive: true });
   mkdirSync(workspace, { recursive: true });
   mkdirSync(external, { recursive: true });
   return {
@@ -1229,7 +1229,7 @@ function createShortIsolatedRoot(prefix: string) {
   const home = join(root, "home");
   const workspace = join(root, "workspace");
   const external = join(root, "external");
-  mkdirSync(join(home, ".fx"), { recursive: true });
+  mkdirSync(join(home, ".tetris"), { recursive: true });
   mkdirSync(workspace, { recursive: true });
   mkdirSync(external, { recursive: true });
   return {
@@ -1262,10 +1262,10 @@ function writeAcpSession(
   sessionId: string,
   updatedAtMs: number,
 ): void {
-  const sessionDir = join(home, ".fx", "sessions", sessionId);
+  const sessionDir = join(home, ".tetris", "sessions", sessionId);
   mkdirSync(sessionDir, { recursive: true, mode: 0o700 });
-  chmodSync(join(home, ".fx"), 0o700);
-  chmodSync(join(home, ".fx", "sessions"), 0o700);
+  chmodSync(join(home, ".tetris"), 0o700);
+  chmodSync(join(home, ".tetris", "sessions"), 0o700);
   chmodSync(sessionDir, 0o700);
   writeFileSync(
     join(sessionDir, "session.json"),
@@ -1290,10 +1290,10 @@ function writeLegacyAcpSessionWithoutWorkspace(
   sessionId: string,
   updatedAtMs: number,
 ): void {
-  const sessionDir = join(home, ".fx", "sessions", sessionId);
+  const sessionDir = join(home, ".tetris", "sessions", sessionId);
   mkdirSync(sessionDir, { recursive: true, mode: 0o700 });
-  chmodSync(join(home, ".fx"), 0o700);
-  chmodSync(join(home, ".fx", "sessions"), 0o700);
+  chmodSync(join(home, ".tetris"), 0o700);
+  chmodSync(join(home, ".tetris", "sessions"), 0o700);
   chmodSync(sessionDir, 0o700);
   writeFileSync(
     join(sessionDir, "session.json"),
@@ -1542,7 +1542,7 @@ describe("acp: model-independent", () => {
         expect(gateway.requests.length).toBe(1);
         expect(gateway.requests[0]!.headers.get("authorization")).toBeNull();
         expect(gateway.requests[0]!.headers.get("x-vercel-ai-gateway-team")).toBeNull();
-        expect(existsSync(join(root.home, ".fx", "auth.json"))).toBe(false);
+        expect(existsSync(join(root.home, ".tetris", "auth.json"))).toBe(false);
         expect(client.stderr).toBe("");
       } finally {
         await client?.close();
@@ -1610,7 +1610,7 @@ describe("acp: model-independent", () => {
         expect(result.promptResult.result.stopReason).toBe("end_turn");
         expect(JSON.stringify(result.messages)).toContain("ACP_MAIN_ANSWER_OK");
         expect(gateway.titleRequests).toHaveLength(1);
-        // The title call's own deadline is 15 s; fx gives it a short grace
+        // The title call's own deadline is 15 s; tetris gives it a short grace
         // after the answer and then replies.
         expect(elapsedMs).toBeLessThan(8_000);
 
@@ -2199,7 +2199,7 @@ describe("acp: model-independent", () => {
   test(
     "ACP compacts automatically at the configured percent",
     async () => {
-      // Replies without provider usage, so fx sizes the conversation by its
+      // Replies without provider usage, so tetris sizes the conversation by its
       // own estimate.
       const reply = (text: string) => fakeGatewaySse([
         { type: "text-delta", id: "answer_1", delta: text },
@@ -2690,7 +2690,7 @@ describe("acp: model-independent", () => {
         expect(client.stderr).toBe("");
         await client.close();
         // The ACP process owned the terminal itself: no host daemon state.
-        expect(existsSync(join(root.root, "home", ".fx", "terminal-host-v7"))).toBe(false);
+        expect(existsSync(join(root.root, "home", ".tetris", "terminal-host-v7"))).toBe(false);
       } finally {
         await client?.close();
         gateway.stop();
@@ -2810,7 +2810,7 @@ describe("acp: model-independent", () => {
         "ACP_RULE_PREFIX\nACP_RULE_SECOND\nACP_RULE_TAIL_SENTINEL\n",
       );
       writeFileSync(
-        join(root.home, ".fx", "settings.json"),
+        join(root.home, ".tetris", "settings.json"),
         JSON.stringify({
           context_limits: { project_instruction_file_bytes: 96 },
           workspaces: {
@@ -3075,11 +3075,11 @@ describe("acp: model-independent", () => {
         expect(resp.jsonrpc).toBe("2.0");
         expect(resp.id).toBe(1);
         expect(resp.result.protocolVersion).toBe(1);
-        expect(resp.result.agentInfo.name).toBe("fx");
+        expect(resp.result.agentInfo.name).toBe("tetris");
         expect(resp.result.agentInfo.version).toBe(version.stdout.trim());
         expect(resp.result.agentCapabilities.loadSession).toBe(true);
         expect(resp.result.agentCapabilities.promptCapabilities.image).toBe(true);
-        // HTTP only: fx doesn't speak HTTP+SSE or MCP over ACP.
+        // HTTP only: tetris doesn't speak HTTP+SSE or MCP over ACP.
         expect(resp.result.agentCapabilities.mcpCapabilities).toEqual({ http: true, sse: false, acp: false });
         expect(resp.result.agentCapabilities.sessionCapabilities.resume).toEqual({});
         expect(resp.result.agentCapabilities.sessionCapabilities.close).toEqual({});
@@ -3115,7 +3115,7 @@ describe("acp: model-independent", () => {
           env: { ...fakeGatewayEnv(root, gateway) },
         });
         const initialized = await client.request("initialize", { protocolVersion: 1 }, 1) as any;
-        // Only what ACP v1 defines and fx's MCP engine speaks: no HTTP+SSE, no "type": "acp".
+        // Only what ACP v1 defines and tetris's MCP engine speaks: no HTTP+SSE, no "type": "acp".
         expect(initialized.result.agentCapabilities.mcpCapabilities).toEqual({ http: true, sse: false, acp: false });
         const created = await client.request(
           "session/new",
@@ -3133,7 +3133,7 @@ describe("acp: model-independent", () => {
         ) as any;
         expect(created.error).toBeUndefined();
         await client.readLine();
-        // fx starts a server when the model first needs it.
+        // tetris starts a server when the model first needs it.
         expect(httpFixture.requests).toHaveLength(0);
         await client.request("session/set_mode", { modeId: "auto" }, 3);
         const requestStart = gateway.requests.length;
@@ -3357,7 +3357,7 @@ describe("acp: model-independent", () => {
         fakeGatewayToolCall("call_stdio", MCP_TOOL_NAME, { text: "acp" }),
         finalText("ACP MCP stdio"),
       ]);
-      // It keeps running after its input closes, so fx sends SIGTERM after 1.5 s.
+      // It keeps running after its input closes, so tetris sends SIGTERM after 1.5 s.
       let oldPid = 0;
       const server = {
         name: "fixture",
@@ -3392,7 +3392,7 @@ describe("acp: model-independent", () => {
         expect(readFileSync(eofPath, "utf8").trim()).toBe(String(oldPid));
         expect(processAlive(oldPid)).toBe(true);
 
-        // Closing straight away still stops it: fx never leaves it behind.
+        // Closing straight away still stops it: tetris never leaves it behind.
         client.endStdin();
         expect(await client.waitForExit()).toBe(0);
         expect(processAlive(oldPid)).toBe(false);
@@ -3401,7 +3401,7 @@ describe("acp: model-independent", () => {
         await client?.close();
         client = null;
         gateway.stop();
-        // A server fx left behind would never exit by itself.
+        // A server tetris left behind would never exit by itself.
         if (oldPid && processAlive(oldPid)) process.kill(oldPid, "SIGKILL");
         rmSync(root.root, { recursive: true, force: true });
       }
@@ -3708,8 +3708,8 @@ describe("acp: model-independent", () => {
           expect(rejected.error.code).toBe(-32602);
           expect(rejected.error.message).toBe(message);
         }
-        expect(existsSync(join(root.home, ".fx", "sessions"))
-          ? readdirSync(join(root.home, ".fx", "sessions")).filter((name) => !name.startsWith("."))
+        expect(existsSync(join(root.home, ".tetris", "sessions"))
+          ? readdirSync(join(root.home, ".tetris", "sessions")).filter((name) => !name.startsWith("."))
           : []).toEqual([]);
 
         const created = await client.request("session/new", {
@@ -3732,7 +3732,7 @@ describe("acp: model-independent", () => {
         );
         expect(firstSystem.indexOf("# Identity and context")).toBeLessThan(firstSystem.indexOf(marker));
         expect(firstSystem).toContain("A client application hosts this conversation");
-        expect(firstSystem).not.toContain("which fx renders in the terminal");
+        expect(firstSystem).not.toContain("which Tetris renders in the terminal");
         expect(userText(gateway.requests[0]!.body)).not.toContain(marker);
         await client.close();
 
@@ -3752,19 +3752,19 @@ describe("acp: model-independent", () => {
         const secondSystem = systemText(gateway.requests[1]!.body);
         expect(secondSystem).toContain(`<client_instructions>\nYou are the assistant inside Mini, a macOS browser. ${marker}`);
         // This client did not opt out of the terminal prompt.
-        expect(secondSystem).toContain("which fx renders in the terminal");
+        expect(secondSystem).toContain("which Tetris renders in the terminal");
 
         expect(client.stderr).toBe("");
         await client.close();
 
         // v2 keeps the prompt as one setting in the session's own log
         // (D46): nothing beside the log can go bad on its own.
-        const log = readFileSync(join(root.home, ".fx", "sessions", "v2", sessionId, "log.jsonl"), "utf8");
+        const log = readFileSync(join(root.home, ".tetris", "sessions", "v2", sessionId, "log.jsonl"), "utf8");
         const prompts = log.trimEnd().split("\n").map((line) => JSON.parse(line))
           .filter((line) => line.kind === "set" && line.key === "client_prompt");
         expect(prompts).toHaveLength(1);
         expect(JSON.stringify(prompts[0].value)).toContain(marker);
-        expect(existsSync(join(root.home, ".fx", "session-files"))).toBe(false);
+        expect(existsSync(join(root.home, ".tetris", "session-files"))).toBe(false);
       } finally {
         await client?.close();
         gateway.stop();
@@ -3839,7 +3839,7 @@ describe("acp: model-independent", () => {
       const root = createIsolatedRoot("fx-acp-profile-mcp-");
       const profilePid = join(root.root, "profile.pid");
       writeFileSync(
-        join(root.home, ".fx", "mcp.json"),
+        join(root.home, ".tetris", "mcp.json"),
         JSON.stringify({
           mcp: {
             profile: {
@@ -3909,7 +3909,7 @@ describe("acp: model-independent", () => {
     async () => {
       const root = createIsolatedRoot("fx-acp-session-cwd-mcp-");
       writeFileSync(
-        join(root.home, ".fx", "settings.json"),
+        join(root.home, ".tetris", "settings.json"),
         JSON.stringify({
           workspaces: { [root.external]: { enabledMcpjsonServers: ["project"] } },
         }),
@@ -3943,7 +3943,7 @@ describe("acp: model-independent", () => {
         await client.request("session/set_mode", { modeId: "auto" }, 3);
         await runMcpToolPrompt(client, gateway, "call_project", "MODERN_MCP_TOOL_RESULT");
         // The server writes its pid file to its working directory, which is
-        // the session's workspace, not fx's.
+        // the session's workspace, not tetris's.
         expect(existsSync(join(root.external, "project-server.pid"))).toBe(true);
         expect(existsSync(join(root.workspace, "project-server.pid"))).toBe(false);
         expect(client.stderr).toBe("");
@@ -4153,7 +4153,7 @@ describe("acp: model-independent", () => {
           "ACP_PROJECT_MCP_RESULT",
         );
         expect(existsSync(pidPath)).toBe(true);
-        const settingsPath = join(root.home, ".fx", "settings.json");
+        const settingsPath = join(root.home, ".tetris", "settings.json");
         expect(readFileSync(settingsPath, "utf8")).toContain(
           "enabledMcpjsonServers",
         );
@@ -4197,7 +4197,7 @@ describe("acp: model-independent", () => {
       try {
         const approved = await runFx(["mcp", "approve", "fixture"], { cwd: root.workspace, env });
         expect(approved.code).toBe(0);
-        // fx itself runs elsewhere; the session names the project.
+        // Tetris itself runs elsewhere; the session names the project.
         client = await AcpClient.create({ cwd: root.root, env });
         await client.request("initialize", { protocolVersion: 1 }, 1);
         const created = await client.request("session/new", { cwd: root.workspace, mcpServers: [] }, 2) as any;
@@ -4302,7 +4302,7 @@ describe("acp: model-independent", () => {
         },
       });
       writeFileSync(
-        join(root.home, ".fx", "settings.json"),
+        join(root.home, ".tetris", "settings.json"),
         JSON.stringify({
           workspaces: {
             [root.workspace]: { disabledMcpjsonServers: ["fixture"] },
@@ -4403,7 +4403,7 @@ describe("acp: model-independent", () => {
           "call_legacy_http",
           `${LEGACY_REMOTE_TOOL_RESULT}:new`,
         );
-        // A 2025 server: fx asks for the 2026 discovery first, then
+        // A 2025 server: tetris asks for the 2026 discovery first, then
         // initializes the 2025 way.
         const methods = newFixture.requests.map((entry) => entry.message?.method).filter(Boolean);
         expect(methods.slice(0, 2)).toEqual(["server/discover", "initialize"]);
@@ -4541,17 +4541,17 @@ describe("acp: model-independent", () => {
           .join("\n");
         expect(first).toContain('<server name="protected" state="authentication_required" />');
         // The server came from the editor, so its credentials go there:
-        // fx mcp login can't find it.
+        // tetris mcp login can't find it.
         const selected = acpToolResultText(gateway.requests[1]!.body, "select_protected");
         expect(selected).toContain(
           "Ask the user to add an Authorization header for protected in the editor's MCP server settings, then try again.",
         );
-        expect(selected).not.toContain("fx mcp login");
+        expect(selected).not.toContain("tetris mcp login");
         // One request, answered 401: no OAuth discovery, no sign-in, and no
         // credential saved (the store's lock file is all that exists).
         expect(mcpRequests).toBe(1);
         expect(metadataRequests).toBe(0);
-        const credentials = join(root.home, ".fx", "mcp-credentials");
+        const credentials = join(root.home, ".tetris", "mcp-credentials");
         const saved = existsSync(credentials)
           ? readdirSync(credentials).filter((entry) => entry !== "credentials-v3.lock")
           : [];
@@ -4629,7 +4629,7 @@ describe("acp: model-independent", () => {
         );
         // Every saved file, on either session backend: the scan must see the
         // saved tool result, and nothing may hold the credential.
-        const fxDir = join(root.home, ".fx");
+        const fxDir = join(root.home, ".tetris");
         const saved = (readdirSync(fxDir, { recursive: true }) as string[])
           .map((name) => join(fxDir, name))
           .filter((path) => statSync(path).isFile())
@@ -5165,7 +5165,7 @@ describe("acp: model-independent", () => {
         expect(prompt.promptResult.result.stopReason).toBe("end_turn");
         // The editor can't answer questions, so the call fails and the model
         // hears why.
-        const unanswerable = "MCP server 'fixture' ended the call: the server asked for input fx can't give.";
+        const unanswerable = "MCP server 'fixture' ended the call: the server asked for input Tetris can't give.";
         expect(gateway.requests).toHaveLength(3);
         expect(acpToolResultText(gateway.requests[2]!.body, "call_mrtr")).toContain(unanswerable);
         const failedUpdate = prompt.messages.find((message) =>
@@ -5244,7 +5244,7 @@ describe("acp: model-independent", () => {
         expect(prompt.promptResult.result.stopReason).toBe("end_turn");
         // The editor takes forms only, so a URL request fails the call and the
         // model hears why.
-        const unanswerable = "MCP server 'fixture' ended the call: the server asked for input fx can't give.";
+        const unanswerable = "MCP server 'fixture' ended the call: the server asked for input Tetris can't give.";
         expect(gateway.requests).toHaveLength(3);
         expect(acpToolResultText(gateway.requests[2]!.body, "call_unadvertised")).toContain(unanswerable);
         expect(directRequests).toHaveLength(0);
@@ -5807,7 +5807,7 @@ describe("acp: model-independent", () => {
         expect(calls[1]?.params?.inputResponses).toEqual({
           confirm: { action: "accept" },
         });
-        // fx sends the spec's opaque string back as it came.
+        // tetris sends the spec's opaque string back as it came.
         expect(calls[1]?.params?.requestState).toEqual("opaque");
         expect(calls[1]?.params?.name).toBe(calls[0]?.params?.name);
         expect(calls[1]?.params?.arguments).toEqual(calls[0]?.params?.arguments);
@@ -6401,7 +6401,7 @@ describe("acp: model-independent", () => {
       const suppliedPid = join(root.root, "supplied.pid");
       const gateway = startFakeGateway([finalText("supplied server started")]);
       writeFileSync(
-        join(root.home, ".fx", "mcp.json"),
+        join(root.home, ".tetris", "mcp.json"),
         JSON.stringify({
           mcp: {
             profile: {
@@ -7226,7 +7226,7 @@ describe("acp: model-independent", () => {
         client = await AcpClient.create({ cwd: root.workspace, env });
         const refused = await client.request("initialize", { protocolVersion: 1 }, 1) as any;
         expect(refused.error?.message).toBe(
-          "no Codex model is selected; run `fx provider codex` to choose one, or set a model for this run with --model or FX_MODEL",
+          "no Codex model is selected; run `tetris provider codex` to choose one, or set a model for this run with --model or FX_MODEL",
         );
         await client.close();
 
@@ -7300,7 +7300,7 @@ describe("acp: model-independent", () => {
         });
         expect(codex.requests).toHaveLength(0);
         expect(gateway.requests).toHaveLength(0);
-        const imageDir = join(root.home, ".fx", "sessions", sessionId, "images");
+        const imageDir = join(root.home, ".tetris", "sessions", sessionId, "images");
         if (existsSync(imageDir)) expect(readdirSync(imageDir)).toEqual([]);
 
         const rejectedDetail = await runFx(["session", "--id", sessionId, "--json"], {
@@ -7359,7 +7359,7 @@ describe("acp: model-independent", () => {
           message: "Invalid image prompt block",
         });
         expect(gateway.requests).toHaveLength(0);
-        const imageDir = join(root.home, ".fx", "sessions", sessionId, "images");
+        const imageDir = join(root.home, ".tetris", "sessions", sessionId, "images");
         if (existsSync(imageDir)) expect(readdirSync(imageDir)).toEqual([]);
 
         const recovered = await runPrompt(
@@ -7385,10 +7385,10 @@ describe("acp: model-independent", () => {
       const root = createIsolatedRoot("fx-acp-image-replay-missing-");
       const gateway = startFakeGateway([]);
       try {
-        // A session an older fx saved with a prompt image, whose image file
+        // A session an older tetris saved with a prompt image, whose image file
         // is gone; loading converts it.
         const [sessionId] = copyV1Fixture(root.home, "image", 1, root.workspace) as [string];
-        const imageDir = join(root.home, ".fx", "sessions", sessionId, "images");
+        const imageDir = join(root.home, ".tetris", "sessions", sessionId, "images");
         const snapshots = readdirSync(imageDir);
         expect(snapshots).toHaveLength(1);
         rmSync(join(imageDir, snapshots[0]!));
@@ -8057,9 +8057,9 @@ describe("acp: model-independent", () => {
         });
         const resp = await client.request("initialize", { protocolVersion: 1 }, 1) as any;
         expect(resp.error).toBeDefined();
-        expect(resp.error.message).toContain("fx login");
-        expect(resp.error.message).toContain("fx login vercel --api-key");
-        expect(resp.error.message).not.toContain("fx setup");
+        expect(resp.error.message).toContain("tetris login");
+        expect(resp.error.message).toContain("tetris login vercel --api-key");
+        expect(resp.error.message).not.toContain("tetris setup");
         expect(resp.error.message).toContain("AI_GATEWAY_API_KEY");
         expect(client.stderr).toBe("");
       } finally {
@@ -8176,7 +8176,7 @@ describe("acp: model-independent", () => {
         expect(response.result).toEqual({ sessions: [] });
         await client.close();
 
-        expect(existsSync(join(home, ".fx"))).toBe(false);
+        expect(existsSync(join(home, ".tetris"))).toBe(false);
       } finally {
         rmSync(root, { recursive: true, force: true });
       }
@@ -8448,7 +8448,7 @@ describe("acp: model-independent", () => {
           env: fakeGatewayEnv(root, gateway),
         });
         await client.request("initialize", { protocolVersion: 1 }, 3);
-        // fx waits for the owner's lock before it says the session is busy:
+        // tetris waits for the owner's lock before it says the session is busy:
         // about 3 s here, and past 10 s on a slow PGSO runner.
         const contendedLoad = await client.request(
           "session/load",
@@ -8520,7 +8520,7 @@ describe("acp: model-independent", () => {
           params: { mcpServers: [] },
         });
         expect(await client.waitForExit()).toBe(86);
-        expect(existsSync(join(home, ".fx"))).toBe(false);
+        expect(existsSync(join(home, ".tetris"))).toBe(false);
       } finally {
         rmSync(root, { recursive: true, force: true });
       }
@@ -8569,10 +8569,10 @@ describe("acp: model-independent", () => {
         mkdirSync(home);
         mkdirSync(workspace);
         const workspaceRoot = realpathSync(workspace);
-        const sessionDir = join(home, ".fx", "sessions", "last");
+        const sessionDir = join(home, ".tetris", "sessions", "last");
         mkdirSync(sessionDir, { recursive: true, mode: 0o700 });
-        chmodSync(join(home, ".fx"), 0o700);
-        chmodSync(join(home, ".fx", "sessions"), 0o700);
+        chmodSync(join(home, ".tetris"), 0o700);
+        chmodSync(join(home, ".tetris", "sessions"), 0o700);
         chmodSync(sessionDir, 0o700);
         writeFileSync(
           join(sessionDir, "session.json"),
@@ -8838,7 +8838,7 @@ describe("acp: model-independent", () => {
         "allowed.txt",
       );
       writeFileSync(
-        join(deniedRoot.home, ".fx", "settings.json"),
+        join(deniedRoot.home, ".tetris", "settings.json"),
         JSON.stringify({
           permission: {
             edit: {
@@ -8873,7 +8873,7 @@ describe("acp: model-independent", () => {
         await client.close();
 
         writeFileSync(
-          join(allowedRoot.home, ".fx", "settings.json"),
+          join(allowedRoot.home, ".tetris", "settings.json"),
           JSON.stringify({
             permission: {
               edit: {
@@ -9410,7 +9410,7 @@ describe("acp: model-independent", () => {
       writeFileSync(join(nested, "AGENTS.md"), `${nestedRule}\n${nestedTail}\n`);
       writeFileSync(join(sibling, "AGENTS.md"), `${siblingRule}\n`);
       writeFileSync(
-        join(root.home, ".fx", "settings.json"),
+        join(root.home, ".tetris", "settings.json"),
         JSON.stringify({
           context_limits: { project_instruction_file_bytes: 48 },
         }),
@@ -9492,7 +9492,7 @@ describe("acp: model-independent", () => {
       const root = createIsolatedRoot("fx-acp-permission-parity-");
       const target = join(root.external, "approved.txt");
       writeFileSync(
-        join(root.home, ".fx", "settings.json"),
+        join(root.home, ".tetris", "settings.json"),
         JSON.stringify({ permission: { edit: { [`${root.external}/**`]: "ask" } } }),
       );
       const gateway = startFakeGateway([
@@ -9570,7 +9570,7 @@ describe("acp: model-independent", () => {
       const root = createIsolatedRoot("fx-acp-permission-reject-");
       const target = join(root.external, "rejected.txt");
       writeFileSync(
-        join(root.home, ".fx", "settings.json"),
+        join(root.home, ".tetris", "settings.json"),
         JSON.stringify({ permission: { edit: { [`${root.external}/**`]: "ask" } } }),
       );
       const gateway = startFakeGateway([
@@ -9754,7 +9754,7 @@ describe("acp: model-independent", () => {
       const root = createIsolatedRoot("fx-acp-command-approval-");
       const marker = join(root.workspace, "approved-command.txt");
       writeFileSync(
-        join(root.home, ".fx", "settings.json"),
+        join(root.home, ".tetris", "settings.json"),
         JSON.stringify({ permission: { bash: { "printf *": "ask" } } }),
       );
       const gateway = startFakeGateway([
@@ -9928,7 +9928,7 @@ describe("acp: model-independent", () => {
       const root = createIsolatedRoot("fx-acp-permission-shutdown-");
       const target = join(root.external, "never-written.txt");
       writeFileSync(
-        join(root.home, ".fx", "settings.json"),
+        join(root.home, ".tetris", "settings.json"),
         JSON.stringify({ permission: { edit: { [`${root.external}/**`]: "ask" } } }),
       );
       const gateway = startFakeGateway([
@@ -9962,7 +9962,7 @@ describe("acp: model-independent", () => {
     async () => {
       for (const [saved, expected] of [[undefined, "auto"], ["ask", "ask"], ["auto", "auto"], ["yolo", "full-access"], ["full-access", "full-access"]] as const) {
         const root = createIsolatedRoot("fx-acp-permission-modes-");
-        if (saved) writeFileSync(join(root.home, ".fx", "settings.json"), JSON.stringify({ permission_mode: saved }));
+        if (saved) writeFileSync(join(root.home, ".tetris", "settings.json"), JSON.stringify({ permission_mode: saved }));
         const gateway = startFakeGateway([]);
         try {
           client = await AcpClient.create({ cwd: root.workspace, env: fakeGatewayEnv(root, gateway) });
@@ -9988,10 +9988,10 @@ describe("acp: model-independent", () => {
   );
 
   test(
-    "fx acp --permission-mode sets the starting mode without saving it",
+    "tetris acp --permission-mode sets the starting mode without saving it",
     async () => {
       const root = createIsolatedRoot("fx-acp-permission-flag-");
-      const settingsPath = join(root.home, ".fx", "settings.json");
+      const settingsPath = join(root.home, ".tetris", "settings.json");
       writeFileSync(settingsPath, JSON.stringify({ permission_mode: "auto" }));
       const gateway = startFakeGateway([]);
       try {
@@ -10018,11 +10018,11 @@ describe("acp: model-independent", () => {
   );
 
   test(
-    "fx status --json lists the modes and the one a new ACP session starts in",
+    "tetris status --json lists the modes and the one a new ACP session starts in",
     async () => {
       for (const [saved, expected] of [[undefined, "auto"], ["ask", "ask"], ["yolo", "full-access"]] as const) {
         const root = createIsolatedRoot("fx-acp-status-modes-");
-        if (saved) writeFileSync(join(root.home, ".fx", "settings.json"), JSON.stringify({ permission_mode: saved }));
+        if (saved) writeFileSync(join(root.home, ".tetris", "settings.json"), JSON.stringify({ permission_mode: saved }));
         const gateway = startFakeGateway([]);
         try {
           const env = fakeGatewayEnv(root, gateway);
@@ -10055,7 +10055,7 @@ describe("acp: model-independent", () => {
     "a mode change is saved like /permissions and unknown modes are rejected",
     async () => {
       const root = createIsolatedRoot("fx-acp-permission-mode-save-");
-      const settingsPath = join(root.home, ".fx", "settings.json");
+      const settingsPath = join(root.home, ".tetris", "settings.json");
       const savedMode = () => JSON.parse(readFileSync(settingsPath, "utf8")).permission_mode;
       const gateway = startFakeGateway([]);
       try {
@@ -10085,7 +10085,7 @@ describe("acp: model-independent", () => {
         await client.readLine();
         expect(next.result.modes.currentModeId).toBe("full-access");
 
-        // Another fx process, such as the CLI's /permissions, saves a mode.
+        // Another tetris process, such as the CLI's /permissions, saves a mode.
         writeFileSync(settingsPath, JSON.stringify({ ...JSON.parse(readFileSync(settingsPath, "utf8")), permission_mode: "ask" }));
         const afterOther = await client.request("session/new", { mcpServers: [] }, 9) as any;
         await client.readLine();
@@ -10158,7 +10158,7 @@ describe("acp: model catalog authentication", () => {
           const initialized = await client.request("initialize", { protocolVersion: 1 }, 1) as any;
           if (scenario.expectInitializeFailure) {
             expect(initialized.error).toBeDefined();
-            expect(initialized.error.message).toContain("fx login");
+            expect(initialized.error.message).toContain("tetris login");
             expect(gateway.modelRequests).toHaveLength(0);
             return;
           }

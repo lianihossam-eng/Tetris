@@ -116,10 +116,10 @@ function createIsolatedRoot(domains = ["example.com"]) {
   const root = realpathSync(mkdtempSync(join(tmpdir(), "fx-web-fetch-live-")));
   const home = join(root, "home");
   const workspace = join(root, "workspace");
-  mkdirSync(join(home, ".fx"), { recursive: true });
+  mkdirSync(join(home, ".tetris"), { recursive: true });
   mkdirSync(workspace, { recursive: true });
   writeFileSync(
-    join(home, ".fx", "settings.json"),
+    join(home, ".tetris", "settings.json"),
     JSON.stringify({
       model: OUTER_MODEL,
       permission: {
@@ -177,7 +177,7 @@ describe.skipIf(process.env.FX_WEB_FETCH_LIVE !== "1")("live web_fetch public UR
 
           if (result.code !== 0) {
             throw new Error(
-              `fx exited ${result.code}\nstdout: ${result.stdout.slice(-4000)}\nstderr: ${result.stderr.slice(-4000)}`,
+              `tetris exited ${result.code}\nstdout: ${result.stdout.slice(-4000)}\nstderr: ${result.stderr.slice(-4000)}`,
             );
           }
           const json = JSON.parse(result.stdout.trim()) as {
@@ -248,7 +248,7 @@ describe.skipIf(process.env.FX_WEB_FETCH_LIVE !== "1")("live web_fetch public UR
 
         if (result.code !== 0) {
           throw new Error(
-            `fx exited ${result.code}\nstdout: ${result.stdout.slice(-4000)}\nstderr: ${result.stderr.slice(-4000)}`,
+            `tetris exited ${result.code}\nstdout: ${result.stdout.slice(-4000)}\nstderr: ${result.stderr.slice(-4000)}`,
           );
         }
         const json = JSON.parse(result.stdout.trim()) as {
@@ -314,7 +314,7 @@ describe.skipIf(process.env.FX_WEB_FETCH_LIVE !== "1")("live web_fetch public UR
 
         if (result.code !== 0) {
           throw new Error(
-            `fx exited ${result.code}\nstdout: ${result.stdout.slice(-4000)}\nstderr: ${result.stderr.slice(-4000)}`,
+            `tetris exited ${result.code}\nstdout: ${result.stdout.slice(-4000)}\nstderr: ${result.stderr.slice(-4000)}`,
           );
         }
         const json = JSON.parse(result.stdout.trim()) as {

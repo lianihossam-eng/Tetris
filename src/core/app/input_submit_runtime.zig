@@ -943,7 +943,7 @@ pub fn SubmitRuntime(comptime App: type) type {
             var body_buf: [192]u8 = undefined;
             const home = homeHint(app, &name_buf);
             const body = std.mem.print(&body_buf, "{s} works on {s}'s screen. Press {s} and pick {s} to go back.", .{ command.command, home.name, home.key, home.name }) catch
-                "This command works on an fx instance's screen, not a subagent's.";
+                "This command works on a Tetris instance's screen, not a subagent's.";
             try app.writeDomainNotice(.{ .topic = "subagent", .tone = .neutral, .body = body }, true);
             app.input_runtime.inputResetState().clearCurrent(app.alloc);
             app.shell.render_requests.request(.footer);

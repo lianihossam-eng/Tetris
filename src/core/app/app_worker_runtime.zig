@@ -2308,19 +2308,19 @@ test "core.app_worker_runtime program status follows decision prompts to the tur
     defer app.deinit();
 
     try tickNoop(&app);
-    try expectProgramStatusReports(&app, "\x1b]7501;state=idle:app=fx\x1b\\");
+    try expectProgramStatusReports(&app, "\x1b]7501;state=idle:app=tetris\x1b\\");
 
     app.agent().worker.processing = true;
     try app.agent().worker.pushEvent(std.heap.c_allocator, .{ .begin_prompt = .{ .text = @constCast("push it") } });
     try tickNoop(&app);
-    try expectProgramStatusReports(&app, "\x1b]7501;state=working:app=fx\x1b\\");
+    try expectProgramStatusReports(&app, "\x1b]7501;state=working:app=tetris\x1b\\");
 
     app.agent().worker.pending_permission_request = .{ .label = "shell.run git push" };
     try tickNoop(&app);
     try tickNoop(&app);
     try expectProgramStatusReports(
         &app,
-        "\x1b]7501;state=blocked:kind=permission:app=fx:msg=c2hlbGwucnVuIGdpdCBwdXNo\x1b\\",
+        "\x1b]7501;state=blocked:kind=permission:app=tetris:msg=c2hlbGwucnVuIGdpdCBwdXNo\x1b\\",
     );
 
     app.agent().worker.pending_permission_request = null;
@@ -2328,16 +2328,16 @@ test "core.app_worker_runtime program status follows decision prompts to the tur
     app.agent().question_prompt.question = "Which branch?";
     try app.agent().worker.pushEvent(std.heap.c_allocator, .question_requested);
     try tickNoop(&app);
-    try expectProgramStatusReports(&app, "\x1b]7501;state=blocked:kind=question:app=fx:msg=V2hpY2ggYnJhbmNoPw==\x1b\\");
+    try expectProgramStatusReports(&app, "\x1b]7501;state=blocked:kind=question:app=tetris:msg=V2hpY2ggYnJhbmNoPw==\x1b\\");
 
     app.agent().worker.pending_question = false;
     try tickNoop(&app);
-    try expectProgramStatusReports(&app, "\x1b]7501;state=working:app=fx\x1b\\");
+    try expectProgramStatusReports(&app, "\x1b]7501;state=working:app=tetris\x1b\\");
 
     try queueTurnFinished(&app, 1, .completed);
     app.agent().worker.processing = false;
     try tickNoop(&app);
-    try expectProgramStatusReports(&app, "\x1b]7501;state=done:app=fx\x1b\\");
+    try expectProgramStatusReports(&app, "\x1b]7501;state=done:app=tetris\x1b\\");
 
     // Work that starts no turn and reports no result settles as idle instead
     // of reporting the earlier result again.
@@ -2347,7 +2347,7 @@ test "core.app_worker_runtime program status follows decision prompts to the tur
     try tickNoop(&app);
     try expectProgramStatusReports(
         &app,
-        "\x1b]7501;state=working:app=fx\x1b\\\x1b]7501;state=idle:app=fx\x1b\\",
+        "\x1b]7501;state=working:app=tetris\x1b\\\x1b]7501;state=idle:app=tetris\x1b\\",
     );
 
     // A failed `/compact` reports an error although no turn ran.
@@ -2359,7 +2359,7 @@ test "core.app_worker_runtime program status follows decision prompts to the tur
     try tickNoop(&app);
     try expectProgramStatusReports(
         &app,
-        "\x1b]7501;state=working:app=fx\x1b\\\x1b]7501;state=error:app=fx\x1b\\",
+        "\x1b]7501;state=working:app=tetris\x1b\\\x1b]7501;state=error:app=tetris\x1b\\",
     );
 
     app.agent().worker.processing = true;
@@ -2374,7 +2374,7 @@ test "core.app_worker_runtime program status follows decision prompts to the tur
     try tickNoop(&app);
     try expectProgramStatusReports(
         &app,
-        "\x1b]7501;state=working:app=fx\x1b\\\x1b]7501;state=error:app=fx\x1b\\",
+        "\x1b]7501;state=working:app=tetris\x1b\\\x1b]7501;state=error:app=tetris\x1b\\",
     );
 
     // An approval prompt that opens outside a turn does not bring the
@@ -2385,8 +2385,8 @@ test "core.app_worker_runtime program status follows decision prompts to the tur
     try tickNoop(&app);
     try expectProgramStatusReports(
         &app,
-        "\x1b]7501;state=blocked:kind=permission:app=fx:msg=UmVtZW1iZXIgYWxsb3cgZm9yIHRoaXMgc2F2ZWQgc2Vzc2lvbg==\x1b\\" ++
-            "\x1b]7501;state=idle:app=fx\x1b\\",
+        "\x1b]7501;state=blocked:kind=permission:app=tetris:msg=UmVtZW1iZXIgYWxsb3cgZm9yIHRoaXMgc2F2ZWQgc2Vzc2lvbg==\x1b\\" ++
+            "\x1b]7501;state=idle:app=tetris\x1b\\",
     );
 }
 

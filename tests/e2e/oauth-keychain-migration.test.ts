@@ -21,7 +21,9 @@ import {
 } from "./tmux-helpers";
 
 const TIMEOUT = 30_000;
-const OAUTH_SERVICE = "FX_OAUTH_SESSION_V1";
+const OAUTH_SERVICE = "TETRIS_OAUTH_SESSION_V1";
+/** Fx's own OAuth item, which Tetris must never read, overwrite, or delete. */
+const FX_OAUTH_SERVICE = "FX_OAUTH_SESSION_V1";
 const TEST_ACCOUNT_PREFIX = "fx-e2e-oauth-";
 const activeCleanups = new Set<() => void>();
 const KEYCHAIN_PROBE_SCRIPT = `
@@ -94,10 +96,10 @@ function loadKeychainItem(account: string, home: string): string | null {
   throw new Error(`isolated OAuth Keychain lookup failed: ${result.stderr.trim()}`);
 }
 
-function productionMetadata(): string | null {
+function productionMetadata(service: string): string | null {
   const result = spawnSync(
     "/usr/bin/security",
-    ["find-generic-password", "-a", userInfo().username, "-s", OAUTH_SERVICE],
+    ["find-generic-password", "-a", userInfo().username, "-s", service],
     { encoding: "utf8" },
   );
   if (result.status === 0) return `${result.stdout}\n${result.stderr}`;
@@ -143,7 +145,7 @@ function startOAuthIssuer() {
 }
 
 function writeLogin(home: string, issuer: string, tokenSuffix: string): void {
-  const fxDir = join(home, ".fx");
+  const fxDir = join(home, ".tetris");
   mkdirSync(fxDir, { recursive: true, mode: 0o700 });
   chmodSync(fxDir, 0o700);
   const authPath = join(fxDir, "auth.json");
@@ -206,7 +208,7 @@ keychainTest(
     activeCleanups.add(cleanup);
     cleanup();
     writeLogin(home, issuer.issuer, account);
-    const path = join(home, ".fx", "auth.json");
+    const path = join(home, ".tetris", "auth.json");
     const original = readFileSync(path, "utf8");
     chmodSync(path, 0o400);
     try {
@@ -233,7 +235,8 @@ keychainTest(
   "OAuth file migration survives restart and logout in an isolated Keychain account",
   async () => {
     const account = isolatedAccount();
-    const before = productionMetadata();
+    const before = productionMetadata(OAUTH_SERVICE);
+    const fxBefore = productionMetadata(FX_OAUTH_SERVICE);
     const home = mkdtempSync(join(tmpdir(), "fx-oauth-keychain-migration-"));
     attachSystemKeychain(home);
     const issuer = startOAuthIssuer();
@@ -254,9 +257,9 @@ keychainTest(
     try {
       const first = await runFx(["status", "--json"], { env, timeoutMs: TIMEOUT });
       expect(first.code, `stdout: ${first.stdout}\nstderr: ${first.stderr}`).toBe(0);
-      expect(JSON.parse(first.stdout).auth).toBe("fx login");
+      expect(JSON.parse(first.stdout).auth).toBe("tetris login");
       expect(
-        existsSync(join(home, ".fx", "auth.json")),
+        existsSync(join(home, ".tetris", "auth.json")),
         readFileSync(join(home, "oauth-keychain-trace.log"), "utf8"),
       ).toBe(false);
 
@@ -275,7 +278,7 @@ keychainTest(
       expect(JSON.parse(refreshed.stdout).output).toContain(
         "Keychain refresh complete",
       );
-      expect(existsSync(join(home, ".fx", "auth.json"))).toBe(false);
+      expect(existsSync(join(home, ".tetris", "auth.json"))).toBe(false);
       expect(JSON.parse(loadKeychainItem(account, home)!).access_token).toBe(
         "keychain-refreshed-access",
       );
@@ -283,15 +286,15 @@ keychainTest(
         issuer.requests.filter((request) => request.path === "/oauth/token"),
       ).toHaveLength(1);
 
-      rmSync(join(home, ".fx"), { recursive: true, force: true });
+      rmSync(join(home, ".tetris"), { recursive: true, force: true });
       const restarted = await runFx(["status", "--json"], { env, timeoutMs: TIMEOUT });
       expect(restarted.code).toBe(0);
-      expect(JSON.parse(restarted.stdout).auth).toBe("fx login");
-      expect(existsSync(join(home, ".fx"))).toBe(false);
+      expect(JSON.parse(restarted.stdout).auth).toBe("tetris login");
+      expect(existsSync(join(home, ".tetris"))).toBe(false);
 
       const logout = await runFx(["logout"], { env, timeoutMs: TIMEOUT });
       expect(logout.code, `stdout: ${logout.stdout}\nstderr: ${logout.stderr}`).toBe(0);
-      expect(logout.stdout).toBe("Signed out of fx.\n");
+      expect(logout.stdout).toBe("Signed out of Tetris.\n");
       expect(loadKeychainItem(account, home)).toBeNull();
       expect(issuer.requests.filter((request) => request.path === "/oauth/revoke")).toHaveLength(2);
     } finally {
@@ -302,7 +305,8 @@ keychainTest(
       rmSync(home, { recursive: true, force: true });
     }
 
-    expect(productionMetadata()).toBe(before);
+    expect(productionMetadata(OAUTH_SERVICE)).toBe(before);
+    expect(productionMetadata(FX_OAUTH_SERVICE)).toBe(fxBefore);
   },
   TIMEOUT,
 );
@@ -311,7 +315,8 @@ keychainTest(
   "OAuth Keychain cleanup survives a failure after migration",
   async () => {
     const account = isolatedAccount();
-    const before = productionMetadata();
+    const before = productionMetadata(OAUTH_SERVICE);
+    const fxBefore = productionMetadata(FX_OAUTH_SERVICE);
     const home = mkdtempSync(join(tmpdir(), "fx-oauth-keychain-failure-"));
     attachSystemKeychain(home);
     const issuer = startOAuthIssuer();
@@ -341,7 +346,8 @@ keychainTest(
     try {
       expect(injectedFailureObserved).toBe(true);
       expect(loadKeychainItem(account, home)).toBeNull();
-      expect(productionMetadata()).toBe(before);
+      expect(productionMetadata(OAUTH_SERVICE)).toBe(before);
+      expect(productionMetadata(FX_OAUTH_SERVICE)).toBe(fxBefore);
     } finally {
       rmSync(home, { recursive: true, force: true });
     }

@@ -1396,7 +1396,7 @@ pub fn Bindings(comptime App: type) type {
                 .{ .label = "Cancel this turn", .description = "Stop this request." },
             };
             const entry = types.QuestionBatchEntry{
-                .question = "Out of credits. What should fx do?",
+                .question = "Out of credits. What should Tetris do?",
                 .options = &options,
             };
             const answers = try agent.worker.requestRouteRecoveryAnswerBlocking(std.heap.c_allocator, &.{entry});

@@ -7,7 +7,7 @@
 (* of its own, or it joins a turn. A turn runs model requests: while one   *)
 (* streams text or reasoning the turn is in `gen`, once the model streams  *)
 (* a tool call's arguments it is in `args`, and while the tool runs it is  *)
-(* in `tool`. These rules come from the fx CLI:                            *)
+(* in `tool`. These rules come from the tetris CLI:                            *)
 (*                                                                         *)
 (* - A steer sent in `gen` cuts the reply short: the request stops and the *)
 (*   turn goes on with the steer in its next request (Interrupt).          *)

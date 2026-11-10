@@ -1,4 +1,4 @@
-// Connects behavior observed from the real fx binary to TLC.
+// Connects behavior observed from the real tetris binary to TLC.
 //
 // The observations become LaunchObserved.tla. LaunchTrace replays them through
 // LaunchSelection's own actions for one design. ACCEPTED requires TLC exit 12

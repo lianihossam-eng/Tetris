@@ -68,7 +68,7 @@ jobs:
           version: "0.17.0"
           cache-key: ci-unit-ReleaseSafe
 
-      # shell_parity compares fx's parse with sh, dash, bash, and zsh.
+      # shell_parity compares Tetris's parse with sh, dash, bash, and zsh.
       - name: Install zsh
         if: matrix.target == 'shell_parity'
         run: command -v zsh >/dev/null || { sudo apt-get update -qq && sudo apt-get install -y -qq zsh; }

@@ -154,10 +154,10 @@ const fetch = async (_url, init = {}) => {
   if (!checkedBrowserCapabilityContext) {
     const serializedPrompt = JSON.stringify(body.prompt || []);
     for (const guidance of [
-      "embedded browser version of fx",
+      "embedded browser version of Tetris",
       "Public web fetch, web search, and general outbound network access are unavailable",
       "Do not attempt curl, wget",
-      "locally installed fx provides the full tool suite",
+      "locally installed Tetris provides the full tool suite",
     ]) {
       if (!serializedPrompt.includes(guidance)) {
         throw new Error(`browser capability context omitted ${guidance}: ${serializedPrompt}`);
@@ -257,7 +257,7 @@ async function prompt(value, expected) {
   await waitFor(() => grid().includes(expected), expected);
 }
 
-await waitFor(() => grid().includes("𝒇x"), "startup");
+await waitFor(() => grid().includes("tetris v"), "startup");
 await prompt("workspace success", "success record checked");
 await prompt("workspace truncation", "truncation record checked");
 await prompt("workspace timeout", "timeout mapping checked");

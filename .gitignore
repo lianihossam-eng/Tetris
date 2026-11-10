@@ -13,6 +13,7 @@ zig-pkg/
 sdk/dist/
 
 # Workspace-local runtime state
+/.tetris/
 /skills/
 
 # Local environment files

@@ -3,7 +3,7 @@
 //! `fx_dark` and `fx_light` retain their historical palette bytes. The ui
 //! keeps diff marker accents off until a theme is explicitly selected. Both
 //! core presentation and ui rendering resolve their themed values from here.
-//! User themes load from `~/.fx/themes/<name>.json` (selected with
+//! User themes load from `~/.tetris/themes/<name>.json` (selected with
 //! FX_THEME=<name>) in either the
 //! native fx slot schema or the VS Code theme schema (`colors` +
 //! `tokenColors`), so editor themes like GitHub Dark apply
@@ -184,7 +184,7 @@ pub const ThemeChoice = union(enum) {
 
 /// Classifies a configured theme value (FX_THEME or the settings "theme"
 /// key): light/dark pin the builtin variant, anything else names a theme file
-/// under ~/.fx/themes.
+/// under ~/.tetris/themes.
 pub fn classifyValue(value: []const u8) ?ThemeChoice {
     if (value.len == 0) return null;
     if (std.ascii.eqlIgnoreCase(value, "light")) return .pin_light;
@@ -758,7 +758,7 @@ fn parseVsCode(alloc: std.mem.Allocator, root: std.json.ObjectMap, options: Pars
     return theme;
 }
 
-// --- Loading from ~/.fx/themes ---
+// --- Loading from ~/.tetris/themes ---
 
 pub const LoadError = error{ InvalidName, ThemeNotFound, InvalidTheme, OutOfMemory };
 
@@ -812,10 +812,10 @@ pub fn resolveNamed(alloc: std.mem.Allocator, name: []const u8, terminal_light: 
     return null;
 }
 
-/// Loads `~/.fx/themes/<name>.json` and resolves it for the terminal's color
+/// Loads `~/.tetris/themes/<name>.json` and resolves it for the terminal's color
 /// capability. The returned Theme is process-lifetime state allocated from
 /// `alloc`; the caller keeps the allocation alive.
-/// Whether `name` can name a theme file under ~/.fx/themes: 1 to 64 letters,
+/// Whether `name` can name a theme file under ~/.tetris/themes: 1 to 64 letters,
 /// digits, `-`, `_`, or `.`, and not `.` or `..`.
 pub fn validThemeName(name: []const u8) bool {
     if (name.len == 0 or name.len > 64) return false;

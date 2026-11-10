@@ -294,11 +294,11 @@ function createIsolatedRoot(
   const root = realpathSync(mkdtempSync(join(tmpdir(), "fx-web-search-e2e-")));
   const home = join(root, "home");
   const workspace = join(root, "workspace");
-  mkdirSync(join(home, ".fx"), { recursive: true });
+  mkdirSync(join(home, ".tetris"), { recursive: true });
   mkdirSync(workspace, { recursive: true });
   const permission: Record<string, Record<string, string>> = {};
   if (webSearchPermission) permission.web_search = { "*": webSearchPermission };
-  writeFileSync(join(home, ".fx", "settings.json"), JSON.stringify({ ...settings, permission }));
+  writeFileSync(join(home, ".tetris", "settings.json"), JSON.stringify({ ...settings, permission }));
   return { root, home, workspace: realpathSync(workspace) };
 }
 
@@ -528,7 +528,7 @@ describe("web_search Gateway fixture", () => {
   );
 
   test(
-    "default fx ask unadvertised native web_search cannot start a worker",
+    "default tetris ask unadvertised native web_search cannot start a worker",
     async () => {
       const root = createIsolatedRoot();
       const gateway = startFakeGateway([
@@ -897,7 +897,7 @@ describe("web_search Gateway fixture", () => {
   );
 
   test(
-    "fx ask preserves the exact GLM model while sending declared Fast",
+    "tetris ask preserves the exact GLM model while sending declared Fast",
     async () => {
       const root = createIsolatedRoot("allow", {
         model: "zai/glm-5.2",
@@ -975,7 +975,7 @@ describe("web_search Gateway fixture", () => {
           expect(gateway.requests[0].body).not.toContain('"thinking"');
 
           const stored = JSON.parse(
-            readFileSync(join(root.home, ".fx", "settings.json"), "utf8"),
+            readFileSync(join(root.home, ".tetris", "settings.json"), "utf8"),
           );
           expect(stored.effort).toBe(testCase.effort);
           expect(stored.fast_mode).toBe(true);
@@ -1092,7 +1092,7 @@ describe("web_search Gateway fixture", () => {
   );
 
   test(
-    "default fx ask applies environment model, permission, and step-limit overrides",
+    "default tetris ask applies environment model, permission, and step-limit overrides",
     async () => {
       const root = createIsolatedRoot(null, {
         model: OUTER_MODEL,

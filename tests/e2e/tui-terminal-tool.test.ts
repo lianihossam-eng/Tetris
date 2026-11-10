@@ -40,10 +40,10 @@ function createFixture(prefix: string) {
   const workspace = join(root, "workspace");
   const tracePath = join(root, "trace.log");
   const stderrPath = join(root, "stderr.log");
-  mkdirSync(join(home, ".fx"), { recursive: true });
+  mkdirSync(join(home, ".tetris"), { recursive: true });
   mkdirSync(workspace);
   writeFileSync(
-    join(home, ".fx", "settings.json"),
+    join(home, ".tetris", "settings.json"),
     JSON.stringify({
       permission_mode: "yolo",
       sandbox: "os",
@@ -145,10 +145,10 @@ function schemaFromRequest(body: string): Record<string, unknown> {
   return shell.inputSchema as Record<string, unknown>;
 }
 
-/// Every hosted terminal's record; their state lives under `~/.fx/terminal`
+/// Every hosted terminal's record; their state lives under `~/.tetris/terminal`
 /// (D45).
 function terminalRecords(home: string): Array<Record<string, unknown>> {
-  const sessionsRoot = join(home, ".fx", "terminal");
+  const sessionsRoot = join(home, ".tetris", "terminal");
   if (!existsSync(sessionsRoot)) return [];
   return readdirSync(sessionsRoot).flatMap((sessionId) => {
     const terminalRoot = join(sessionsRoot, sessionId, "terminal", "state");
@@ -216,7 +216,7 @@ async function waitUntilGone(pids: number[], timeoutMs: number): Promise<number>
 
 function expectNoTerminalHostDaemon(fixture: ReturnType<typeof createFixture>): void {
   expect(processesMatching(`${FX_BIN} --fx-internal-terminal-host`)).toEqual([]);
-  expect(existsSync(join(fixture.home, ".fx", "terminal-host-v7"))).toBe(false);
+  expect(existsSync(join(fixture.home, ".tetris", "terminal-host-v7"))).toBe(false);
 }
 
 function terminalRecord(home: string, sessionId: string): Record<string, unknown> {
@@ -1148,18 +1148,18 @@ test.skipIf(!tmuxAvailable())(
     ] as const) {
       const result = toolResultEnvelope(gateway.requests[index]!.body, id);
       expect(result).toContain("TerminalEnded");
-      expect(result).toContain("ended when the fx process that started it exited");
+      expect(result).toContain("ended when the Tetris process that started it exited");
       expect(result).toContain("Start a new terminal");
     }
     // The transcript shows why the terminal is gone.
-    expect(await resumed.captureFullScrollback()).toContain("ended when fx exited");
+    expect(await resumed.captureFullScrollback()).toContain("ended when Tetris exited");
     expect(terminalRecord(fixture.home, sessionId).lifecycle).toBe("lost");
     expect(readFileSync(fixture.stderrPath, "utf8")).toBe("");
   },
   60_000,
 );
 
-test("fx ask exit ends its TTY terminal within one second", async () => {
+test("tetris ask exit ends its TTY terminal within one second", async () => {
   const fixture = createFixture("fx-shell-tty-ask-exit-");
   let sessionId = "";
   const gateway = startFakeGateway([
@@ -1229,7 +1229,7 @@ test("TTY runs in the requested cwd on a real PTY and reports the exact exit", a
 }, TIMEOUT);
 
 test.skipIf(!tmuxAvailable())(
-  "another fx process can neither drive nor end a running owner's terminal",
+  "another Tetris process can neither drive nor end a running owner's terminal",
   async () => {
     const fixture = createFixture("fx-shell-tty-owner-");
     let ownerTerminal = "";

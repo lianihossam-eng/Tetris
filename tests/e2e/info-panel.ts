@@ -1,6 +1,6 @@
 // What a read-only footer panel showed, `/status` or `/permissions`, read
 // back through fx's own virtual terminal. A test records the terminal with
-// `FX_RECORD` and `FX_RECORD_INPUT=1`; `fx replay --frames-dir` feeds that
+// `FX_RECORD` and `FX_RECORD_INPUT=1`; `tetris replay --frames-dir` feeds that
 // tape to the vt_emulator engine (`src/core/terminal/engine.zig`) and writes
 // the grid after every frame. Each time the tape's input submitted the
 // command, it is matched to the panel fx painted before the next keystroke,
@@ -94,7 +94,7 @@ export type StatusPanelView = PanelView;
 export type StatusReport = PanelReport;
 
 /// A tape's frames. A process killed mid-write leaves its last frame cut
-/// short; it is left out, as `fx replay` leaves it out.
+/// short; it is left out, as `tetris replay` leaves it out.
 function frames(tapePath: string) {
   return readTapeFrames(tapePath, { ignoreTruncatedTail: true });
 }
@@ -118,7 +118,7 @@ export function holdsKeystroke(input: string): boolean {
   return false;
 }
 
-/// Every grid `fx replay --frames-dir` wrote for `tapePath`, by tape frame.
+/// Every grid `tetris replay --frames-dir` wrote for `tapePath`, by tape frame.
 export function replayGrids(fxBin: string, tapePath: string, framesRoot: string): Map<number, string[]> {
   execFileSync(fxBin, ["replay", tapePath, "--frames-dir", framesRoot], {
     stdio: "pipe",
@@ -189,7 +189,7 @@ export function submittedFrames(tapePath: string, command: string): { typed: num
 /// the column ends, the only break that fills the line. A word that exactly
 /// fills its column before a space reads back joined to the next word; no
 /// value the tests read holds one.
-/// `width` is the terminal's; by default the widest row's, since `fx replay`
+/// `width` is the terminal's; by default the widest row's, since `tetris replay`
 /// writes every row at the terminal's full width.
 export function infoPanel(grid: string[], title: PanelTitle, width = Math.max(...grid.map((row) => [...row].length))): InfoPanel | null {
   const top = grid.findIndex((row, at) => row.trimEnd() === title && /^(?: *| {2,}\S.*)$/.test(grid[at + 1] ?? ""));
@@ -332,7 +332,7 @@ export function panelReports(fxBin: string, tapePath: string, framesRoot: string
     [...grids.keys()].filter((index) => index > after && index < before).sort((a, b) => b - a);
   return submittedFrames(tapePath, command).map(({ typed, submitted }) => {
     const beforeFrame = paintedBetween(-1, typed)[0];
-    if (beforeFrame === undefined) throw new Error(`${command} typed at tape frame ${typed} before fx painted anything`);
+    if (beforeFrame === undefined) throw new Error(`${command} typed at tape frame ${typed} before tetris painted anything`);
     const before = grids.get(beforeFrame)!;
     if (showsPanel(before, title)) throw new Error(`a ${command} panel was already showing when ${command} was typed at tape frame ${typed}`);
 

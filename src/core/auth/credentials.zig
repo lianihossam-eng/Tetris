@@ -250,19 +250,19 @@ pub const LoadMode = enum { stored, refresh_if_needed };
 
 const FxLoginRefreshMode = enum { if_needed, force };
 
-pub const missing_credential_message = "fx needs access to Vercel AI Gateway. Run fx login to sign in, fx login vercel --api-key to use an API key, or set AI_GATEWAY_API_KEY.";
-pub const missing_interactive_credential_message = "fx needs access to Vercel AI Gateway. Run /login to sign in, /provider to use an API key, or set AI_GATEWAY_API_KEY.";
-pub const missing_chatgpt_credential_message = "fx needs a Codex subscription login for this model. Run fx login codex.";
+pub const missing_credential_message = "Tetris needs access to Vercel AI Gateway. Run tetris login to sign in, tetris login vercel --api-key to use an API key, or set AI_GATEWAY_API_KEY.";
+pub const missing_interactive_credential_message = "Tetris needs access to Vercel AI Gateway. Run /login to sign in, /provider to use an API key, or set AI_GATEWAY_API_KEY.";
+pub const missing_chatgpt_credential_message = "Tetris needs a Codex subscription login for this model. Run tetris login codex.";
 pub const missing_chatgpt_interactive_credential_message = "Codex needs a subscription login. Run /login, open Connections, then choose Codex subscription.";
-pub const missing_grok_credential_message = "fx needs a Grok subscription login for this model. Run fx login grok.";
+pub const missing_grok_credential_message = "Tetris needs a Grok subscription login for this model. Run tetris login grok.";
 pub const missing_grok_interactive_credential_message = "Grok needs a subscription login. Run /login, open Connections, then choose Grok subscription.";
-pub const unreadable_store_message = "fx could not read the stored API key from " ++ stored_key_backend_label ++ ". A key may be saved but unreadable. Set FX_TRACE_LOG for the failing step, or set AI_GATEWAY_API_KEY.";
+pub const unreadable_store_message = "Tetris could not read the stored API key from " ++ stored_key_backend_label ++ ". A key may be saved but unreadable. Set FX_TRACE_LOG for the failing step, or set AI_GATEWAY_API_KEY.";
 pub const host_managed_auth_message = "Authentication is managed by the host.";
 
-test "public credential guidance spells fx lowercase" {
-    try std.testing.expect(std.mem.startsWith(u8, missing_credential_message, "fx needs"));
-    try std.testing.expect(std.mem.startsWith(u8, missing_interactive_credential_message, "fx needs"));
-    try std.testing.expect(std.mem.startsWith(u8, unreadable_store_message, "fx could"));
+test "public credential guidance spells Tetris" {
+    try std.testing.expect(std.mem.startsWith(u8, missing_credential_message, "Tetris needs"));
+    try std.testing.expect(std.mem.startsWith(u8, missing_interactive_credential_message, "Tetris needs"));
+    try std.testing.expect(std.mem.startsWith(u8, unreadable_store_message, "Tetris could"));
 }
 
 test "auth mode accepts only local and host-managed process values" {
@@ -912,12 +912,22 @@ pub fn sourceLabel(source: Source) []const u8 {
     return switch (source) {
         .vercel_oidc_token => "VERCEL_OIDC_TOKEN",
         .ai_gateway_api_key => "AI_GATEWAY_API_KEY",
-        .fx_login => "fx login",
+        .fx_login => "tetris login",
         .stored_key => "stored API key (" ++ stored_key_backend_label ++ ")",
         .chatgpt_subscription => "Codex subscription",
         .grok_subscription => "Grok subscription",
         .host_managed => "host managed",
         .configured => "configured provider",
+    };
+}
+
+/// The source's name at the start of a sentence. Other labels already
+/// start with a capital or a variable name; only a login, which mirrors the
+/// `tetris login` command, needs one.
+pub fn sourceSentenceLabel(source: Source) []const u8 {
+    return switch (source) {
+        .fx_login => "Tetris login",
+        else => sourceLabel(source),
     };
 }
 
@@ -934,13 +944,13 @@ test "stored key label discloses the backend that answered" {
 }
 
 test "missing credential messages use surface commands in preferred order" {
-    const cli_login = std.mem.find(u8, missing_credential_message, "fx login").?;
-    const cli_api_key = std.mem.find(u8, missing_credential_message, "fx login vercel --api-key").?;
+    const cli_login = std.mem.find(u8, missing_credential_message, "tetris login").?;
+    const cli_api_key = std.mem.find(u8, missing_credential_message, "tetris login vercel --api-key").?;
     const cli_env = std.mem.find(u8, missing_credential_message, "AI_GATEWAY_API_KEY").?;
 
     try std.testing.expect(cli_login < cli_api_key);
     try std.testing.expect(cli_api_key < cli_env);
-    try std.testing.expect(std.mem.find(u8, missing_credential_message, "fx setup") == null);
+    try std.testing.expect(std.mem.find(u8, missing_credential_message, "tetris setup") == null);
 
     const tui_login = std.mem.find(u8, missing_interactive_credential_message, "/login").?;
     const tui_setup = std.mem.find(u8, missing_interactive_credential_message, "/provider").?;
@@ -1120,8 +1130,8 @@ const CredentialTestEnv = struct {
     /// environment, `HOME` included, is absent for the duration of the test.
     /// The Keychain is force-disabled: it is keyed by service and account, not
     /// by `HOME`, so without this a fixture session written under a tmp HOME
-    /// migrates into the developer's real `FX_OAUTH_SESSION_V1` item and
-    /// destroys their fx login.
+    /// migrates into the developer's real `TETRIS_OAUTH_SESSION_V1` item and
+    /// destroys their saved Tetris sign-in.
     fn install(alloc: std.mem.Allocator, entries: []const [2][]const u8) !*CredentialTestEnv {
         const self = try alloc.create(CredentialTestEnv);
         errdefer alloc.destroy(self);
@@ -1348,7 +1358,7 @@ test "credential source presence reads metadata without parsing session secrets"
     const alloc = std.testing.allocator;
     var tmp = std.testing.tmpDir(.{});
     defer tmp.cleanup();
-    try tmp.dir.createDirPath(io_mod.getIo(), ".fx");
+    try tmp.dir.createDirPath(io_mod.getIo(), ".tetris");
     const home = try io_mod.dirRealpathAlloc(alloc, tmp.dir, "");
     defer alloc.free(home);
     const env = try CredentialTestEnv.install(alloc, &.{.{ "HOME", home }});
@@ -1366,7 +1376,7 @@ test "credential source presence reads metadata without parsing session secrets"
         var path_buffer: [std.Io.Dir.max_path_bytes]u8 = undefined;
         const relative_path = try std.mem.print(
             &path_buffer,
-            ".fx/{s}",
+            ".tetris/{s}",
             .{case.file_name},
         );
         var file = try tmp.dir.createFile(io_mod.getIo(), relative_path, .{
@@ -1467,8 +1477,8 @@ const ExpiredFxLoginFixture = struct {
         const home = try io_mod.dirRealpathAlloc(alloc, tmp.dir, "");
         errdefer alloc.free(home);
 
-        try tmp.dir.createDirPath(io_mod.getIo(), ".fx");
-        const auth_path = try std.Io.Dir.path.join(alloc, &.{ home, ".fx", "auth.json" });
+        try tmp.dir.createDirPath(io_mod.getIo(), ".tetris");
+        const auth_path = try std.Io.Dir.path.join(alloc, &.{ home, ".tetris", "auth.json" });
         defer alloc.free(auth_path);
         var file = try std.Io.Dir.createFileAbsolute(io_mod.getIo(), auth_path, .{
             .truncate = true,
@@ -1610,7 +1620,7 @@ test "an fx login refresh retires the consumed token when durable replacement fa
     const alloc = std.testing.allocator;
     var fixture = try ExpiredFxLoginFixture.install(alloc);
     defer fixture.deinit();
-    const auth_path = try std.Io.Dir.path.join(alloc, &.{ fixture.home, ".fx", "auth.json" });
+    const auth_path = try std.Io.Dir.path.join(alloc, &.{ fixture.home, ".tetris", "auth.json" });
     defer alloc.free(auth_path);
     var refresh = FxLoginRefreshProbe{
         .token_disposition = .accepted,

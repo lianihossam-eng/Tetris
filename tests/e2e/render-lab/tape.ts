@@ -10,7 +10,7 @@ export type TapeFrame = {
 
 /// Every frame of the tape at `path`. A final frame cut short, as a killed
 /// process can leave it, throws unless `ignoreTruncatedTail` is set; then it
-/// is left out, as `fx replay` leaves it out.
+/// is left out, as `tetris replay` leaves it out.
 export function readTapeFrames(path: string, options: { ignoreTruncatedTail?: boolean } = {}): TapeFrame[] {
   const bytes = readFileSync(path);
   const magic = Buffer.from("FXTP\x01", "binary");

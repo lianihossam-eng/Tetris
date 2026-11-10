@@ -1,5 +1,5 @@
 // /fork (D58) through the real binary in a terminal, judged by TLC. Each
-// scenario drives fx in tmux, then check_runtime.py has TLC check what it
+// scenario drives Tetris in tmux, then check_runtime.py has TLC check what it
 // left: every process's wiring trace against
 // tests/tla/session_manager/Wiring.tla (Fork with ForkIsNewSession,
 // ForkLeavesSource and ForkBetweenTurns), each saved log against
@@ -24,9 +24,9 @@ type App = { session: any; pid: number; stderr: string };
 function fixture(label: string) {
   const root = mkdtempSync(join(artifacts, `fork-${label}-`));
   const home = join(root, "home"), workspace = join(root, "workspace"), trace = join(root, "wiring.log");
-  mkdirSync(join(home, ".fx"), { recursive: true, mode: 0o700 });
+  mkdirSync(join(home, ".tetris"), { recursive: true, mode: 0o700 });
   mkdirSync(workspace, { mode: 0o700 });
-  const sessionsRoot = join(home, ".fx/sessions/v2");
+  const sessionsRoot = join(home, ".tetris/sessions/v2");
   let reply: Reply = () => fakeGatewayFinalText("UNSCRIPTED");
   const gateway = startDynamicFakeGateway(body => reply(body));
   const processes: Process[] = [];

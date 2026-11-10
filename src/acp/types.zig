@@ -19,7 +19,7 @@ pub fn generateMessageId(storage: *MessageIdBuffer) []const u8 {
 pub const protocol_version: u32 = 1;
 
 /// Returns the borrowed value at `_meta.fx.<key>` on an ACP params object.
-/// fx reads and writes its protocol extensions under that one namespace.
+/// Tetris retains its Fx-named protocol namespace for compatibility.
 pub fn fxMetaField(object: std.json.ObjectMap, key: []const u8) ?std.json.Value {
     const meta = object.get("_meta") orelse return null;
     if (meta != .object) return null;
@@ -42,10 +42,10 @@ pub fn fxMetaInteger(object: std.json.ObjectMap, key: []const u8) ?i64 {
 
 const model_recovery_update_prefix = "{\"sessionUpdate\":\"session_info_update\",\"_meta\":{\"fx\":{\"modelResponseRecovery\":";
 
-/// What a session load reports for a request an earlier fx process was
+/// What a session load reports for a request an earlier Tetris process was
 /// running when it stopped.
 /// `_meta.fx.modelResponseRecovery`: the recovery module's shape, as in
-/// `fx ask --json` (decision 38). Null clears the client's status.
+/// `tetris ask --json` (decision 38). Null clears the client's status.
 pub fn writeModelRecoveryInfoUpdate(
     writer: *std.Io.Writer,
     status: ?core_types.RouteRecoveryStatus,
@@ -189,7 +189,7 @@ pub fn writeUserImageChunk(
 /// Host-facing identity of a tool call, sent as `_meta.fx.toolCall` so
 /// clients never need to match on tool names.
 pub const ToolCallMeta = struct {
-    /// fx's own discovery or bookkeeping step, which hosts may hide.
+    /// Tetris's own discovery or bookkeeping step, which hosts may hide.
     internal: bool = false,
     /// The MCP server and its own tool name, for MCP tool calls.
     mcp: ?struct { server: []const u8, tool: []const u8 } = null,
@@ -273,7 +273,7 @@ pub const AgentCapabilities = struct {
     system_prompt: bool = false,
     /// Serves `type: "acp"` MCP servers over this connection.
     mcp_over_acp: bool = false,
-    /// Speaks MCP's HTTP+SSE transport (2024-11-05), which fx's MCP engine doesn't.
+    /// Speaks MCP's HTTP+SSE transport (2024-11-05), which Tetris's MCP engine doesn't.
     mcp_sse: bool = true,
 };
 
@@ -293,7 +293,7 @@ pub fn writeInitializeResponse(w: *std.Io.Writer, capabilities: AgentCapabilitie
     if (capabilities.system_prompt) try w.writeAll(",\"systemPrompt\":{}");
     try w.writeByte('}');
     try w.print(",\"_meta\":{{\"fx\":{{\"steering\":{s}}}}}", .{if (capabilities.steering) "true" else "false"});
-    try w.writeAll("},\"agentInfo\":{\"name\":\"fx\",\"title\":\"fx\",\"version\":");
+    try w.writeAll("},\"agentInfo\":{\"name\":\"tetris\",\"title\":\"Tetris\",\"version\":");
     try writeJsonStr(build_options.app_version, w);
     try w.writeAll("},");
     try w.writeAll("\"authMethods\":[]}");
@@ -533,7 +533,7 @@ test "writeInitializeResponse contains required fields" {
     const mcp_capabilities = agent_capabilities.get("mcpCapabilities").?.object;
     try std.testing.expect(std.mem.find(u8, out.writer.buffered(), "\"protocolVersion\":1") != null);
     try std.testing.expect(std.mem.find(u8, out.writer.buffered(), "\"loadSession\":true") != null);
-    try std.testing.expect(std.mem.find(u8, out.writer.buffered(), "\"name\":\"fx\"") != null);
+    try std.testing.expect(std.mem.find(u8, out.writer.buffered(), "\"name\":\"tetris\"") != null);
     try std.testing.expectEqualStrings(
         build_options.app_version,
         parsed.value.object.get("agentInfo").?.object.get("version").?.string,

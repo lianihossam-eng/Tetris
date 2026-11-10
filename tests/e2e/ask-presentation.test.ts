@@ -135,7 +135,7 @@ function fakeGatewayStreamingText(lines: string[], delayMs: number) {
   );
 }
 
-describe("fx ask presentation", () => {
+describe("tetris ask presentation", () => {
   test("redirected command output separates the next tool header", async () => {
     const root = createRoot();
     const gateway = startFakeGateway([
@@ -306,9 +306,9 @@ describe("fx ask presentation", () => {
     expect(gateway.requests[6]!.body).toContain("neighbor-exec");
     // The refused tty run never reached the terminal store.
     expect(
-      existsSync(join(root.home, ".fx"))
+      existsSync(join(root.home, ".tetris"))
         ? Array.from(new Bun.Glob("**/terminal/state/record-*.json").scanSync({
-          cwd: join(root.home, ".fx"),
+          cwd: join(root.home, ".tetris"),
           dot: true,
         }))
         : [],
@@ -571,7 +571,7 @@ describe("fx ask presentation", () => {
   );
 
   test.skipIf(!tmuxAvailable())(
-    "--no-color keeps the TTY layout without fx styles or hyperlinks",
+    "--no-color keeps the TTY layout without tetris styles or hyperlinks",
     async () => {
       const root = createRoot();
       const gateway = startFakeGateway([fakeGatewayFinalText(MARKDOWN)]);
@@ -1017,7 +1017,7 @@ function occurrences(text: string, needle: string): number {
   return text.split(needle).length - 1;
 }
 
-describe("fx ask shell startup files", () => {
+describe("tetris ask shell startup files", () => {
   test("user-profile commands load startup files once and reload after an edit", async () => {
     const root = createRoot();
     writeStartupFiles(
@@ -1098,7 +1098,7 @@ describe("fx ask shell startup files", () => {
 
     expect(result.code).toBe(0);
     const notice = "shell snapshot unavailable (the captured state exceeded 8 MiB)";
-    expect(occurrences(result.stderr, `fx ask: warning: ${notice}`)).toBe(1);
+    expect(occurrences(result.stderr, `tetris ask: warning: ${notice}`)).toBe(1);
     expect(occurrences(gateway.requests[1]!.body, notice)).toBe(1);
     // The later request repeats the history, so one notice in total.
     expect(occurrences(gateway.requests[2]!.body, notice)).toBe(1);
@@ -1130,7 +1130,7 @@ describe("fx ask shell startup files", () => {
 
     expect(result.code).toBe(0);
     expect(existsSync(join(root.home, "fault-fired"))).toBe(true);
-    const notice = "fx ask: warning: shell snapshot unavailable (the login shell exited before reporting its state)";
+    const notice = "tetris ask: warning: shell snapshot unavailable (the login shell exited before reporting its state)";
     expect(occurrences(result.stderr, notice)).toBe(1);
     expect(gateway.requests[3]!.body).toContain("FX_RECOVERY_ALIAS");
   }, TIMEOUT);
@@ -1183,7 +1183,7 @@ describe("fx ask shell startup files", () => {
       expect(readFileSync(join(root.root, report!), "utf8")).not.toContain(secret);
       expect(readFileSync(tracePath, "utf8")).toContain("shell snapshot ready");
       expect(readFileSync(tracePath, "utf8")).not.toContain(secret);
-      expect(filesContaining(join(root.home, ".fx"), secret)).toEqual([]);
+      expect(filesContaining(join(root.home, ".tetris"), secret)).toEqual([]);
       for (const request of gateway.requests) expect(request.body).not.toContain(secret);
     },
     TIMEOUT,

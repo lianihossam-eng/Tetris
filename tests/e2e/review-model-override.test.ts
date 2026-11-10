@@ -38,10 +38,10 @@ function createIsolatedRoot(settings: Record<string, unknown> = {}): IsolatedRoo
   );
   const home = join(root, "home");
   const workspace = join(root, "workspace");
-  mkdirSync(join(home, ".fx"), { recursive: true });
+  mkdirSync(join(home, ".tetris"), { recursive: true });
   mkdirSync(workspace, { recursive: true });
   writeFileSync(
-    join(home, ".fx", "settings.json"),
+    join(home, ".tetris", "settings.json"),
     JSON.stringify({ sandbox: "none", permission: {}, ...settings }),
   );
   roots.push(root);

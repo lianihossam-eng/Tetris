@@ -71,7 +71,7 @@ comptime {
 }
 
 const shell_base_description =
-    "Run a shell command. Each call starts a new shell with the user's startup files, so cd and export do not carry over. If the command is still running after yield_time_ms, you get a session_id: call again with action=interact to wait for more output, or action=stop to end it. Never rerun it. Owned sessions end when fx exits; & and nohup jobs end with their command. To keep a service running, use `" ++ detach_command ++ "` and check it is ready in that call. In zsh, quote globs meant for another program.";
+    "Run a shell command. Each call starts a new shell with the user's startup files, so cd and export do not carry over. If the command is still running after yield_time_ms, you get a session_id: call again with action=interact to wait for more output, or action=stop to end it. Never rerun it. Owned sessions end when Tetris exits; & and nohup jobs end with their command. To keep a service running, use `" ++ detach_command ++ "` and check it is ready in that call. In zsh, quote globs meant for another program.";
 const shell_file_tools_sentence =
     " To list, find, or read files, use glob_files, grep_files, and read_file, not ls, find, grep, or cat.";
 const shell_process_description = shell_base_description ++ shell_file_tools_sentence;
@@ -127,7 +127,7 @@ const skill_description =
 const capability_search_description =
     "Search installed skills and configured MCP tools for a capability. Matching MCP tools become callable on your next step.";
 const install_skill_description =
-    "Install a skill into fx's skill storage when the user asks. Pass the source as given; fx checks it.";
+    "Install a skill into Tetris's skill storage when the user asks. Pass the source as given; Tetris checks it.";
 const mcp_select_tool_description =
     "Make a configured MCP tool callable on your next step. Pass its exact name, such as mcp_server_tool.";
 const ask_user_question_description = std.fmt.comptimePrint(
@@ -904,7 +904,7 @@ test "built-in model-facing tool contract stays byte exact" {
         if (builtin.target.os.tag.isDarwin())
             "acfa71f07cec5662e77777af6075e529f0d3c2598c9855a04dcbdffda6db5760"
         else
-            "4ab95d2811addf193111f0150912076b1dde54074a1fe6be24b64700ffc254c7",
+            "157fd6a4171abca31c7322a59aebce35f3249475693b23713c87c734b73fe465",
         &actual_hex,
     );
 }
@@ -1441,7 +1441,7 @@ test "built-in install_skill owns product metadata and schema" {
 
     try std.testing.expectEqualStrings("install_skill", install_skill.name);
     try std.testing.expect(std.mem.find(u8, install_skill.description, "when the user asks") != null);
-    try std.testing.expect(std.mem.find(u8, install_skill.description, "fx checks it") != null);
+    try std.testing.expect(std.mem.find(u8, install_skill.description, "Tetris checks it") != null);
     try std.testing.expect(std.mem.find(u8, install_skill.description, "load an already-installed skill") == null);
     try std.testing.expect(std.mem.find(u8, schema_json, "\"source\":{\"type\":\"string\"") != null);
     try std.testing.expect(std.mem.find(u8, schema_json, "\"skill\":{\"type\":\"string\"") != null);

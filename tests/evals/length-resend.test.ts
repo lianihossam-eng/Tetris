@@ -102,7 +102,7 @@ describe.skipIf(!HAS_API_KEY)(`eval: length-cut resend (${EVAL_MODEL})`, () => {
           timeoutMs: 180_000,
         },
       );
-      if (result.code !== 0) throw new Error(`fx exited ${result.code}\n${result.stdout}\n${result.stderr}`);
+      if (result.code !== 0) throw new Error(`tetris exited ${result.code}\n${result.stdout}\n${result.stderr}`);
       expect(JSON.parse(result.stdout).final_output).toContain(ANSWER);
       expect(existsSync(join(workspace, SENTINEL))).toBe(false);
 

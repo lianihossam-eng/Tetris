@@ -6,20 +6,20 @@
  * marker directory to PATH, so whichever login shell passwd selects loads it.
  * The agent runs `echo $PATH` in 10 separate shell calls and replies DONE. A
  * trial passes when it makes at least 10 successful shell calls, uses no other
- * tool, and every printed PATH contains the marker directory. `fx ask --json`
+ * tool, and every printed PATH contains the marker directory. `tetris ask --json`
  * reports no command output, so outputs are read from the raw command output
- * that `fx ask` streams to stderr.
+ * that `tetris ask` streams to stderr.
  *
  * The comparison is report-only like agent-quality-ab: it prints and saves
  * per-side pass counts and per-trial wall time, and does not fail on model
- * noise. Per-trial wall time also includes one `fx --version` call.
+ * noise. Per-trial wall time also includes one `tetris --version` call.
  *
  * It makes real model calls, so run it only on the test billing lane, with
  * absolute paths to the two binaries:
  *
  *   cd tests/evals
- *   FX_AB_BASELINE_BIN=/abs/path/baseline/zig-out/bin/fx \
- *   FX_AB_CANDIDATE_BIN=/abs/path/candidate/zig-out/bin/fx \
+ *   FX_AB_BASELINE_BIN=/abs/path/baseline/zig-out/bin/tetris \
+ *   FX_AB_CANDIDATE_BIN=/abs/path/candidate/zig-out/bin/tetris \
  *   ~/.local/bin/aig test bun test shell-path-ab.test.ts
  *
  * The harness gives every fx run a fresh HOME and passes AI_GATEWAY_API_KEY
@@ -73,7 +73,7 @@ const SHELL_PATH_ROW: AgentQualityMatrixRow = {
   targetResult: "The candidate passes every trial the baseline passes, with lower wall time.",
   coveredEntrypoints: [
     {
-      entrypoint: "fx ask",
+      entrypoint: "tetris ask",
       contextContract: SHARED_MODEL_CONTEXT_CONTRACT,
       notes: "Captured shell calls under the default user profile.",
     },

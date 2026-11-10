@@ -1,5 +1,5 @@
 // Prompt images as blobs of a v2 session (D89) through the real binary,
-// judged by TLC. Each scenario runs `fx ask` against a fake gateway, then
+// judged by TLC. Each scenario runs `tetris ask` against a fake gateway, then
 // writes what it observed, every turn's first request and saved user item
 // and the session's blobs folder, as one line per step of
 // tests/tla/session_manager/PromptImages.tla, and has TLC check the lines
@@ -40,10 +40,10 @@ function sseText(text: string) {
 function fixture(name: string) {
   const root = mkdtempSync(join(artifacts, `prompt-images-${name}-`));
   const home = join(root, "home"), workspace = join(root, "workspace");
-  mkdirSync(join(home, ".fx"), { recursive: true, mode: 0o700 });
+  mkdirSync(join(home, ".tetris"), { recursive: true, mode: 0o700 });
   mkdirSync(workspace, { mode: 0o700 });
-  writeFileSync(join(home, ".fx", "settings.json"), JSON.stringify({ permission: {} }));
-  const sessionsRoot = join(home, ".fx", "sessions", "v2");
+  writeFileSync(join(home, ".tetris", "settings.json"), JSON.stringify({ permission: {} }));
+  const sessionsRoot = join(home, ".tetris", "sessions", "v2");
   const requests: string[] = [];
   const server = Bun.serve({
     port: 0,
@@ -78,7 +78,7 @@ function fixture(name: string) {
       writeFileSync(path, solidPng(width, height));
       return path;
     },
-    /// One `fx ask` turn; its first request and its user item become lines.
+    /// One `tetris ask` turn; its first request and its user item become lines.
     async ask(session: "source" | "fork", images: string[], resume?: string): Promise<string> {
       const before = requests.length;
       const args = ["ask", "--json", ...(resume ? ["--resume", resume] : [])];
@@ -215,7 +215,7 @@ test("a converted v1 session's prompt images become blobs its next request names
   try {
     // v0.0.14 saved one turn with twenty attachments of one image.
     const [id] = copyV1Fixture(f.home, "many-images");
-    const v1Images = join(f.home, ".fx", "sessions", id, "images");
+    const v1Images = join(f.home, ".tetris", "sessions", id, "images");
     for (const name of readdirSync(v1Images)) f.label(sha256File(join(v1Images, name)));
     // Resuming converts the session, then sends a new image with the old.
     await f.ask("source", [f.image("b.png", 10, 20)], id);

@@ -1018,7 +1018,7 @@ test "responsive compact menus stay inline across the VT width matrix" {
         .arena = std.heap.ArenaAllocator.init(alloc),
         .views = usage_views,
         .status = .ready,
-        .label = "team (fx login)",
+        .label = "team (tetris login)",
         .now_ms = 0,
     };
     defer usage_snapshot.deinit();
@@ -4484,7 +4484,7 @@ test "welcome logo stays pinned while middle transcript rows overflow" {
     try h.flush();
 
     try expectGridContains(&h, "Run /help for commands");
-    try expectGridContains(&h, "𝒇x v");
+    try expectGridContains(&h, "tetris v");
     try expectGridNotContains(&h, "content line 0");
     try expectGridContains(&h, "content line 44");
 }
@@ -4513,7 +4513,7 @@ test "welcome logo stays pinned during footer-reserved overflow" {
 
     try std.testing.expect(h.shell.last_visible_transcript_split_active);
     try std.testing.expect(h.shell.last_visible_transcript_split_suffix_start_line > h.shell.last_visible_transcript_split_prefix_lines);
-    try expectGridContains(&h, "𝒇x v");
+    try expectGridContains(&h, "tetris v");
     try expectGridContains(&h, "Run /help for commands");
     try expectGridNotContains(&h, "content line 0");
     try expectGridContains(&h, "content line 44");
@@ -5168,7 +5168,7 @@ test "entry-bound shimmer resolves inside pinned welcome tail selection" {
     try h.flush();
 
     const status_row = try findRowContaining(&h, "tail status line");
-    try expectGridContains(&h, "𝒇x v");
+    try expectGridContains(&h, "tetris v");
 
     var ctx = defaultFooterContext(&input);
     setToolActivity(&ctx, status_id, "Reading pinned tail");

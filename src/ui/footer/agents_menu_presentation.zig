@@ -1,6 +1,6 @@
 //! The agent list ↓, Ctrl+X, and `/agents` open: one row per open agent,
 //! working agents first, then the most recently answered conversations,
-//! such as "fx 3 · Fix the login bug · reviewer · needs approval · opus 4-7".
+//! such as "tetris 3 · Fix the login bug · reviewer · needs approval · opus 4-7".
 
 const std = @import("std");
 const picker_presentation = @import("picker_presentation.zig");
@@ -61,7 +61,7 @@ pub fn rowText(alloc: Allocator, row: render_input.AgentsMenuRow) ![]u8 {
         effort_sep,
         effort,
     });
-    return alloc.print("fx {d}{s} · {f} · {f} · {s}{s}{f}{s}{f}", .{ row.number, tag, title, profile, row.state, model_sep, model, effort_sep, effort });
+    return alloc.print("tetris {d}{s} · {f} · {f} · {s}{s}{f}{s}{f}", .{ row.number, tag, title, profile, row.state, model_sep, model, effort_sep, effort });
 }
 
 pub fn composeAgentsMenuRow(
@@ -155,9 +155,9 @@ test "the agent list shows each agent's number or name, title, profile, state, a
     const projection: AgentsMenuProjection = .{ .rows = &rows, .selected = 1 };
     try std.testing.expectEqual(@as(u16, 3), menuRowCount(projection, max_inline_rows));
     const expected = [_][]const u8{
-        "  fx 1 (on screen) · Fix the login bug · main · working · opus 4-7 high",
+        "  tetris 1 (on screen) · Fix the login bug · main · working · opus 4-7 high",
         "    tester · Run the auth tests · tester · needs approval · gpt-5.4-mini",
-        "  fx 2 · new session · reviewer · idle",
+        "  tetris 2 · new session · reviewer · idle",
     };
     for (expected, 0..) |text, row_index| {
         const row = try testRow(projection, @intCast(row_index), 80, max_inline_rows);
@@ -178,7 +178,7 @@ test "the agent list scrolls to keep the selected agent in view" {
     defer std.testing.allocator.free(top.text);
     const bottom = try testRow(projection, 1, 80, 2);
     defer std.testing.allocator.free(bottom.text);
-    try std.testing.expectEqualStrings("  fx 3 · t · main · idle", top.text);
-    try std.testing.expectEqualStrings("  fx 4 · t · main · idle", bottom.text);
+    try std.testing.expectEqualStrings("  tetris 3 · t · main · idle", top.text);
+    try std.testing.expectEqualStrings("  tetris 4 · t · main · idle", bottom.text);
     try std.testing.expect(bottom.selected);
 }

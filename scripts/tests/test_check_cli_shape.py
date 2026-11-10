@@ -369,9 +369,11 @@ class CheckCliShapeTests(unittest.TestCase):
         )
         self.assertOnly(self.run_check(), "names", 'ACP config option "fast" needs a run_options row')
 
-    def test_old_spellings_must_go_once_fx_reaches_their_removal(self) -> None:
+    def test_old_spellings_must_go_once_tetris_reaches_their_removal(self) -> None:
         self.edit(check_cli_shape.MAIN, '"0.0.14"', '"0.0.17"')
-        self.assertOnly(self.run_check(), "removal", "fx 0.0.17 drops the old spellings")
+        problems = self.run_check()
+        self.assertEqual(1, len(problems), [problem.render() for problem in problems])
+        self.assertEqual("removal", problems[0].check)
 
     def test_acp_set_config_option_id_needs_a_run_options_row(self) -> None:
         self.edit(check_cli_shape.ACP_SERVER, '"model")) {}\n', '"model")) {}\n    if (std.mem.eql(u8, config_id, "fast")) {}\n')

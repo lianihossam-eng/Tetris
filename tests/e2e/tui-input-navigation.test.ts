@@ -67,9 +67,9 @@ async function startFx(
   testHome = mkdtempSync(join(tmpdir(), "fx-tui-input-"));
   stderrPath = join(testHome, "stderr.log");
   writeFileSync(stderrPath, "");
-  mkdirSync(join(testHome, ".fx"), { recursive: true });
+  mkdirSync(join(testHome, ".tetris"), { recursive: true });
   writeFileSync(
-    join(testHome, ".fx", "settings.json"),
+    join(testHome, ".tetris", "settings.json"),
     JSON.stringify({ sandbox: "none" }),
   );
   if (withGateway) {
@@ -194,7 +194,7 @@ function rowHasBackgroundSgr(row: string): boolean {
 }
 
 test("selected slash row ignores the welcome header help hint", () => {
-  const header = `${SELECTED_COMPLETION_SGR}𝒇x\x1b[0m\x1b[38;5;245m v0.3.27 · Run /help for commands`;
+  const header = `${SELECTED_COMPLETION_SGR}tetris\x1b[0m\x1b[38;5;245m v0.3.27 · Run /help for commands`;
   const composer = `${SELECTED_COMPLETION_SGR}┃ /\x1b[39m`;
   const selected = `${SELECTED_COMPLETION_SGR}  /clear\x1b[38;5;245m Clear the conversation`;
 
@@ -1707,7 +1707,7 @@ tmuxTest(
 );
 
 tmuxTest(
-  "repeated image-path paste cannot grow direct input past the cap and leaves fx alive",
+  "repeated image-path paste cannot grow direct input past the cap and leaves tetris alive",
   async () => {
     const active = await startFx(120, 24);
     await active.pasteText(repeatedImagePaste(80));
@@ -1765,7 +1765,7 @@ tmuxTest(
   "current composer and submitted prompt use connected rails",
   async () => {
     testHome = mkdtempSync(join(tmpdir(), "fx-tui-current-rails-"));
-    mkdirSync(join(testHome, ".fx"), { recursive: true });
+    mkdirSync(join(testHome, ".tetris"), { recursive: true });
     const localGateway = startFakeGateway([
       fakeGatewayFinalText("CURRENT_RAIL_MOCK_OK"),
     ]);

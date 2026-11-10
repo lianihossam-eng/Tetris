@@ -9,6 +9,7 @@ const Allocator = std.mem.Allocator;
 const recv_timeout_sec: i64 = 30;
 const latest_version_max_bytes: usize = 128;
 const checksum_max_bytes: usize = 4096;
+const dev_release_list_max_bytes: usize = 1024 * 1024;
 
 const Channel = update_target.Channel;
 const Target = update_target.Target;
@@ -19,13 +20,16 @@ fn setRecvTimeout(conn: *std.http.Client.Connection) void {
     std.posix.setsockopt(sock, std.posix.SOL.SOCKET, std.posix.SO.RCVTIMEO, std.mem.asBytes(&timeout)) catch {};
 }
 
-pub const cdn_base = "https://releases.fx.sh";
+pub const release_download_base = "https://github.com/lianihossam-eng/Tetris/releases/download";
+const stable_latest_download_base = "https://github.com/lianihossam-eng/Tetris/releases/latest/download";
+const dev_releases_api_url = "https://api.github.com/repos/lianihossam-eng/Tetris/releases?per_page=100";
+const dev_release_tag_prefix = "dev-";
 
-pub fn resolveCdnBase() []const u8 {
-    if (io_mod.getenv("FX_TEST_UPGRADE_BASE_URL")) |url| {
+pub fn resolveReleaseBase() []const u8 {
+    if (io_mod.getenv("TETRIS_TEST_UPGRADE_BASE_URL")) |url| {
         if (isLoopbackE2eUpgradeBase(url)) return url;
     }
-    return cdn_base;
+    return release_download_base;
 }
 
 fn isLoopbackE2eUpgradeBase(url: []const u8) bool {
@@ -79,7 +83,24 @@ pub fn fetchTarget(alloc: Allocator, channel: Channel, base_url: []const u8, con
         .dev => blk: {
             var client: std.http.Client = .{ .allocator = alloc, .io = io_mod.getIo() };
             defer client.deinit();
-            const url = try alloc.print("{s}/dev.json", .{base_url});
+
+            const release_tag = if (std.mem.eql(u8, base_url, release_download_base)) blk_tag: {
+                const releases = try fetchTextBounded(
+                    &client,
+                    alloc,
+                    dev_releases_api_url,
+                    dev_release_list_max_bytes,
+                    control,
+                );
+                defer alloc.free(releases);
+                break :blk_tag try latestDevReleaseTag(alloc, releases);
+            } else null;
+            defer if (release_tag) |tag| alloc.free(tag);
+
+            const url = if (release_tag) |tag|
+                try alloc.print("{s}/{s}/dev.json", .{ base_url, tag })
+            else
+                try alloc.print("{s}/dev.json", .{base_url});
             defer alloc.free(url);
             const manifest = try fetchTextBounded(
                 &client,
@@ -89,15 +110,55 @@ pub fn fetchTarget(alloc: Allocator, channel: Channel, base_url: []const u8, con
                 control,
             );
             defer alloc.free(manifest);
-            break :blk Target.parseDevManifest(alloc, manifest) catch return error.FetchFailed;
+
+            var target = Target.parseDevManifest(alloc, manifest) catch return error.FetchFailed;
+            errdefer target.deinit(alloc);
+            if (release_tag) |tag| {
+                const revision = target.revision() orelse return error.FetchFailed;
+                const expected_tag = try alloc.print("{s}{s}", .{ dev_release_tag_prefix, revision });
+                defer alloc.free(expected_tag);
+                if (!std.mem.eql(u8, tag, expected_tag)) return error.FetchFailed;
+            }
+            break :blk target;
         },
     };
+}
+
+fn latestDevReleaseTag(alloc: Allocator, bytes: []const u8) ![]u8 {
+    if (bytes.len > dev_release_list_max_bytes) return error.InvalidReleaseList;
+    var parsed = std.json.parseFromSlice(std.json.Value, alloc, bytes, .{}) catch
+        return error.InvalidReleaseList;
+    defer parsed.deinit();
+    if (parsed.value != .array) return error.InvalidReleaseList;
+
+    for (parsed.value.array.items) |release| {
+        if (release != .object) continue;
+        const prerelease = release.object.get("prerelease") orelse continue;
+        if (prerelease != .bool or !prerelease.bool) continue;
+        const draft = release.object.get("draft") orelse continue;
+        if (draft != .bool or draft.bool) continue;
+        const tag = release.object.get("tag_name") orelse continue;
+        if (tag != .string or !isValidDevReleaseTag(tag.string)) continue;
+        return alloc.dupe(u8, tag.string);
+    }
+    return error.DevReleaseNotFound;
+}
+
+fn isValidDevReleaseTag(tag: []const u8) bool {
+    if (!std.mem.startsWith(u8, tag, dev_release_tag_prefix)) return false;
+    const revision = tag[dev_release_tag_prefix.len..];
+    if (revision.len != 40 and revision.len != 64) return false;
+    return update_target.isValidRevision(revision);
 }
 
 fn fetchLatestVersion(alloc: Allocator, base_url: []const u8, control: TransferControl) ![]u8 {
     var client: std.http.Client = .{ .allocator = alloc, .io = io_mod.getIo() };
     defer client.deinit();
-    const url = try alloc.print("{s}/latest.txt", .{base_url});
+    const latest_base = if (std.mem.eql(u8, base_url, release_download_base))
+        stable_latest_download_base
+    else
+        base_url;
+    const url = try alloc.print("{s}/latest.txt", .{latest_base});
     defer alloc.free(url);
 
     const raw = try fetchTextBounded(
@@ -449,8 +510,23 @@ test "E2E upgrade base accepts only explicit IPv4 loopback origins" {
     try std.testing.expect(!isLoopbackE2eUpgradeBase("http://localhost:1234"));
 }
 
-test "production upgrade base uses the fx release domain" {
-    try std.testing.expectEqualStrings("https://releases.fx.sh", resolveCdnBase());
+test "production upgrade base uses the Tetris GitHub release domain" {
+    try std.testing.expectEqualStrings(release_download_base, resolveReleaseBase());
+}
+
+test "latest dev release tag skips stable, draft, and malformed releases" {
+    const alloc = std.testing.allocator;
+    const releases =
+        \\[
+        \\  {"tag_name":"v0.1.0","prerelease":false,"draft":false},
+        \\  {"tag_name":"dev-not-a-commit","prerelease":true,"draft":false},
+        \\  {"tag_name":"dev-0123456789abcdef0123456789abcdef01234567","prerelease":true,"draft":true},
+        \\  {"tag_name":"dev-abcdef0123456789abcdef0123456789abcdef01","prerelease":true,"draft":false}
+        \\]
+    ;
+    const tag = try latestDevReleaseTag(alloc, releases);
+    defer alloc.free(tag);
+    try std.testing.expectEqualStrings("dev-abcdef0123456789abcdef0123456789abcdef01", tag);
 }
 
 test "extractChecksumHex parses sha256sum format" {

@@ -1030,7 +1030,7 @@ pub fn bootstrapInteractiveApp(cfg: BootstrapConfig) !StartupState {
     // Theme selection: FX_THEME wins over the settings "theme" key; an empty
     // FX_THEME counts as unset per the codebase convention. light/dark pin the
     // builtin variant and skip the OSC 11 probe; any other value names a theme
-    // file under ~/.fx/themes.
+    // file under ~/.tetris/themes.
     var configured_theme: ?[]const u8 = state.theme;
     if (themeEnvOverride()) |value| configured_theme = value;
     if (if (configured_theme) |value| shared_theme.classifyValue(value) else null) |choice| {
@@ -1707,7 +1707,7 @@ test "loadSavedPermissionMode reads the mode saved after startup" {
     const alloc = std.testing.allocator;
     var tmp = std.testing.tmpDir(.{});
     defer tmp.cleanup();
-    try tmp.dir.createDirPath(io_mod.getIo(), "home/.fx");
+    try tmp.dir.createDirPath(io_mod.getIo(), "home/.tetris");
     try tmp.dir.createDirPath(io_mod.getIo(), "workspace");
     const home_root = try io_mod.dirRealpathAlloc(alloc, tmp.dir, "home");
     defer alloc.free(home_root);
@@ -1718,10 +1718,10 @@ test "loadSavedPermissionMode reads the mode saved after startup" {
     defer env.deinit();
     try std.testing.expectEqual(default_permission_mode, try loadSavedPermissionMode(alloc, null, workspace_root));
 
-    try writeFixtureFile(tmp.dir, "home/.fx/settings.json", "{\"permission_mode\":\"ask\"}\n");
+    try writeFixtureFile(tmp.dir, "home/.tetris/settings.json", "{\"permission_mode\":\"ask\"}\n");
     try std.testing.expectEqual(PermissionMode.ask, try loadSavedPermissionMode(alloc, null, workspace_root));
 
-    try writeFixtureFile(tmp.dir, "home/.fx/settings.json", "{\"permission_mode\":\"yolo\"}\n");
+    try writeFixtureFile(tmp.dir, "home/.tetris/settings.json", "{\"permission_mode\":\"yolo\"}\n");
     try std.testing.expectEqual(PermissionMode.yolo, try loadSavedPermissionMode(alloc, home_root, workspace_root));
 }
 
@@ -1729,10 +1729,10 @@ test "loadSavedPermissionMode keeps the FX_PERMISSION_MODE override" {
     const alloc = std.testing.allocator;
     var tmp = std.testing.tmpDir(.{});
     defer tmp.cleanup();
-    try tmp.dir.createDirPath(io_mod.getIo(), "home/.fx");
+    try tmp.dir.createDirPath(io_mod.getIo(), "home/.tetris");
     const home_root = try io_mod.dirRealpathAlloc(alloc, tmp.dir, "home");
     defer alloc.free(home_root);
-    try writeFixtureFile(tmp.dir, "home/.fx/settings.json", "{\"permission_mode\":\"yolo\"}\n");
+    try writeFixtureFile(tmp.dir, "home/.tetris/settings.json", "{\"permission_mode\":\"yolo\"}\n");
 
     var env = try TestEnv.install(alloc, &.{
         .{ .key = "HOME", .value = home_root },
@@ -1757,7 +1757,7 @@ fn initialModelId(default_model: []const u8, configured: ?[]const u8) []const u8
 test "loadStartupState starts Codex from FX_PROVIDER and FX_MODEL without a saved model" {
     var tmp = std.testing.tmpDir(.{});
     defer tmp.cleanup();
-    try tmp.dir.createDirPath(io_mod.getIo(), "home/.fx");
+    try tmp.dir.createDirPath(io_mod.getIo(), "home/.tetris");
     try tmp.dir.createDirPath(io_mod.getIo(), "workspace");
     const home_root = try io_mod.dirRealpathAlloc(std.testing.allocator, tmp.dir, "home");
     defer std.testing.allocator.free(home_root);
@@ -1795,7 +1795,7 @@ test "loadStartupState seeds a provider without a saved model from the launch --
     const alloc = std.testing.allocator;
     var tmp = std.testing.tmpDir(.{});
     defer tmp.cleanup();
-    try tmp.dir.createDirPath(io_mod.getIo(), "home/.fx");
+    try tmp.dir.createDirPath(io_mod.getIo(), "home/.tetris");
     try tmp.dir.createDirPath(io_mod.getIo(), "workspace");
     const home_root = try io_mod.dirRealpathAlloc(alloc, tmp.dir, "home");
     defer alloc.free(home_root);
@@ -1832,7 +1832,7 @@ test "loadStartupStatus reports where the selected model came from" {
     const alloc = std.testing.allocator;
     var tmp = std.testing.tmpDir(.{});
     defer tmp.cleanup();
-    try tmp.dir.createDirPath(io_mod.getIo(), "home/.fx");
+    try tmp.dir.createDirPath(io_mod.getIo(), "home/.tetris");
     const home_root = try io_mod.dirRealpathAlloc(alloc, tmp.dir, "home");
     defer alloc.free(home_root);
 
@@ -1868,7 +1868,7 @@ test "loadStartupStatus reports where the selected model came from" {
         try std.testing.expectEqualStrings("default/model", status.selected_model);
         try std.testing.expectEqual(ModelOrigin.default, status.model_origin);
     }
-    try writeFixtureFile(tmp.dir, "home/.fx/settings.json", "{\"provider\":\"codex\",\"models\":{\"codex\":\"gpt-saved\"}}\n");
+    try writeFixtureFile(tmp.dir, "home/.tetris/settings.json", "{\"provider\":\"codex\",\"models\":{\"codex\":\"gpt-saved\"}}\n");
     {
         var env = try TestEnv.install(alloc, &.{.{ .key = "HOME", .value = home_root }});
         defer env.deinit();
@@ -2653,7 +2653,7 @@ test "ultrafast startup separates profile preferences from process overrides" {
     const alloc = std.testing.allocator;
     var tmp = std.testing.tmpDir(.{});
     defer tmp.cleanup();
-    try tmp.dir.createDirPath(io_mod.getIo(), "home/.fx");
+    try tmp.dir.createDirPath(io_mod.getIo(), "home/.tetris");
     try tmp.dir.createDirPath(io_mod.getIo(), "profile-off");
     try tmp.dir.createDirPath(io_mod.getIo(), "profile-on");
     const home_root = try io_mod.dirRealpathAlloc(alloc, tmp.dir, "home");
@@ -2667,7 +2667,7 @@ test "ultrafast startup separates profile preferences from process overrides" {
         .{ profile_off_root, profile_on_root },
     );
     defer alloc.free(settings);
-    try writeFixtureFile(tmp.dir, "home/.fx/settings.json", settings);
+    try writeFixtureFile(tmp.dir, "home/.tetris/settings.json", settings);
 
     const env = try TestEnv.install(alloc, &.{
         .{ .key = "HOME", .value = home_root },
@@ -2720,7 +2720,7 @@ test "loadStartupState defaults fast mode off and requires bound explicit prefer
     var tmp = std.testing.tmpDir(.{});
     defer tmp.cleanup();
 
-    try tmp.dir.createDirPath(io_mod.getIo(), "home/.fx");
+    try tmp.dir.createDirPath(io_mod.getIo(), "home/.tetris");
     try tmp.dir.createDirPath(io_mod.getIo(), "absent");
     try tmp.dir.createDirPath(io_mod.getIo(), "configured");
     try tmp.dir.createDirPath(io_mod.getIo(), "disabled");
@@ -2748,7 +2748,7 @@ test "loadStartupState defaults fast mode off and requires bound explicit prefer
         .{ configured_root, disabled_root, legacy_fast_root, bound_fast_root, codex_root },
     );
     defer std.testing.allocator.free(fixture);
-    try writeFixtureFile(tmp.dir, "home/.fx/settings.json", fixture);
+    try writeFixtureFile(tmp.dir, "home/.tetris/settings.json", fixture);
 
     var env = try TestEnv.install(std.testing.allocator, &.{.{ .key = "HOME", .value = home_root }});
     defer env.deinit();
@@ -2795,7 +2795,7 @@ test "loadStartupState resolves startup scrollback default and explicit false" {
     var tmp = std.testing.tmpDir(.{});
     defer tmp.cleanup();
 
-    try tmp.dir.createDirPath(io_mod.getIo(), "home/.fx");
+    try tmp.dir.createDirPath(io_mod.getIo(), "home/.tetris");
     try tmp.dir.createDirPath(io_mod.getIo(), "absent");
     try tmp.dir.createDirPath(io_mod.getIo(), "disabled");
 
@@ -2811,7 +2811,7 @@ test "loadStartupState resolves startup scrollback default and explicit false" {
         .{disabled_root},
     );
     defer std.testing.allocator.free(fixture);
-    try writeFixtureFile(tmp.dir, "home/.fx/settings.json", fixture);
+    try writeFixtureFile(tmp.dir, "home/.tetris/settings.json", fixture);
 
     var env = try TestEnv.install(std.testing.allocator, &.{.{ .key = "HOME", .value = home_root }});
     defer env.deinit();
@@ -2829,7 +2829,7 @@ test "loadStartupState resolves slash menu categories default and explicit false
     var tmp = std.testing.tmpDir(.{});
     defer tmp.cleanup();
 
-    try tmp.dir.createDirPath(io_mod.getIo(), "home/.fx");
+    try tmp.dir.createDirPath(io_mod.getIo(), "home/.tetris");
     try tmp.dir.createDirPath(io_mod.getIo(), "workspace");
 
     const home_root = try io_mod.dirRealpathAlloc(std.testing.allocator, tmp.dir, "home");
@@ -2844,7 +2844,7 @@ test "loadStartupState resolves slash menu categories default and explicit false
     defer initial.deinit(std.testing.allocator);
     try std.testing.expect(initial.slash_menu_categories);
 
-    try writeFixtureFile(tmp.dir, "home/.fx/settings.json", "{\"slash_menu_categories\":false}\n");
+    try writeFixtureFile(tmp.dir, "home/.tetris/settings.json", "{\"slash_menu_categories\":false}\n");
     var hidden = try loadStartupStateForWorkspace(std.testing.allocator, workspace_root, "default-model", 25);
     defer hidden.deinit(std.testing.allocator);
     try std.testing.expect(!hidden.slash_menu_categories);
@@ -2930,7 +2930,7 @@ test "loadStartupState falls back to auto for invalid first_call_tool_choice" {
 test "loadStartupState diagnoses the retired fuzzy skill setting" {
     var tmp = std.testing.tmpDir(.{});
     defer tmp.cleanup();
-    try tmp.dir.createDirPath(io_mod.getIo(), "home/.fx");
+    try tmp.dir.createDirPath(io_mod.getIo(), "home/.tetris");
     try tmp.dir.createDirPath(io_mod.getIo(), "workspace");
 
     const home_root = try io_mod.dirRealpathAlloc(std.testing.allocator, tmp.dir, "home");
@@ -2938,7 +2938,7 @@ test "loadStartupState diagnoses the retired fuzzy skill setting" {
     const workspace_root = try io_mod.dirRealpathAlloc(std.testing.allocator, tmp.dir, "workspace");
     defer std.testing.allocator.free(workspace_root);
 
-    try writeFixtureFile(tmp.dir, "home/.fx/settings.json", "{\"skill_match_fuzzy\":true}");
+    try writeFixtureFile(tmp.dir, "home/.tetris/settings.json", "{\"skill_match_fuzzy\":true}");
 
     var env = try TestEnv.install(std.testing.allocator, &.{.{ .key = "HOME", .value = home_root }});
     defer env.deinit();
@@ -2981,9 +2981,9 @@ test "interactive launch leaves a Keychain credential unresolved for the caller"
     const alloc = std.testing.allocator;
     var tmp = std.testing.tmpDir(.{});
     defer tmp.cleanup();
-    try tmp.dir.createDirPath(io_mod.getIo(), "home/.fx");
+    try tmp.dir.createDirPath(io_mod.getIo(), "home/.tetris");
     try tmp.dir.createDirPath(io_mod.getIo(), "workspace");
-    try writeFixtureFile(tmp.dir, "home/.fx/settings.json", "{\"credential_source\":\"fx_login\"}");
+    try writeFixtureFile(tmp.dir, "home/.tetris/settings.json", "{\"credential_source\":\"fx_login\"}");
     const home_root = try io_mod.dirRealpathAlloc(alloc, tmp.dir, "home");
     defer alloc.free(home_root);
     const workspace_root = try io_mod.dirRealpathAlloc(alloc, tmp.dir, "workspace");

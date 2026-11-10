@@ -1,16 +1,16 @@
-// RefreshLease: real fx processes refresh one login through its refresh
+// RefreshLease: real Tetris processes refresh one login through its refresh
 // lock on the file store, against the fake OAuth server
 // (../mcp/fakes/oauth.ts), which answers the first refreshes late. The
-// harness freezes or kills the fx holding the lock, or holds it itself with
-// no stamp as an older fx does. Each process is `fx mcp show web` with the
+// harness freezes or kills the Tetris holding the lock, or holds it itself with
+// no stamp as an older fx does. Each process is `tetris mcp show web` with the
 // saved login expired, so it refreshes before its first request. Their
 // "MCP refresh lock" and "MCP refresh went ahead" trace lines and the
 // harness's steps are checked by TLC against RefreshLeaseTrace.tla, the
 // rules of RefreshLease.tla on the real clock, and each run asserts what it
-// must show. `fx mcp show` refreshes while it starts the server, which the
+// must show. `tetris mcp show` refreshes while it starts the server, which the
 // engine gives 10 s (src/mcp/core/era.zig probe_timeout_ms), so one that
 // waits longer reports the server as retrying whatever the lock does: these
-// runs check the lock, and tests/e2e/mcp-auth.test.ts checks fx processes
+// runs check the lock, and tests/e2e/mcp-auth.test.ts checks Tetris processes
 // already connected.
 import { expect, test } from "bun:test";
 import { dlopen, FFIType, ptr } from "bun:ffi";
@@ -27,7 +27,7 @@ const SLACK = 2_000;
 /** Scheduling noise allowed around every deadline. */
 const TOLERANCE = 600;
 
-// fx times its stamps on Zig's awake clock, CLOCK_UPTIME_RAW on macOS and
+// Tetris times its stamps on Zig's awake clock, CLOCK_UPTIME_RAW on macOS and
 // CLOCK_MONOTONIC on Linux. Bun's hrtime is neither, so both are read from libc.
 const uptime = process.platform === "darwin"
   ? dlopen("/usr/lib/libSystem.B.dylib", { clock_gettime_nsec_np: { args: [FFIType.i32], returns: FFIType.u64 } }).symbols
@@ -46,7 +46,7 @@ function awakeMs(): number {
 interface Proc { label: string; child: ReturnType<typeof Bun.spawn>; trace: string; done: Promise<{ code: number; out: string; err: string }> }
 interface Scene { f: Fixture; fake: Awaited<ReturnType<typeof startFake>>; t0: number; records: TraceRecord[]; procs: Proc[]; holders: ReturnType<typeof Bun.spawn>[] }
 
-/** A signed-in login to the fake, saved and then expired, so the next fx refreshes it. */
+/** A signed-in login to the fake, saved and then expired, so the next Tetris refreshes it. */
 async function scene(name: string, server: Record<string, unknown>): Promise<Scene> {
   const f = fixture(artifacts, name);
   const fake = await startFake(f, server);
@@ -147,7 +147,7 @@ function cleanup(s: Scene) {
   s.fake.stop();
 }
 
-test("a refresh answered 15 s late: the next fx waits for it and takes the login it saved", async () => {
+test("a refresh answered 15 s late: the next Tetris waits for it and takes the login it saved", async () => {
   const s = await scene("rl-slow", { refreshDelayMs: [15_000] });
   try {
     const first = start(s, "first");
@@ -164,7 +164,7 @@ test("a refresh answered 15 s late: the next fx waits for it and takes the login
   } finally { cleanup(s); }
 }, 120_000);
 
-test("a refresher frozen with its refresh out: the next fx goes ahead 32 s after its stamp, not before", async () => {
+test("a refresher frozen with its refresh out: the next Tetris goes ahead 32 s after its stamp, not before", async () => {
   // rotate false: the token the frozen one sent still works, so the next one's refresh succeeds.
   const s = await scene("rl-frozen", { refreshDelayMs: [60_000], rotate: false });
   try {
@@ -187,14 +187,14 @@ test("a refresher frozen with its refresh out: the next fx goes ahead 32 s after
   } finally { cleanup(s); }
 }, 120_000);
 
-test("an older fx holds the refresh lock and stamps nothing: the next fx goes ahead 32 s after it starts", async () => {
+test("an older fx holds the refresh lock and stamps nothing: the next Tetris goes ahead 32 s after it starts", async () => {
   const s = await scene("rl-older", { rotate: false });
   try {
     // One refresh first, so the lock file exists, and the login expired again.
     const once = start(s, "once");
     expect((await once.done).code).toBe(0);
     expire(s.f);
-    const dir = join(s.f.home, ".fx", "mcp-credentials");
+    const dir = join(s.f.home, ".tetris", "mcp-credentials");
     const lock = readdirSync(dir).find((n) => /^refresh-v3-.*\.lock$/.test(n));
     if (!lock) throw new Error("no refresh lock file");
     const holder = Bun.spawn(["perl", "-e", 'use Fcntl qw(:flock); open(my $f, ">>", $ARGV[0]) or die; flock($f, LOCK_EX) or die; $| = 1; print "held\\n"; sleep $ARGV[1];', join(dir, lock), "60"], { stdout: "pipe" });
@@ -214,7 +214,7 @@ test("an older fx holds the refresh lock and stamps nothing: the next fx goes ah
   } finally { cleanup(s); }
 }, 120_000);
 
-test("a refresher killed mid-refresh: the next fx takes the lock at once and refreshes", async () => {
+test("a refresher killed mid-refresh: the next Tetris takes the lock at once and refreshes", async () => {
   const s = await scene("rl-kill", { refreshDelayMs: [30_000], rotate: false });
   try {
     const first = start(s, "first");

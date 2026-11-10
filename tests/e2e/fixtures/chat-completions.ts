@@ -23,7 +23,7 @@ export function createConfiguredProviderFixture(respond?: (body: any) => Respons
   const home = realpathSync(createIsolatedTestHome());
   const workspace = join(home, "workspace");
   mkdirSync(workspace);
-  mkdirSync(join(home, ".fx"), { mode: 0o700 });
+  mkdirSync(join(home, ".tetris"), { mode: 0o700 });
   const requests: Array<{ path: string; authorization: string | null; body: any }> = [];
   const server = Bun.serve({
     hostname: "127.0.0.1", port: 0,
@@ -35,7 +35,7 @@ export function createConfiguredProviderFixture(respond?: (body: any) => Respons
       return respond ? respond(body) : completion((body as any).model);
     },
   });
-  const settingsPath = join(home, ".fx", "settings.json");
+  const settingsPath = join(home, ".tetris", "settings.json");
   const settings = {
     provider: "local", auto_upgrade: false, permission_mode: "ask",
     providers: {

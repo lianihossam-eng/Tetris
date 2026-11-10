@@ -990,7 +990,7 @@ fn authorizeBridgeCall(
     const state: *McpCallBridgeState = @ptrCast(@alignCast(raw));
     const ctx = state.runtime;
     if (ctx.tool_registry.lookup(tool) != null) {
-        return .{ .deny = try arena.print("{s} is a built-in tool; fx mcp call runs MCP tools only.", .{tool}) };
+        return .{ .deny = try arena.print("{s} is a built-in tool; tetris mcp call runs MCP tools only.", .{tool}) };
     }
     const resolved = (try resolveUnselectedMcpTool(ctx, arena, tool)) orelse {
         return .{ .deny = try arena.print("No MCP tool named {s} is available to this agent. Find tool names with capability_search.", .{tool}) };
@@ -1133,7 +1133,7 @@ fn callBridgeTool(
         .success => .{ .status = .ok, .bytes = try bridgeResultData(arena, result.model_output) },
         .tool_failure => .{ .status = .tool_error, .bytes = try bridgeResultData(arena, result.model_output) },
         .protocol_failure => .{ .status = .failed, .bytes = result.model_output },
-        .input_required => .{ .status = .failed, .bytes = "This tool asked for input that fx mcp call cannot give. Call the tool directly instead." },
+        .input_required => .{ .status = .failed, .bytes = "This tool asked for input that tetris mcp call cannot give. Call the tool directly instead." },
     };
 }
 
@@ -1203,10 +1203,10 @@ fn lookupBridge(
     switch (question) {
         .help => |tool| {
             if (ctx.tool_registry.lookup(tool) != null) {
-                return .{ .status = .failed, .bytes = try arena.print("{s} is a built-in tool; fx mcp call runs MCP tools only.", .{tool}) };
+                return .{ .status = .failed, .bytes = try arena.print("{s} is a built-in tool; tetris mcp call runs MCP tools only.", .{tool}) };
             }
             const resolved = (try resolveUnselectedMcpTool(ctx, arena, tool)) orelse {
-                return .{ .status = .failed, .bytes = try arena.print("No MCP tool named {s} is available to this agent. Find tool names with fx mcp call search.", .{tool}) };
+                return .{ .status = .failed, .bytes = try arena.print("No MCP tool named {s} is available to this agent. Find tool names with tetris mcp call search.", .{tool}) };
             };
             mcp_tool_lookup.writeHelp(arena, &out.writer, resolved.schema_json) catch |err| switch (err) {
                 error.OutOfMemory, error.WriteFailed => return error.OutOfMemory,
@@ -1218,7 +1218,7 @@ fn lookupBridge(
             const search = ctx.mcp_search_tools orelse return .{ .status = .failed, .bytes = "MCP is not available in this session." };
             const query = try arena.create(lexical_relevance.PreparedQuery);
             query.* = lexical_relevance.prepare(if (question == .list) "" else text) catch |err| {
-                return .{ .status = .failed, .bytes = try arena.print("fx can't search for that: {s}.", .{@errorName(err)}) };
+                return .{ .status = .failed, .bytes = try arena.print("Tetris can't search for that: {s}.", .{@errorName(err)}) };
             };
             var limits = ctx.context_limits;
             limits.mcp_search_result_bytes.value = .{ .bytes = bridge_search_page_bytes };
@@ -1232,12 +1232,12 @@ fn lookupBridge(
                     .cursor = cursor,
                 };
                 request.validate() catch |err| {
-                    return .{ .status = .failed, .bytes = try arena.print("fx can't search for that: {s}.", .{@errorName(err)}) };
+                    return .{ .status = .failed, .bytes = try arena.print("Tetris can't search for that: {s}.", .{@errorName(err)}) };
                 };
                 const result = try search(runtime, arena, request, ctx.permission_rules, limits, ctx.mcp_access, cancel);
                 const page = mcp_tool_lookup.writeToolLines(arena, &out.writer, result.model_output) catch |err| switch (err) {
                     error.OutOfMemory, error.WriteFailed => return error.OutOfMemory,
-                    error.InvalidSearchPage => return .{ .status = .failed, .bytes = "The MCP search returned a page fx could not read." },
+                    error.InvalidSearchPage => return .{ .status = .failed, .bytes = "The MCP search returned a page Tetris could not read." },
                 };
                 if (page.problem) |problem| if (out.written().len == 0) return .{ .status = .failed, .bytes = problem };
                 if (question == .search) break;
@@ -7181,7 +7181,7 @@ test "install_skill explicit tool installs local skill source" {
     var arena_state = std.heap.ArenaAllocator.init(alloc);
     defer arena_state.deinit();
     const result = try executeToolCall(rt.context(), arena_state.allocator(), .{ .id = "1", .name = "install_skill", .arguments_json = args_json });
-    try expectContains(result.model_output, "Installed 1 skill(s) into fx.");
+    try expectContains(result.model_output, "Installed 1 skill(s) into Tetris.");
     try expectContains(result.model_output, "- workflow&quot;&lt;injected&gt;\n");
     try expectNotContains(result.model_output, "<skill");
     try expectNotContains(result.model_output, "BODY SENTINEL");
@@ -7205,10 +7205,10 @@ test "skill tool preserves resource and discovery notices separately" {
     defer tmp.cleanup();
 
     try tmp.dir.createDirPath(io_mod.getIo(), "home/workspace");
-    try tmp.dir.createDirPath(io_mod.getIo(), "home/.fx/skills/workflow/assets");
-    try tmp.dir.createDirPath(io_mod.getIo(), "home/.fx/skills/malformed");
+    try tmp.dir.createDirPath(io_mod.getIo(), "home/.tetris/skills/workflow/assets");
+    try tmp.dir.createDirPath(io_mod.getIo(), "home/.tetris/skills/malformed");
     {
-        var file = try tmp.dir.createFile(io_mod.getIo(), "home/.fx/skills/workflow/SKILL.md", .{});
+        var file = try tmp.dir.createFile(io_mod.getIo(), "home/.tetris/skills/workflow/SKILL.md", .{});
         defer file.close(io_mod.getIo());
         try file.writeStreamingAll(
             io_mod.getIo(),
@@ -7216,19 +7216,19 @@ test "skill tool preserves resource and discovery notices separately" {
         );
     }
     {
-        var file = try tmp.dir.createFile(io_mod.getIo(), "home/.fx/skills/workflow/assets/data.txt", .{});
+        var file = try tmp.dir.createFile(io_mod.getIo(), "home/.tetris/skills/workflow/assets/data.txt", .{});
         defer file.close(io_mod.getIo());
         try file.writeStreamingAll(io_mod.getIo(), "hello\n");
     }
     {
-        var file = try tmp.dir.createFile(io_mod.getIo(), "home/.fx/skills/malformed/SKILL.md", .{});
+        var file = try tmp.dir.createFile(io_mod.getIo(), "home/.tetris/skills/malformed/SKILL.md", .{});
         defer file.close(io_mod.getIo());
         try file.writeStreamingAll(io_mod.getIo(), "---\ndescription: missing name\n---\nMALFORMED BODY");
     }
 
     const workspace_root = try io_mod.dirRealpathAlloc(alloc, tmp.dir, "home/workspace");
     defer alloc.free(workspace_root);
-    const skills_dir = try io_mod.dirRealpathAlloc(alloc, tmp.dir, "home/.fx/skills");
+    const skills_dir = try io_mod.dirRealpathAlloc(alloc, tmp.dir, "home/.tetris/skills");
     defer alloc.free(skills_dir);
     try setTestHome(null);
     defer io_mod.resetEnvironForTest();
@@ -7263,7 +7263,7 @@ test "skill tool loads the exact advertised duplicate and rejects ambiguous or u
     defer tmp.cleanup();
 
     try tmp.dir.createDirPath(io_mod.getIo(), "home/workspace/.agents/skills/workflow/assets");
-    try tmp.dir.createDirPath(io_mod.getIo(), "home/.fx/skills/workflow/assets");
+    try tmp.dir.createDirPath(io_mod.getIo(), "home/.tetris/skills/workflow/assets");
     try tmp.dir.createDirPath(io_mod.getIo(), "home/outside/workflow/assets");
     {
         var file = try tmp.dir.createFile(io_mod.getIo(), "home/workspace/.agents/skills/workflow/SKILL.md", .{});
@@ -7276,12 +7276,12 @@ test "skill tool loads the exact advertised duplicate and rejects ambiguous or u
         try file.writeStreamingAll(io_mod.getIo(), "WORKSPACE COMPANION A\n");
     }
     {
-        var file = try tmp.dir.createFile(io_mod.getIo(), "home/.fx/skills/workflow/SKILL.md", .{});
+        var file = try tmp.dir.createFile(io_mod.getIo(), "home/.tetris/skills/workflow/SKILL.md", .{});
         defer file.close(io_mod.getIo());
         try file.writeStreamingAll(io_mod.getIo(), "---\nname: workflow\ndescription: managed workflow\n---\n\nMANAGED BODY B\n");
     }
     {
-        var file = try tmp.dir.createFile(io_mod.getIo(), "home/.fx/skills/workflow/assets/b-only.txt", .{});
+        var file = try tmp.dir.createFile(io_mod.getIo(), "home/.tetris/skills/workflow/assets/b-only.txt", .{});
         defer file.close(io_mod.getIo());
         try file.writeStreamingAll(io_mod.getIo(), "MANAGED COMPANION B\n");
     }
@@ -7298,11 +7298,11 @@ test "skill tool loads the exact advertised duplicate and rejects ambiguous or u
 
     const workspace_root = try io_mod.dirRealpathAlloc(alloc, tmp.dir, "home/workspace");
     defer alloc.free(workspace_root);
-    const skills_dir = try io_mod.dirRealpathAlloc(alloc, tmp.dir, "home/.fx/skills");
+    const skills_dir = try io_mod.dirRealpathAlloc(alloc, tmp.dir, "home/.tetris/skills");
     defer alloc.free(skills_dir);
     const workspace_skill = try io_mod.dirRealpathAlloc(alloc, tmp.dir, "home/workspace/.agents/skills/workflow");
     defer alloc.free(workspace_skill);
-    const managed_skill = try io_mod.dirRealpathAlloc(alloc, tmp.dir, "home/.fx/skills/workflow");
+    const managed_skill = try io_mod.dirRealpathAlloc(alloc, tmp.dir, "home/.tetris/skills/workflow");
     defer alloc.free(managed_skill);
     const outside_skill = try io_mod.dirRealpathAlloc(alloc, tmp.dir, "home/outside/workflow");
     defer alloc.free(outside_skill);
@@ -7353,16 +7353,16 @@ test "name-only skill call rediscovers a duplicate added after the first read" {
     defer tmp.cleanup();
 
     try tmp.dir.createDirPath(io_mod.getIo(), "home/workspace");
-    try tmp.dir.createDirPath(io_mod.getIo(), "home/.fx/skills/workflow");
+    try tmp.dir.createDirPath(io_mod.getIo(), "home/.tetris/skills/workflow");
     {
-        var file = try tmp.dir.createFile(io_mod.getIo(), "home/.fx/skills/workflow/SKILL.md", .{});
+        var file = try tmp.dir.createFile(io_mod.getIo(), "home/.tetris/skills/workflow/SKILL.md", .{});
         defer file.close(io_mod.getIo());
         try file.writeStreamingAll(io_mod.getIo(), "---\nname: workflow\ndescription: managed workflow\n---\n\nMANAGED BODY A\n");
     }
 
     const workspace_root = try io_mod.dirRealpathAlloc(alloc, tmp.dir, "home/workspace");
     defer alloc.free(workspace_root);
-    const skills_dir = try io_mod.dirRealpathAlloc(alloc, tmp.dir, "home/.fx/skills");
+    const skills_dir = try io_mod.dirRealpathAlloc(alloc, tmp.dir, "home/.tetris/skills");
     defer alloc.free(skills_dir);
     try setTestHome(null);
     defer io_mod.resetEnvironForTest();
@@ -7417,11 +7417,11 @@ test "skill tool reports missing skill" {
     defer tmp.cleanup();
 
     try tmp.dir.createDirPath(io_mod.getIo(), "home/workspace");
-    try tmp.dir.createDirPath(io_mod.getIo(), "home/.fx/skills");
+    try tmp.dir.createDirPath(io_mod.getIo(), "home/.tetris/skills");
 
     const workspace_root = try io_mod.dirRealpathAlloc(alloc, tmp.dir, "home/workspace");
     defer alloc.free(workspace_root);
-    const skills_dir = try io_mod.dirRealpathAlloc(alloc, tmp.dir, "home/.fx/skills");
+    const skills_dir = try io_mod.dirRealpathAlloc(alloc, tmp.dir, "home/.tetris/skills");
     defer alloc.free(skills_dir);
     try setTestHome(null);
     defer io_mod.resetEnvironForTest();

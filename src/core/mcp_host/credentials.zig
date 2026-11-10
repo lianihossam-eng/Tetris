@@ -1,6 +1,6 @@
 //! Sign-in credentials the engine hands fx to keep (AUTH-21): one opaque blob per
 //! server name and URL, so a changed URL never gets an old token. They live in
-//! the macOS Keychain, or in a private file under `~/.fx/mcp-credentials/`.
+//! the macOS Keychain, or in a private file under `~/.tetris/mcp-credentials/`.
 //! Either way the directory's advisory lock is held while the store is read
 //! and rewritten, so two fx processes don't overwrite each other's entries.
 //! A store this fx can't read, damaged or saved by a newer fx, is never
@@ -13,8 +13,10 @@
 //! write it back, erasing every login in it, and fx processes still running
 //! those builds keep refreshing the logins they hold in memory. A login
 //! shared with them would be refreshed apart and signed out, so this store
-//! starts empty, in files and a Keychain item no older fx opens, and each
-//! server signs in once.
+//! starts empty, in files and a Keychain item (`TETRIS_MCP_OAUTH_CREDENTIALS_V3`)
+//! that neither older builds nor Fx opens, and each server signs in once. Fx
+//! keeps its credentials in its own `FX_*` Keychain items; this build never
+//! reads, overwrites, or deletes them.
 //!
 //! TLA+ models: `tests/tla/mcp_host/Credentials.tla`; for logins shared between
 //! processes, `tests/tla/mcp_host/SharedLogins.tla`; for processes running
@@ -90,10 +92,10 @@ pub const Store = struct {
     pub fn writeFailure(s: Store, buffer: []u8, err: anyerror) []const u8 {
         const why: []const u8 = switch (err) {
             // A store over fx's size limit is one fx can't read either.
-            error.CredentialStoreUnreadable, error.StreamTooLong => "a newer fx saved it, or it's damaged",
-            error.LockBusy => "another fx kept it busy",
-            error.AccessDenied => "fx isn't allowed to write it",
-            error.PrivateStatePermissionsUnsupported => "its permissions let others read it, or fx can't make them private",
+            error.CredentialStoreUnreadable, error.StreamTooLong => "a newer Tetris saved it, or it's damaged",
+            error.LockBusy => "another Tetris kept it busy",
+            error.AccessDenied => "Tetris isn't allowed to write it",
+            error.PrivateStatePermissionsUnsupported => "its permissions let others read it, or Tetris can't make them private",
             error.DurablePathUnsafe => "it isn't a plain file",
             error.NoSpaceLeft, error.DiskQuota => "the disk is full",
             error.ReadOnlyFileSystem => "its disk is read-only",
@@ -494,10 +496,10 @@ test "one snapshot holds every server's credential" {
 test "a store that can't be written says where and why in words" {
     var buffer: [320]u8 = undefined;
     const file: Store = .{ .home = "/home/example", .backend = .file };
-    try testing.expectEqualStrings("~/.fx/mcp-credentials/credentials-v3.json couldn't be written: another fx kept it busy", file.writeFailure(&buffer, error.LockBusy));
-    try testing.expectEqualStrings("~/.fx/mcp-credentials/credentials-v3.json couldn't be written: fx isn't allowed to write it", file.writeFailure(&buffer, error.AccessDenied));
-    try testing.expectEqualStrings("~/.fx/mcp-credentials/credentials-v3.json couldn't be written: a newer fx saved it, or it's damaged", file.writeFailure(&buffer, error.StreamTooLong));
-    try testing.expectEqualStrings("~/.fx/mcp-credentials/credentials-v3.json couldn't be written: the disk is full", file.writeFailure(&buffer, error.NoSpaceLeft));
+    try testing.expectEqualStrings("~/.tetris/mcp-credentials/credentials-v3.json couldn't be written: another Tetris kept it busy", file.writeFailure(&buffer, error.LockBusy));
+    try testing.expectEqualStrings("~/.tetris/mcp-credentials/credentials-v3.json couldn't be written: Tetris isn't allowed to write it", file.writeFailure(&buffer, error.AccessDenied));
+    try testing.expectEqualStrings("~/.tetris/mcp-credentials/credentials-v3.json couldn't be written: a newer Tetris saved it, or it's damaged", file.writeFailure(&buffer, error.StreamTooLong));
+    try testing.expectEqualStrings("~/.tetris/mcp-credentials/credentials-v3.json couldn't be written: the disk is full", file.writeFailure(&buffer, error.NoSpaceLeft));
     const keychain: Store = .{ .home = "/home/example", .backend = .keychain };
     try testing.expectEqualStrings("the Keychain item " ++ native_keychain.mcp_host_credentials_service_name ++ " couldn't be written: the Keychain refused it or didn't answer", keychain.writeFailure(&buffer, error.KeychainWriteFailed));
 }
@@ -612,8 +614,8 @@ test "credentials-v2.json's logins aren't taken over, and an older fx rewriting 
     defer testing.allocator.free(home);
     const store: Store = .{ .home = home, .backend = .file };
     const plain: Key = .{ .name = "plain", .url = "https://mcp.plain.com/mcp" };
-    const v2_path = ".fx/" ++ profile_paths.mcp_credentials_dir_name ++ "/credentials-v2.json";
-    try tmp.dir.createDirPath(testing.io, ".fx/" ++ profile_paths.mcp_credentials_dir_name);
+    const v2_path = ".tetris/" ++ profile_paths.mcp_credentials_dir_name ++ "/credentials-v2.json";
+    try tmp.dir.createDirPath(testing.io, ".tetris/" ++ profile_paths.mcp_credentials_dir_name);
     const v2 = "{\"version\":2,\"servers\":[{\"name\":\"plain\",\"url\":\"https://mcp.plain.com/mcp\",\"credential\":\"{\\\"access\\\":\\\"v2\\\"}\"}]}";
     try tmp.dir.writeFile(testing.io, .{ .sub_path = v2_path, .data = v2 });
 
@@ -639,9 +641,9 @@ test "credentials-v2.json's logins aren't taken over, and an older fx rewriting 
 test "the store is the one no older fx opens" {
     try testing.expectEqualStrings("credentials-v3.json", file_name);
     try testing.expectEqualStrings("credentials-v3.lock", lock_file_name);
-    try testing.expectEqualStrings("FX_MCP_OAUTH_CREDENTIALS_V3", native_keychain.mcp_host_credentials_service_name);
-    try testing.expectEqualStrings("the Keychain item FX_MCP_OAUTH_CREDENTIALS_V3", (Store{ .home = "/Users/example", .backend = .keychain }).place());
-    try testing.expectEqualStrings("~/.fx/mcp-credentials/credentials-v3.json", (Store{ .home = "/Users/example", .backend = .file }).place());
+    try testing.expectEqualStrings("TETRIS_MCP_OAUTH_CREDENTIALS_V3", native_keychain.mcp_host_credentials_service_name);
+    try testing.expectEqualStrings("the Keychain item TETRIS_MCP_OAUTH_CREDENTIALS_V3", (Store{ .home = "/Users/example", .backend = .keychain }).place());
+    try testing.expectEqualStrings("~/.tetris/mcp-credentials/credentials-v3.json", (Store{ .home = "/Users/example", .backend = .file }).place());
 }
 
 /// A document that parses is saved as version 2 and reads back the same, so
@@ -879,7 +881,7 @@ test "a refresh lock's waiter goes ahead 2 s after both the holder's step and th
     try testing.expect(!refreshWaitExpired(started + 90_000, null, started, started + step + hold_slack_ms - 1, step));
 }
 
-const test_path = ".fx/" ++ profile_paths.mcp_credentials_dir_name ++ "/" ++ file_name;
+const test_path = ".tetris/" ++ profile_paths.mcp_credentials_dir_name ++ "/" ++ file_name;
 
 test "the credential file is private, and one this fx can't read is never written over" {
     var tmp = testing.tmpDir(.{});

@@ -1,8 +1,8 @@
 ---------------------------- MODULE ShellSession ----------------------------
 (***************************************************************************)
-(* The session the interactive app has open, and what fx tells the user   *)
+(* The session the interactive app has open, and what Tetris tells the user   *)
 (* about it (D90): `/status` shows its id and whether it is saved, and     *)
-(* quitting prints `fx --resume <id>` for a saved session. Saved means its *)
+(* quitting prints `tetris --resume <id>` for a saved session. Saved means its *)
 (* log is on disk, so a resume opens it.                                   *)
 (*                                                                         *)
 (* One profile outlives many processes. A launch opens a new session,      *)
@@ -14,7 +14,7 @@
 (*                                                                         *)
 (* `last` is what the latest action showed the user. ShellSessionTrace     *)
 (* matches it, the saved ids, and their turns against what the real binary *)
-(* did. Report and Handoff are what fx shows; the properties say what is   *)
+(* did. Report and Handoff are what Tetris shows; the properties say what is   *)
 (* true. Mutant plants one bug so that each property is shown to catch it. *)
 (***************************************************************************)
 EXTENDS Naturals, FiniteSets, TLC
@@ -67,7 +67,7 @@ Quiet(op) == Obs(op, None, 0, FALSE, None)
 
 Saved(i) == i # None /\ i \in onDisk
 
-(* ------------------------- what fx shows -------------------------------- *)
+(* ------------------------- what Tetris shows -------------------------------- *)
 
 (* The `/status` panel's Session line: the id, and whether it says saved.  *)
 Report ==
@@ -112,7 +112,7 @@ Init ==
 
 (* ------------------------------ launches -------------------------------- *)
 
-(* `fx`: a new session, held in memory until its first turn (D2).          *)
+(* `tetris`: a new session, held in memory until its first turn (D2).          *)
 Launch(i) ==
   /\ ~running
   /\ i \in FreshIds
@@ -124,7 +124,7 @@ Launch(i) ==
   /\ last' = Obs("launch", i, 0, FALSE, None)
   /\ UNCHANGED <<turnOpen, onDisk, turns, discarded, ended>>
 
-(* `fx --resume <id>`, as the exit line or `/status` gives it.             *)
+(* `tetris --resume <id>`, as the exit line or `/status` gives it.             *)
 LaunchResume(i) ==
   /\ ~running
   /\ i \in onDisk
@@ -135,7 +135,7 @@ LaunchResume(i) ==
   /\ last' = Obs("launch_resume", i, 0, FALSE, None)
   /\ UNCHANGED <<turnOpen, onDisk, turns, used, discarded, ended>>
 
-(* `fx` where no session can be created: it runs, and saves nothing.       *)
+(* `tetris` where no session can be created: it runs, and saves nothing.       *)
 LaunchNoStore ==
   /\ ~running
   /\ running' = TRUE
@@ -278,7 +278,7 @@ TypeOK ==
 (* `/status` names the session that is open, or none.                      *)
 StatusNamesOpenSession == last.op = "status" => last.id = cur
 
-(* A session `/status` calls saved is on disk, so `fx --resume` opens it.  *)
+(* A session `/status` calls saved is on disk, so `tetris --resume` opens it.  *)
 StatusSavedIsOnDisk == last.op = "status" /\ last.saved => last.id \in onDisk
 
 (* A session `/status` calls unsaved is not on disk, so it is not called   *)

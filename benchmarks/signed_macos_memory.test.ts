@@ -26,10 +26,10 @@ test("signed macOS variants preserve the image flow and native resource accounti
       const lane = (label === "candidate" ? 1 : 0) ^ cohort;
       const binary = join(root, `cohort-${cohort}`, `lane-${lane}`, "fx");
       const profile = join(dir, "profile"), workspace = join(dir, "workspace");
-      mkdirSync(join(profile, ".fx"), { recursive: true });
+      mkdirSync(join(profile, ".tetris"), { recursive: true });
       mkdirSync(workspace);
-      writeFileSync(join(profile, ".fx/settings.json"), "{}");
-      writeFileSync(join(profile, ".fx/mcp.json"), JSON.stringify({ mcp: { fixture: {
+      writeFileSync(join(profile, ".tetris/settings.json"), "{}");
+      writeFileSync(join(profile, ".tetris/mcp.json"), JSON.stringify({ mcp: { fixture: {
         type: "local", command: [process.execPath, fixture], enabled: true,
         environment: { FX_MCP_MODE: "image_result" },
       } } }));

@@ -70,11 +70,11 @@ function createIsolatedRoot(): IsolatedRoot {
   const home = join(root, "home");
   const workspace = join(root, "workspace");
   const external = join(root, "external");
-  mkdirSync(join(home, ".fx"), { recursive: true });
+  mkdirSync(join(home, ".tetris"), { recursive: true });
   mkdirSync(workspace, { recursive: true });
   mkdirSync(external, { recursive: true });
   writeFileSync(
-    join(home, ".fx", "settings.json"),
+    join(home, ".tetris", "settings.json"),
     JSON.stringify({
       sandbox: "none",
       permission_mode: "ask",
@@ -257,7 +257,7 @@ function expectApprovalControls(
   for (const oldCopy of [
     "1. Yes, proceed",
     "2. Yes, and don't ask again",
-    "3. No, and tell fx",
+    "3. No, and tell Tetris",
     "This action changes files in your workspace.",
   ]) {
     expect(block).not.toContain(oldCopy);
@@ -898,7 +898,7 @@ describe.skipIf(!tmuxAvailable())("tui: file permissions", () => {
         required: ["amended-review.txt", "+ amended review content"],
       });
       await session.sendKeys("Tab");
-      await session.waitForText("Apply once, and tell fx what to do next", TIMEOUT);
+      await session.waitForText("Apply once, and tell Tetris what to do next", TIMEOUT);
       await session.sendLiteralText(feedback);
       await session.waitForText(`Apply once, ${feedback}`, TIMEOUT);
 
@@ -1223,7 +1223,7 @@ describe.skipIf(!tmuxAvailable())("tui: file permissions", () => {
         const content = "private-value\n";
         writeFileSync(target, content);
         writeFileSync(
-          join(root.home, ".fx", "settings.json"),
+          join(root.home, ".tetris", "settings.json"),
           JSON.stringify({
             sandbox: "none",
             permission: {
@@ -1376,13 +1376,13 @@ describe.skipIf(!tmuxAvailable())("tui: file permissions", () => {
         const target = join(root.workspace, "marker.txt");
         writeFileSync(target, "before\n");
         if (selection === "named") {
-          mkdirSync(join(root.home, ".fx", "themes"), { recursive: true });
-          writeFileSync(join(root.home, ".fx", "themes", "marker-dark.json"), JSON.stringify({
+          mkdirSync(join(root.home, ".tetris", "themes"), { recursive: true });
+          writeFileSync(join(root.home, ".tetris", "themes", "marker-dark.json"), JSON.stringify({
             name: "Marker Dark",
             type: "dark",
             colors: { diff_added_marker: "#30A46C", diff_removed_marker: "#E5484D" },
           }));
-          writeFileSync(join(root.home, ".fx", "settings.json"), JSON.stringify({
+          writeFileSync(join(root.home, ".tetris", "settings.json"), JSON.stringify({
             sandbox: "none",
             permission_mode: "ask",
             permission: {},

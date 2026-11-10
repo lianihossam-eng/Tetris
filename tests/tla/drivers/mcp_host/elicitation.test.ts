@@ -1,4 +1,4 @@
-// ElicitationRouting: a real `fx ask` in a terminal (tmux; fx ask asks MCP
+// ElicitationRouting: a real `tetris ask` in a terminal (tmux; tetris ask asks MCP
 // questions only with a terminal) whose fake-gateway model calls the 2025
 // fixture's `elicit` tool. The fixture asks question 1, and once the harness
 // sees it on screen, withdraws it (notifications/cancelled) and asks question
@@ -6,7 +6,7 @@
 // then answers what it saw: "for-1". The fixture's log says which question
 // got which answer. Checked against ElicitationRouting.tla.
 //
-// An earlier fx gave question 2 the answer "for-1". Now it is the contract:
+// An earlier Tetris gave question 2 the answer "for-1". Now it is the contract:
 // the answer to the withdrawn question reaches no one, and question 2 gets its
 // own, which the model with its guard accepts.
 import { expect, test } from "bun:test";
@@ -30,7 +30,7 @@ test("An answer to a withdrawn 2025 question reaches no one, and question 2 gets
   const env = fxEnv(f, { FX_GATEWAY_BASE_URL: gateway.baseUrl, FX_GATEWAY_CHAT_URL: gateway.chatUrl, FX_MODEL: "openai/gpt-5", FX_PERMISSION_MODE: "full-access" });
   const tui = await TmuxSession.create({
     cmd: `${shellQuote(binary)} ask --no-save ${shellQuote("Use the fixture's elicit tool.")}`,
-    // No stderrPath: fx ask declares elicitation only when stdin and stderr are a terminal.
+    // No stderrPath: tetris ask declares elicitation only when stdin and stderr are a terminal.
     cwd: f.workspace, env, isolated: true, width: 160, height: 40, remainOnExit: true,
   });
   const records: TraceRecord[] = [];
@@ -48,12 +48,12 @@ test("An answer to a withdrawn 2025 question reaches no one, and question 2 gets
     await Bun.sleep(700);
     await snap("after the withdrawal and question 2");
     await tui.sendText("for-1");
-    // fx reviews the form before it goes: Submit is choice 1.
+    // Tetris reviews the form before it goes: Submit is choice 1.
     await tui.waitForText("Choose Submit, Edit, Decline, or Cancel.", 10_000);
     await snap("question 1 review");
     records.push({ event: "answer", data: { q: 1 }, at: Date.now() });
     await tui.sendText("1");
-    // fx may show question 2 next; answer what is on screen, naming it.
+    // Tetris may show question 2 next; answer what is on screen, naming it.
     two = await tui.waitForText(/Answer 2|Question 2|question 2/, 6_000).then(() => true, () => false);
     if (two) {
       records.push({ event: "shown", data: { q: 2 }, at: Date.now() });

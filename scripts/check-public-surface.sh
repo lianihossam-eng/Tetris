@@ -7,7 +7,7 @@ cd "$repo_root"
 
 personal_paths="$({
   git grep -n -E '/Users/[^/[:space:]]+/' -- . ':(exclude)scripts/check-public-surface.sh' || true
-} | grep -Ev '/Users/(example|tester|private|me|<you>)/' || true)"
+} | grep -aEv '/Users/(example|tester|private|me|<you>)/' || true)"
 if [[ -n "$personal_paths" ]]; then
   printf 'Tracked personal paths found:\n%s\n' "$personal_paths" >&2
   exit 1
@@ -15,7 +15,7 @@ fi
 
 real_team_ids="$({
   git grep -n -E 'team_[A-Za-z0-9]{24}' -- . ':(exclude)scripts/check-public-surface.sh' || true
-} | grep -Fv 'team_000000000000000000000000' || true)"
+} | grep -aFv 'team_000000000000000000000000' || true)"
 if [[ -n "$real_team_ids" ]]; then
   printf 'Tracked real-looking team identifiers found:\n%s\n' "$real_team_ids" >&2
   exit 1
@@ -51,7 +51,7 @@ tar -xzf "$capture" -C "$extract_dir"
 
 archive_matches="$({
   grep -R -a -n -E '/Users/[^/[:space:]]+/|team_[A-Za-z0-9]{24}' "$extract_dir" || true
-} | grep -Ev '/Users/(guest|example|tester|private|me)/|team_000000000000000000000000' || true)"
+} | grep -aEv '/Users/(guest|example|tester|private|me)/|team_000000000000000000000000' || true)"
 if [[ -n "$archive_matches" ]]; then
   printf 'Render fixture contains personal or internal data:\n%s\n' "$archive_matches" >&2
   exit 1

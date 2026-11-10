@@ -163,11 +163,11 @@ describe("host-managed authentication", () => {
     for (const command of [["login"], ["login", "--api-key"], ["logout"], ["setup"], ["teams"]]) {
       const result = await runFx(command, { cwd: workspace, env: childEnv });
       expect(result.code).toBe(0);
-      // `fx setup` is deprecated and says so even when the host manages authentication.
-      expect(result.stderr).toBe(command[0] === "setup" ? "fx setup is deprecated and stops working in fx 0.0.18; use fx login vercel --api-key\n" : "");
+      // `tetris setup` is deprecated and says so even when the host manages authentication.
+      expect(result.stderr).toBe(command[0] === "setup" ? "tetris setup is deprecated and stops working in Tetris 0.1.1; use tetris login vercel --api-key\n" : "");
       expect(result.stdout).toBe("Authentication is managed by the host.\n");
     }
-    expect(existsSync(join(home, ".fx", "auth.json"))).toBe(false);
+    expect(existsSync(join(home, ".tetris", "auth.json"))).toBe(false);
 
     for (const [provider, marker] of [
       ["gateway", "GATEWAY_HOST_MANAGED_OK"],
@@ -191,7 +191,7 @@ describe("host-managed authentication", () => {
       expect(models.stderr).toBe("");
       if (provider === "grok") {
         expect(JSON.parse(models.stdout).ids).toEqual(["grok-subscription-only", "grok-4.20"]);
-        const settings = JSON.parse(readFileSync(join(home, ".fx", "settings.json"), "utf8"));
+        const settings = JSON.parse(readFileSync(join(home, ".tetris", "settings.json"), "utf8"));
         expect(settings.provider).toBe("grok");
         expect(settings.models.grok).toBe("grok-subscription-only");
       }
@@ -216,7 +216,7 @@ describe("host-managed authentication", () => {
       expect(request.headers.get("x-grok-user-id"), request.path).toBeNull();
       expect(request.headers.get("x-userid"), request.path).toBeNull();
     }
-    expect(existsSync(join(home, ".fx", "auth.json"))).toBe(false);
+    expect(existsSync(join(home, ".tetris", "auth.json"))).toBe(false);
   }, TIMEOUT);
 
   test("rejects malformed auth mode before provider I/O", async () => {
@@ -250,10 +250,10 @@ describe("host-managed authentication", () => {
     expect(asked.code).toBe(1);
     const after = requests.filter((request) => request.path === "/codex/responses").length;
     expect(after - before).toBe(1);
-    expect(existsSync(join(home, ".fx", "auth.json"))).toBe(false);
+    expect(existsSync(join(home, ".tetris", "auth.json"))).toBe(false);
   }, TIMEOUT);
 
-  test("an empty reply cut short is asked again with fx's limit through Grok and at low effort through Codex", async () => {
+  test("an empty reply cut short is asked again with tetris's limit through Grok and at low effort through Codex", async () => {
     const childEnv = env();
     const turnBodies = (path: string) => responseBodies
       .filter((entry) => entry.path === path && !entry.body.includes("Generate a short title"))

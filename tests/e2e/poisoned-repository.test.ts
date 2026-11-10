@@ -83,10 +83,10 @@ function poisonedRepository(): Fixture {
     log: join(base, "sentinel.log"),
   };
   fixtures.push(fixture);
-  mkdirSync(join(fixture.home, ".fx"), { recursive: true });
+  mkdirSync(join(fixture.home, ".tetris"), { recursive: true });
   mkdirSync(join(fixture.workspace, "notes"), { recursive: true });
   writeFileSync(
-    join(fixture.home, ".fx", "settings.json"),
+    join(fixture.home, ".tetris", "settings.json"),
     JSON.stringify({ auto_upgrade: false }),
   );
   const sentinel = join(base, "sentinel.sh");
@@ -201,7 +201,7 @@ describe("poisoned repository", () => {
         { cwd: fixture.workspace, env: fxEnv(fixture, gateway), timeoutMs: TIMEOUT },
       );
       expect(result.code, result.stderr).toBe(0);
-      // `fx ask` reports each tool's activity on stderr.
+      // `tetris ask` reports each tool's activity on stderr.
       expect(result.stderr).toContain("Running git status --short");
       expect(result.stderr).not.toMatch(/panic|error/i);
       expect(sentinelRuns(fixture)).toEqual([]);
@@ -222,7 +222,7 @@ describe("poisoned repository", () => {
   );
 
   test(
-    "auto mode holds a git command whose repository config fx cannot read",
+    "auto mode holds a git command whose repository config tetris cannot read",
     async () => {
       const fixture = poisonedRepository();
       // fx reads repository config only through regular files, so an include
@@ -247,7 +247,7 @@ describe("poisoned repository", () => {
       expect(sentinelRuns(fixture)).toEqual([]);
       expect(gateway.classifierRequests).toHaveLength(0);
       const bodies = gateway.requests.map((request: { body: string }) => request.body);
-      expect(toolResult(bodies[1]!, "status")).toContain("fx did not run this git command");
+      expect(toolResult(bodies[1]!, "status")).toContain("Tetris did not run this git command");
     },
     TIMEOUT,
   );
@@ -288,7 +288,7 @@ describe("poisoned repository", () => {
   );
 
   test(
-    "fx pr snapshots the repository without running its programs",
+    "tetris pr snapshots the repository without running its programs",
     async () => {
       const fixture = poisonedRepository();
       const gateway = startFakeGateway(
@@ -322,10 +322,10 @@ describe("user git config through a symlink", () => {
       const base = realpathSync(mkdtempSync(join(tmpdir(), "fx-linked-gitconfig-")));
       const fixture: Fixture = { base, home: join(base, "home"), workspace: join(base, "workspace"), log: join(base, "unused.log") };
       fixtures.push(fixture);
-      mkdirSync(join(fixture.home, ".fx"), { recursive: true });
+      mkdirSync(join(fixture.home, ".tetris"), { recursive: true });
       mkdirSync(join(fixture.home, "dotfiles"));
       mkdirSync(fixture.workspace);
-      writeFileSync(join(fixture.home, ".fx", "settings.json"), JSON.stringify({ auto_upgrade: false }));
+      writeFileSync(join(fixture.home, ".tetris", "settings.json"), JSON.stringify({ auto_upgrade: false }));
       writeFileSync(join(fixture.home, "dotfiles", "ignore"), "*.secret\n");
       writeFileSync(join(fixture.home, "dotfiles", "gitconfig"), "[core]\n\texcludesFile = ~/dotfiles/ignore\n");
       symlinkSync(join(fixture.home, "dotfiles", "gitconfig"), join(fixture.home, ".gitconfig"));

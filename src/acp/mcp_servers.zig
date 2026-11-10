@@ -250,7 +250,7 @@ fn alwaysLoadedPreference(object: std.json.ObjectMap) bool {
     return acp_types.fxMetaBool(object, "alwaysLoaded") orelse true;
 }
 
-/// MCP over ACP, a draft ACP proposal fx doesn't speak: the server is kept,
+/// MCP over ACP, a draft ACP proposal Tetris doesn't speak: the server is kept,
 /// so the model's server catalog says why it is unavailable.
 fn parseAcpServerInto(
     out: *mcp_contract.McpServerConfig,

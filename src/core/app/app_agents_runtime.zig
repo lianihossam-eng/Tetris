@@ -940,8 +940,8 @@ pub fn Runtime(comptime App: type) type {
         pub fn noteName(app: *App, child: ?*ChildAgent, buf: []u8) []const u8 {
             if (child) |value| if (value.agent.role == .subagent) return value.displayName();
             if (openInstanceCount(app) <= 1) return "main";
-            const number = instanceNumber(app, child) orelse return "fx";
-            return std.mem.print(buf, "fx {d}", .{number}) catch "fx";
+            const number = instanceNumber(app, child) orelse return "tetris";
+            return std.mem.print(buf, "tetris {d}", .{number}) catch "tetris";
         }
 
         /// Instance `child`'s place among the open instances, from 1, as
@@ -1571,7 +1571,7 @@ pub fn Runtime(comptime App: type) type {
             const total = openInstanceCount(app);
             if (total <= 1) return "main";
             const position = instanceNumber(app, app.agent_on_screen) orelse 1;
-            return std.mem.print(buf, "fx {d}/{d}", .{ position, total }) catch "fx";
+            return std.mem.print(buf, "tetris {d}/{d}", .{ position, total }) catch "tetris";
         }
 
         /// The instance whose tree subagent `child` is in: the one that

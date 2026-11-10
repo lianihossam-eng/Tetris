@@ -3,14 +3,14 @@
 // runs the real binary and its observations are judged by TLC against
 // tests/tla/session_manager/V1Conversion.tla.
 //
-// Each scenario runs real fx processes one step at a time: "older build"
+// Each scenario runs real Tetris processes one step at a time: "older build"
 // steps run a v1 writer (v1Writer, or an older release), requests run the
 // target, through every way a session can be opened. After every
 // step the driver observes what the step left: each v1 member's contents,
 // each id in v2, the version a v2 copy equals (by the real readers on both
 // sides), leftovers in the manager's .tmp, and the listing. The content
 // oracle continues two copies of the pre-conversion profile, one with each
-// store, and compares the requests fx sends the model for the root and its
+// store, and compares the requests Tetris sends the model for the root and its
 // child; a difference marks that copy as matching no v1 version. Read-backs
 // do the same for each kind of state D56 says the converter carries.
 // check_conversion.py then asks TLC whether some behavior of V1Conversion
@@ -84,6 +84,9 @@ export function fixture(label: string, at?: string, models?: object[]) {
   const root = at ?? mkdtempSync(join(artifacts, label + "-"));
   const home = join(root, "home"), workspace = join(root, "workspace");
   mkdirSync(home, { mode: 0o700 }); mkdirSync(workspace, { mode: 0o700 });
+  // The v1 writer builds this suite runs keep their profile at ~/.fx, so
+  // this fixture's home is that legacy folder; `env` points the native
+  // binary at the same folder with TETRIS_HOME.
   const v1Root = join(home, ".fx/sessions"), v2Root = join(v1Root, "v2");
   const runs: Run[] = [];
   const active = new Set<ReturnType<typeof Bun.spawn>>();
@@ -106,6 +109,11 @@ export function fixture(label: string, at?: string, models?: object[]) {
       // The older releases that write v1 read these names for the same hooks.
       FX_E2E_GATEWAY_CHAT_URL: gateway.chatUrl, FX_E2E_GATEWAY_MODELS_URL: `${gateway.baseUrl}/coding-agent/v1/models`,
       FX_MODEL: FAKE_GATEWAY_MODEL, FX_PERMISSION_MODE: "full-access", FX_AUTO_UPGRADE: "0", FX_SOUND: "0", NO_COLOR: "1",
+      // The v1 builds that write these profiles keep them at ~/.fx, so the
+      // fixture stays there, and TETRIS_HOME points the new binary at that
+      // same folder: it reads and converts the sessions where they were
+      // written. Every other driver uses Tetris's default ~/.tetris.
+      ...(v2 ? { TETRIS_HOME: join(homeDir, ".fx") } : {}),
       // A v1 writer build that still has the store switch writes v1 even when
       // the driver's own environment sets it; tmux passes that environment on.
       ...(v2 ? {} : { FX_SESSIONS_V2: "0" }),
@@ -153,11 +161,11 @@ export function fixture(label: string, at?: string, models?: object[]) {
     return hash.digest("hex");
   }
 
-  // Until `stop`, every fx this fixture starts runs with the path fault
+  // Until `stop`, every Tetris this fixture starts runs with the path fault
   // on these absolute paths: "refuse" fails every move or removal of them,
   // "pause" blocks a rename of exactly one, for `pauseMs` when given. The
   // tmux app gets it too: it is started through /usr/bin/env, whose
-  // arguments keep DYLD_* for the fx it starts.
+  // arguments keep DYLD_* for the Tetris it starts.
   function faultPaths(mode: "refuse" | "pause", paths: string[], pauseMs?: number) {
     const dir = mkdtempSync(join(root, `${mode}-fault-`));
     const arm = join(dir, "armed"), record = join(dir, "hits.txt");
@@ -179,7 +187,7 @@ export function fixture(label: string, at?: string, models?: object[]) {
   const stagingPath = (id: string) => join(realpathSync(home), ".fx/sessions/v2/.tmp", id);
 
   return { root, home, workspace, v1Root, v2Root, runs, gateway, env, start, fx, v1Ask, fingerprint, apps, acps, faultPaths, v1Path, stagingPath,
-    // What the host said in the last openVia: fx ask's output, ACP's load
+    // What the host said in the last openVia: tetris ask's output, ACP's load
     // error and session updates, or the app's screen and stderr.
     said: "",
     setRespond: (f: (body: string) => Response) => { respond = f; },
@@ -205,7 +213,7 @@ export async function waitUntil(check: () => boolean | Promise<boolean>, timeout
   return false;
 }
 
-// What fx said when it refused, from any host's output; `otherwise` when it
+// What Tetris said when it refused, from any host's output; `otherwise` when it
 // said none of these.
 function refusal(text: string, where: string, otherwise?: Answer): Answer {
   if (/SessionBusy|session is busy|is open in another/i.test(text)) return "busy";
@@ -215,15 +223,15 @@ function refusal(text: string, where: string, otherwise?: Answer): Answer {
   throw new Error(`Unclassified answer from ${where}: ${text.slice(0, 600)}`);
 }
 
-// The answer a v2 `fx ask` gave, from fx's own JSON.
+// The answer a v2 `tetris ask` gave, from Tetris's own JSON.
 export function askAnswer(run: Run, id: string): Answer {
   let json: any = null;
   try { json = JSON.parse(run.stdout); } catch { /* not JSON */ }
   if (run.code === 0 && json?.session_id === id) return "opened";
-  return refusal(String(json?.error ?? json?.code ?? "") + " " + run.stdout + run.stderr, `fx ${run.args.join(" ")}`);
+  return refusal(String(json?.error ?? json?.code ?? "") + " " + run.stdout + run.stderr, `${run.v2 ? "tetris" : "fx"} ${run.args.join(" ")}`);
 }
 
-// A minimal ACP client over the real `fx acp`.
+// A minimal ACP client over the real `tetris acp`.
 export class Acp {
   private buffer = "";
   private nextId = 1;
@@ -338,7 +346,7 @@ export async function rememberInV1(f: Fixture, id: string) {
     "the v1 app did not remember the session for -c");
 }
 
-// `fx sessions convert`, as JSON or text: the run, and the answer it gave
+// `tetris sessions convert`, as JSON or text: the run, and the answer it gave
 // each root from its own report, where a root it did not skip converted.
 export async function convertAll(f: Fixture, json = true) {
   const run = await f.fx(true, ["sessions", "convert", ...(json ? ["--json"] : [])]);
@@ -346,10 +354,10 @@ export async function convertAll(f: Fixture, json = true) {
   if (json) {
     let report: any = null;
     try { report = JSON.parse(run.stdout); } catch { /* not JSON */ }
-    assert.equal(report?.kind, "sessions_convert", `fx sessions convert gave no report: ${run.stdout}${run.stderr}`);
+    assert.equal(report?.kind, "sessions_convert", `tetris sessions convert gave no report: ${run.stdout}${run.stderr}`);
     for (const skip of report.skipped) skipped.set(skip.id, skip.error === "SessionBusy" ? "busy" : "unreadable");
   } else {
-    assert.match(run.stdout, /^converted \d+, busy \d+, unreadable \d+\n/, `fx sessions convert gave no report: ${run.stdout}${run.stderr}`);
+    assert.match(run.stdout, /^converted \d+, busy \d+, unreadable \d+\n/, `tetris sessions convert gave no report: ${run.stdout}${run.stderr}`);
     for (const [, id, why] of run.stdout.matchAll(/^(\S+): (busy|unreadable)/gm)) skipped.set(id, why as Answer);
   }
   return { run, answer: (id: string): Answer => skipped.get(id) ?? "converted" };

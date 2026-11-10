@@ -7,6 +7,7 @@ import pathlib
 import tempfile
 import types
 import unittest
+from unittest.mock import patch
 
 from scripts.pgso import macos
 from scripts.pgso.model import PgsoError, sha256_file
@@ -40,6 +41,7 @@ from scripts.pgso.pipeline import (
     _outline_excluding_dropped_outputs,
     _outline_without_folded_constants,
     apply_profile,
+    build_control,
     cleanup_outlined_ir_argv,
     candidate_object_argv,
     emit_bitcode,
@@ -246,6 +248,23 @@ class PgsoPipelineTests(unittest.TestCase):
 
         self.assertEqual(self.paths, reopened)
         self.assertEqual(b"bitcode", reopened.bitcode.read_bytes())
+
+    def test_tetris_native_build_keeps_internal_pgso_filename(self) -> None:
+        product_binary = self.paths.control_prefix / "bin" / "tetris"
+        product_binary.parent.mkdir(parents=True)
+        product_binary.write_bytes(b"Tetris control binary")
+        result = types.SimpleNamespace(
+            stdout="",
+            stderr="",
+            stdout_truncated=False,
+            stderr_truncated=False,
+        )
+
+        with patch("scripts.pgso.pipeline.run_checked", return_value=result):
+            control = build_control(self.toolchain, self.spec, self.paths)
+
+        self.assertEqual(self.paths.control_binary, control)
+        self.assertEqual(b"Tetris control binary", control.read_bytes())
 
     def make_toolchain(self, **changes: pathlib.Path) -> Toolchain:
         tool_root = self.root / "tools"
@@ -755,7 +774,7 @@ print('{{}}')""",
                 "approval-review-bench",
                 "approval-review.bc",
             ),
-            ("unit_tests", "install-test", "fx-test", "unit-tests.bc"),
+            ("unit_tests", "install-test", "tetris-test", "unit-tests.bc"),
         )
         for selector, build_step, binary_name, bitcode_name in cases:
             with self.subTest(selector=selector):

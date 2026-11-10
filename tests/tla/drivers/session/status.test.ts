@@ -1,9 +1,9 @@
-// Runs the real fx binary along tests/tla/session/ShellSession.tla: a profile
+// Runs the real tetris binary along tests/tla/session/ShellSession.tla: a profile
 // outlives several processes, each of which launches, prompts, runs
 // `/status`, `/new`, `/clear`, `/resume` and `/fork`, then quits or crashes.
-// After every step the driver records what fx showed and saved, from fx's
+// After every step the driver records what Tetris showed and saved, from Tetris's
 // own output only: the session each step opened from the wiring trace, each
-// `/status` panel as fx's virtual terminal replays it from the recorded
+// `/status` panel as Tetris's virtual terminal replays it from the recorded
 // tape, the exit line, and the session folders on disk. TLC then replays the
 // whole run through the model (ShellSessionTrace.tla). Every panel must also
 // close without adding a row to the transcript.
@@ -11,7 +11,7 @@
 // The scripted walk reaches every action and every case D90 names. The
 // random walks (FX_TLA_WALKS, default 2, of FX_TLA_STEPS steps, default 16,
 // from FX_TLA_SEED, default 1) choose among the steps a user could take
-// next; the driver tracks only what it did, never what fx should show.
+// next; the driver tracks only what it did, never what Tetris should show.
 // Planted changes to a kept run must be rejected, and an empty run is no
 // evidence at all.
 import { expect, test } from "bun:test";
@@ -38,7 +38,7 @@ type Step =
 /// from, and whether its first prompt was answered, which titles it (D52).
 type Tracked = { prompts: string[]; marker: string | null; source: string | null; titled: boolean };
 
-/// What the driver did, and nothing it expects fx to show: which process
+/// What the driver did, and nothing it expects Tetris to show: which process
 /// runs, which session it last opened, what each session was given, and
 /// whether a reply is held.
 class Walk {

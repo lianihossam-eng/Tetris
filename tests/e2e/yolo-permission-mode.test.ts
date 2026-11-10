@@ -22,7 +22,7 @@ import {
 } from "./tmux-helpers";
 import { expectPermissionModeContext } from "./permission-mode-context";
 
-const WARNING = "Full access enabled: fx permission checks disabled";
+const WARNING = "Full access enabled: Tetris permission checks disabled";
 const COMPACT_WARNING = "Full access";
 const QUIT_HINT = "press ctrl+c again to exit";
 const COMMAND_APPROVAL_PROMPT = "Would you like to run the following command?";
@@ -49,14 +49,14 @@ function createFixture(prefix: string) {
   const root = realpathSync(mkdtempSync(join(tmpdir(), prefix)));
   const home = join(root, "home");
   const workspace = join(root, "workspace");
-  mkdirSync(join(home, ".fx"), { recursive: true });
+  mkdirSync(join(home, ".tetris"), { recursive: true });
   mkdirSync(workspace);
   tempRoots.push(root);
   return {
     root,
     home,
     workspace: realpathSync(workspace),
-    settingsPath: join(home, ".fx", "settings.json"),
+    settingsPath: join(home, ".tetris", "settings.json"),
   };
 }
 

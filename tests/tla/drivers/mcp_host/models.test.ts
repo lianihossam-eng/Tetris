@@ -77,7 +77,7 @@ const controls: { name: string; module: string; constants: Record<string, never>
       { event: "callback", data: { login: 1, state: 1, kind: "get" } }, { event: "redeem", data: { login: 1 } },
       { event: "signed_in", data: { login: 1 } }, { event: "probe", data: { login: 1, result: "closed" } },
     ],
-    // A code redeemed for a callback whose state fx never made.
+    // A code redeemed for a callback whose state Tetris never made.
     bad: [
       { event: "login" }, { event: "authorize", data: { login: 1 } },
       { event: "callback", data: { login: 1, state: 0, kind: "get" } }, { event: "redeem", data: { login: 1 } },

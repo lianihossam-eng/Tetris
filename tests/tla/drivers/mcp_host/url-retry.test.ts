@@ -1,4 +1,4 @@
-// UrlRetry: a real `fx ask` in a terminal (tmux; fx ask asks MCP questions
+// UrlRetry: a real `tetris ask` in a terminal (tmux; tetris ask asks MCP questions
 // only with a terminal) whose fake-gateway model calls a 2025-11-25 stdio
 // server, tests/e2e/fixtures/mcp-legacy-stdio.mjs, that answers the first
 // tools/call with -32042. The harness opens the URLs, then releases the
@@ -34,7 +34,7 @@ async function start(name: string, mode: string, url: string) {
       },
     },
   });
-  // fx opens a URL with `open` or `xdg-open`: these log it, so no browser starts.
+  // Tetris opens a URL with `open` or `xdg-open`: these log it, so no browser starts.
   const bin = join(f.base, "bin");
   mkdirSync(bin);
   for (const opener of ["open", "xdg-open"]) {
@@ -55,7 +55,7 @@ async function start(name: string, mode: string, url: string) {
   });
   const tui = await TmuxSession.create({
     cmd: `${shellQuote(binary)} ask --no-save ${shellQuote("Call the fixture's echo tool.")}`,
-    // No stderrPath: fx ask asks MCP questions only when stdin and stderr are a terminal.
+    // No stderrPath: tetris ask asks MCP questions only when stdin and stderr are a terminal.
     cwd: f.workspace, env, isolated: true, width: 160, height: 40, remainOnExit: true,
   });
   const calls = () => existsSync(wire)
@@ -74,7 +74,7 @@ async function start(name: string, mode: string, url: string) {
   return { f, release, tui, calls, records, push, snap, stop };
 }
 
-test("Two URLs: fx calls again only once the server completes both, ignoring the rest (trace ACCEPTED)", async () => {
+test("Two URLs: Tetris calls again only once the server completes both, ignoring the rest (trace ACCEPTED)", async () => {
   const url = "https://example.test/url-retry";
   const run = await start("url-retry-two", "url_required_multiple", url);
   const { tui, calls, push, snap } = run;

@@ -1,4 +1,4 @@
-//! `~/.fx/mcp.json` and `.mcp.json` edited in place. `add` and
+//! `~/.tetris/mcp.json` and `.mcp.json` edited in place. `add` and
 //! `remove` change one entry of the file's JSON tree, so keys fx doesn't
 //! know, the other top-level keys, the order, the spelling, and the text of
 //! numbers all stay as written.
@@ -412,18 +412,18 @@ test "read returns a file's text, follows a symlink, and refuses a fifo without 
     try testing.expectError(error.DurablePathUnsafe, read(alloc, fifo));
 }
 
-test "the profile's first write creates ~/.fx readable only by its owner" {
+test "the profile's first write creates ~/.tetris readable only by its owner" {
     const alloc = testing.allocator;
     const io = io_mod.getIo();
     var tmp = testing.tmpDir(.{});
     defer tmp.cleanup();
     const home = try io_mod.dirRealpathAlloc(alloc, tmp.dir, ".");
     defer alloc.free(home);
-    const path = try std.Io.Dir.path.join(alloc, &.{ home, ".fx", "mcp.json" });
+    const path = try std.Io.Dir.path.join(alloc, &.{ home, ".tetris", "mcp.json" });
     defer alloc.free(path);
     try write(alloc, .profile, path, "{\"mcpServers\":{}}");
-    const dir = try tmp.dir.statFile(io, ".fx", .{});
+    const dir = try tmp.dir.statFile(io, ".tetris", .{});
     try testing.expectEqual(@as(std.posix.mode_t, 0o700), dir.permissions.toMode() & 0o777);
-    const file = try tmp.dir.statFile(io, ".fx/mcp.json", .{});
+    const file = try tmp.dir.statFile(io, ".tetris/mcp.json", .{});
     try testing.expectEqual(@as(std.posix.mode_t, 0o600), file.permissions.toMode() & 0o777);
 }

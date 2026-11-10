@@ -106,9 +106,9 @@ pub const Command = union(enum) {
 const ResumeInvocation = struct {
     args: []const [:0]const u8,
     top_level_alias: bool = false,
-    /// Set for `fx resume`, which only the upgrade relaunch may still use: an
+    /// Set for `tetris resume`, which only the upgrade relaunch may still use: an
     /// older fx that installs this version restarts it with
-    /// `fx resume <id> --upgrade-relaunch`.
+    /// `tetris resume <id> --upgrade-relaunch`.
     legacy_command: bool = false,
 };
 
@@ -242,7 +242,7 @@ pub const RunResult = union(enum) {
 /// Result for a command line fx can't accept; see `output_contracts.usage_exit_code`.
 const usage_failure: RunResult = .{ .handled_exit = output_contracts.usage_exit_code };
 
-const version_usage = "usage: fx --version\n";
+const version_usage = "usage: tetris --version\n";
 
 pub const Config = struct {
     version: []const u8 = "",
@@ -299,7 +299,7 @@ const LoginArgs = struct {
 const LoginFlag = enum { api_key };
 const login_flag_ids = cli_flags.idTable(LoginFlag, &builtin_commands.login_options);
 
-/// `fx login [vercel|codex|grok] [--api-key]`, in either order.
+/// `tetris login [vercel|codex|grok] [--api-key]`, in either order.
 fn parseLoginArgs(rest: []const [:0]const u8) error{ InvalidLoginProviderArgs, ApiKeyNeedsVercel }!LoginArgs {
     var parsed: LoginArgs = .{};
     var provider_arg: ?[]const u8 = null;
@@ -431,7 +431,7 @@ fn applyAgentFlag(
 }
 
 fn writeBadAgentValue(alloc: Allocator, deps: RunDeps, command: []const u8, bad: BadAgentValue) !void {
-    const message = try alloc.print("fx {s}: invalid value for {s}: {f}\n", .{ command, bad.flag, text_utils.terminalSafe(bad.value) });
+    const message = try alloc.print("tetris {s}: invalid value for {s}: {f}\n", .{ command, bad.flag, text_utils.terminalSafe(bad.value) });
     defer alloc.free(message);
     try writeStderr(deps, message);
 }
@@ -666,7 +666,7 @@ fn writeLaunchWordProblem(
     switch (err) {
         error.PrintFlagUseAsk => {
             const flag = if (std.mem.findScalar(u8, word, '=')) |at| word[0..at] else word;
-            try writer.print("fx: {s} isn't an fx flag; to run one request and exit, use fx ask ", .{flag});
+            try writer.print("tetris: {s} isn't a tetris flag; to run one request and exit, use tetris ask ", .{flag});
             if (printFlagPrompt(remaining)) |prompt| {
                 try writer.print("\"{f}\"\n", .{text_utils.terminalSafe(prompt)});
             } else {
@@ -674,16 +674,16 @@ fn writeLaunchWordProblem(
             }
         },
         error.UnknownCommandTypo => {
-            try writer.print("fx: unknown command {f}", .{text_utils.terminalSafe(word)});
+            try writer.print("tetris: unknown command {f}", .{text_utils.terminalSafe(word)});
             if (launchWordSuggestion(command_catalog, word)) |suggestion| {
                 try writer.print(" (did you mean {s}?)", .{suggestion});
             }
             try writer.writeAll("\n");
         },
-        error.EmptyLaunchPrompt => try writer.writeAll("fx: the prompt is empty\n"),
+        error.EmptyLaunchPrompt => try writer.writeAll("tetris: the prompt is empty\n"),
         error.UnquotedPrompt => {
             // The shell split the prompt into words; show them quoted.
-            try writer.writeAll("fx: put the prompt in quotes: fx \"");
+            try writer.writeAll("tetris: put the prompt in quotes: tetris \"");
             var parser: cli_flags.Parser = .init(&builtin_commands.launch_options, args);
             var first = true;
             while (parser.next() catch null) |item| switch (item) {
@@ -700,7 +700,7 @@ fn writeLaunchWordProblem(
     }
 }
 
-/// The prompt given with `-p` or `--print`, for the `fx ask` hint.
+/// The prompt given with `-p` or `--print`, for the `tetris ask` hint.
 fn printFlagPrompt(remaining: []const [:0]const u8) ?[]const u8 {
     if (remaining.len == 0) return null;
     if (std.mem.startsWith(u8, remaining[0], "--print=")) {
@@ -860,7 +860,7 @@ pub fn parseInteractiveLaunch(
             var prompt: ?[]const u8 = null;
             if (resume_line.len > head_len) {
                 // Launch flags may follow the resume word and its target, as in
-                // `fx -c --model x` or `fx session resume last --fast`. They're
+                // `fx -c --model x` or `tetris session resume last --fast`. They're
                 // read together with the flags before the resume word, so the
                 // last one still wins.
                 const before = args[0 .. args.len - effective_args.len];
@@ -883,7 +883,7 @@ pub fn parseInteractiveLaunch(
                     }
                     return err;
                 };
-                // `fx -c` and `fx -r` take a first prompt; `fx session resume`
+                // `fx -c` and `fx -r` take a first prompt; `tetris session resume`
                 // doesn't.
                 if (launch.prompt != null and !invocation.top_level_alias) {
                     launch.deinit(alloc);
@@ -948,7 +948,7 @@ pub fn parseInteractiveLaunch(
 /// word, when `has_resume_word` (`-c`, `-r`, `--resume`), and its target.
 /// `-c`, `--continue`, and `--resume=<id>` carry their target. `-r` and
 /// `--resume` take the next word as theirs unless it's a long flag, because
-/// a session ID can start with a single dash; `fx session resume` does the
+/// a session ID can start with a single dash; `tetris session resume` does the
 /// same with its first word. Every word after these is a launch flag or, for
 /// the resume flags, the first prompt.
 fn resumeHeadLen(line: []const [:0]const u8, has_resume_word: bool) usize {
@@ -1016,7 +1016,7 @@ fn launchWordSuggestion(command_catalog: CommandCatalog, word: []const u8) ?[]co
     // taken for a mistyped command.
     var nearest: cli_flags.Nearest = .{ .word = word, .max_edits = if (word.len <= 4) 1 else 2 };
     for (command_catalog.specs) |spec| {
-        // `fx resume` is removed; its typos shouldn't point back to it.
+        // `tetris resume` is removed; its typos shouldn't point back to it.
         if (spec.kind == .@"resume") continue;
         const names = [_][]const []const u8{ &.{spec.token}, spec.aliases };
         for (names) |group| for (group) |name| {
@@ -1034,7 +1034,7 @@ fn topLevelHelpRequest(command_catalog: CommandCatalog, args: []const [:0]const 
     if (args.len < 2) return null;
     const kind = command_specs.topLevelKindFromToken(command_catalog, args[0]) orelse return null;
     if (kind == .help) return null;
-    // `fx resume` was removed, so its help request gets the removal hint.
+    // `tetris resume` was removed, so its help request gets the removal hint.
     if (kind == .@"resume" and std.mem.eql(u8, args[0], "resume")) return null;
     for (args[1..]) |arg| {
         if (std.mem.eql(u8, arg, "--help") or std.mem.eql(u8, arg, "-h")) return kind;
@@ -1155,7 +1155,7 @@ fn writeProviderActivationError(
 ) !void {
     const message = try alloc.print(
         "{s}: {s}\n",
-        .{ if (caller == .provider_login) "fx login" else "fx provider", detail },
+        .{ if (caller == .provider_login) "tetris login" else "tetris provider", detail },
     );
     defer alloc.free(message);
     try writeStderr(deps, message);
@@ -1211,7 +1211,7 @@ fn writeProviderLoginFailure(alloc: Allocator, deps: RunDeps, provider: model_pr
     try writeProviderActivationError(alloc, deps, caller, switch (err) {
         error.ClientIdMissing => "missing FX_OAUTH_CLIENT_ID; configure the fx Vercel App client id first",
         error.AccessDenied, error.ChatGptAuthorizationFailed, error.GrokAuthorizationFailed => "authorization denied",
-        error.ExpiredToken, error.LoginTimedOut, error.ChatGptLoginTimedOut, error.GrokLoginTimedOut => "authorization expired; run fx login again",
+        error.ExpiredToken, error.LoginTimedOut, error.ChatGptLoginTimedOut, error.GrokLoginTimedOut => "authorization expired; run tetris login again",
         else => "failed to sign in",
     });
 }
@@ -1437,14 +1437,14 @@ fn runIfRequestedWithDeps(alloc: Allocator, args: []const [:0]const u8, cfg: Con
             else => {},
         }
         if (err == error.InvalidFlag or err == error.UnknownLaunchFlag) {
-            try writer.writer.writeAll("fx: ");
+            try writer.writer.writeAll("tetris: ");
             const failure = if (err == error.InvalidFlag) launchFlagFailure(args) else unknownLaunchFlagFailure(args);
             if (failure) |found| try found.write(&writer.writer);
             try writer.writer.writeAll("\n");
         } else if (globalLaunchErrorMessage(err)) |message| {
-            try writer.writer.print("fx: {s}\n", .{message});
+            try writer.writer.print("tetris: {s}\n", .{message});
         } else {
-            try writer.writer.print("fx: invalid global launch option: {s}\n", .{@errorName(err)});
+            try writer.writer.print("tetris: invalid global launch option: {s}\n", .{@errorName(err)});
         }
         try writer.writer.writeAll(builtin_commands.launch_usage);
         try writeStderr(deps, writer.written());
@@ -1494,7 +1494,7 @@ fn runNonInteractiveWithDeps(
         else => false,
     };
     if (global_args.modifiers.profile_name != null) {
-        try writeStderr(deps, "fx: --profile applies to interactive sessions\n");
+        try writeStderr(deps, "tetris: --profile applies to interactive sessions\n");
         return usage_failure;
     }
     if (global_args.modifiers.hasModelOverrides() and !acp_ultrafast_override) {
@@ -1502,7 +1502,7 @@ fn runNonInteractiveWithDeps(
         return usage_failure;
     }
     if (global_args.modifiers.instances != null) {
-        try writeStderr(deps, "fx: --instances applies to interactive sessions\n");
+        try writeStderr(deps, "tetris: --instances applies to interactive sessions\n");
         return usage_failure;
     }
 
@@ -1545,7 +1545,7 @@ fn runNonInteractiveWithDeps(
                     } else {
                         try writeFlagFailure(alloc, deps, .acp, rest);
                     }
-                    try writeStderr(deps, "usage: fx " ++ builtin_commands.acp_usage ++ "\n");
+                    try writeStderr(deps, "usage: tetris " ++ builtin_commands.acp_usage ++ "\n");
                     return usage_failure;
                 },
             };
@@ -1590,10 +1590,10 @@ fn runNonInteractiveWithDeps(
         .login => |rest| {
             const login_args = parseLoginArgs(rest) catch |err| {
                 switch (err) {
-                    error.ApiKeyNeedsVercel => try writeStderr(deps, "fx login: --api-key works only with vercel\n"),
+                    error.ApiKeyNeedsVercel => try writeStderr(deps, "tetris login: --api-key works only with vercel\n"),
                     error.InvalidLoginProviderArgs => {
                         try writeFlagFailure(alloc, deps, .login, rest);
-                        try writeStderr(deps, "usage: fx login [vercel|codex|grok] [--api-key]\n");
+                        try writeStderr(deps, "usage: tetris login [vercel|codex|grok] [--api-key]\n");
                     },
                 }
                 return usage_failure;
@@ -1603,9 +1603,9 @@ fn runNonInteractiveWithDeps(
                 return .handled_success;
             }
             if (login_args.api_key) {
-                return if (try runPasteSetup(alloc, cfg.secret_store, deps, "fx login")) .handled_success else .handled_failure;
+                return if (try runPasteSetup(alloc, cfg.secret_store, deps, "tetris login")) .handled_success else .handled_failure;
             }
-            // Preserve the original `fx login` behavior for scripts and users.
+            // Preserve the original `tetris login` behavior for scripts and users.
             const login_provider = login_args.provider orelse .gateway;
             runProviderLogin(alloc, cfg, login_provider) catch |err| {
                 try writeProviderLoginFailure(alloc, deps, login_provider, .provider_login, err);
@@ -1629,18 +1629,18 @@ fn runNonInteractiveWithDeps(
         },
         .logout => |rest| {
             const maybe_login_provider = parseLoginProvider(rest) catch {
-                try writeStderr(deps, "usage: fx logout [vercel|codex|grok]\n");
+                try writeStderr(deps, "usage: tetris logout [vercel|codex|grok]\n");
                 return usage_failure;
             };
             if (cfg.auth_mode == .host_managed) {
                 try writeHostManagedAuthResult(deps);
                 return .handled_success;
             }
-            // Preserve the original `fx logout` behavior for scripts and users.
+            // Preserve the original `tetris logout` behavior for scripts and users.
             const login_provider = maybe_login_provider orelse .gateway;
             if (login_provider == .codex) {
                 const outcome = chatgpt_oauth.logout() catch {
-                    try writeStderr(deps, "fx logout: failed to durably remove saved Codex login\n");
+                    try writeStderr(deps, "tetris logout: failed to durably remove saved Codex login\n");
                     return .handled_failure;
                 };
                 return switch (outcome) {
@@ -1653,18 +1653,18 @@ fn runNonInteractiveWithDeps(
                         break :result .handled_success;
                     },
                     .deleted_not_durable => result: {
-                        try writeStderr(deps, "fx logout: failed to durably remove saved Codex login\n");
+                        try writeStderr(deps, "tetris logout: failed to durably remove saved Codex login\n");
                         break :result .handled_failure;
                     },
                 };
             }
             if (login_provider == .grok) {
                 const outcome = grok_oauth.logout(alloc, cfg.gateway_provider.oauth_transport) catch {
-                    try writeStderr(deps, "fx logout: failed to durably remove saved Grok login\n");
+                    try writeStderr(deps, "tetris logout: failed to durably remove saved Grok login\n");
                     return .handled_failure;
                 };
                 if (outcome.revocation_failed) {
-                    try writeStderr(deps, "fx logout: local Grok session removed, but remote revocation could not be confirmed\n");
+                    try writeStderr(deps, "tetris logout: local Grok session removed, but remote revocation could not be confirmed\n");
                 }
                 return switch (outcome.deletion) {
                     .deleted => result: {
@@ -1676,14 +1676,14 @@ fn runNonInteractiveWithDeps(
                         break :result .handled_success;
                     },
                     .deleted_not_durable => result: {
-                        try writeStderr(deps, "fx logout: failed to durably remove saved Grok login\n");
+                        try writeStderr(deps, "tetris logout: failed to durably remove saved Grok login\n");
                         break :result .handled_failure;
                     },
                 };
             }
             const result = login_flow.logout(alloc, cfg.gateway_provider.oauth_transport) catch |err| switch (err) {
                 error.SessionDeleteFailed => {
-                    try writeStderr(deps, "fx logout: failed to durably remove saved fx login\n");
+                    try writeStderr(deps, "tetris logout: failed to durably remove saved Tetris login\n");
                     return .handled_failure;
                 },
             };
@@ -1701,17 +1701,17 @@ fn runNonInteractiveWithDeps(
                             "logout credential preference clear failed err={s}",
                             .{@errorName(failure.err)},
                         );
-                        try writeStderr(deps, "fx logout: signed out, but failed to clear the saved fx login selection\n");
+                        try writeStderr(deps, "tetris logout: signed out, but failed to clear the saved Tetris login selection\n");
                         return .handled_failure;
                     },
                 }
             }
             if (result.local_durability_failed) {
-                try writeStderr(deps, "fx logout: failed to durably remove saved fx login\n");
+                try writeStderr(deps, "tetris logout: failed to durably remove saved Tetris login\n");
             } else {
                 try writeStdout(
                     deps,
-                    if (result.session_deleted) "Signed out of fx.\n" else "No fx login session found.\n",
+                    if (result.session_deleted) "Signed out of Tetris.\n" else "No Tetris login session found.\n",
                 );
             }
             if (result.remote_revocation_failed) {
@@ -1722,7 +1722,7 @@ fn runNonInteractiveWithDeps(
         },
         .teams => |rest| {
             if (rest.len != 0) {
-                try writeStderr(deps, "usage: fx teams\n");
+                try writeStderr(deps, "usage: tetris teams\n");
                 return usage_failure;
             }
             if (cfg.auth_mode == .host_managed) {
@@ -1739,13 +1739,13 @@ fn runNonInteractiveWithDeps(
                 },
             ) catch |err| {
                 const message = switch (err) {
-                    error.NoSession => "fx teams: run fx login first\n",
-                    error.SessionChanged => "fx teams: authentication changed; try again\n",
-                    error.TeamRequestFailed => "fx teams: failed to list Vercel teams\n",
-                    error.InvalidTeamSelection => "fx teams: no team selected\n",
-                    error.AccessDenied => "fx teams: authorization denied\n",
-                    error.TeamValidationFailed => "fx teams: selected team could not access AI Gateway\n",
-                    else => "fx teams: failed to switch team\n",
+                    error.NoSession => "tetris teams: run tetris login first\n",
+                    error.SessionChanged => "tetris teams: authentication changed; try again\n",
+                    error.TeamRequestFailed => "tetris teams: failed to list Vercel teams\n",
+                    error.InvalidTeamSelection => "tetris teams: no team selected\n",
+                    error.AccessDenied => "tetris teams: authorization denied\n",
+                    error.TeamValidationFailed => "tetris teams: selected team could not access AI Gateway\n",
+                    else => "tetris teams: failed to switch team\n",
                 };
                 try writeStderr(deps, message);
                 return .handled_failure;
@@ -1762,11 +1762,11 @@ fn runNonInteractiveWithDeps(
         },
         .provider => |rest| {
             if (rest.len != 1) {
-                try writeStderr(deps, "usage: fx provider <name>\n");
+                try writeStderr(deps, "usage: tetris provider <name>\n");
                 return usage_failure;
             }
             const target = model_provider.parse(rest[0]) orelse {
-                try writeStderr(deps, "fx provider: expected gateway, codex, grok, or a configured name\n");
+                try writeStderr(deps, "tetris provider: expected gateway, codex, grok, or a configured name\n");
                 return usage_failure;
             };
             const activated = activateProviderSelection(alloc, cfg, deps, target, .provider_command, null) catch |err| switch (err) {
@@ -1788,7 +1788,7 @@ fn runNonInteractiveWithDeps(
                 try writeHostManagedAuthResult(deps);
                 return .handled_success;
             }
-            return if (try runPasteSetup(alloc, cfg.secret_store, deps, "fx setup")) .handled_success else .handled_failure;
+            return if (try runPasteSetup(alloc, cfg.secret_store, deps, "tetris setup")) .handled_success else .handled_failure;
         },
         .status => |rest| {
             const opts = parseLocalSurfaceArgs(rest) catch |err| {
@@ -1918,10 +1918,10 @@ fn runNonInteractiveWithDeps(
             available_providers.definitions = startup.configured_providers.definitions;
             const catalog_provider = available_providers.select(startup.provider).cli_model_catalog orelse {
                 try writeStderr(deps, switch (startup.provider) {
-                    .gateway => "fx models: Gateway model catalog is unavailable\n",
-                    .codex => "fx models: Codex model catalog is unavailable\n",
-                    .grok => "fx models: Grok model catalog is unavailable\n",
-                    .configured => "fx models: Configured model catalog is unavailable\n",
+                    .gateway => "tetris models: Gateway model catalog is unavailable\n",
+                    .codex => "tetris models: Codex model catalog is unavailable\n",
+                    .grok => "tetris models: Grok model catalog is unavailable\n",
+                    .configured => "tetris models: Configured model catalog is unavailable\n",
                 });
                 return .handled_failure;
             };
@@ -1943,7 +1943,7 @@ fn runNonInteractiveWithDeps(
                             message,
                         );
                     } else {
-                        try writeStderr(deps, "fx models: ");
+                        try writeStderr(deps, "tetris models: ");
                         try writeStderr(deps, message);
                         try writeStderr(deps, "\n");
                     }
@@ -2217,7 +2217,7 @@ fn runNonInteractiveWithDeps(
             var rejected_channel: ?[]const u8 = null;
             const opts = parseUpgradeArgs(rest, &rejected_channel) catch |err| {
                 if (rejected_channel) |value| if (!argsContainJson(rest)) {
-                    const line = try alloc.print("fx upgrade: invalid value for --channel: {f}\n", .{text_utils.terminalSafe(value)});
+                    const line = try alloc.print("tetris upgrade: invalid value for --channel: {f}\n", .{text_utils.terminalSafe(value)});
                     defer alloc.free(line);
                     try writeStderr(deps, line);
                 };
@@ -2233,7 +2233,7 @@ fn runNonInteractiveWithDeps(
                 if (opts.format == .json) {
                     try writeJsonCommandFailure(alloc, deps, "upgrade", err, "failed to load update settings");
                 } else {
-                    try writeStderr(deps, "fx upgrade: failed to load update settings\n");
+                    try writeStderr(deps, "tetris upgrade: failed to load update settings\n");
                 }
                 return .handled_failure;
             };
@@ -2246,7 +2246,7 @@ fn runNonInteractiveWithDeps(
                     if (opts.format == .json) {
                         try writeJsonCommandFailure(alloc, deps, "upgrade", err, "failed to save update channel");
                     } else {
-                        try writeStderr(deps, "fx upgrade: failed to save update channel\n");
+                        try writeStderr(deps, "tetris upgrade: failed to save update channel\n");
                     }
                     return .handled_failure;
                 };
@@ -2271,7 +2271,7 @@ fn runNonInteractiveWithDeps(
                 .text => .text,
                 .json => .json,
             }) catch {
-                try writeStderr(deps, "fx upgrade: render failed\n");
+                try writeStderr(deps, "tetris upgrade: render failed\n");
                 return .handled_failure;
             };
             defer alloc.free(text);
@@ -2283,7 +2283,7 @@ fn runNonInteractiveWithDeps(
             const shell = if (rest.len == 1) completion.parseShell(rest[0]) else null;
             if (shell == null) {
                 if (rest.len == 1) {
-                    try writeStderrLine(alloc, deps, "fx completion: unknown shell {s}; choose bash, zsh, or fish\n", rest[0]);
+                    try writeStderrLine(alloc, deps, "tetris completion: unknown shell {s}; choose bash, zsh, or fish\n", rest[0]);
                 }
                 try writeTopLevelUsage(cfg.command_catalog, deps, .completion);
                 return usage_failure;
@@ -2303,15 +2303,15 @@ fn runNonInteractiveWithDeps(
                         try writeJsonCommandFailure(alloc, deps, "config", err, text);
                         return usage_failure;
                     }
-                    try writeStderrLine(alloc, deps, "fx config: {s}\n", text);
+                    try writeStderrLine(alloc, deps, "tetris config: {s}\n", text);
                 }
                 if (!argsContainJson(rest)) {
                     if (unknown_key) |part| {
                         const message = try settings_messages.formatUnknownPath(alloc, part);
                         defer alloc.free(message);
-                        try writeStderrLine(alloc, deps, "fx config: {s}\n", message);
+                        try writeStderrLine(alloc, deps, "tetris config: {s}\n", message);
                     } else if (err == error.WorkspaceConfigWrite) {
-                        try writeStderr(deps, "fx config: " ++ workspace_write_message ++ "\n");
+                        try writeStderr(deps, "tetris config: " ++ workspace_write_message ++ "\n");
                     }
                 }
                 try writeUsageOrJsonError(alloc, cfg.command_catalog, deps, .config, "config", err, rest);
@@ -2328,7 +2328,7 @@ fn runNonInteractiveWithDeps(
             return if (exit_code == 0) .handled_success else .{ .handled_exit = exit_code };
         },
         .unknown => |command| {
-            try writeStderr(deps, "fx: unknown subcommand: ");
+            try writeStderr(deps, "tetris: unknown subcommand: ");
             try writeStderr(deps, command);
             try writeStderr(deps, "\n\n");
             try writeTopLevelHelp(alloc, cfg.command_catalog, deps, cfg.version, .stderr);
@@ -2389,7 +2389,7 @@ fn runGithubWorkflow(
     const prompt = switch (workflow) {
         .pull_request => github_workflows.buildPrompt(alloc, workflow, workflowLanguagePlaceholder(), opts.context) catch |err| switch (err) {
             error.NotGitRepository => {
-                try writeStderr(deps, "fx pr: requires running inside a git repository\n");
+                try writeStderr(deps, "tetris pr: requires running inside a git repository\n");
                 return .handled_failure;
             },
             else => return err,
@@ -2410,8 +2410,8 @@ fn runGithubWorkflow(
 
     const draft = draftFromRun(alloc, run_result) catch {
         try writeStderr(deps, switch (workflow) {
-            .pull_request => "fx pr: failed to parse drafted PR title/body\n",
-            .issue => "fx issue: failed to parse drafted issue title/body\n",
+            .pull_request => "tetris pr: failed to parse drafted PR title/body\n",
+            .issue => "tetris issue: failed to parse drafted issue title/body\n",
         });
         return .handled_failure;
     };
@@ -2424,8 +2424,8 @@ fn runGithubWorkflow(
     defer published.deinit(alloc);
     if (!published.ok) {
         try writeStderr(deps, switch (workflow) {
-            .pull_request => "fx pr: ",
-            .issue => "fx issue: ",
+            .pull_request => "tetris pr: ",
+            .issue => "tetris issue: ",
         });
         try writeStderr(deps, published.text);
         try writeStderr(deps, "\n");
@@ -2451,7 +2451,7 @@ fn writeStderr(deps: RunDeps, text: []const u8) !void {
 }
 
 /// Reads and stores an AI Gateway API key. `command` names the command in
-/// failure messages: `fx login` for `fx login --api-key`, `fx setup` for the
+/// failure messages: `tetris login` for `tetris login --api-key`, `tetris setup` for the
 /// deprecated spelling.
 fn runPasteSetup(
     alloc: Allocator,
@@ -2616,10 +2616,10 @@ fn writeConfigDiagnostics(
         var notice_writer: std.Io.Writer.Allocating = .init(alloc);
         defer notice_writer.deinit();
         if (note) |text| {
-            try notice_writer.writer.print("fx: note: {s}", .{text});
+            try notice_writer.writer.print("tetris: note: {s}", .{text});
         } else {
             try notice_writer.writer.print(
-                "fx: config {s}: {s}",
+                "tetris: config {s}: {s}",
                 .{ @tagName(diagnostic.layer), @tagName(diagnostic.cause) },
             );
             try config_runtime.writeDiagnosticMetadata(&notice_writer.writer, diagnostic);
@@ -2779,7 +2779,7 @@ fn environMapDefault(_: ?*anyopaque) ?*const std.process.Environ.Map {
 }
 
 fn writeTopLevelUsage(command_catalog: CommandCatalog, deps: RunDeps, kind: TopLevelKind) !void {
-    try writeStderr(deps, "usage: fx ");
+    try writeStderr(deps, "usage: tetris ");
     try writeStderr(deps, command_specs.topLevelUsage(command_catalog, kind));
     try writeStderr(deps, "\n");
 }
@@ -2803,10 +2803,10 @@ fn runTopLevelMcp(
     return runMcpVerbs(alloc, rest, cfg, deps);
 }
 
-/// `fx mcp`: the verbs `/mcp` shares.
+/// `tetris mcp`: the verbs `/mcp` shares.
 fn runMcpVerbs(alloc: Allocator, rest: []const [:0]const u8, cfg: Config, deps: RunDeps) !RunResult {
     const home = io_mod.homeDir() orelse {
-        try writeStderr(deps, "fx mcp: " ++ io_mod.no_home_dir_reason ++ "\n");
+        try writeStderr(deps, "tetris mcp: " ++ io_mod.no_home_dir_reason ++ "\n");
         return .handled_failure;
     };
     const workspace_root = try io_mod.realpathAlloc(alloc, ".");
@@ -2837,7 +2837,7 @@ fn runMcpVerbs(alloc: Allocator, rest: []const [:0]const u8, cfg: Config, deps: 
     };
 }
 
-/// A host made for one `fx mcp` command.
+/// A host made for one `tetris mcp` command.
 const CliMcpHosts = struct {
     alloc: Allocator,
     cfg: Config,
@@ -2849,7 +2849,7 @@ const CliMcpHosts = struct {
         return load(self.alloc, self.workspace_root, self.cfg.tool_set.registry, .{ .notify = notify });
     }
 
-    /// `fx mcp` exits after its one command, so nothing waits for the
+    /// `tetris mcp` exits after its one command, so nothing waits for the
     /// servers; a logout already waited for its revocation.
     fn release(_: *anyopaque, _: *mcp_host.Host) void {
         mcp_host.signalServersForExit();
@@ -2935,7 +2935,7 @@ fn writeMcpProfileWarning(
     var out: std.Io.Writer.Allocating = .init(alloc);
     defer out.deinit();
     try out.writer.print(
-        "fx: {s}/mcp.json warning: {s}",
+        "tetris: {s}/mcp.json warning: {s}",
         .{ profile_paths.displayRoot(), @tagName(warning.cause) },
     );
     if (warning.key()) |key| {
@@ -2995,7 +2995,7 @@ fn parsedOptions(kind: TopLevelKind) ?[]const command_specs.OptionDoc {
 fn writeFlagFailure(alloc: Allocator, deps: RunDeps, kind: TopLevelKind, args: anytype) !void {
     const problem = try flagProblem(alloc, kind, args) orelse return;
     defer alloc.free(problem);
-    try writeStderrLine(alloc, deps, "fx {s}: ", @tagName(kind));
+    try writeStderrLine(alloc, deps, "tetris {s}: ", @tagName(kind));
     try writeStderr(deps, problem);
     try writeStderr(deps, "\n");
 }
@@ -3005,7 +3005,7 @@ fn writeFlagFailure(alloc: Allocator, deps: RunDeps, kind: TopLevelKind, args: a
 /// Null when the flags are fine. The caller frees the result.
 fn flagProblem(alloc: Allocator, kind: TopLevelKind, args: anytype) !?[]u8 {
     const docs = parsedOptions(kind) orelse return null;
-    // `fx session` and `fx config` read operands that may start with a dash,
+    // `tetris session` and `tetris config` read operands that may start with a dash,
     // such as an ID or `-5`; report what their parsers hit.
     const parser: cli_flags.Parser = switch (kind) {
         .session, .config => .initDashOperands(docs, args),
@@ -3041,7 +3041,7 @@ fn writeUsageCommandFailure(
             message,
         );
     }
-    try writeStderr(deps, "fx usage: ");
+    try writeStderr(deps, "tetris usage: ");
     try writeStderr(deps, message);
     try writeStderr(deps, "\n");
 }
@@ -3051,8 +3051,8 @@ fn usageFailureMessage(err: anyerror) []const u8 {
         error.HomeNotSet => io_mod.no_home_dir_reason,
         error.DurablePathUnsafe,
         error.PrivateStatePermissionsUnsupported,
-        => "the ~/.fx folder is unsafe",
-        else => "couldn't load the fx profile",
+        => "the ~/.tetris folder is unsafe",
+        else => "couldn't load the Tetris profile",
     };
 }
 
@@ -3065,7 +3065,7 @@ fn writeWorkspaceCommandError(
 ) !void {
     if (!argsContainJson(args)) {
         if (output_contracts.workspaceErrorMessage(err)) |message| {
-            try writeStderr(deps, "fx workspace: ");
+            try writeStderr(deps, "tetris workspace: ");
             try writeStderr(deps, message);
             try writeStderr(deps, "\n");
             return;
@@ -3098,7 +3098,7 @@ fn writeWorkspaceIndeterminateError(
         .unconfirmed => "settings durability is uncertain; reloaded settings match neither the requested nor previous state",
     };
     if (!argsContainJson(args)) {
-        try writeStderr(deps, "fx workspace: ");
+        try writeStderr(deps, "tetris workspace: ");
         try writeStderr(deps, message);
         try writeStderr(deps, "\n");
         return;
@@ -3123,7 +3123,7 @@ fn workflowLanguagePlaceholder() types.ConversationLanguage {
     return types.ConversationLanguage.default();
 }
 
-/// The session modes `fx status` reports, so a client can show the mode
+/// The session modes `tetris status` reports, so a client can show the mode
 /// choice before an ACP session exists. Null for a registry without modes.
 fn statusModes(registry: mode_registry.Registry, permission_mode: types.PermissionMode) ?output_contracts.StatusSnapshot.SessionModes {
     if (registry.modes.len == 0) return null;
@@ -3208,7 +3208,7 @@ fn modelDetails(
     return details;
 }
 
-/// What `fx models` says when it could not load the catalog. A connection fx
+/// What `tetris models` says when it could not load the catalog. A connection fx
 /// could not make is named as one. The caller owns the text.
 fn modelListFailureMessage(alloc: Allocator, failure: model_catalog.Failure, provider: model_provider.ProviderId) Allocator.Error![]u8 {
     if (failure.category == .transport) {
@@ -3337,7 +3337,7 @@ fn writeSessionRecovery(
     return if (result.status == .recovered) .handled_success else .handled_failure;
 }
 
-/// `fx sessions` on v2: the page v1 shows, from the v2 catalog.
+/// `tetris sessions` on v2: the page v1 shows, from the v2 catalog.
 fn runSessionList(alloc: Allocator, deps: RunDeps, opts: SessionListOptions) !RunResult {
     var store = session_adapter.Store.openFromEnv(alloc) catch |err| {
         try writeLookupFailure(alloc, deps, "sessions", session_adapter.commandError(err), opts.format);
@@ -3381,7 +3381,7 @@ test "sessions convert reads its flags through the shared parser" {
     try std.testing.expectError(error.InvalidLocalSurfaceArgs, parseSessionConvertArgs(&.{"extra"}));
 }
 
-/// `fx sessions convert`: converts every v1 session v2 does not hold yet,
+/// `tetris sessions convert`: converts every v1 session v2 does not hold yet,
 /// and fails when it skipped any (D61).
 fn runSessionConvert(alloc: Allocator, deps: RunDeps, format: output_contracts.OutputFormat) !RunResult {
     // Each conversion is traced (`[convert]`), as an open's is.
@@ -3431,7 +3431,7 @@ fn runSessionConvert(alloc: Allocator, deps: RunDeps, format: output_contracts.O
     return if (skipped.len == 0) .handled_success else .handled_failure;
 }
 
-/// `fx session last|{id}` on v2, read without the session's lock (D37).
+/// `tetris session last|{id}` on v2, read without the session's lock (D37).
 fn runSessionDetail(
     alloc: Allocator,
     deps: RunDeps,
@@ -3469,7 +3469,7 @@ fn runSessionDetail(
     }
 }
 
-/// `fx session recover` on v2 (D15): a copy up to the last good turn.
+/// `tetris session recover` on v2 (D15): a copy up to the last good turn.
 fn runSessionRecovery(alloc: Allocator, deps: RunDeps, recovery: SessionRecoveryOptions) !RunResult {
     var store = session_adapter.Store.openFromEnv(alloc) catch |err| {
         try writeLookupFailure(alloc, deps, "session", session_adapter.commandError(err), recovery.format);
@@ -3510,58 +3510,58 @@ fn writeLookupFailure(
 
     switch (err) {
         error.NoSavedSessions => {
-            try writeStderr(deps, "fx session: no saved sessions for this workspace\n");
+            try writeStderr(deps, "tetris session: no saved sessions for this workspace\n");
         },
         error.NoReadableSessions => {
-            try writeStderr(deps, "fx session: saved sessions are unreadable; run `fx doctor` for recovery guidance\n");
+            try writeStderr(deps, "tetris session: saved sessions are unreadable; run `tetris doctor` for recovery guidance\n");
         },
         error.SessionNotFound => {
-            try writeStderr(deps, "fx session: record not found\n");
+            try writeStderr(deps, "tetris session: record not found\n");
         },
         error.InvalidSessionFormat => {
             try writeStderr(
                 deps,
-                "fx session: record is corrupt; run `fx doctor` for recovery guidance\n",
+                "tetris session: record is corrupt; run `tetris doctor` for recovery guidance\n",
             );
         },
         error.UnsupportedSessionSchema => {
             try writeStderr(
                 deps,
-                "fx session: record uses an unsupported session version\n",
+                "tetris session: record uses an unsupported session version\n",
             );
         },
         error.InvalidSessionId => {
-            try writeStderr(deps, "fx session: invalid session id\n");
+            try writeStderr(deps, "tetris session: invalid session id\n");
         },
         error.SessionRecoveryNotNeeded => {
             try writeStderr(
                 deps,
-                "fx session: recovery was refused because the session has a valid commit boundary; resume it normally\n",
+                "tetris session: recovery was refused because the session has a valid commit boundary; resume it normally\n",
             );
         },
         error.SessionRecoveryBoundaryInvalid => {
             try writeStderr(
                 deps,
-                "fx session: no exact trustworthy recovery boundary was found; the source was left unchanged\n",
+                "tetris session: no exact trustworthy recovery boundary was found; the source was left unchanged\n",
             );
         },
         error.SessionBusy => {
             try writeStderr(
                 deps,
-                "fx session: session is busy or the filesystem cannot provide the required lock\n",
+                "tetris session: session is busy or the filesystem cannot provide the required lock\n",
             );
         },
         error.DurablePathUnsafe => {
             try writeStderr(
                 deps,
-                "fx session: durable session storage is unsafe or does not support required private permissions\n",
+                "tetris session: durable session storage is unsafe or does not support required private permissions\n",
             );
         },
         error.SessionStoreUnavailable => {
-            try writeStderr(deps, "fx session: durable session store is unavailable\n");
+            try writeStderr(deps, "tetris session: durable session store is unavailable\n");
         },
         error.HomeNotSet => {
-            try writeStderr(deps, "fx ");
+            try writeStderr(deps, "tetris ");
             try writeStderr(deps, kind);
             try writeStderr(deps, ": " ++ io_mod.no_home_dir_reason ++ "\n");
         },
@@ -3581,10 +3581,10 @@ fn writeSessionDetailFailure(
 ) !void {
     const message = switch (err) {
         error.InvalidSessionFormat => if (reason.len > 0) try alloc.print(
-            "session {s} can't be read: {s}; run `fx doctor`",
+            "session {s} can't be read: {s}; run `tetris doctor`",
             .{ session_id, reason },
         ) else try alloc.print(
-            "session {s} is corrupt; run `fx session recover {s}`",
+            "session {s} is corrupt; run `tetris session recover {s}`",
             .{ session_id, session_id },
         ),
         error.UnsupportedSessionSchema => try alloc.print(
@@ -3609,7 +3609,7 @@ fn writeSessionDetailFailure(
             message,
         );
     }
-    try writeStderr(deps, "fx session: ");
+    try writeStderr(deps, "tetris session: ");
     try writeStderr(deps, message);
     try writeStderr(deps, "\n");
 }
@@ -3636,9 +3636,9 @@ fn commandFailureMessage(err: anyerror) ?[]const u8 {
 fn lookupFailureMessage(err: anyerror) ?[]const u8 {
     return switch (err) {
         error.NoSavedSessions => "no saved sessions for this workspace",
-        error.NoReadableSessions => "saved sessions are unreadable; run `fx doctor` for recovery guidance",
+        error.NoReadableSessions => "saved sessions are unreadable; run `tetris doctor` for recovery guidance",
         error.SessionNotFound => "record not found",
-        error.InvalidSessionFormat => "record is corrupt; run `fx doctor` for recovery guidance",
+        error.InvalidSessionFormat => "record is corrupt; run `tetris doctor` for recovery guidance",
         error.UnsupportedSessionSchema => "record uses an unsupported session version",
         error.InvalidSessionId => "invalid session id",
         error.SessionRecoveryNotNeeded => "recovery was refused because the session has a valid commit boundary; resume it normally",
@@ -3659,14 +3659,14 @@ test "session detail failure names an older fx's damaged file and points at doct
     defer text.deinit();
     try writeSessionDetailFailure(std.testing.allocator, text.deps(), "old-session", error.InvalidSessionFormat, "events.jsonl can't be read (AccessDenied)", .text);
     try std.testing.expectEqualStrings(
-        "fx session: session old-session can't be read: events.jsonl can't be read (AccessDenied); run `fx doctor`\n",
+        "tetris session: session old-session can't be read: events.jsonl can't be read (AccessDenied); run `tetris doctor`\n",
         text.stderr.written(),
     );
     var json = CaptureOutput.init(std.testing.allocator);
     defer json.deinit();
     try writeSessionDetailFailure(std.testing.allocator, json.deps(), "old-session", error.InvalidSessionFormat, "events.jsonl can't be read (AccessDenied)", .json);
     try std.testing.expect(std.mem.find(u8, json.stdout.written(), "\"code\":\"InvalidSessionFormat\"") != null);
-    try std.testing.expect(std.mem.find(u8, json.stdout.written(), "run `fx doctor`") != null);
+    try std.testing.expect(std.mem.find(u8, json.stdout.written(), "run `tetris doctor`") != null);
 }
 
 test "session detail failures separate corruption from unsupported schema" {
@@ -3682,7 +3682,7 @@ test "session detail failures separate corruption from unsupported schema" {
     );
     try std.testing.expectEqualStrings("", corrupt_text.stdout.written());
     try std.testing.expectEqualStrings(
-        "fx session: session broken-session is corrupt; run `fx session recover broken-session`\n",
+        "tetris session: session broken-session is corrupt; run `tetris session recover broken-session`\n",
         corrupt_text.stderr.written(),
     );
 
@@ -3701,7 +3701,7 @@ test "session detail failures separate corruption from unsupported schema" {
         std.mem.find(
             u8,
             corrupt_json.stdout.written(),
-            "\"error\":\"session broken-session is corrupt; run `fx session recover broken-session`\"",
+            "\"error\":\"session broken-session is corrupt; run `tetris session recover broken-session`\"",
         ) != null,
     );
     try std.testing.expect(
@@ -3724,7 +3724,7 @@ test "session detail failures separate corruption from unsupported schema" {
     );
     try std.testing.expectEqualStrings("", unsupported_text.stdout.written());
     try std.testing.expectEqualStrings(
-        "fx session: session future-session uses an unsupported session version\n",
+        "tetris session: session future-session uses an unsupported session version\n",
         unsupported_text.stderr.written(),
     );
 }
@@ -3741,7 +3741,7 @@ test "session recovery boundary failures keep stable text and json guidance" {
     );
     try std.testing.expectEqualStrings("", text_output.stdout.written());
     try std.testing.expectEqualStrings(
-        "fx session: no exact trustworthy recovery boundary was found; the source was left unchanged\n",
+        "tetris session: no exact trustworthy recovery boundary was found; the source was left unchanged\n",
         text_output.stderr.written(),
     );
 
@@ -3820,12 +3820,12 @@ fn commandSupportsWorkspaceModifiers(command: Command) bool {
 fn writeWorkspaceModifierUsage(deps: RunDeps) !void {
     try writeStderr(
         deps,
-        "fx: --add-dir and --no-additional-dirs are only supported for interactive, resume, ask, ACP, PR, and issue launches\n",
+        "tetris: --add-dir and --no-additional-dirs are only supported for interactive, resume, ask, ACP, PR, and issue launches\n",
     );
 }
 
 /// For an agent-run flag before a command, says where it goes, as in
-/// `fx: put agent-run flags after the command, as in fx ask --model <id>`.
+/// `fx: put agent-run flags after the command, as in tetris ask --model <id>`.
 fn writeModelModifierUsage(alloc: Allocator, deps: RunDeps, command: Command, modifiers: LaunchModifiers) !void {
     const example = firstAgentRunFlag(modifiers);
     const routing = modifiers.provider_order_override != null or modifiers.provider_strict_override != null;
@@ -3838,9 +3838,9 @@ fn writeModelModifierUsage(alloc: Allocator, deps: RunDeps, command: Command, mo
         else => null,
     };
     const message = if (target) |name|
-        try alloc.print("fx: put agent-run flags after the command, as in fx {s} {s}\n", .{ name, example })
+        try alloc.print("tetris: put agent-run flags after the command, as in tetris {s} {s}\n", .{ name, example })
     else
-        try alloc.print("fx: agent-run flags such as {s} apply to a session and to fx ask, fx pr, fx issue, and fx acp\n", .{example[0 .. std.mem.findScalar(u8, example, ' ') orelse example.len]});
+        try alloc.print("tetris: agent-run flags such as {s} apply to a session and to tetris ask, tetris pr, tetris issue, and tetris acp\n", .{example[0 .. std.mem.findScalar(u8, example, ' ') orelse example.len]});
     defer alloc.free(message);
     try writeStderr(deps, message);
 }
@@ -3937,7 +3937,7 @@ test "pr and issue take the agent-run flags before their context" {
     try std.testing.expectEqualStrings("--permission-mode", bad.?.flag);
 }
 
-/// Prints the settings `fx config list` or `fx config get` asks for. `get` of a
+/// Prints the settings `tetris config list` or `tetris config get` asks for. `get` of a
 /// key that isn't set prints nothing and fails, as `git config get` does.
 fn runConfigSchema(alloc: Allocator, deps: RunDeps, opts: cli_config.Options) !RunResult {
     var out: std.Io.Writer.Allocating = .init(alloc);
@@ -3961,7 +3961,7 @@ fn runConfig(alloc: Allocator, cfg: Config, deps: RunDeps, opts: cli_config.Opti
         if (opts.format == .json) {
             try writeJsonCommandFailure(alloc, deps, "config", err, message);
         } else {
-            try writeStderrLine(alloc, deps, "fx config: {s}\n", message);
+            try writeStderrLine(alloc, deps, "tetris config: {s}\n", message);
         }
         return .handled_failure;
     };
@@ -3997,7 +3997,7 @@ fn runConfig(alloc: Allocator, cfg: Config, deps: RunDeps, opts: cli_config.Opti
         for (snapshot.unknown) |unknown| {
             const message = try settings_messages.formatUnknownSetting(alloc, unknown.key, unknown.file);
             defer alloc.free(message);
-            try writeStderrLine(alloc, deps, "fx config: {s}\n", message);
+            try writeStderrLine(alloc, deps, "tetris config: {s}\n", message);
         }
     }
 
@@ -4015,7 +4015,7 @@ fn runConfig(alloc: Allocator, cfg: Config, deps: RunDeps, opts: cli_config.Opti
     return if (opts.key != null and entries.len == 0) .handled_failure else .handled_success;
 }
 
-/// The entries `fx config get` looks a key up in without a scope: each value
+/// The entries `tetris config get` looks a key up in without a scope: each value
 /// as a run resolves it, through the same `resolveSettings` the session uses.
 fn resolvedConfigEntries(
     alloc: Allocator,
@@ -4028,7 +4028,7 @@ fn resolvedConfigEntries(
 ) ![]settings_entries.Entry {
     var detailed = try config_runtime.loadMergedSettingsDetailed(alloc, workspace_root);
     defer detailed.deinit(alloc);
-    // The same warnings fx status prints, such as a profile fx rejects, which
+    // The same warnings tetris status prints, such as a profile fx rejects, which
     // explain a value shown as the default.
     if (format == .text) try writeConfigDiagnostics(alloc, deps, detailed.diagnostics);
     var state = app_lifecycle.StartupState{ .agent_step_limit = cfg.default_agent_step_limit };
@@ -4057,17 +4057,17 @@ fn dupeJsonValue(arena: Allocator, value: std.json.Value) !std.json.Value {
 
 const workspace_write_message = "preferences apply to every workspace, so set and unset don't take --workspace";
 
-/// Saves what `fx config set` or `fx config unset` asks for to the profile's
+/// Saves what `tetris config set` or `tetris config unset` asks for to the profile's
 /// top level and prints one line naming the key, the value, and the file.
 fn runConfigWrite(alloc: Allocator, deps: RunDeps, opts: cli_config.Options) !RunResult {
     var problem: cli_config.WriteProblem = .none;
     const planned = cli_config.change(opts, &problem) catch |err| {
-        const message = try cli_config.formatWriteProblem(alloc, opts.key.?, opts.value, problem, "fx config");
+        const message = try cli_config.formatWriteProblem(alloc, opts.key.?, opts.value, problem, "tetris config");
         defer alloc.free(message);
         if (opts.format == .json) {
             try writeJsonCommandFailure(alloc, deps, "config", err, message);
         } else {
-            try writeStderrLine(alloc, deps, "fx config: {s}\n", message);
+            try writeStderrLine(alloc, deps, "tetris config: {s}\n", message);
         }
         return usage_failure;
     };
@@ -4078,7 +4078,7 @@ fn runConfigWrite(alloc: Allocator, deps: RunDeps, opts: cli_config.Options) !Ru
         if (opts.format == .json) {
             try writeJsonCommandFailure(alloc, deps, "config", err, message);
         } else {
-            try writeStderrLine(alloc, deps, "fx config: {s}\n", message);
+            try writeStderrLine(alloc, deps, "tetris config: {s}\n", message);
         }
         return .handled_failure;
     };
@@ -4133,7 +4133,7 @@ fn parseUpgradeArgs(args: []const [:0]const u8, rejected_channel: *?[]const u8) 
     return options;
 }
 
-/// The line `fx upgrade --channel` prints after saving, so the user knows the
+/// The line `tetris upgrade --channel` prints after saving, so the user knows the
 /// channel persists and where. Caller owns the result.
 fn channelSavedLine(
     alloc: Allocator,
@@ -4268,8 +4268,8 @@ fn parseWorkspaceArgs(args: []const [:0]const u8) !WorkspaceOptions {
 const SessionFlag = enum { id, json };
 const session_flag_ids = cli_flags.idTable(SessionFlag, &builtin_commands.session_options);
 
-/// The flags and the one target shared by `fx session` and
-/// `fx session recover`. A repeated `--id` keeps its last value; two
+/// The flags and the one target shared by `tetris session` and
+/// `tetris session recover`. A repeated `--id` keeps its last value; two
 /// targets, or a positional target with `--id`, are an error.
 const SessionTargetArgs = struct {
     format: output_contracts.OutputFormat = .text,
@@ -4377,17 +4377,17 @@ fn resumeFlagTarget(alloc: Allocator, value: []const u8) !ResumeTarget {
 /// The hint for a removed resume spelling, or null for any other error.
 fn removedResumeHint(err: anyerror) ?[]const u8 {
     return switch (err) {
-        error.RemovedResumeLast => "fx: --resume-last was removed; use fx --resume last\n",
-        error.RemovedResumeIdAlias => "fx: --resume-<id> was removed; use fx --resume <id>\n",
-        error.RemovedResumeCommand => "fx: fx resume was removed; use fx --resume [last|<id>] or fx session resume [last|<id>]\n",
-        error.RemovedResumeIdFlag => "fx session resume: --id was removed; use fx session resume <id>\n",
-        error.RemovedResumeLastFlag => "fx session resume: --resume --last was removed; use fx session resume last\n",
+        error.RemovedResumeLast => "tetris: --resume-last was removed; use tetris --resume last\n",
+        error.RemovedResumeIdAlias => "tetris: --resume-<id> was removed; use tetris --resume <id>\n",
+        error.RemovedResumeCommand => "tetris: tetris resume was removed; use tetris --resume [last|<id>] or tetris session resume [last|<id>]\n",
+        error.RemovedResumeIdFlag => "tetris session resume: --id was removed; use tetris session resume <id>\n",
+        error.RemovedResumeLastFlag => "tetris session resume: --resume --last was removed; use tetris session resume last\n",
         else => null,
     };
 }
 
 const WorkflowFlag = enum { permission_mode, ask, auto, full_access, yolo, provider, model, effort, fast, no_fast, ultrafast, no_ultrafast, provider_order, provider_strict, no_provider_strict, create };
-// `fx issue` documents the same flags as `fx pr`.
+// `tetris issue` documents the same flags as `tetris pr`.
 const workflow_flag_ids = cli_flags.idTable(WorkflowFlag, &builtin_commands.pr_options);
 
 /// Reads `--auto` and `--create`, then joins the rest into the context.
@@ -5018,7 +5018,7 @@ test "upgrade channel saved line says whether the file changed" {
     const alloc = std.testing.allocator;
     const set = try channelSavedLine(alloc, .dev, .{ .committed = .{ .scope = .user } });
     defer alloc.free(set);
-    try std.testing.expectEqualStrings("Release channel set to dev in ~/.fx/settings.json.\n", set);
+    try std.testing.expectEqualStrings("Release channel set to dev in ~/.tetris/settings.json.\n", set);
 
     const same = try channelSavedLine(alloc, .stable, .unchanged);
     defer alloc.free(same);
@@ -5040,7 +5040,7 @@ test "runIfRequested names an upgrade channel that does not exist" {
     try std.testing.expect(std.mem.startsWith(
         u8,
         capture.stderr.written(),
-        "fx upgrade: invalid value for --channel: nightly\nusage: fx upgrade",
+        "tetris upgrade: invalid value for --channel: nightly\nusage: tetris upgrade",
     ));
 }
 
@@ -5436,12 +5436,12 @@ test "runIfRequested help writes top-level help" {
 
     const result = try runIfRequestedWithDeps(std.testing.allocator, &.{@constCast("help")}, testConfig(), capture.deps());
     try std.testing.expectEqual(RunResult.handled_success, result);
-    try std.testing.expect(std.mem.startsWith(u8, capture.stdout.written(), "𝒇x v0.0.0\nFast, native coding agent for the terminal."));
+    try std.testing.expect(std.mem.startsWith(u8, capture.stdout.written(), "tetris v0.0.0\nFast, native coding agent for the terminal."));
     try std.testing.expect(std.mem.find(u8, capture.stdout.written(), testConfig().version) != null);
     try std.testing.expectEqualStrings("", capture.stderr.written());
 }
 
-// `builtins/mcp.zig` "fx mcp approve saves the approval of a project server"
+// `builtins/mcp.zig` "tetris mcp approve saves the approval of a project server"
 // checks what approving saves.
 test "top-level MCP approve runs without interactive startup" {
     const alloc = std.testing.allocator;
@@ -5508,7 +5508,7 @@ test "workspace launch modifiers preserve supported command help" {
         deps,
     );
     try std.testing.expectEqual(RunResult.handled_success, result);
-    try std.testing.expect(std.mem.startsWith(u8, capture.stdout.written(), "fx ask\n\n"));
+    try std.testing.expect(std.mem.startsWith(u8, capture.stdout.written(), "tetris ask\n\n"));
     try std.testing.expectEqualStrings("", capture.stderr.written());
 }
 
@@ -5535,15 +5535,15 @@ test "global workspace launch option errors use user-facing copy" {
     }{
         .{
             .args = &.{@constCast("--add-dir")},
-            .expected = "fx: --add-dir needs a value\n",
+            .expected = "tetris: --add-dir needs a value\n",
         },
         .{
             .args = &.{@constCast("--add-dir=")},
-            .expected = "fx: --add-dir requires a directory path\n",
+            .expected = "tetris: --add-dir requires a directory path\n",
         },
         .{
             .args = &.{@constCast("--fast=on")},
-            .expected = "fx: --fast doesn't take a value\n",
+            .expected = "tetris: --fast doesn't take a value\n",
         },
     };
 
@@ -5590,7 +5590,7 @@ test "runIfRequested version flags reject extra args" {
         const result = try runIfRequestedWithDeps(std.testing.allocator, args, testConfig(), capture.deps());
         try std.testing.expectEqual(usage_failure, result);
         try std.testing.expectEqualStrings("", capture.stdout.written());
-        try std.testing.expectEqualStrings("usage: fx --version\n", capture.stderr.written());
+        try std.testing.expectEqualStrings("usage: tetris --version\n", capture.stderr.written());
     }
 }
 
@@ -5654,8 +5654,8 @@ test "setup preserves the disabled secret-store failure" {
     try std.testing.expectEqual(@as(usize, 0), capture.setup_store_calls);
     try std.testing.expectEqual(@as(usize, 0), capture.setup_read_calls);
     try std.testing.expectEqualStrings(
-        "fx setup is deprecated and stops working in fx 0.0.18; use fx login vercel --api-key\n" ++
-            "fx setup: stored API keys are disabled by FX_DISABLE_KEYCHAIN\n",
+        "tetris setup is deprecated and stops working in Tetris 0.1.1; use tetris login vercel --api-key\n" ++
+            "tetris setup: stored API keys are disabled by FX_DISABLE_KEYCHAIN\n",
         capture.stderr.written(),
     );
 }
@@ -5689,7 +5689,7 @@ test "login --api-key stores a pasted key like setup, without the deprecation wa
     cfg.secret_store = capture.secretStore();
     const result = try runIfRequestedWithDeps(std.testing.allocator, &.{ "login", "--api-key" }, cfg, capture.deps());
     try std.testing.expectEqual(RunResult.handled_failure, result);
-    try std.testing.expectEqualStrings("fx login: stored API keys are disabled by FX_DISABLE_KEYCHAIN\n", capture.stderr.written());
+    try std.testing.expectEqualStrings("tetris login: stored API keys are disabled by FX_DISABLE_KEYCHAIN\n", capture.stderr.written());
 }
 
 test "login arguments take one provider and --api-key only for vercel" {
@@ -5778,7 +5778,7 @@ test "runIfRequested rejects removed record flag as unknown input" {
         capture.deps(),
     );
     try std.testing.expectEqual(usage_failure, result);
-    try std.testing.expect(std.mem.startsWith(u8, capture.stderr.written(), "fx: unknown flag --record\nusage: fx "));
+    try std.testing.expect(std.mem.startsWith(u8, capture.stderr.written(), "tetris: unknown flag --record\nusage: tetris "));
 }
 
 test "global ultrafast launch modifier is ACP-only" {
@@ -5803,7 +5803,7 @@ test "runNoConfigIfRequested handles help without config" {
         testCommandCatalog(),
         capture.deps(),
     ));
-    try std.testing.expect(std.mem.startsWith(u8, capture.stdout.written(), "𝒇x v0.0.0\nFast, native coding agent for the terminal."));
+    try std.testing.expect(std.mem.startsWith(u8, capture.stdout.written(), "tetris v0.0.0\nFast, native coding agent for the terminal."));
     try std.testing.expectEqualStrings("", capture.stderr.written());
 
     try std.testing.expect(!try runNoConfigIfRequestedWithDeps(
@@ -5872,7 +5872,7 @@ test "CLI surface uses the supplied command catalog for parsing usage and help" 
         usage_capture.deps(),
     );
     try std.testing.expectEqual(usage_failure, result);
-    try std.testing.expectEqualStrings("usage: fx start\n", usage_capture.stderr.written());
+    try std.testing.expectEqualStrings("usage: tetris start\n", usage_capture.stderr.written());
 }
 
 test "workflow config does not carry placeholder gateway tools" {
@@ -5899,7 +5899,7 @@ test "runIfRequested invalid local flags write usage" {
     const result = try runIfRequestedWithDeps(std.testing.allocator, &.{ @constCast("status"), @constCast("--wat") }, testConfig(), capture.deps());
     try std.testing.expectEqual(usage_failure, result);
     try std.testing.expectEqualStrings("", capture.stdout.written());
-    try std.testing.expectEqualStrings("fx status: unknown flag --wat\nusage: fx status [--json]\n", capture.stderr.written());
+    try std.testing.expectEqualStrings("tetris status: unknown flag --wat\nusage: tetris status [--json]\n", capture.stderr.written());
 }
 
 test "runIfRequested names the bad flag after a session id that starts with a dash" {
@@ -5913,7 +5913,7 @@ test "runIfRequested names the bad flag after a session id that starts with a da
         capture.deps(),
     );
     try std.testing.expectEqual(usage_failure, result);
-    try std.testing.expect(std.mem.startsWith(u8, capture.stderr.written(), "fx session: unknown flag --jsno (did you mean --json?)\n"));
+    try std.testing.expect(std.mem.startsWith(u8, capture.stderr.written(), "tetris session: unknown flag --jsno (did you mean --json?)\n"));
 }
 
 test "runIfRequested invalid json local flags write json error" {
@@ -6022,11 +6022,11 @@ test "runIfRequested top-level resume aliases return the existing target" {
 
 test "runIfRequested removed resume spellings exit with the replacement" {
     const cases = [_]struct { args: []const [:0]const u8, stderr: []const u8 }{
-        .{ .args = &.{"--resume-session.123"}, .stderr = "fx: --resume-<id> was removed; use fx --resume <id>\n" },
-        .{ .args = &.{"--resume-"}, .stderr = "fx: --resume-<id> was removed; use fx --resume <id>\n" },
-        .{ .args = &.{ "--resume-last", "unexpected" }, .stderr = "fx: --resume-last was removed; use fx --resume last\n" },
-        .{ .args = &.{ "resume", "--resume", "--last" }, .stderr = "fx: fx resume was removed; use fx --resume [last|<id>] or fx session resume [last|<id>]\n" },
-        .{ .args = &.{ "resume", "--resume" }, .stderr = "fx: fx resume was removed; use fx --resume [last|<id>] or fx session resume [last|<id>]\n" },
+        .{ .args = &.{"--resume-session.123"}, .stderr = "tetris: --resume-<id> was removed; use tetris --resume <id>\n" },
+        .{ .args = &.{"--resume-"}, .stderr = "tetris: --resume-<id> was removed; use tetris --resume <id>\n" },
+        .{ .args = &.{ "--resume-last", "unexpected" }, .stderr = "tetris: --resume-last was removed; use tetris --resume last\n" },
+        .{ .args = &.{ "resume", "--resume", "--last" }, .stderr = "tetris: tetris resume was removed; use tetris --resume [last|<id>] or tetris session resume [last|<id>]\n" },
+        .{ .args = &.{ "resume", "--resume" }, .stderr = "tetris: tetris resume was removed; use tetris --resume [last|<id>] or tetris session resume [last|<id>]\n" },
     };
     for (cases) |case| {
         var capture = CaptureOutput.init(std.testing.allocator);
@@ -6056,7 +6056,7 @@ test "runIfRequested rejects malformed resume aliases with canonical usage" {
         );
         try std.testing.expectEqual(usage_failure, result);
         try std.testing.expectEqualStrings(
-            "usage: fx session resume [last|<id>] | -r, --resume [last|<id>] | --continue | -c\n",
+            "usage: tetris session resume [last|<id>] | -r, --resume [last|<id>] | --continue | -c\n",
             capture.stderr.written(),
         );
     }
@@ -6087,7 +6087,7 @@ test "runIfRequested invalid resume writes usage" {
     const result = try runIfRequestedWithDeps(std.testing.allocator, &.{ @constCast("--resume"), @constCast("a"), @constCast("b"), @constCast("c") }, testConfig(), capture.deps());
     try std.testing.expectEqual(usage_failure, result);
     try std.testing.expectEqualStrings(
-        "usage: fx session resume [last|<id>] | -r, --resume [last|<id>] | --continue | -c\n",
+        "usage: tetris session resume [last|<id>] | -r, --resume [last|<id>] | --continue | -c\n",
         capture.stderr.written(),
     );
 }
@@ -6176,7 +6176,7 @@ test "runIfRequested takes a first prompt after a resume target" {
     defer empty_capture.deinit();
     const empty = try runIfRequestedWithDeps(std.testing.allocator, &.{ @constCast("-c"), @constCast(" ") }, testConfig(), empty_capture.deps());
     try std.testing.expectEqual(usage_failure, empty);
-    try std.testing.expectEqualStrings("fx: the prompt is empty\n", empty_capture.stderr.written());
+    try std.testing.expectEqualStrings("tetris: the prompt is empty\n", empty_capture.stderr.written());
 }
 
 test "runIfRequested explains a first argument that is neither a command nor a prompt" {
@@ -6186,28 +6186,28 @@ test "runIfRequested explains a first argument that is neither a command nor a p
     }{
         .{
             .args = &.{ @constCast("fix"), @constCast("the"), @constCast("login"), @constCast("bug") },
-            .stderr = "fx: put the prompt in quotes: fx \"fix the login bug\"\n",
+            .stderr = "tetris: put the prompt in quotes: tetris \"fix the login bug\"\n",
         },
         .{
             .args = &.{ @constCast("--fast"), @constCast("fix"), @constCast("it") },
-            .stderr = "fx: put the prompt in quotes: fx \"fix it\"\n",
+            .stderr = "tetris: put the prompt in quotes: tetris \"fix it\"\n",
         },
-        .{ .args = &.{@constCast("stauts")}, .stderr = "fx: unknown command stauts (did you mean status?)\n" },
-        .{ .args = &.{ @constCast("sesions"), @constCast("--json") }, .stderr = "fx: unknown command sesions (did you mean sessions?)\n" },
-        .{ .args = &.{@constCast("version")}, .stderr = "fx: unknown command version (did you mean --version?)\n" },
+        .{ .args = &.{@constCast("stauts")}, .stderr = "tetris: unknown command stauts (did you mean status?)\n" },
+        .{ .args = &.{ @constCast("sesions"), @constCast("--json") }, .stderr = "tetris: unknown command sesions (did you mean sessions?)\n" },
+        .{ .args = &.{@constCast("version")}, .stderr = "tetris: unknown command version (did you mean --version?)\n" },
         .{
             .args = &.{ @constCast("-p"), @constCast("fix the bug") },
-            .stderr = "fx: -p isn't an fx flag; to run one request and exit, use fx ask \"fix the bug\"\n",
+            .stderr = "tetris: -p isn't a tetris flag; to run one request and exit, use tetris ask \"fix the bug\"\n",
         },
         .{
             .args = &.{@constCast("--print")},
-            .stderr = "fx: --print isn't an fx flag; to run one request and exit, use fx ask \"<prompt>\"\n",
+            .stderr = "tetris: --print isn't a tetris flag; to run one request and exit, use tetris ask \"<prompt>\"\n",
         },
         .{
             .args = &.{@constCast("--print=fix it")},
-            .stderr = "fx: --print isn't an fx flag; to run one request and exit, use fx ask \"fix it\"\n",
+            .stderr = "tetris: --print isn't a tetris flag; to run one request and exit, use tetris ask \"fix it\"\n",
         },
-        .{ .args = &.{@constCast(" ")}, .stderr = "fx: the prompt is empty\n" },
+        .{ .args = &.{@constCast(" ")}, .stderr = "tetris: the prompt is empty\n" },
     };
     for (cases) |case| {
         var capture = CaptureOutput.init(std.testing.allocator);
@@ -6225,9 +6225,9 @@ test "runIfRequested suggests the nearest flag for an unknown one, before or aft
         args: []const [:0]const u8,
         first_line: []const u8,
     }{
-        .{ .args = &.{ @constCast("--modle"), @constCast("x") }, .first_line = "fx: unknown flag --modle (did you mean --model?)\n" },
-        .{ .args = &.{@constCast("--verison")}, .first_line = "fx: unknown flag --verison (did you mean --version?)\n" },
-        .{ .args = &.{ @constCast("fix it"), @constCast("--modle=x") }, .first_line = "fx: unknown flag --modle (did you mean --model?)\n" },
+        .{ .args = &.{ @constCast("--modle"), @constCast("x") }, .first_line = "tetris: unknown flag --modle (did you mean --model?)\n" },
+        .{ .args = &.{@constCast("--verison")}, .first_line = "tetris: unknown flag --verison (did you mean --version?)\n" },
+        .{ .args = &.{ @constCast("fix it"), @constCast("--modle=x") }, .first_line = "tetris: unknown flag --modle (did you mean --model?)\n" },
     };
     for (cases) |case| {
         var capture = CaptureOutput.init(std.testing.allocator);
@@ -6252,7 +6252,7 @@ test "runIfRequested model fetch failure is handled" {
     const result = try runIfRequestedWithDeps(std.testing.allocator, &.{@constCast("models")}, cfg, deps);
     try std.testing.expectEqual(RunResult.handled_failure, result);
     try std.testing.expectEqualStrings(
-        "fx models: could not list models: Unavailable\n",
+        "tetris models: could not list models: Unavailable\n",
         capture.stderr.written(),
     );
 }
@@ -6294,7 +6294,7 @@ test "runIfRequested model provider cancellation is handled" {
     const result = try runIfRequestedWithDeps(std.testing.allocator, &.{@constCast("models")}, cfg, deps);
     try std.testing.expectEqual(RunResult.handled_failure, result);
     try std.testing.expectEqualStrings(
-        "fx models: could not list models: the request was cancelled\n",
+        "tetris models: could not list models: the request was cancelled\n",
         capture.stderr.written(),
     );
 }
@@ -6449,7 +6449,7 @@ test "runIfRequested local json success appends exactly one newline" {
     const result = try runIfRequestedWithDeps(std.testing.allocator, &.{ @constCast("status"), @constCast("--json") }, testConfig(), deps);
     try std.testing.expectEqual(RunResult.handled_success, result);
     try std.testing.expectEqualStrings(
-        "{\"kind\":\"status\",\"model\":\"test-model\",\"model_origin\":\"default\",\"effort\":\"auto\",\"update_channel\":\"stable\",\"build_channel\":\"stable\",\"build_revision\":\"\",\"auth\":\"missing\",\"auth_refreshable\":false,\"auth_help\":\"fx needs access to Vercel AI Gateway. Run fx login to sign in, fx login vercel --api-key to use an API key, or set AI_GATEWAY_API_KEY.\",\"permission_mode\":\"auto\",\"workspace\":\"/tmp/fx\",\"history_turns\":0,\"session_permission_grants\":0,\"agent_step_limit\":42,\"ultrafast_requested\":false,\"mcp\":{\"connection_check\":\"not_checked\",\"servers\":[],\"configuration_issues\":[],\"inspection_error\":null}}\n",
+        "{\"kind\":\"status\",\"model\":\"test-model\",\"model_origin\":\"default\",\"effort\":\"auto\",\"update_channel\":\"stable\",\"build_channel\":\"stable\",\"build_revision\":\"\",\"auth\":\"missing\",\"auth_refreshable\":false,\"auth_help\":\"Tetris needs access to Vercel AI Gateway. Run tetris login to sign in, tetris login vercel --api-key to use an API key, or set AI_GATEWAY_API_KEY.\",\"permission_mode\":\"auto\",\"workspace\":\"/tmp/fx\",\"history_turns\":0,\"session_permission_grants\":0,\"agent_step_limit\":42,\"ultrafast_requested\":false,\"mcp\":{\"connection_check\":\"not_checked\",\"servers\":[],\"configuration_issues\":[],\"inspection_error\":null}}\n",
         capture.stdout.written(),
     );
     try std.testing.expect(!std.mem.endsWith(u8, capture.stdout.written(), "\n\n"));
@@ -6513,7 +6513,7 @@ test "status and doctor inspect MCP configuration once per command" {
     try std.testing.expect(std.mem.find(
         u8,
         doctor_capture.stdout.written(),
-        "\"detail\":\"failed to load ~/.fx/mcp.json: McpConfigInvalidJson\"",
+        "\"detail\":\"failed to load ~/.tetris/mcp.json: McpConfigInvalidJson\"",
     ) != null);
 }
 
@@ -6538,7 +6538,7 @@ test "writeRenderedJsonLine falls back to heap and appends exactly one newline" 
     );
 
     try std.testing.expectEqualStrings(
-        "{\"kind\":\"status\",\"model\":\"test-model\",\"model_origin\":\"default\",\"effort\":\"auto\",\"update_channel\":\"stable\",\"build_channel\":\"stable\",\"build_revision\":\"\",\"auth\":\"missing\",\"auth_refreshable\":false,\"auth_help\":\"fx needs access to Vercel AI Gateway. Run fx login to sign in, fx login vercel --api-key to use an API key, or set AI_GATEWAY_API_KEY.\",\"permission_mode\":\"ask\",\"workspace\":\"/tmp/fx\",\"history_turns\":0,\"session_permission_grants\":0,\"agent_step_limit\":42,\"ultrafast_requested\":true}\n",
+        "{\"kind\":\"status\",\"model\":\"test-model\",\"model_origin\":\"default\",\"effort\":\"auto\",\"update_channel\":\"stable\",\"build_channel\":\"stable\",\"build_revision\":\"\",\"auth\":\"missing\",\"auth_refreshable\":false,\"auth_help\":\"Tetris needs access to Vercel AI Gateway. Run tetris login to sign in, tetris login vercel --api-key to use an API key, or set AI_GATEWAY_API_KEY.\",\"permission_mode\":\"ask\",\"workspace\":\"/tmp/fx\",\"history_turns\":0,\"session_permission_grants\":0,\"agent_step_limit\":42,\"ultrafast_requested\":true}\n",
         capture.stdout.written(),
     );
 }

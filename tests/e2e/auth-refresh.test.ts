@@ -32,7 +32,7 @@ function writeFxLogin(
   issuer = "https://vercel.com",
   expiresAtMs = Date.now() - 60_000,
 ): void {
-  const fxDir = join(home, ".fx");
+  const fxDir = join(home, ".tetris");
   mkdirSync(fxDir, { recursive: true, mode: 0o700 });
   chmodSync(fxDir, 0o700);
   const authPath = join(fxDir, "auth.json");
@@ -132,7 +132,7 @@ async function waitForFileText(path: string, text: string): Promise<void> {
 // Two fx whose login expired together: the second waits while the first is
 // still refreshing it, however slowly, and uses the login it saved.
 test(
-  "a second fx waits for another's slow login refresh and uses its login",
+  "a second tetris waits for another's slow login refresh and uses its login",
   async () => {
     const home = mkdtempSync(join(tmpdir(), "fx-auth-refresh-slow-holder-e2e-"));
     let markRefreshStarted = () => {};
@@ -197,7 +197,7 @@ function subscriptionAccessToken(provider: Subscription, signature: string): str
 }
 
 function writeExpiredSubscriptionLogin(home: string, provider: Subscription, accessToken: string): void {
-  const fxDir = join(home, ".fx");
+  const fxDir = join(home, ".tetris");
   mkdirSync(fxDir, { recursive: true, mode: 0o700 });
   chmodSync(fxDir, 0o700);
   const authPath = join(fxDir, provider === "codex" ? "chatgpt-auth.json" : "grok-auth.json");
@@ -270,7 +270,7 @@ function startFakeSubscription(provider: Subscription, refreshedAccessToken: str
 // second fx waits for it the same way.
 for (const provider of ["codex", "grok"] as const) {
   test(
-    `a second fx waits for another's slow ${provider} login refresh and uses its login`,
+    `a second tetris waits for another's slow ${provider} login refresh and uses its login`,
     async () => {
       const home = mkdtempSync(join(tmpdir(), `fx-auth-refresh-slow-${provider}-e2e-`));
       let markRefreshStarted = () => {};
@@ -326,7 +326,7 @@ test(
   "logout cannot be undone by an in-flight login refresh",
   async () => {
     const home = mkdtempSync(join(tmpdir(), "fx-auth-refresh-logout-race-e2e-"));
-    const contentionPath = join(home, ".fx", "auth-lock-contention");
+    const contentionPath = join(home, ".tetris", "auth-lock-contention");
     let releaseRefresh = () => {};
     const refreshMayFinish = new Promise<void>((resolve) => {
       releaseRefresh = resolve;
@@ -392,9 +392,9 @@ test(
         logoutResult.code,
         `stdout: ${logoutResult.stdout}\nstderr: ${logoutResult.stderr}`,
       ).toBe(0);
-      expect(logoutResult.stdout).toBe("Signed out of fx.\n");
+      expect(logoutResult.stdout).toBe("Signed out of Tetris.\n");
       expect(tokenRequestCount).toBe(1);
-      expect(existsSync(join(home, ".fx", "auth.json"))).toBe(false);
+      expect(existsSync(join(home, ".tetris", "auth.json"))).toBe(false);
       const revocations = oauth.requests.filter(
         (request) => request.path === "/oauth/revoke",
       );
@@ -414,7 +414,7 @@ test(
 );
 
 test(
-  "fx ask refreshes an expired login then forces one refresh and retry after 401",
+  "tetris ask refreshes an expired login then forces one refresh and retry after 401",
   async () => {
     const home = mkdtempSync(join(tmpdir(), "fx-auth-refresh-e2e-"));
     const oauth = startFakeOAuth(
@@ -478,7 +478,7 @@ test(
       expect(oauth.requests[3].body).toContain("refresh_token=first-rotated-refresh-token");
 
       const persisted = JSON.parse(
-        readFileSync(join(home, ".fx", "auth.json"), "utf8"),
+        readFileSync(join(home, ".tetris", "auth.json"), "utf8"),
       );
       expect(persisted.access_token).toBe(RETRY_REFRESH_TOKEN);
       expect(persisted.refresh_token).toBe("second-rotated-refresh-token");
@@ -501,7 +501,7 @@ test(
     const home = mkdtempSync(join(tmpdir(), "fx-auth-expired-report-e2e-"));
     const oauth = startFakeOAuth([EXPIRED_REFRESH_TOKEN]);
     writeFxLogin(home, oauth.issuerUrl);
-    const authPath = join(home, ".fx", "auth.json");
+    const authPath = join(home, ".tetris", "auth.json");
     const seededAuthFile = readFileSync(authPath, "utf8");
     const env = {
       HOME: home,
@@ -520,14 +520,14 @@ test(
         `stdout: ${status.stdout}\nstderr: ${status.stderr}`,
       ).toBe(0);
       const statusJson = JSON.parse(status.stdout);
-      expect(statusJson.auth).toBe("fx login");
+      expect(statusJson.auth).toBe("tetris login");
       expect(statusJson.auth_expired).toBe(true);
       expect(statusJson.auth_refreshable).toBe(true);
 
       const doctor = await runFx(["doctor", "--json"], { env, timeoutMs: TIMEOUT });
       expect(doctor.code).toBe(0);
       const doctorJson = JSON.parse(doctor.stdout);
-      expect(doctorJson.auth).toBe("fx login");
+      expect(doctorJson.auth).toBe("tetris login");
       expect(doctorJson.auth_expired).toBe(true);
       const authCheck = doctorJson.checks.find(
         (check: { name: string }) => check.name === "auth",
@@ -549,7 +549,7 @@ test(
 );
 
 test(
-  "fx ask keeps a failed API key selected when login also exists",
+  "tetris ask keeps a failed API key selected when login also exists",
   async () => {
     const home = mkdtempSync(join(tmpdir(), "fx-auth-source-failure-e2e-"));
     const tracePath = join(home, "trace.log");
@@ -669,7 +669,7 @@ test(
       );
       expect(rejected.code).toBe(1);
       expect(rejected.stderr).toBe(
-        "fx ask: AI_GATEWAY_API_KEY authentication failed · HTTP 401\n",
+        "tetris ask: AI_GATEWAY_API_KEY authentication failed · HTTP 401\n",
       );
       const rejectedJson = JSON.parse(rejected.stdout);
       expect(rejectedJson).toMatchObject({ exit_code: 1, steps: 0, tool_calls: [] });
@@ -758,7 +758,7 @@ test(
       expect(teams.stderr).toBe("");
 
       const persisted = JSON.parse(
-        readFileSync(join(home, ".fx", "auth.json"), "utf8"),
+        readFileSync(join(home, ".tetris", "auth.json"), "utf8"),
       );
       expect(persisted).toMatchObject({
         issuer: issuerA.issuerUrl,
@@ -770,7 +770,7 @@ test(
 
       const logout = await runFx(["logout"], { env, timeoutMs: TIMEOUT });
       expect(logout.code).toBe(0);
-      expect(logout.stdout).toBe("Signed out of fx.\n");
+      expect(logout.stdout).toBe("Signed out of Tetris.\n");
       expect(logout.stderr).toBe("");
 
       expect(
@@ -840,7 +840,7 @@ test(
       });
 
       expect(logout.code).toBe(0);
-      expect(logout.stdout).toBe("Signed out of fx.\n");
+      expect(logout.stdout).toBe("Signed out of Tetris.\n");
       expect(logout.stderr).toBe("");
       expect(invalidIssuer.requests).toEqual([]);
       expect(logout.stdout).not.toContain("expired-access-token");

@@ -15,13 +15,13 @@
 //   9. every planted bug in the spec caught by the law it names;
 //  10. every planted bug in the core caught by a conformance direction;
 //  11. traceability: DESIGN.md, the configs, the tests, and the bugs agree;
-//  12. binary to spec: the built fx binary through three compaction cycles,
+//  12. binary to spec: the built tetris binary through three compaction cycles,
 //      Ctrl+O, and a resume, its traced window steps replayed on the core and
 //      checked by TLC (binary-to-spec.ts). FX_BIN picks the binary.
 //
 // With --ci, CI's TLA+ transcript window job leaves out steps 9, 10, and 12:
 // the planted bugs measure the checks rather than the code, and the binary
-// run needs a built fx and tmux.
+// run needs a built tetris and tmux.
 //
 // Settings: FX_TRANSCRIPT_WINDOW_SEED (default 20261030),
 // FX_TRANSCRIPT_WINDOW_TRACES (random traces per session kind, default 200),
@@ -139,7 +139,7 @@ try {
 
   if (!ci) {
     at = performance.now();
-    const fx = process.env.FX_BIN ?? join(REPO_ROOT, "zig-out", "bin", "fx");
+    const fx = process.env.FX_BIN ?? join(REPO_ROOT, "zig-out", "bin", "tetris");
     const binary = await binaryToSpec({ bin: fx, dir: join(out, "binary-to-spec") });
     report.binaryToSpec = { ...binary, tlc: binary.tlc ? { verdict: binary.tlc.verdict, property: binary.tlc.property, distinct: binary.tlc.distinct } : null };
     stage("binary to spec", binary.problem === null,

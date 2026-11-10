@@ -194,7 +194,7 @@ describe.skipIf(SKIP)("tui: logical-line deletion", () => {
           );
         }
         if (!session.isAlive()) {
-          failures.push(`${route.label}: fx process is not alive`);
+          failures.push(`${route.label}: tetris process is not alive`);
         }
         const stderr = readFileSync(stderrPath, "utf8");
         if (stderr.length !== 0) {
@@ -286,7 +286,7 @@ describe.skipIf(SKIP)("tui: logical-line deletion", () => {
           );
         }
         if (!session.isAlive()) {
-          failures.push(`${route.label}: fx process is not alive`);
+          failures.push(`${route.label}: tetris process is not alive`);
         }
         const stderr = readFileSync(stderrPath, "utf8");
         if (stderr.length !== 0) {

@@ -15,10 +15,10 @@ function createIsolatedRoot() {
   const root = realpathSync(mkdtempSync(join(tmpdir(), "fx-web-search-live-")));
   const home = join(root, "home");
   const workspace = join(root, "workspace");
-  mkdirSync(join(home, ".fx"), { recursive: true });
+  mkdirSync(join(home, ".tetris"), { recursive: true });
   mkdirSync(workspace, { recursive: true });
   writeFileSync(
-    join(home, ".fx", "settings.json"),
+    join(home, ".tetris", "settings.json"),
     JSON.stringify({
       model: OUTER_MODEL,
       permission: { web_search: { "*": "allow" } },
@@ -67,7 +67,7 @@ describe.skipIf(!HAS_API_KEY)("live web_search private backends", () => {
 
           if (result.code !== 0) {
             throw new Error(
-              `fx exited with code ${result.code}\nstdout: ${result.stdout.slice(-4000)}\nstderr: ${result.stderr.slice(0, 8000)}`,
+              `tetris exited with code ${result.code}\nstdout: ${result.stdout.slice(-4000)}\nstderr: ${result.stderr.slice(0, 8000)}`,
             );
           }
           const json = JSON.parse(result.stdout.trim()) as {

@@ -85,7 +85,7 @@ export function analyzeRun(manifest: RenderLabManifest) {
     assertTuiObservabilityFrame(failures, frame, manifest);
 
     if (countLogoBlocks(frame.grid, logoRows) > 1) {
-      push(failures, "single-active-logo", frame, "more than one active fx logo block is visible");
+      push(failures, "single-active-logo", frame, "more than one active tetris logo block is visible");
     }
 
     if (footers.length > 1) {

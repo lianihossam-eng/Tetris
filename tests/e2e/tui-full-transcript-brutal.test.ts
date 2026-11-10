@@ -330,14 +330,14 @@ function prepareFixture(config: StressConfig): {
   totalTools: number;
 } {
   const paths = makeRoot(config.label);
-  mkdirSync(join(paths.home, ".fx"), { recursive: true });
+  mkdirSync(join(paths.home, ".tetris"), { recursive: true });
   mkdirSync(paths.workspace);
   writeFileSync(paths.stderrPath, "");
   writeFileSync(paths.resumedStderrPath, "");
   writeFileSync(paths.tracePath, "");
   writeFileSync(paths.resumedTracePath, "");
   writeFileSync(
-    join(paths.home, ".fx", "settings.json"),
+    join(paths.home, ".tetris", "settings.json"),
     JSON.stringify({
       sandbox: "none",
       permission_mode: "auto",
@@ -636,7 +636,7 @@ function fxProcessId(session: TmuxSession): number {
   }).trim().split("\n");
   const pid = findFxProcessId(rows);
   if (pid !== undefined) return pid;
-  throw new Error(`Unable to find fx on ${tty}. Processes:\n${rows.join("\n")}`);
+  throw new Error(`Unable to find tetris on ${tty}. Processes:\n${rows.join("\n")}`);
 }
 
 function findFxProcessId(rows: readonly string[]): number | undefined {
@@ -644,16 +644,16 @@ function findFxProcessId(rows: readonly string[]): number | undefined {
     const match = row.trim().match(/^(\d+)\s+(.+)$/);
     if (!match) continue;
     const command = match[2]!;
-    if (command === "fx" || command === FX_BIN || command.endsWith("/fx")) {
+    if (command === "tetris" || command === FX_BIN || command.endsWith("/tetris")) {
       return Number(match[1]);
     }
   }
   return undefined;
 }
 
-test("fx process discovery accepts basename and path process names", () => {
-  expect(findFxProcessId(["11361 fx"])).toBe(11361);
-  expect(findFxProcessId(["11362 /workspace/zig-out/bin/fx"])).toBe(11362);
+test("tetris process discovery accepts basename and path process names", () => {
+  expect(findFxProcessId(["11361 tetris"])).toBe(11361);
+  expect(findFxProcessId(["11362 /workspace/zig-out/bin/tetris"])).toBe(11362);
 });
 
 function residentKib(pid: number): number {
@@ -1284,7 +1284,7 @@ test.skipIf(!tmuxAvailable())(
   "Ctrl-O keeps saved tool output intact across window replacement",
   async () => {
     const paths = makeRoot("saved-result-lifetime");
-    mkdirSync(join(paths.home, ".fx"), { recursive: true });
+    mkdirSync(join(paths.home, ".tetris"), { recursive: true });
     mkdirSync(paths.workspace);
     const lines = Array.from({ length: 300 }, (_, i) =>
       `SAVED_ROW_${String(i + 1).padStart(4, "0")} original tool output`,
@@ -1348,7 +1348,7 @@ test.skipIf(!tmuxAvailable())(
   "Ctrl-O fills a viewport taller than the prepared overscan cache",
   async () => {
     const paths = makeRoot("tall-viewport");
-    mkdirSync(join(paths.home, ".fx"), { recursive: true });
+    mkdirSync(join(paths.home, ".tetris"), { recursive: true });
     mkdirSync(paths.workspace);
     writeFileSync(paths.stderrPath, "");
     const tallTail = "TALL_TRANSCRIPT_TAIL";
@@ -1398,7 +1398,7 @@ test.skipIf(!tmuxAvailable())(
   "Ctrl-O resized close preserves long history within ordinary resize cost",
   async () => {
     const paths = makeRoot("resize-recovery-cost");
-    mkdirSync(join(paths.home, ".fx"), { recursive: true });
+    mkdirSync(join(paths.home, ".tetris"), { recursive: true });
     mkdirSync(paths.workspace);
     const paragraphs = Array.from({ length: 4_000 }, (_, index) =>
       `ROW${pad(index + 1)} ALPHA_abcdefghijklmnopqrstuvwxyz0123456789 ` +

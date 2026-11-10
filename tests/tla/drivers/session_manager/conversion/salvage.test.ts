@@ -1,5 +1,5 @@
 // Salvage of v1 sessions (D64) through the real binary, judged by TLC against
-// tests/tla/session_manager/V1Conversion.tla: `fx session recover` on a v1 id
+// tests/tla/session_manager/V1Conversion.tla: `tetris session recover` on a v1 id
 // answers as today's v1 recover answers, copies the same start into a fresh v2
 // session when v1 salvages it, and never changes the v1 session. Each case's
 // oracle is today's v1 writer's own recover on a private copy of the profile,

@@ -58,10 +58,10 @@ function createIsolatedRoot(baseDir = tmpdir()): IsolatedRoot {
   );
   const home = join(root, "home");
   const workspace = join(root, "workspace");
-  mkdirSync(join(home, ".fx"), { recursive: true });
+  mkdirSync(join(home, ".tetris"), { recursive: true });
   mkdirSync(workspace, { recursive: true });
   writeFileSync(
-    join(home, ".fx", "settings.json"),
+    join(home, ".tetris", "settings.json"),
     JSON.stringify({ sandbox: "none", permission: {} }),
   );
   roots.push(root);
@@ -349,7 +349,7 @@ describe("lean auto mode reliability", () => {
     async () => {
       const root = createIsolatedRoot();
       writeFileSync(
-        join(root.home, ".fx", "settings.json"),
+        join(root.home, ".tetris", "settings.json"),
         JSON.stringify({
           sandbox: "none",
           permission: { bash: { pwd: "allow" } },
@@ -431,7 +431,7 @@ describe("lean auto mode reliability", () => {
         "substitution-bypass-must-not-run",
       );
       writeFileSync(
-        join(root.home, ".fx", "settings.json"),
+        join(root.home, ".tetris", "settings.json"),
         JSON.stringify({
           sandbox: "none",
           permission: { "*": { "printf *": "allow" } },
@@ -1363,7 +1363,7 @@ describe("lean auto mode reliability", () => {
     async () => {
       const root = createIsolatedRoot();
       const startup = join(root.home, ".zshrc");
-      const before = "alias r='cd ~/projects/research && fx'\n";
+      const before = "alias r='cd ~/projects/research && tetris'\n";
       const after = before +
         "\n_rfx() {\n" +
         "  local key\n" +
@@ -1420,8 +1420,8 @@ describe("lean auto mode reliability", () => {
         "  [[ -z $key ]] && return 1\n" +
         "  command sandbox run --silent \\\n" +
         "    -i -e \"AI_GATEWAY_API_KEY=$key\" \"$@\" -- \\\n" +
-        "    bash -c 'curl -fsSL https://fx.sh/setup.sh | bash 2>/dev/nu\n" +
-        "    ll && fx; exec bash'\n" +
+        "    bash -c 'curl -fsSL https://raw.githubusercontent.com/lianihossam-eng/Tetris/main/scripts/install.sh | bash 2>/dev/nu\n" +
+        "    ll && tetris; exec bash'\n" +
         "}\n";
       const after = before.replace(
         "2>/dev/nu\n    ll",
@@ -1469,7 +1469,7 @@ describe("lean auto mode reliability", () => {
     async () => {
       const root = createIsolatedRoot();
       const startup = join(root.home, ".zshrc");
-      const before = "alias r='cd ~/projects/research && fx'\n";
+      const before = "alias r='cd ~/projects/research && tetris'\n";
       const after = before +
         'sandbox -e "AI_GATEWAY_API_KEY=$key literal-suffix"\n';
       writeFileSync(startup, before);
@@ -1517,7 +1517,7 @@ describe("lean auto mode reliability", () => {
     async () => {
       const root = createIsolatedRoot();
       const startup = join(root.home, ".zshrc");
-      const before = "alias r='cd ~/projects/research && fx'\n";
+      const before = "alias r='cd ~/projects/research && tetris'\n";
       const after = before + 'AI_GATEWAY_API_KEY="literal-fixture-value" run-sandbox\n';
       writeFileSync(startup, before);
       const gateway = startGateway(
@@ -1706,7 +1706,7 @@ describe("lean auto mode reliability", () => {
     async () => {
       const root = createIsolatedRoot();
       writeFileSync(
-        join(root.home, ".fx", "settings.json"),
+        join(root.home, ".tetris", "settings.json"),
         JSON.stringify({
           sandbox: "none",
           permission: { bash: { pwd: "allow" } },
@@ -2371,7 +2371,7 @@ describe("lean auto mode reliability", () => {
     async () => {
       const root = createIsolatedRoot();
       writeFileSync(
-        join(root.home, ".fx", "settings.json"),
+        join(root.home, ".tetris", "settings.json"),
         JSON.stringify({
           sandbox: "none",
           permission: { bash: { pwd: "allow" } },
@@ -2439,7 +2439,7 @@ describe("lean auto mode reliability", () => {
     async () => {
       const root = createIsolatedRoot();
       writeFileSync(
-        join(root.home, ".fx", "settings.json"),
+        join(root.home, ".tetris", "settings.json"),
         JSON.stringify({
           sandbox: "none",
           permission: { bash: { pwd: "allow" } },
@@ -2498,7 +2498,7 @@ describe("lean auto mode reliability", () => {
       const allowedMarker = join(root.workspace, "saved-allow-ran");
       const allowedCommand = `touch ${JSON.stringify(allowedMarker)}`;
       writeFileSync(
-        join(root.home, ".fx", "settings.json"),
+        join(root.home, ".tetris", "settings.json"),
         JSON.stringify({
           sandbox: "none",
           permission: { bash: { [allowedCommand]: "ask" } },
@@ -2607,7 +2607,7 @@ describe("lean auto mode reliability", () => {
       const blockedMarker = join(root.workspace, "saved-deny-must-not-run");
       const blockedCommand = `touch ${JSON.stringify(blockedMarker)}`;
       writeFileSync(
-        join(root.home, ".fx", "settings.json"),
+        join(root.home, ".tetris", "settings.json"),
         JSON.stringify({
           sandbox: "none",
           permission: { bash: { [blockedCommand]: "allow", pwd: "allow" } },

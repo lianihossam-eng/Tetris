@@ -30,7 +30,7 @@ function createNotificationRoot(
   const root = realpathSync(mkdtempSync(join(tmpdir(), "fx-notifications-")));
   const home = join(root, "home");
   const workspace = join(root, "workspace");
-  const profile = join(home, ".fx");
+  const profile = join(home, ".tetris");
   mkdirSync(profile, { recursive: true, mode: 0o700 });
   mkdirSync(workspace, { recursive: true });
   chmodSync(profile, 0o700);
@@ -134,7 +134,7 @@ test.skipIf(!tmuxAvailable())(
     ]);
     const tracePath = join(fixture.root, "trace.log");
     const stderrPath = join(fixture.root, "stderr.log");
-    const settingsPath = join(fixture.home, ".fx", "settings.json");
+    const settingsPath = join(fixture.home, ".tetris", "settings.json");
     writeFileSync(stderrPath, "");
     let session: TmuxSession | null = null;
     try {
@@ -239,7 +239,7 @@ test.skipIf(!tmuxAvailable())(
 );
 
 test(
-  "fx ask keeps redirected stdout JSON and stderr byte-clean with notifications enabled",
+  "tetris ask keeps redirected stdout JSON and stderr byte-clean with notifications enabled",
   async () => {
     const fixture = createNotificationRoot();
     const gateway = startFakeGateway([
@@ -273,7 +273,7 @@ test(
 );
 
 test.skipIf(!tmuxAvailable())(
-  "fx ask correlates permission attention and turn-end notifications",
+  "tetris ask correlates permission attention and turn-end notifications",
   async () => {
     const fixture = createNotificationRoot();
     const marker = join(fixture.workspace, "ask-permission-marker.txt");

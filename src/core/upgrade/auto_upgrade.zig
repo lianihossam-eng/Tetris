@@ -12,7 +12,7 @@ const sleep_increment_ms: u64 = 50;
 /// Upper bound stop() waits for the upgrade thread once cancellation has
 /// been requested; a stuck network read must not delay process exit.
 const stop_join_budget_ms: i64 = 250;
-const download_dir_prefix = "fx-auto-upgrade-";
+const download_dir_prefix = "tetris-auto-upgrade-";
 /// A download directory this old belongs to no live upgrade: its process ended
 /// before the upgrade thread could remove it.
 const stale_download_dir_ns: i128 = std.time.ns_per_hour;
@@ -247,9 +247,9 @@ pub const AutoUpgrade = struct {
         alloc: Allocator,
         current: update_target.CurrentBuild,
     ) void {
-        const cdn_base = helpers.resolveCdnBase();
+        const release_base = helpers.resolveReleaseBase();
         if (helpers.cancelRequested(&self.should_stop)) return;
-        var target = helpers.fetchTarget(alloc, self.selected_channel, cdn_base, self.transferControl()) catch return;
+        var target = helpers.fetchTarget(alloc, self.selected_channel, release_base, self.transferControl()) catch return;
         defer target.deinit(alloc);
 
         if (!target.shouldInstall(current)) return;
@@ -259,7 +259,7 @@ pub const AutoUpgrade = struct {
         self.setLatestVersion(label);
         self.setState(.downloading);
 
-        self.downloadAndInstall(alloc, target, cdn_base) catch {
+        self.downloadAndInstall(alloc, target, release_base) catch {
             self.setState(.failed);
             return;
         };
@@ -280,7 +280,7 @@ pub const AutoUpgrade = struct {
         self: *AutoUpgrade,
         alloc: Allocator,
         target: update_target.Target,
-        cdn_base: []const u8,
+        release_base: []const u8,
     ) InstallError!void {
         var client: std.http.Client = .{ .allocator = alloc, .io = io_mod.getIo() };
         defer client.deinit();
@@ -296,10 +296,10 @@ pub const AutoUpgrade = struct {
 
         std.Io.Dir.createDirAbsolute(io_mod.getIo(), tmp_dir, .default_dir) catch return error.ExtractionFailed;
 
-        const archive_path = alloc.print("{s}/fx.tar.gz", .{tmp_dir}) catch return error.AllocFailed;
+        const archive_path = alloc.print("{s}/tetris.tar.gz", .{tmp_dir}) catch return error.AllocFailed;
         defer alloc.free(archive_path);
 
-        const archive_url = alloc.print("{s}/{s}/fx-{s}.tar.gz", .{ cdn_base, target.artifactRef(), helpers.platform }) catch return error.AllocFailed;
+        const archive_url = alloc.print("{s}/{s}/tetris-{s}.tar.gz", .{ release_base, target.artifactRef(), helpers.platform }) catch return error.AllocFailed;
         defer alloc.free(archive_url);
 
         helpers.downloadFileStreaming(&client, archive_url, archive_path, self.transferControl()) catch |err| return switch (err) {
@@ -309,7 +309,7 @@ pub const AutoUpgrade = struct {
 
         if (self.should_stop.load(.acquire)) return error.Cancelled;
 
-        const checksum_url = alloc.print("{s}/{s}/fx-{s}.tar.gz.sha256", .{ cdn_base, target.artifactRef(), helpers.platform }) catch return error.AllocFailed;
+        const checksum_url = alloc.print("{s}/{s}/tetris-{s}.tar.gz.sha256", .{ release_base, target.artifactRef(), helpers.platform }) catch return error.AllocFailed;
         defer alloc.free(checksum_url);
 
         helpers.verifyChecksum(&client, archive_path, checksum_url, self.transferControl()) catch |err| return switch (err) {
@@ -321,7 +321,7 @@ pub const AutoUpgrade = struct {
 
         helpers.extractTarGz(alloc, archive_path, tmp_dir) catch return error.ExtractionFailed;
 
-        const extracted_bin = alloc.print("{s}/fx", .{tmp_dir}) catch return error.AllocFailed;
+        const extracted_bin = alloc.print("{s}/tetris", .{tmp_dir}) catch return error.AllocFailed;
         defer alloc.free(extracted_bin);
 
         var self_exe_buf: [std.Io.Dir.max_path_bytes]u8 = undefined;
@@ -426,7 +426,7 @@ test "no install starts after a process-exit stop" {
     // with InstallFailed instead.
     try std.testing.expectError(
         error.Cancelled,
-        au.installUnlessStopped(std.testing.allocator, "/nonexistent/fx-extracted", "/nonexistent/fx"),
+        au.installUnlessStopped(std.testing.allocator, "/nonexistent/tetris-extracted", "/nonexistent/tetris"),
     );
 }
 
@@ -484,9 +484,9 @@ test "selected release channel is owned by the upgrade runtime" {
 }
 
 test "development build paths disable auto upgrade" {
-    try std.testing.expect(isDevelopmentBuildPath("/repo/zig-out/bin/fx"));
-    try std.testing.expect(isDevelopmentBuildPath("C:\\repo\\zig-out\\bin\\fx.exe"));
-    try std.testing.expect(!isDevelopmentBuildPath("/Users/me/.local/bin/fx"));
+    try std.testing.expect(isDevelopmentBuildPath("/repo/zig-out/bin/tetris"));
+    try std.testing.expect(isDevelopmentBuildPath("C:\\repo\\zig-out\\bin\\tetris.exe"));
+    try std.testing.expect(!isDevelopmentBuildPath("/Users/me/.local/bin/tetris"));
 }
 
 test "statusLabel downloading shows ellipsis" {
@@ -517,9 +517,9 @@ test "setLatestVersion stores normalized version" {
 
 test "relaunch request owns its path and previous revision and is consumed once" {
     var au = AutoUpgrade{};
-    var path = [_]u8{ '/', 't', 'm', 'p', '/', 'f', 'x' };
-    var revision: [40]u8 = @splat('1');
     au.configure_channel(.dev);
+    var path = [_]u8{ '/', 't', 'm', 'p', '/', 't', 'e', 't', 'r', 'i', 's' };
+    var revision: [40]u8 = @splat('1');
     au.setPreviousRevision(&revision);
     try au.requestRelaunch(&path);
     path[1] = 'x';
@@ -527,7 +527,7 @@ test "relaunch request owns its path and previous revision and is consumed once"
 
     const request = au.takeRelaunchRequest() orelse
         return error.TestExpectedRelaunchRequest;
-    try std.testing.expectEqualStrings("/tmp/fx", request.executablePath());
+    try std.testing.expectEqualStrings("/tmp/tetris", request.executablePath());
     try std.testing.expectEqualStrings(
         "1111111111111111111111111111111111111111",
         request.previousRevision().?,

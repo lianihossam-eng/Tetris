@@ -1,6 +1,6 @@
-name: TLA+ fx mcp call
+name: TLA+ Tetris mcp call
 
-# Checks the `fx mcp call` bridge model in tests/tla/mcp_call/: TLC on
+# Checks the `tetris mcp call` bridge model in tests/tla/mcp_call/: TLC on
 # McpCall.tla, the core's tests, both driver directions against the real core,
 # every planted bug, and DESIGN.md traceability. Every push to main runs it. A
 # pull request runs it only with the ci:tla-mcp-call label; dispatch this
@@ -24,7 +24,7 @@ permissions:
 
 jobs:
   verify:
-    name: TLA+ fx mcp call model
+    name: TLA+ Tetris mcp call model
     if: >-
       github.event_name != 'pull_request' ||
       (contains(github.event.pull_request.labels.*.name, 'ci:tla-mcp-call') &&
@@ -46,7 +46,7 @@ jobs:
         uses: oven-sh/setup-bun@v2
         with:
           bun-version: "1.3.14"
-      - name: Model-check fx mcp call and drive the real core along the model
+      - name: Model-check Tetris mcp call and drive the real core along the model
         run: |
           set -euo pipefail
           jar="$RUNNER_TEMP/tla2tools.jar"

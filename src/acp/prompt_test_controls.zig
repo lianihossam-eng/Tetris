@@ -10,7 +10,7 @@ const Controls = struct {
     release_path: []const u8,
 };
 
-// Only the fx binary's ACP tests set these controls
+// Only the Tetris binary's ACP tests set these controls
 // (`tests/e2e/acp.test.ts`), so the libfx artifacts leave them out.
 pub fn pauseAfterTerminalWrite() void {
     if (comptime build_options.libfx) return;

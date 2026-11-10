@@ -585,11 +585,11 @@ function createIsolatedRoot(baseDir = tmpdir()): IsolatedRoot {
   const hostileBin = join(root, "hostile-bin");
   const profileMarker = join(root, "hostile-profile-used");
   const commandMarkers: Record<string, string> = {};
-  mkdirSync(join(home, ".fx"), { recursive: true });
+  mkdirSync(join(home, ".tetris"), { recursive: true });
   mkdirSync(workspace, { recursive: true });
   mkdirSync(hostileBin, { recursive: true });
   writeFileSync(
-    join(home, ".fx", "settings.json"),
+    join(home, ".tetris", "settings.json"),
     JSON.stringify({ sandbox: "none", permission: {} }),
   );
   writeFileSync(join(home, ".profile"), `printf profile > ${JSON.stringify(profileMarker)}\n`);
@@ -664,7 +664,7 @@ function definedEnv(env: Record<string, string | undefined>) {
 
 async function launchPermissionResumeHarness(initialResponses: Response[]) {
   const root = createIsolatedRoot();
-  const settingsPath = join(root.home, ".fx", "settings.json");
+  const settingsPath = join(root.home, ".tetris", "settings.json");
   const markerPath = join(root.workspace, "must-not-exist");
   const initialStderrPath = join(root.root, "permission-resume-initial-stderr.log");
   const resumedStderrPath = join(root.root, "permission-resume-resumed-stderr.log");
@@ -725,7 +725,7 @@ function expectUserProfileTrace(tracePath: string) {
 }
 
 function expectNoCommandArtifacts(root: IsolatedRoot) {
-  const sessions = join(root.home, ".fx", "sessions");
+  const sessions = join(root.home, ".tetris", "sessions");
   if (!existsSync(sessions)) return;
   const files = Bun.spawnSync(["find", sessions, "-type", "f"], {
     stdout: "pipe",
@@ -795,7 +795,7 @@ function normalizeVolatileStatusRows(grid: string[]): string[] {
     /^• Streaming \([^)]*\)$/.test(line) ||
       isVolatileTokenStatusRow(line)
       ? "<status>"
-      : line.replace(/\s+Full access enabled: fx permission checks disabled$/, "")
+      : line.replace(/\s+Full access enabled: Tetris permission checks disabled$/, "")
   );
 }
 
@@ -803,7 +803,7 @@ test("volatile token status rows normalize before transcript grid comparison", (
   expect(normalizeVolatileStatusRows(["  (↑10 ↓5)"])).toEqual(["<status>"]);
   expect(normalizeVolatileStatusRows(["  0s (↑10 ↓5)"])).toEqual(["<status>"]);
   expect(normalizeVolatileStatusRows([
-    "full access · gpt-5                 Full access enabled: fx permission checks disabled",
+    "full access · gpt-5                 Full access enabled: Tetris permission checks disabled",
   ])).toEqual(["full access · gpt-5"]);
 });
 
@@ -842,7 +842,7 @@ describe("effect-aware command permissions", () => {
       await activeSession.sendText("Run the prepared two-command history fixture.");
       await activeSession.waitForText(COMMAND_APPROVAL_PROMPT, TIMEOUT);
       await activeSession.sendKeys("Tab");
-      await activeSession.waitForText("Yes, and tell fx what to do next", TIMEOUT);
+      await activeSession.waitForText("Yes, and tell Tetris what to do next", TIMEOUT);
       await activeSession.sendLiteralText(feedback);
       await activeSession.waitForText(`Yes, ${feedback}`, TIMEOUT);
       await activeSession.sendKeys("Enter");
@@ -1037,7 +1037,7 @@ describe("effect-aware command permissions", () => {
       ]);
       const stderrPath = join(root.root, "stderr.log");
       writeFileSync(stderrPath, "");
-      const settingsPath = join(root.home, ".fx", "settings.json");
+      const settingsPath = join(root.home, ".tetris", "settings.json");
       const settingsBefore = readFileSync(settingsPath, "utf8");
 
       activeSession = await TmuxSession.create({
@@ -1135,7 +1135,7 @@ describe("effect-aware command permissions", () => {
       const stderrPath = join(root.root, "current-command-output-stderr.log");
       const resumedStderrPath = join(root.root, "current-command-output-resumed-stderr.log");
       writeFileSync(
-        join(root.home, ".fx", "settings.json"),
+        join(root.home, ".tetris", "settings.json"),
         JSON.stringify({
           sandbox: "none",
           permission_mode: "auto",
@@ -1566,7 +1566,7 @@ describe("effect-aware command permissions", () => {
         toolCall(command, {}, "fxc29_compact_output"),
         finalText(responseRows.join("\n")),
       ]);
-      const settingsPath = join(root.home, ".fx", "settings.json");
+      const settingsPath = join(root.home, ".tetris", "settings.json");
       writeFileSync(
         settingsPath,
         JSON.stringify({
@@ -1900,11 +1900,11 @@ describe("effect-aware command permissions", () => {
       const escapes = await activeSession.capturePaneEscapes();
       expect(escapes).not.toContain("Trace:");
       expect(escapes).not.toContain("Report issue");
-      expect(escapes).not.toContain("fx.sh/feedback");
+      expect(escapes).not.toContain("issues/new/choose");
       expect(escapes).not.toContain("github.com");
       const reportPath = latestTraceReportPath(root);
       const report = readFileSync(reportPath, "utf8");
-      expect(report).toContain("# fx trace");
+      expect(report).toContain("# tetris trace");
       expect(report).toContain("## Summary");
       expect(report).toContain(root.workspace);
       expect(report).toContain("terminal_hosts: tmux=true");
@@ -1916,7 +1916,7 @@ describe("effect-aware command permissions", () => {
       expect(rendererEvents).toContain("kind=resize");
       expect(rendererEvents).not.toContain("TRACE_RENDER_ROW_");
       expect(rendererEvents).not.toContain("[truncated]");
-      expect(existsSync(join(root.home, ".fx", "logs", "trace.log"))).toBe(false);
+      expect(existsSync(join(root.home, ".tetris", "logs", "trace.log"))).toBe(false);
       expect(statSync(reportPath).mode & 0o077).toBe(0);
       if (process.platform === "darwin") {
         expect(readFileSync(clipboardPath, "utf8")).toBe(reportPath);
@@ -1934,7 +1934,7 @@ describe("effect-aware command permissions", () => {
   );
 
   test.skipIf(!tmuxAvailable())(
-    "TUI feedback opens fx.sh without creating a trace or touching the clipboard",
+    "TUI feedback opens the Tetris issue picker without creating a trace or touching the clipboard",
     async () => {
       const root = createIsolatedRoot();
       const gateway = startFakeGateway([]);
@@ -1966,16 +1966,16 @@ describe("effect-aware command permissions", () => {
       });
       await activeSession.waitForComposer(TIMEOUT);
       await activeSession.sendText("/feedback");
-      await activeSession.waitForText("Opened https://fx.sh/feedback.", TIMEOUT);
+      await activeSession.waitForText("Opened https://github.com/lianihossam-eng/Tetris/issues/new/choose.", TIMEOUT);
 
-      expect(readFileSync(openerPath, "utf8")).toBe("https://fx.sh/feedback");
+      expect(readFileSync(openerPath, "utf8")).toBe("https://github.com/lianihossam-eng/Tetris/issues/new/choose");
       expect(existsSync(clipboardMarker)).toBe(false);
       expect(
         readdirSync(root.root).filter((entry) => entry.startsWith("fx-trace-")),
       ).toHaveLength(0);
       const escapes = await activeSession.capturePaneEscapes();
       expect(escapes).not.toContain("Feedback:");
-      expect(escapes).not.toContain("github.com");
+      expect(escapes).toContain("github.com/lianihossam-eng/Tetris/issues/new/choose");
       expect(readFileSync(stderrPath, "utf8")).toBe("");
 
       await activeSession.sendText("/quit");
@@ -2220,7 +2220,7 @@ describe("effect-aware command permissions", () => {
 
         writeTerminalOwnershipFixture(fixturePath);
         writeFileSync(
-          join(root.home, ".fx", "settings.json"),
+          join(root.home, ".tetris", "settings.json"),
           JSON.stringify({ sandbox: "os", permission: {} }),
         );
         writeFileSync(join(root.home, ".profile"), "");
@@ -2445,7 +2445,7 @@ describe("effect-aware command permissions", () => {
       activeSession = null;
 
       rmSync(
-        join(root.home, ".fx", "sessions", sessionId, "resume-view.bin"),
+        join(root.home, ".tetris", "sessions", sessionId, "resume-view.bin"),
         { force: true },
       );
       activeSession = await TmuxSession.create({
@@ -2659,7 +2659,7 @@ describe("effect-aware command permissions", () => {
   );
 
   test(
-    "default fx ask defaults missing permission mode to auto",
+    "default tetris ask defaults missing permission mode to auto",
     async () => {
       const root = createIsolatedRoot();
       const marker = join(root.workspace, "ask-turn-default-auto.txt");
@@ -2686,7 +2686,7 @@ describe("effect-aware command permissions", () => {
   );
 
   test(
-    "fx ask yolo returns repeated user-profile command results to the model",
+    "tetris ask yolo returns repeated user-profile command results to the model",
     async () => {
       const root = createIsolatedRoot();
       const callIds = ["direct_1", "direct_2", "direct_3"];
@@ -2717,7 +2717,7 @@ describe("effect-aware command permissions", () => {
   );
 
   test(
-    "fx ask yolo completes more than ten serial user-profile commands when unlimited",
+    "tetris ask yolo completes more than ten serial user-profile commands when unlimited",
     async () => {
       const root = createIsolatedRoot();
       const gateway = startFakeGateway([
@@ -2854,7 +2854,7 @@ describe("effect-aware command permissions", () => {
       expect(dismissalPlan).toContain("semantic_rows=0 planned_rows=0");
       expect(dismissalPlan).toContain("geometry_rebase=true");
       expect(commandTrace).toContain("transcript_projection_history_floor");
-      expect(JSON.parse(readFileSync(join(root.home, ".fx", "settings.json"), "utf8")).permission_mode)
+      expect(JSON.parse(readFileSync(join(root.home, ".tetris", "settings.json"), "utf8")).permission_mode)
         .toBe("ask");
       expect(gateway.requests).toHaveLength(1);
       expect(activeSession.isAlive()).toBe(true);
@@ -3187,7 +3187,7 @@ describe("effect-aware command permissions", () => {
   );
 
   test(
-    "fx ask forwards agent identity to clean, user, and TTY commands",
+    "tetris ask forwards agent identity to clean, user, and TTY commands",
     async () => {
       for (const options of [{ profile: "clean" }, { profile: "user" }, { tty: true }]) {
         const root = createIsolatedRoot();
@@ -3214,7 +3214,7 @@ describe("effect-aware command permissions", () => {
         JSON.parse(result.stdout.trim());
         const toolResult = JSON.parse(toolResultText(gateway.requests[1].body, "command_1"));
         expect(toolResult).toMatchObject({ state: "completed", exit_code: 0 });
-        expect(toolResult.output_delta).toContain("agent=fx");
+        expect(toolResult.output_delta).toContain("agent=tetris");
         if (options.profile === "user") {
           expect(readFileSync(tracePath, "utf8")).toContain("command runner snapshot generation=");
         }
@@ -3224,7 +3224,7 @@ describe("effect-aware command permissions", () => {
   );
 
   test(
-    "fx ask yolo executes pwd through the default user profile with process-scoped replay",
+    "tetris ask yolo executes pwd through the default user profile with process-scoped replay",
     async () => {
       const root = createIsolatedRoot();
       const gateway = startFakeGateway([toolCall("pwd"), finalText("ask direct complete")]);
@@ -3268,7 +3268,7 @@ describe("effect-aware command permissions", () => {
   );
 
   test(
-    "fx ask defaults missing permission mode to auto through the classifier",
+    "tetris ask defaults missing permission mode to auto through the classifier",
     async () => {
       const root = createIsolatedRoot();
       const marker = join(root.workspace, "classifier-accepted.txt");
@@ -3393,7 +3393,7 @@ describe("effect-aware command permissions", () => {
   );
 
   test(
-    "fx ask review response recovery executes only once after malformed text",
+    "tetris ask review response recovery executes only once after malformed text",
     async () => {
       const root = createIsolatedRoot();
       const marker = join(root.workspace, "recovered-action.txt");
@@ -3417,7 +3417,7 @@ describe("effect-aware command permissions", () => {
   );
 
   test(
-    "fx ask safely replans after bounded malformed classifier recovery",
+    "tetris ask safely replans after bounded malformed classifier recovery",
     async () => {
       const root = createIsolatedRoot();
       const marker = join(root.workspace, "classifier-malformed-must-not-run.txt");
@@ -3465,7 +3465,7 @@ describe("effect-aware command permissions", () => {
   );
 
   test(
-    "fx ask returns persistent malformed classifier output without execution",
+    "tetris ask returns persistent malformed classifier output without execution",
     async () => {
       const root = createIsolatedRoot();
       const marker = join(root.workspace, "classifier-fallback-must-not-exist.txt");
@@ -3512,7 +3512,7 @@ describe("effect-aware command permissions", () => {
   );
 
   test(
-    "fx ask provider failure never executes or enters malformed recovery",
+    "tetris ask provider failure never executes or enters malformed recovery",
     async () => {
       const root = createIsolatedRoot();
       const marker = join(root.workspace, "classifier-provider-must-not-exist.txt");
@@ -3566,7 +3566,7 @@ describe("effect-aware command permissions", () => {
   );
 
   test(
-    "fx ask SIGINT during classifier wait terminates before decision or execution",
+    "tetris ask SIGINT during classifier wait terminates before decision or execution",
     async () => {
       const root = createIsolatedRoot();
       const marker = join(root.workspace, "classifier-cancel-must-not-exist.txt");
@@ -3612,7 +3612,7 @@ describe("effect-aware command permissions", () => {
         const result = await Promise.race([
           closed,
           Bun.sleep(2_000).then(() => {
-            throw new Error("fx did not exit on SIGINT while the classifier remained blocked");
+            throw new Error("tetris did not exit on SIGINT while the classifier remained blocked");
           }),
         ]);
         expect(result).toEqual({ code: null, signal: "SIGINT" });
@@ -3643,7 +3643,7 @@ describe("effect-aware command permissions", () => {
   );
 
   test(
-    "fx ask automatic review receives the exact delegated command",
+    "tetris ask automatic review receives the exact delegated command",
     async () => {
       const root = createIsolatedRoot();
       const marker = join(root.workspace, "delegated-agent-ran.txt");
@@ -3700,7 +3700,7 @@ describe("effect-aware command permissions", () => {
   );
 
   test.skipIf(!tmuxAvailable())(
-    "fx ask terminal automatic caution returns advice without prompting",
+    "tetris ask terminal automatic caution returns advice without prompting",
     async () => {
       const root = createIsolatedRoot();
       const marker = join(root.workspace, "fx-ask-prompt-approved.txt");
@@ -3708,7 +3708,7 @@ describe("effect-aware command permissions", () => {
       const gateway = startFakeGateway(
         [
           toolCall(command),
-          finalText("fx ask prompt complete"),
+          finalText("tetris ask prompt complete"),
         ],
         { classifierDecision: "caution" },
       );
@@ -3726,7 +3726,7 @@ describe("effect-aware command permissions", () => {
         height: 40,
         remainOnExit: true,
       });
-      const finalPane = await activeSession.waitForText("fx ask prompt complete", TIMEOUT);
+      const finalPane = await activeSession.waitForText("tetris ask prompt complete", TIMEOUT);
       expect(finalPane).not.toContain("Approve? [y/N]");
       expect(finalPane).not.toContain("Auto agent denied");
       expect(existsSync(marker)).toBe(false);
@@ -3746,7 +3746,7 @@ describe("effect-aware command permissions", () => {
   );
 
   test(
-    "fx ask and ACP send large automatic review packets before execution",
+    "tetris ask and ACP send large automatic review packets before execution",
     async () => {
       const cliRoot = createIsolatedRoot();
       const cliMarker = "large-cli-marker";
@@ -3822,7 +3822,7 @@ describe("effect-aware command permissions", () => {
   );
 
   test(
-    "fx ask projects hostile ls filenames through the default user profile",
+    "tetris ask projects hostile ls filenames through the default user profile",
     async () => {
       const root = createIsolatedRoot();
       const gateway = startFakeGateway([toolCall("ls"), finalText("ask ls complete")]);
@@ -3855,7 +3855,7 @@ describe("effect-aware command permissions", () => {
   );
 
   test(
-    "fx ask preserves quoted shell metacharacters through the user profile",
+    "tetris ask preserves quoted shell metacharacters through the user profile",
     async () => {
       const root = createIsolatedRoot();
       const gateway = startFakeGateway([
@@ -3893,7 +3893,7 @@ describe("effect-aware command permissions", () => {
   );
 
   test(
-    "fx ask keeps parser hardening cases approval-bearing",
+    "tetris ask keeps parser hardening cases approval-bearing",
     async () => {
       const commands = [
         "wc -c < input.txt",
@@ -3930,7 +3930,7 @@ describe("effect-aware command permissions", () => {
   );
 
   test(
-    "fx ask blocks approval-bearing commands before side effects",
+    "tetris ask blocks approval-bearing commands before side effects",
     async () => {
       const root = createIsolatedRoot();
       const marker = join(root.workspace, "must-not-exist");
@@ -3958,7 +3958,7 @@ describe("effect-aware command permissions", () => {
   );
 
   test(
-    "fx ask blocks hostile git before any executable or repository access",
+    "tetris ask blocks hostile git before any executable or repository access",
     async () => {
       const root = createIsolatedRoot();
       const gateway = startFakeGateway([
@@ -3992,7 +3992,7 @@ describe("effect-aware command permissions", () => {
     async () => {
       const root = createIsolatedRoot();
       writeFileSync(
-        join(root.home, ".fx", "settings.json"),
+        join(root.home, ".tetris", "settings.json"),
         JSON.stringify({
           sandbox: "none",
           permission: { bash: { pwd: "allow" } },

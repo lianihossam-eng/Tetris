@@ -1,5 +1,5 @@
-//! Messages about settings keys fx doesn't know, shared by `fx doctor` and
-//! `fx config`.
+//! Messages about settings keys Tetris doesn't know, shared by `tetris doctor` and
+//! `tetris config`.
 
 const std = @import("std");
 const command_specs = @import("../slash_commands/command_specs.zig");
@@ -16,7 +16,7 @@ pub fn closest(name: []const u8, known: []const []const u8) ?[]const u8 {
     return nearest.best;
 }
 
-/// `unknown setting statusLine.contxt in ~/.fx/settings.json (did you mean
+/// `unknown setting statusLine.contxt in ~/.tetris/settings.json (did you mean
 /// statusLine.context?)`, for a key found in a settings file. Caller owns the
 /// result.
 pub fn formatUnknownSetting(alloc: Allocator, key: settings_keys.UnknownKey, display_path: []const u8) ![]u8 {
@@ -31,7 +31,7 @@ pub fn formatUnknownSetting(alloc: Allocator, key: settings_keys.UnknownKey, dis
     return out.toOwnedSlice();
 }
 
-/// `statusLine and status_line are both set in ~/.fx/settings.json; fx uses
+/// `statusLine and status_line are both set in ~/.tetris/settings.json; Tetris uses
 /// status_line where they differ, so remove statusLine`. Caller owns the
 /// result.
 pub fn formatOlderName(alloc: Allocator, twice: settings_keys.OlderName, display_path: []const u8) ![]u8 {
@@ -41,7 +41,7 @@ pub fn formatOlderName(alloc: Allocator, twice: settings_keys.OlderName, display
     if (twice.both) {
         try writer.print("{s} and {s} are both set in {s}", .{ twice.older, twice.current, display_path });
         try writeWorkspace(writer, twice.workspace);
-        try writer.print("; fx uses {s} where they differ, so remove {s}", .{ twice.current, twice.older });
+        try writer.print("; Tetris uses {s} where they differ, so remove {s}", .{ twice.current, twice.older });
     } else {
         try writer.print("{s} in {s}", .{ twice.older, display_path });
         try writeWorkspace(writer, twice.workspace);
@@ -50,8 +50,8 @@ pub fn formatOlderName(alloc: Allocator, twice: settings_keys.OlderName, display
     return out.toOwnedSlice();
 }
 
-/// `permission_mode yolo in ~/.fx/settings.json is deprecated and stops
-/// working in fx 0.0.18; use full-access`. Caller owns the result.
+/// `permission_mode yolo in ~/.tetris/settings.json is deprecated and stops
+/// working in Tetris 0.1.1; use full-access`. Caller owns the result.
 pub fn formatOldYolo(alloc: Allocator, workspace: ?[]const u8, display_path: []const u8) ![]u8 {
     var out: std.Io.Writer.Allocating = .init(alloc);
     errdefer out.deinit();
@@ -95,13 +95,13 @@ test "unknown settings name the file, the workspace, and the closest key" {
     const cases = [_]struct { key: settings_keys.UnknownKey, file: []const u8, expected: []const u8 }{
         .{
             .key = .{ .name = "fast_mdoe", .known = &.{ "fast_mode", "model" } },
-            .file = "~/.fx/settings.json",
-            .expected = "unknown setting fast_mdoe in ~/.fx/settings.json (did you mean fast_mode?)",
+            .file = "~/.tetris/settings.json",
+            .expected = "unknown setting fast_mdoe in ~/.tetris/settings.json (did you mean fast_mode?)",
         },
         .{
             .key = .{ .name = "contxt", .parent = "statusLine", .workspace = "/w", .known = &.{ "context", "session" } },
-            .file = "~/.fx/settings.json",
-            .expected = "unknown setting statusLine.contxt in ~/.fx/settings.json for workspace /w (did you mean statusLine.context?)",
+            .file = "~/.tetris/settings.json",
+            .expected = "unknown setting statusLine.contxt in ~/.tetris/settings.json for workspace /w (did you mean statusLine.context?)",
         },
         .{
             .key = .{ .name = "colour", .known = &.{ "model", "theme" } },
@@ -118,22 +118,22 @@ test "unknown settings name the file, the workspace, and the closest key" {
 
 test "a setting under both its older and its current name names the one to remove" {
     const alloc = std.testing.allocator;
-    const top = try formatOlderName(alloc, .{ .older = "statusLine", .current = "status_line" }, "~/.fx/settings.json");
+    const top = try formatOlderName(alloc, .{ .older = "statusLine", .current = "status_line" }, "~/.tetris/settings.json");
     defer alloc.free(top);
-    try std.testing.expectEqualStrings("statusLine and status_line are both set in ~/.fx/settings.json; fx uses status_line where they differ, so remove statusLine", top);
-    const workspace = try formatOlderName(alloc, .{ .older = "notifications", .current = "sound", .workspace = "/w" }, "~/.fx/settings.json");
+    try std.testing.expectEqualStrings("statusLine and status_line are both set in ~/.tetris/settings.json; Tetris uses status_line where they differ, so remove statusLine", top);
+    const workspace = try formatOlderName(alloc, .{ .older = "notifications", .current = "sound", .workspace = "/w" }, "~/.tetris/settings.json");
     defer alloc.free(workspace);
-    try std.testing.expectEqualStrings("notifications and sound are both set in ~/.fx/settings.json for workspace /w; fx uses sound where they differ, so remove notifications", workspace);
+    try std.testing.expectEqualStrings("notifications and sound are both set in ~/.tetris/settings.json for workspace /w; Tetris uses sound where they differ, so remove notifications", workspace);
 }
 
 test "an older setting name or a saved yolo names the release that drops it" {
     const alloc = std.testing.allocator;
-    const older = try formatOlderName(alloc, .{ .older = "statusLine", .current = "status_line", .both = false }, "~/.fx/settings.json");
+    const older = try formatOlderName(alloc, .{ .older = "statusLine", .current = "status_line", .both = false }, "~/.tetris/settings.json");
     defer alloc.free(older);
-    try std.testing.expectEqualStrings("statusLine in ~/.fx/settings.json is deprecated and stops working in fx 0.0.18; rename it to status_line", older);
-    const yolo = try formatOldYolo(alloc, "/w", "~/.fx/settings.json");
+    try std.testing.expectEqualStrings("statusLine in ~/.tetris/settings.json is deprecated and stops working in Tetris 0.1.1; rename it to status_line", older);
+    const yolo = try formatOldYolo(alloc, "/w", "~/.tetris/settings.json");
     defer alloc.free(yolo);
-    try std.testing.expectEqualStrings("permission_mode yolo in ~/.fx/settings.json for workspace /w is deprecated and stops working in fx 0.0.18; use full-access", yolo);
+    try std.testing.expectEqualStrings("permission_mode yolo in ~/.tetris/settings.json for workspace /w is deprecated and stops working in Tetris 0.1.1; use full-access", yolo);
 }
 
 test "a mistyped key on the command line gets the closest known key" {

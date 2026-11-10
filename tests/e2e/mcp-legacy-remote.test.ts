@@ -69,14 +69,14 @@ function createRoot(
   cleanupRoot = root;
   const home = join(root, "home");
   const workspace = join(root, "workspace");
-  mkdirSync(join(home, ".fx"), { recursive: true });
+  mkdirSync(join(home, ".tetris"), { recursive: true });
   mkdirSync(workspace, { recursive: true });
   writeFileSync(
-    join(home, ".fx", "settings.json"),
+    join(home, ".tetris", "settings.json"),
     JSON.stringify({}),
   );
   writeFileSync(
-    join(home, ".fx", "mcp.json"),
+    join(home, ".tetris", "mcp.json"),
     JSON.stringify({
       mcp: {
         fixture: {
@@ -252,7 +252,7 @@ describe("version-scoped legacy MCP remote transports", () => {
   }
 
   for (const version of VERSIONS) {
-    test(`fresh fx ask calls Streamable HTTP ${version} with its lifecycle headers`, async () => {
+    test(`fresh tetris ask calls Streamable HTTP ${version} with its lifecycle headers`, async () => {
       streamable = startLegacyStreamableHttpFixture(version);
       const root = createRoot(`ask-${version}`, "http", streamable.url);
       gateway = startToolGateway(`${version} complete.`);
@@ -329,7 +329,7 @@ describe("version-scoped legacy MCP remote transports", () => {
   // fx reads at most 16 MiB of one message. Before, an answer over that was
   // treated as a broken stream: fx resumed it twice, getting the same answer
   // each time, then told the model the server went away.
-  test("Streamable HTTP ends a call whose answer is over fx's message limit at once, without resuming it", async () => {
+  test("Streamable HTTP ends a call whose answer is over tetris's message limit at once, without resuming it", async () => {
     streamable = startLegacyStreamableHttpFixture("2025-06-18", { mode: "oversized_resumable" });
     const root = createRoot("oversized-answer", "http", streamable.url);
     gateway = startToolGateway("Oversized answer handled.");
@@ -339,7 +339,7 @@ describe("version-scoped legacy MCP remote transports", () => {
     expect(result.code).toBe(0);
     // What the model was told: the call's error text.
     const told = /MCP server 'fixture' ended the call[^"\\]*/.exec(gateway.requests[2]?.body ?? "")?.[0] ?? "";
-    expect(told).toContain("its reply was larger than fx reads in one message, so fx dropped it");
+    expect(told).toContain("its reply was larger than Tetris reads in one message, so Tetris dropped it");
     expect(told).not.toContain("the server went away");
     expect(streamable.requests.filter((entry) => entry.message?.method === "tools/call")).toHaveLength(1);
     expect(streamable.requests.filter((entry) =>
@@ -483,7 +483,7 @@ describe("version-scoped legacy MCP remote transports", () => {
         ], {
           models: [{ id: MODEL, type: "language", tags: ["tool-use"] }],
         });
-        const binary = join(REPO_ROOT, "zig-out", "bin", "fx");
+        const binary = join(REPO_ROOT, "zig-out", "bin", "tetris");
         tui = await TmuxSession.create({
           isolated: true,
           cwd: root.workspace,
@@ -729,7 +729,7 @@ describe("version-scoped legacy MCP remote transports", () => {
     expect(result.code).toBe(0);
     expect(streamable.toolCallCalls).toBe(1);
     expect(toolResultText(gateway.requests[2]!.body, "call_mcp")).toContain(
-      "MCP server 'fixture' needs a login. Ask the user to run fx mcp login fixture in a terminal, then try again.",
+      "MCP server 'fixture' needs a login. Ask the user to run tetris mcp login fixture in a terminal, then try again.",
     );
   }, 30_000);
 
@@ -806,7 +806,7 @@ describe("version-scoped legacy MCP remote transports", () => {
   }
 
   test.skipIf(!tmuxAvailable())(
-    "/mcp remove ends a 2025 session with a DELETE, and fx keeps running",
+    "/mcp remove ends a 2025 session with a DELETE, and tetris keeps running",
     async () => {
       // The removal reloads fx's MCP host, which closes the old host's
       // servers; a 2025 session waits there for its DELETE.
@@ -839,7 +839,7 @@ describe("version-scoped legacy MCP remote transports", () => {
       ).toBe(true);
 
       await tui.sendText("/mcp remove fixture");
-      await tui.waitForText("Removed fixture from ~/.fx/mcp.json.", 10_000);
+      await tui.waitForText("Removed fixture from ~/.tetris/mcp.json.", 10_000);
       const deleteDeadline = Date.now() + 10_000;
       while (streamable.deleteCalls === 0 && Date.now() < deleteDeadline) {
         await Bun.sleep(25);
@@ -895,7 +895,7 @@ describe("version-scoped legacy MCP remote transports", () => {
       expect(result.signal).toBeNull();
       expect(Date.now() - started).toBeLessThan(85_000);
       expect(result.code).toBe(1);
-      expect(JSON.parse(result.stdout).error).toBe("it never answered fx's initialized notification");
+      expect(JSON.parse(result.stdout).error).toBe("it never answered Tetris's initialized notification");
       // Everything after initialized waits for its answer.
       expect(fixture.toolsListCalls).toBe(0);
     },

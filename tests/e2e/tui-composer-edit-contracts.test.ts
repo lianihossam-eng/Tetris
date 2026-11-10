@@ -61,10 +61,10 @@ async function startFx(
   root = realpathSync(mkdtempSync(join(tmpdir(), "fx-edit-contracts-")));
   const home = join(root, "home");
   const workspace = join(root, "workspace");
-  mkdirSync(join(home, ".fx"), { recursive: true });
+  mkdirSync(join(home, ".tetris"), { recursive: true });
   mkdirSync(workspace);
   writeFileSync(
-    join(home, ".fx", "settings.json"),
+    join(home, ".tetris", "settings.json"),
     JSON.stringify({}),
   );
   stderrPath = join(root, "stderr.log");
@@ -80,7 +80,7 @@ async function startFx(
     ),
   );
   writeFileSync(join(workspace, "target.txt"), "target\n");
-  const skillRoot = join(home, ".fx", "skills", "review");
+  const skillRoot = join(home, ".tetris", "skills", "review");
   mkdirSync(skillRoot, { recursive: true });
   writeFileSync(
     join(skillRoot, "SKILL.md"),
@@ -690,9 +690,9 @@ tmuxTest(
     root = realpathSync(mkdtempSync(join(tmpdir(), "fx-paste-submit-")));
     const home = join(root, "home");
     const workspace = join(root, "workspace");
-    mkdirSync(join(home, ".fx"), { recursive: true });
+    mkdirSync(join(home, ".tetris"), { recursive: true });
     mkdirSync(workspace);
-    writeFileSync(join(home, ".fx", "settings.json"), JSON.stringify({}));
+    writeFileSync(join(home, ".tetris", "settings.json"), JSON.stringify({}));
     stderrPath = join(root, "stderr.log");
     writeFileSync(stderrPath, "");
 
@@ -1024,13 +1024,13 @@ tmuxTest(
       expect(note![1]).toBe(String(requestIndex + 1));
       expect(gateway!.requests[requestIndex]!.body).not.toContain(fixtureImagePath!);
       const saved = JSON.parse(note![2]!) as string;
-      expect(saved.startsWith(join(root!, "home", ".fx", "sessions"))).toBe(true);
+      expect(saved.startsWith(join(root!, "home", ".tetris", "sessions"))).toBe(true);
       expect(readFileSync(saved)).toEqual(readFileSync(fixtureImagePath!));
       return saved;
     });
     // The session keeps those bytes once, as the blob named by their hash.
     expect(savedPaths[1]).toBe(savedPaths[0]);
-    expect(savedPaths[0]!.startsWith(join(root!, "home", ".fx", "sessions", "v2"))).toBe(true);
+    expect(savedPaths[0]!.startsWith(join(root!, "home", ".tetris", "sessions", "v2"))).toBe(true);
     expectCleanRuntime(active);
   },
   TIMEOUT,

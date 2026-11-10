@@ -4,7 +4,7 @@
 # each config's expected verdict.
 #
 # steer-queue.cfg and steer-queue-deep.cfg are the design and must pass.
-# steer-queue-today.cfg is fx before it: one list for every subagent, with
+# steer-queue-today.cfg is Tetris before it: one list for every subagent, with
 # settled entries counted and kept until the same subagent starts again, and
 # steer-queue-today-close.cfg its second defect, a closed subagent's entries
 # kept (both are reached at the same depth, so each config checks one). Each
@@ -18,7 +18,7 @@
 #   no-start-prune   a new work keeps the last work's entries      EntriesFromThisWork
 #   no-close-forget  a closed subagent keeps its entries            ClosedHoldsNothing
 #
-# SteerQueueTrace.tla checks runs of the built fx binary against the model;
+# SteerQueueTrace.tla checks runs of the built tetris binary against the model;
 # tests/tla/drivers/subagent/driver.ts runs it.
 #
 # Needs Java 11+ and tla2tools.jar, as ../README.md describes.

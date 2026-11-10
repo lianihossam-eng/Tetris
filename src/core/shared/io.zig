@@ -478,12 +478,12 @@ fn liveLibcEnviron() ?RawEnviron {
 pub const no_home_dir_reason = "HOME is not set to an absolute path";
 
 /// The home directory fx keeps its own files under: `HOME` when it is an
-/// absolute path, otherwise `FX_HOME`'s parent, or null when `FX_HOME` is
+/// absolute path, otherwise `TETRIS_HOME`'s parent, or null when `TETRIS_HOME` is
 /// unset too. An empty or relative `HOME` counts as unset, so fx never builds
 /// profile paths relative to the current folder. Child processes still
 /// inherit `HOME` unchanged.
 pub fn homeDir() ?[]const u8 {
-    // With HOME unset, FX_HOME alone names fx's files, so its parent serves.
+    // With HOME unset, TETRIS_HOME alone names fx's files, so its parent serves.
     const home = getenv("HOME") orelse return profile_paths.fxHomeParent();
     if (!std.Io.Dir.path.isAbsolute(home)) return profile_paths.fxHomeParent();
     return home;

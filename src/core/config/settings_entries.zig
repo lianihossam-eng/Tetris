@@ -291,7 +291,7 @@ test "scopes pick the profile's own settings or this workspace's override" {
     try std.testing.expectEqual(@as(usize, 0), none.items.len);
 }
 
-test "lookup keeps the entry fx uses for each key under the name" {
+test "lookup keeps the entry Tetris uses for each key under the name" {
     const alloc = std.testing.allocator;
     var profile = try parseForTest(
         \\{"fast_mode":true,"statusLine":{"context":true,"session":true},

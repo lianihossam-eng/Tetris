@@ -1,11 +1,11 @@
 ------------------------------- MODULE Resume -------------------------------
 (***************************************************************************)
-(* How the interactive app resumes a model request after fx dies or is     *)
+(* How the interactive app resumes a model request after Tetris dies or is     *)
 (* closed in the middle of a turn.                                         *)
 (*                                                                         *)
-(* Recovery.tla models the recovery module inside one fx process. This     *)
+(* Recovery.tla models the recovery module inside one Tetris process. This     *)
 (* model takes the module's resume decision as given (recovery.zig         *)
-(* resumeFrom) and checks what surrounds it: two fx processes that can     *)
+(* resumeFrom) and checks what surrounds it: two Tetris processes that can     *)
 (* open one session, the user, the session log they share, and the ways a  *)
 (* process ends.                                                           *)
 (*                                                                         *)
@@ -19,13 +19,13 @@
 (* - Quit: /quit or Ctrl+C twice. It cancels the request first, as Esc     *)
 (*   does, so nothing resumes.                                             *)
 (* - Close: SIGHUP or SIGTERM, from a closed window, a logout, or a        *)
-(*   reboot. A closed window can reach fx as its terminal hanging up       *)
-(*   before SIGHUP, and closes fx the same way. fx gives the module        *)
+(*   reboot. A closed window can reach Tetris as its terminal hanging up       *)
+(*   before SIGHUP, and closes Tetris the same way. Tetris gives the module        *)
 (*   `closing`, saves the record it returns, which is marked clean, and    *)
 (*   exits.                                                                *)
 (* - Kill: SIGKILL or a crash, at any moment.                              *)
 (*                                                                         *)
-(* Policy selects fx's behavior:                                           *)
+(* Policy selects Tetris's behavior:                                           *)
 (* - "today" saves no record, and a close dies as a kill does. A launch    *)
 (*   shows the interrupted turn, and the request goes out again only when  *)
 (*   the user sends a message such as "continue".                          *)
@@ -33,7 +33,7 @@
 (*   when the request's response arrives. A launch that finds a turn ended *)
 (*   by a crash, with a request or tool work unfinished, continues it in a *)
 (*   new turn. The module sends at once, or asks: after the request        *)
-(*   crashed fx twice with a send in flight, when its record is more than  *)
+(*   crashed Tetris twice with a send in flight, when its record is more than  *)
 (*   a day old, or when it was waiting for the user. A turn reaches the    *)
 (*   log with its first send, in one write with that send's record; a turn *)
 (*   that asks first is written when the question shows.                  *)
@@ -179,7 +179,7 @@ Init ==
     /\ answered = [r \in Reqs |-> FALSE] /\ seen = 0 /\ stranded = FALSE
 
 \* The launch opens the session, the manager ends an open turn as a crash,
-\* and fx decides whether to continue it. Planted defect no_lock: a second
+\* and Tetris decides whether to continue it. Planted defect no_lock: a second
 \* process opens a session another holds.
 Launch(p) ==
     LET t == [turn EXCEPT !.st = IF @ = "open" THEN "crash" ELSE @]
@@ -289,7 +289,7 @@ Quit(p) ==
     /\ UNCHANGED <<wall, faults, answered, stranded>>
 
 -----------------------------------------------------------------------------
-(* fx's own steps.                                                         *)
+(* Tetris's own steps.                                                         *)
 
 \* Save the record and send. Today saves nothing. Planted defect
 \* send_before_save: the send goes out first.
@@ -322,7 +322,7 @@ Respond(p) ==
        \/ /\ turn' = [turn EXCEPT !.work = "final", !.rec = Cleared]
           /\ answered' = [answered EXCEPT ![Cur] = TRUE]
           /\ ps' = [ps EXCEPT ![p] = [@ EXCEPT !.pc = "final", !.auto = FALSE]]
-    \* The model request that crashed fx got its answer.
+    \* The model request that crashed Tetris got its answer.
     /\ seen' = 0
     /\ UNCHANGED <<lock, wall, faults, fate, stranded>>
 
@@ -379,7 +379,7 @@ Kill(p) ==
     /\ faults' = faults + 1
     /\ UNCHANGED <<turn, wall, fate, answered, stranded>>
 
-\* SIGHUP, SIGTERM, or a terminal that hangs up. fx saves the running
+\* SIGHUP, SIGTERM, or a terminal that hangs up. Tetris saves the running
 \* module's record marked clean in its turn and leaves the turn open; it
 \* never ends the turn as cancelled. With no request running, or none of its
 \* turn written yet, nothing is saved. Today, and planted defect no_closing,
@@ -432,7 +432,7 @@ AutoResumes == ~stranded
 \* request's send in flight.
 NoFalseCrashQuestion == \A p \in Procs : ps[p].q = "crash" => seen >= CrashLoopAfter
 
-\* A request that crashed fx twice with its send in flight is not sent again
+\* A request that crashed Tetris twice with its send in flight is not sent again
 \* without asking.
 CrashLoopAsks == \A p \in Procs : AutoSend(p) => seen < CrashLoopAfter
 

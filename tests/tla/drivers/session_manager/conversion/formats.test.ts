@@ -1,5 +1,5 @@
 // D61's converter behaviors through the real binary: older v1 formats,
-// `--resume last`, the read-only `fx session`, `fx sessions convert`, the
+// `--resume last`, the read-only `tetris session`, `tetris sessions convert`, the
 // unreadable and slow-conversion messages, a crash's orphan child reused,
 // and two processes converting one family. Every step that involves a
 // request is observed and judged by TLC as in runtime.test.ts.
@@ -77,7 +77,7 @@ scenario("a current-format session with a side file, written by the last v1 buil
 
 // A subagent's own subagent, which fx v0.0.7 still let a subagent create:
 // the parent creates "helper", whose first turn creates "inner" and waits
-// for it. No fx opens "inner" now (a subagent has had no subagent tool since
+// for it. No Tetris opens "inner" now (a subagent has had no subagent tool since
 // v0.0.8), so conversion keeps it as it is and names it (D88); the family
 // around it converts as any family does.
 function nestedReplies(f: Fixture) {
@@ -120,11 +120,11 @@ scenario("a subagent's own subagent, written by fx v0.0.7, is kept as it is and 
   await requireAccepted(o, "older-v0.0.7-nested");
 
   const converted = await convertAll(f);
-  const reason = `it is a subagent of the earlier subagent ${helper}, which no fx opens`;
+  const reason = `it is a subagent of the earlier subagent ${helper}, which no Tetris opens`;
   expect(JSON.parse(converted.run.stdout).kept).toEqual([{ id: inner, reason }]);
   expect(f.fingerprint(inner)).toBe(kept);
   const doctor = await f.fx(true, ["doctor"]);
-  expect(doctor.stdout).toContain(`session ${inner}, a subagent an older fx saved, is kept as it is: ${reason}`);
+  expect(doctor.stdout).toContain(`session ${inner}, a subagent an older Tetris saved, is kept as it is: ${reason}`);
 });
 
 for (const { name, tag, family, marker, private: hidden, run: command } of FORMATS) {
@@ -250,7 +250,7 @@ scenario("a schema 3 session whose prompt is not UTF-8 is shown, refused with th
 
 // --- --resume last ----------------------------------------------------------------
 
-// The session `--resume last` opened, by its id: fx ask's own JSON, or which
+// The session `--resume last` opened, by its id: tetris ask's own JSON, or which
 // session's first prompt the app shows as resumed.
 async function resumeLast(f: Fixture, host: "ask" | "app", ids: { v1: string; v2: string }): Promise<string | null> {
   if (host === "ask") {
@@ -303,9 +303,9 @@ for (const host of ["ask", "app"] as const) {
   }
 }
 
-// --- fx session, read only ----------------------------------------------------
+// --- tetris session, read only ----------------------------------------------------
 
-scenario("fx session shows an unconverted v1 session read-only, as v1 reads it", async f => {
+scenario("tetris session shows an unconverted v1 session read-only, as v1 reads it", async f => {
   plainReplies(f);
   const id = (await f.v1Ask(["CONV_FIRST"])).session_id;
   await f.v1Ask(["--resume-id", id, "CONV_MORE"]);
@@ -315,15 +315,15 @@ scenario("fx session shows an unconverted v1 session read-only, as v1 reads it",
   const v2 = await f.fx(true, ["session", id, "--json"]);
   writeFileSync(join(f.root, "session-detail.json"), JSON.stringify({ v1: v1.stdout, v2: v2.stdout, v2Stderr: v2.stderr }, null, 2));
   await o.observe("list");
-  expect(v2.code, `fx session in v2 failed: ${v2.stderr}${v2.stdout}`).toBe(0);
+  expect(v2.code, `tetris session in v2 failed: ${v2.stderr}${v2.stdout}`).toBe(0);
   expect(JSON.parse(v2.stdout).history).toEqual(JSON.parse(v1.stdout).history);
   await o.observe("open", await openVia(f, id, "ask"));
   await requireAccepted(o, "session-read-only");
 });
 
-// --- fx sessions convert ----------------------------------------------------------
+// --- tetris sessions convert ----------------------------------------------------------
 
-scenario("fx sessions convert converts a family, skips a busy and an unreadable session, and says so", async f => {
+scenario("tetris sessions convert converts a family, skips a busy and an unreadable session, and says so", async f => {
   familyReplies(f);
   const family = (await f.v1Ask(["CONV_FAMILY"])).session_id;
   plainReplies(f);
@@ -363,7 +363,7 @@ scenario("fx sessions convert converts a family, skips a busy and an unreadable 
   expect(text.run.code).toBe(1);
   const [counts, ...lines] = text.run.stdout.trimEnd().split("\n");
   expect(counts).toBe("converted 0, busy 1, unreadable 1");
-  expect(lines.sort()).toEqual([`${busy}: busy, open in another fx`, `${damaged}: unreadable: ${skips[damaged].reason}`].sort());
+  expect(lines.sort()).toEqual([`${busy}: busy, open in another Tetris`, `${damaged}: unreadable: ${skips[damaged].reason}`].sort());
   expect(skips[damaged]?.reason).toMatch(/session\.json \S/);
   for (const id of roots) await requireAccepted(o[id], `convert-all-${id === family ? "family" : id === busy ? "busy" : "unreadable"}`);
 });
@@ -388,7 +388,7 @@ scenario("a side file too large for the new store is left out, named, and kept i
   const all = await convertAll(f, false);
   await o.observe("all", all.answer(id));
   expect(all.run.stdout).toContain(`${id}: converted without logs/commands/replay.bin because it is ${MAX_BLOB_BYTES + 1} bytes, `
-    + `more than the ${MAX_BLOB_BYTES} the new store keeps in one file; ~/.fx/sessions/${id} keeps it`);
+    + `more than the ${MAX_BLOB_BYTES} the new store keeps in one file; ~/.tetris/sessions/${id} keeps it`);
   await o.observe("open", await openVia(f, id, "ask"));
   truncateSync(replay, 1);
   await o.observe("open", await openVia(f, id, "ask"));
@@ -397,7 +397,7 @@ scenario("a side file too large for the new store is left out, named, and kept i
   expect(statSync(replay).size).toBe(1);
 });
 
-// Hosted terminal state the copy can't take, here a link no fx writes, is
+// Hosted terminal state the copy can't take, here a link no Tetris writes, is
 // left out and named, and the session's v1 folder keeps it, by what the
 // copy recorded, even once the link is gone (D56).
 scenario("hosted terminal state the copy can't take is left out, named, and kept in the session's v1 folder (D56)", async f => {
@@ -410,7 +410,7 @@ scenario("hosted terminal state the copy can't take is left out, named, and kept
   await o.observe("create");
   await o.observe("open", await openVia(f, id, "ask"));
   expect(f.said).toContain(`This session was converted without terminal/state/stray-link because it is not a file or folder. `
-    + `Its earlier folder ~/.fx/sessions/${id} keeps it.`);
+    + `Its earlier folder ~/.tetris/sessions/${id} keeps it.`);
   expect(readlinkSync(join(state, "stray-link"))).toBe("elsewhere");
   rmSync(join(state, "stray-link"));
   await o.observe("open", await openVia(f, id, "ask"));
@@ -421,7 +421,7 @@ scenario("hosted terminal state the copy can't take is left out, named, and kept
 
 // --- why a damaged session can't be converted -------------------------------------
 
-scenario("a damaged session's error names the file and the reason in fx ask, ACP and the app", async f => {
+scenario("a damaged session's error names the file and the reason in tetris ask, ACP and the app", async f => {
   plainReplies(f);
   const id = (await f.v1Ask(["CONV_FIRST"])).session_id;
   const o = observer(f, id);
@@ -445,7 +445,7 @@ scenario("a damaged session's error names the file and the reason in fx ask, ACP
 
 const NOTICE = "Converting this session from the previous session format";
 
-// What the host showed of the notice: fx ask's stderr, ACP agent text
+// What the host showed of the notice: tetris ask's stderr, ACP agent text
 // updates, or the app's screen.
 function notices(f: Fixture, via: "ask" | "acp" | "app") {
   if (via === "ask") return f.runs.at(-1)!.stderr;

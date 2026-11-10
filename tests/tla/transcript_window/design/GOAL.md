@@ -64,7 +64,7 @@ All of these hold at the same commit:
    spec and in the core caught, and the traceability check.
 2. `zig build test` passes with the core's inline tests.
 3. The binary driver runs the built
-   `zig-out/bin/fx` through streaming, compaction, resize, and Ctrl+O, and TLC
+   `zig-out/bin/tetris` through streaming, compaction, resize, and Ctrl+O, and TLC
    accepts every observed run.
 4. The S1 workload (40 agentic turns, 2,400 tool calls) has no main-thread
    stretch over 100 ms from transcript work, and its last turn is no slower than

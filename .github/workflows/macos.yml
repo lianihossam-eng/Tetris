@@ -100,13 +100,13 @@ jobs:
         run: zig build -Doptimize=ReleaseSafe -Dcpu=baseline
 
       - name: Smoke test fresh binary
-        run: scripts/smoke-binary.sh zig-out/bin/fx
+        run: scripts/smoke-binary.sh zig-out/bin/tetris
 
       - name: Share the binary with the E2E shards
         uses: actions/upload-artifact@v4
         with:
-          name: fx-macos-arm64
-          path: zig-out/bin/fx
+          name: tetris-macos-arm64
+          path: zig-out/bin/tetris
           retention-days: 1
           if-no-files-found: error
 
@@ -137,11 +137,11 @@ jobs:
       - name: Download the shared binary
         uses: actions/download-artifact@v4
         with:
-          name: fx-macos-arm64
+          name: tetris-macos-arm64
           path: zig-out/bin
 
       - name: Restore the executable bit
-        run: chmod +x zig-out/bin/fx
+        run: chmod +x zig-out/bin/tetris
 
       # Some E2E fixtures build small Zig helpers.
       - name: Setup Zig
@@ -193,7 +193,7 @@ jobs:
           zig build libfx-napi -Dnapi-surface=core -Doptimize=ReleaseSafe
           npm run --prefix sdk test:node-napi
 
-  # Real fx processes take the MCP credential store's lock on the macOS
+  # Real Tetris processes take the MCP credential store's lock on the macOS
   # Keychain, slowed, frozen, and killed, and TLC checks each run against
   # tests/tla/mcp_host/StoreLockBudget.tla. Linux CI runs the other MCP host
   # drivers; this one needs the Keychain.
@@ -212,11 +212,11 @@ jobs:
       - name: Download the shared binary
         uses: actions/download-artifact@v4
         with:
-          name: fx-macos-arm64
+          name: tetris-macos-arm64
           path: zig-out/bin
 
       - name: Restore the executable bit
-        run: chmod +x zig-out/bin/fx
+        run: chmod +x zig-out/bin/tetris
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2

@@ -522,8 +522,8 @@ fn needStatus(need: Status.Need) Status {
         ),
         .crash_loop => needOf(
             need,
-            "This request crashed fx twice · Enter to retry, Esc to cancel",
-            "Crashed fx twice · Enter retries, Esc cancels",
+            "This request crashed Tetris twice · Enter to retry, Esc to cancel",
+            "Tetris crash loop · Enter retries, Esc cancels",
         ),
         .stale => needOf(
             need,
@@ -1060,7 +1060,7 @@ test "two abrupt deaths with a send in flight ask once" {
     const second = step(&state, .{ .start = .{ .resume_from = record } }, 50);
     try testing.expect(second.send == null);
     try testing.expectEqual(Status.Need.crash_loop, second.status.?.need.?);
-    try testing.expectEqualStrings("Crashed fx twice · Enter retries, Esc cancels", second.status.?.short.slice());
+    try testing.expectEqualStrings("Tetris crash loop · Enter retries, Esc cancels", second.status.?.short.slice());
 
     const resumed = step(&state, .user_continue, 900);
     try testing.expect(resumed.send != null);

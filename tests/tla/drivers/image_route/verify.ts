@@ -7,7 +7,7 @@
 //   3. the harness, built from the real src/core/images/image_route.zig;
 //   4. spec to code: every graph edge replayed against the real core;
 //   5. code to spec: scripted and random traces with faults, checked by TLC;
-//   6. binary to spec: `fx ask` turns of the built binary, a matrix and
+//   6. binary to spec: `tetris ask` turns of the built binary, a matrix and
 //      random sessions, each checked by TLC against the model, and doctored
 //      observations the check must reject;
 //   7. every planted bug in the spec caught by its property;
@@ -16,7 +16,7 @@
 //
 // Settings: FX_IMAGE_ROUTE_SEED (default 20261019), FX_IMAGE_ROUTE_TRACES
 // (random traces, default 300), FX_IMAGE_ROUTE_BINARY_SESSIONS (random
-// binary sessions, default 8), FX_BIN (the binary, default zig-out/bin/fx,
+// binary sessions, default 8), FX_BIN (the binary, default zig-out/bin/tetris,
 // which `zig build` must have built from this checkout), FX_TLA_OUT (where
 // the report goes).
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";

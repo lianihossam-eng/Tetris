@@ -63,7 +63,7 @@ function selectedSlashRowIndex(escapes: string): number {
 }
 
 test("slash menu selection index ignores the welcome header help hint", () => {
-  const header = `${SELECTED_COMPLETION_SGR}𝒇x\x1b[0m${DIM_SGR} v0.3.27 · Run /help for commands`;
+  const header = `${SELECTED_COMPLETION_SGR}tetris\x1b[0m${DIM_SGR} v0.3.27 · Run /help for commands`;
   const unselected = "\x1b[38;5;245m/help show available slash commands";
   const selected = `${SELECTED_COMPLETION_SGR}  /clear\x1b[38;5;245m start a fresh session and keep background processes`;
 
@@ -87,7 +87,7 @@ function captureViewportEscapes(session: TmuxSession): string {
 function runningBinaryTitle(workspace: string): string {
   const version = execFileSync(FX_BIN, ["--version"], { encoding: "utf8" }).trim();
   expect(version).toMatch(/^\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?$/);
-  return `fx v${version} | ${basename(workspace)}`;
+  return `tetris v${version} | ${basename(workspace)}`;
 }
 
 async function waitForPaneTitle(
@@ -328,12 +328,12 @@ function createSkillsMenuFixture() {
   const home = join(root, "home");
   const workspace = join(root, "workspace");
   const stderrPath = join(root, "stderr.log");
-  mkdirSync(join(home, ".fx", "skills", "managed-menu"), { recursive: true });
+  mkdirSync(join(home, ".tetris", "skills", "managed-menu"), { recursive: true });
   mkdirSync(join(home, ".codex", "skills", "codex-menu"), { recursive: true });
   mkdirSync(join(home, ".agents", "skills", "compat-menu"), { recursive: true });
   mkdirSync(join(workspace, "skills", "workspace-menu"), { recursive: true });
   writeFileSync(
-    join(home, ".fx", "skills", "managed-menu", "SKILL.md"),
+    join(home, ".tetris", "skills", "managed-menu", "SKILL.md"),
     "---\nname: managed-menu\ndescription: |\n  managed menu first line\n  managed menu second line\n---\n\nManaged body\n",
   );
   writeFileSync(
@@ -358,11 +358,11 @@ function createSkillRankingFixture() {
   const home = join(root, "home");
   const workspace = join(root, "workspace");
   const stderrPath = join(root, "stderr.log");
-  mkdirSync(join(home, ".fx", "skills", "workflow-helper"), { recursive: true });
+  mkdirSync(join(home, ".tetris", "skills", "workflow-helper"), { recursive: true });
   mkdirSync(join(home, ".codex", "skills", "zig-best-practices"), { recursive: true });
   mkdirSync(workspace, { recursive: true });
   writeFileSync(
-    join(home, ".fx", "skills", "workflow-helper", "SKILL.md"),
+    join(home, ".tetris", "skills", "workflow-helper", "SKILL.md"),
     "---\nname: workflow-helper\ndescription: simplify Zig workflows\n---\n\nWorkflow body\n",
   );
   writeFileSync(
@@ -381,10 +381,10 @@ function createLinkedSkillsMenuFixture() {
   const source = join(workspace, "skill-source", "linked-menu");
   const skillsRoot = join(workspace, ".codex", "skills");
   const stderrPath = join(root, "stderr.log");
-  mkdirSync(join(home, ".fx"), { recursive: true });
+  mkdirSync(join(home, ".tetris"), { recursive: true });
   mkdirSync(source, { recursive: true });
   mkdirSync(skillsRoot, { recursive: true });
-  writeFileSync(join(home, ".fx", "settings.json"), "{}\n");
+  writeFileSync(join(home, ".tetris", "settings.json"), "{}\n");
   writeFileSync(
     join(source, "SKILL.md"),
     "---\nname: linked-menu\ndescription: linked menu skill\n---\n\nLINKED_MENU_BODY\n",
@@ -406,10 +406,10 @@ function createLinkedMetadataSkillsMenuFixture() {
   const source = join(workspace, "skill-source", "linked-leaf");
   const candidate = join(workspace, ".codex", "skills", "linked-leaf");
   const stderrPath = join(root, "stderr.log");
-  mkdirSync(join(home, ".fx"), { recursive: true });
+  mkdirSync(join(home, ".tetris"), { recursive: true });
   mkdirSync(source, { recursive: true });
   mkdirSync(candidate, { recursive: true });
-  writeFileSync(join(home, ".fx", "settings.json"), "{}\n");
+  writeFileSync(join(home, ".tetris", "settings.json"), "{}\n");
   writeFileSync(
     join(source, "SKILL.md"),
     "---\nname: linked-leaf\ndescription: linked metadata skill\n---\n\nLINKED_METADATA_BODY\n",
@@ -430,9 +430,9 @@ function createUnavailableLinkedSkillFixture() {
   const workspace = join(root, "workspace");
   const skillsRoot = join(workspace, ".codex", "skills");
   const stderrPath = join(root, "stderr.log");
-  mkdirSync(join(home, ".fx"), { recursive: true });
+  mkdirSync(join(home, ".tetris"), { recursive: true });
   mkdirSync(skillsRoot, { recursive: true });
-  writeFileSync(join(home, ".fx", "settings.json"), "{}\n");
+  writeFileSync(join(home, ".tetris", "settings.json"), "{}\n");
   symlinkSync(
     "../../skill-source/missing-skill",
     join(skillsRoot, "missing-skill"),
@@ -447,10 +447,10 @@ function createModelsMenuFixture() {
   workDirs.push(root);
   const home = join(root, "home");
   const workspace = join(root, "workspace");
-  const settingsPath = join(home, ".fx", "settings.json");
+  const settingsPath = join(home, ".tetris", "settings.json");
   const tapePath = join(root, "models-menu.fxtape");
   const stderrPath = join(root, "stderr.log");
-  mkdirSync(join(home, ".fx"), { recursive: true });
+  mkdirSync(join(home, ".tetris"), { recursive: true });
   mkdirSync(workspace, { recursive: true });
   writeFileSync(settingsPath, "{}\n");
   writeFileSync(stderrPath, "");
@@ -465,10 +465,10 @@ function createMentionGuardFixture() {
   workDirs.push(root);
   const home = join(root, "hq");
   const workspace = join(root, "workspace");
-  mkdirSync(join(home, ".fx", "skills", "managed-menu"), { recursive: true });
+  mkdirSync(join(home, ".tetris", "skills", "managed-menu"), { recursive: true });
   mkdirSync(workspace, { recursive: true });
   writeFileSync(
-    join(home, ".fx", "skills", "managed-menu", "SKILL.md"),
+    join(home, ".tetris", "skills", "managed-menu", "SKILL.md"),
     "---\nname: managed-menu\ndescription: managed menu skill\n---\n\nManaged body\n",
   );
   if (home.toLowerCase().includes("home")) {
@@ -482,7 +482,7 @@ function createExactSkillsMenuFixture() {
   workDirs.push(root);
   const home = join(root, "home");
   const workspace = join(root, "workspace");
-  const managed = join(home, ".fx", "skills", "exact-picker-managed");
+  const managed = join(home, ".tetris", "skills", "exact-picker-managed");
   const workspaceSkill = join(workspace, "skills", "exact-picker-workspace");
   const malformed = join(home, ".agents", "skills", "malformed-picker");
   const bodyA = "EXACT_PICKER_MANAGED_BODY";
@@ -524,9 +524,9 @@ function createManySkillsMenuFixture(count: number) {
   const stderrPath = join(root, "stderr.log");
   for (let i = 0; i < count; i += 1) {
     const name = `skill-${String(i).padStart(3, "0")}`;
-    mkdirSync(join(home, ".fx", "skills", name), { recursive: true });
+    mkdirSync(join(home, ".tetris", "skills", name), { recursive: true });
     writeFileSync(
-      join(home, ".fx", "skills", name, "SKILL.md"),
+      join(home, ".tetris", "skills", name, "SKILL.md"),
       `---\nname: ${name}\ndescription: generated skill ${i}\n---\n\nGenerated body\n`,
     );
   }
@@ -536,7 +536,7 @@ function createManySkillsMenuFixture(count: number) {
 
 function visibleFxSkillNames(grid: string[]): string[] {
   return grid
-    .filter((line) => line.includes("skill-") && line.includes("fx · Global"))
+    .filter((line) => line.includes("skill-") && line.includes("tetris · Global"))
     .map((line) => line.match(/skill-\d+/)?.[0])
     .filter((name): name is string => name !== undefined);
 }
@@ -619,7 +619,7 @@ async function startRenameMenuSession(): Promise<{ tracePath: string; stderrPath
   workDirs.push(root);
   const home = join(root, "home");
   const workspace = join(root, "workspace");
-  mkdirSync(join(home, ".fx"), { recursive: true });
+  mkdirSync(join(home, ".tetris"), { recursive: true });
   for (const [name, description] of Object.entries(RENAME_MENU_SKILLS)) {
     const dir = join(workspace, ".agents", "skills", name);
     mkdirSync(dir, { recursive: true });
@@ -629,7 +629,7 @@ async function startRenameMenuSession(): Promise<{ tracePath: string; stderrPath
     );
   }
   writeFileSync(
-    join(home, ".fx", "settings.json"),
+    join(home, ".tetris", "settings.json"),
     JSON.stringify({ sandbox: "none", permission: {} }),
   );
   const stderrPath = join(root, "stderr.log");
@@ -726,7 +726,7 @@ describe.skipIf(SKIP)("tui: slash menu", () => {
 
       // A command whose argument is optional still runs on Enter.
       await s.sendLiteralText("/permis");
-      await s.waitForText("choose what fx is allowed to do", 5_000);
+      await s.waitForText("choose what Tetris is allowed to do", 5_000);
       await s.sendKeys("Enter");
       await s.waitForText("Configured rules", 5_000);
       await s.sendKeys("Escape");
@@ -1034,7 +1034,7 @@ describe.skipIf(SKIP)("tui: slash menu", () => {
     async () => {
       const fixture = createSkillRankingFixture();
       writeFileSync(
-        join(fixture.home, ".fx", "mcp.json"),
+        join(fixture.home, ".tetris", "mcp.json"),
         JSON.stringify({
           mcpServers: {
             context7: { type: "http", url: "http://127.0.0.1:9/mcp" },
@@ -1104,14 +1104,14 @@ describe.skipIf(SKIP)("tui: slash menu", () => {
       const workDir = mkdtempSync(join(tmpdir(), "fx-title-rename-e2e-"));
       workDirs.push(workDir);
       const home = join(workDir, "home");
-      const workspace = join(workDir, "fx");
+      const workspace = join(workDir, "tetris");
       const resumedWorkspace = join(workDir, "another project é");
       const fallbackTitle = (dir: string) => runningBinaryTitle(dir);
-      mkdirSync(join(home, ".fx"), { recursive: true });
+      mkdirSync(join(home, ".tetris"), { recursive: true });
       mkdirSync(workspace, { recursive: true });
       mkdirSync(resumedWorkspace, { recursive: true });
       writeFileSync(
-        join(home, ".fx", "settings.json"),
+        join(home, ".tetris", "settings.json"),
         JSON.stringify({ sandbox: "none", permission: {} }),
       );
 
@@ -1214,9 +1214,9 @@ describe.skipIf(SKIP)("tui: slash menu", () => {
       workDirs.push(workDir);
       const home = join(workDir, "home");
       const workspace = join(workDir, "workspace");
-      mkdirSync(join(home, ".fx"), { recursive: true });
+      mkdirSync(join(home, ".tetris"), { recursive: true });
       mkdirSync(workspace, { recursive: true });
-      writeFileSync(join(home, ".fx", "settings.json"), JSON.stringify({ sandbox: "none", permission: {} }));
+      writeFileSync(join(home, ".tetris", "settings.json"), JSON.stringify({ sandbox: "none", permission: {} }));
 
       const tracePath = join(workDir, "trace.log");
       const tapePath = join(workDir, "resumed.fxtape");
@@ -1338,7 +1338,7 @@ describe.skipIf(SKIP)("tui: slash menu", () => {
       await session.waitForPane(
         (pane) =>
           composerContains(pane, "/feedback") &&
-          !pane.includes("open the fx feedback form"),
+          !pane.includes("open the Tetris feedback form"),
         5_000,
       );
       const afterDismiss = await capture("after-dismiss");
@@ -1349,7 +1349,7 @@ describe.skipIf(SKIP)("tui: slash menu", () => {
       await session.waitForPane(
         (pane) =>
           composerContains(pane, "/feedbackx") &&
-          !pane.includes("open the fx feedback form"),
+          !pane.includes("open the Tetris feedback form"),
         5_000,
       );
       const afterDismissEdit = await capture("after-dismiss-edit");
@@ -1536,7 +1536,7 @@ describe.skipIf(SKIP)("tui: slash menu", () => {
     "settings can hide slash menu metadata and persist the choice",
     async () => {
       const { home, workspace } = createSkillsMenuFixture();
-      const settingsPath = join(home, ".fx", "settings.json");
+      const settingsPath = join(home, ".tetris", "settings.json");
 
       const launch = () =>
         TmuxSession.create({
@@ -1591,7 +1591,7 @@ describe.skipIf(SKIP)("tui: slash menu", () => {
       grid = await session.capturePaneGrid();
       const skillRow = grid.find((line) => line.includes("managed menu first line"));
       expect(skillRow).toContain("managed-menu");
-      expect(skillRow).not.toContain("global .fx");
+      expect(skillRow).not.toContain("global ~/.tetris");
 
       await session.sendKeys("C-u");
       await session.sendText("/quit");
@@ -1687,7 +1687,7 @@ describe.skipIf(SKIP)("tui: slash menu", () => {
       workDirs.push(root);
       const home = join(root, "home");
       const workspace = join(root, "workspace");
-      const skillDir = join(home, ".fx", "skills", "resume-helper");
+      const skillDir = join(home, ".tetris", "skills", "resume-helper");
       const stderrPath = join(root, "stderr.log");
       mkdirSync(skillDir, { recursive: true });
       mkdirSync(workspace, { recursive: true });
@@ -1761,7 +1761,7 @@ describe.skipIf(SKIP)("tui: slash menu", () => {
 
       await session.sendKeys("Escape");
       await session.waitForPane(
-        (current) => hasEmptyComposer(current) && current.includes("𝒇x") && !current.includes("Commands"),
+        (current) => hasEmptyComposer(current) && current.includes("tetris") && !current.includes("Commands"),
         5_000,
       );
       await session.sendLiteralText("/resume ");
@@ -1778,7 +1778,7 @@ describe.skipIf(SKIP)("tui: slash menu", () => {
 
       await session.sendKeys("Escape");
       await session.waitForPane(
-        (current) => hasEmptyComposer(current) && current.includes("𝒇x") && !current.includes("Sessions"),
+        (current) => hasEmptyComposer(current) && current.includes("tetris") && !current.includes("Sessions"),
         5_000,
       );
       for (const retired of ["/appearance", "/input", "/maxxing"]) {
@@ -1807,7 +1807,7 @@ describe.skipIf(SKIP)("tui: slash menu", () => {
         (current) =>
           current.includes("resume-helper") &&
           !current.includes("enter use") &&
-          !current.includes("fx needs access to Vercel AI Gateway"),
+          !current.includes("Tetris needs access to Vercel AI Gateway"),
         5_000,
       );
       expect(composerContains(pane, "resume-helper")).toBe(true);
@@ -1847,7 +1847,7 @@ describe.skipIf(SKIP)("tui: slash menu", () => {
       await session.sendText("/help");
       let grid = await waitForHelpMenu(session, 40);
       let pane = grid.join("\n");
-      expect(pane).toContain("𝒇x");
+      expect(pane).toContain("tetris");
       expect(pane).toContain("Run /help for commands");
       expect(pane).toContain("[All]");
       expect(pane).toContain("/help");
@@ -1894,7 +1894,7 @@ describe.skipIf(SKIP)("tui: slash menu", () => {
           composerContains(current, "/workspace") &&
           current.includes("list") &&
           current.includes("add") &&
-          current.includes("𝒇x"),
+          current.includes("tetris"),
         5_000,
       );
       expect(pane).not.toContain("Commands 1");
@@ -1907,7 +1907,7 @@ describe.skipIf(SKIP)("tui: slash menu", () => {
       await session.waitForText("No commands found.", 5_000);
       await session.sendKeys("Escape");
       await session.waitForPane(
-        (current) => hasEmptyComposer(current) && current.includes("𝒇x") && !current.includes("enter open"),
+        (current) => hasEmptyComposer(current) && current.includes("tetris") && !current.includes("enter open"),
         5_000,
       );
 
@@ -1925,8 +1925,8 @@ describe.skipIf(SKIP)("tui: slash menu", () => {
       workDirs.push(root);
       const home = join(root, "home");
       const workspace = join(root, "workspace-statusline-visible");
-      const settingsPath = join(home, ".fx", "settings.json");
-      mkdirSync(join(home, ".fx"), { recursive: true });
+      const settingsPath = join(home, ".tetris", "settings.json");
+      mkdirSync(join(home, ".tetris"), { recursive: true });
       mkdirSync(workspace, { recursive: true });
       writeFileSync(
         settingsPath,
@@ -1951,7 +1951,7 @@ describe.skipIf(SKIP)("tui: slash menu", () => {
       await session.sendText("/settings");
       const grid = await waitForSettingsMenu(session);
       let pane = grid.join("\n");
-      expect(pane).toContain("𝒇x");
+      expect(pane).toContain("tetris");
       expect(pane).toContain("Run /help for commands");
       expect(pane).toContain("Settings");
       expect(pane).toContain("Interface");
@@ -1979,7 +1979,7 @@ describe.skipIf(SKIP)("tui: slash menu", () => {
       pane = await session.waitForPane(
         (current) =>
           hasEmptyComposer(current) &&
-          current.includes("𝒇x") &&
+          current.includes("tetris") &&
           current.includes("workspace-statusline-visible") &&
           !current.includes("←→ change"),
         5_000,
@@ -2000,7 +2000,7 @@ describe.skipIf(SKIP)("tui: slash menu", () => {
       workDirs.push(root);
       const home = join(root, "home");
       const workspace = join(root, "workspace");
-      mkdirSync(join(home, ".fx"), { recursive: true });
+      mkdirSync(join(home, ".tetris"), { recursive: true });
       mkdirSync(workspace, { recursive: true });
 
       session = await TmuxSession.create({
@@ -2052,8 +2052,8 @@ describe.skipIf(SKIP)("tui: slash menu", () => {
       workDirs.push(root);
       const home = join(root, "home");
       const workspace = join(root, "compact-statusline-workspace");
-      const settingsPath = join(home, ".fx", "settings.json");
-      mkdirSync(join(home, ".fx"), { recursive: true });
+      const settingsPath = join(home, ".tetris", "settings.json");
+      mkdirSync(join(home, ".tetris"), { recursive: true });
       mkdirSync(workspace, { recursive: true });
       writeFileSync(
         settingsPath,
@@ -2111,7 +2111,7 @@ describe.skipIf(SKIP)("tui: slash menu", () => {
       await session.waitForPane(
         (current) =>
           hasEmptyComposer(current) &&
-          current.includes("𝒇x") &&
+          current.includes("tetris") &&
           current.includes("compact-statusline-workspace") &&
           !current.includes("←→ change"),
         5_000,
@@ -2141,13 +2141,13 @@ describe.skipIf(SKIP)("tui: slash menu", () => {
       const home = join(root, "home");
       const workspace = join(root, "workspace");
       const shared = join(root, "shared");
-      mkdirSync(join(home, ".fx"), { recursive: true });
+      mkdirSync(join(home, ".tetris"), { recursive: true });
       mkdirSync(workspace, { recursive: true });
       mkdirSync(shared, { recursive: true });
       const workspaceRoot = realpathSync(workspace);
       const sharedRoot = realpathSync(shared);
       writeFileSync(
-        join(home, ".fx", "settings.json"),
+        join(home, ".tetris", "settings.json"),
         `${JSON.stringify({
           workspaces: {
             [workspaceRoot]: {
@@ -2240,26 +2240,26 @@ describe.skipIf(SKIP)("tui: slash menu", () => {
       await session.sendKeys("-l '/sk'");
       await session.waitForText("browse and manage skills", 5_000);
       let grid = await session.capturePaneGrid();
-      expect(grid.join("\n")).toContain("𝒇x");
+      expect(grid.join("\n")).toContain("tetris");
       expect(grid.join("\n")).not.toContain("Skills 4");
       await session.sendKeys("Enter");
       grid = await waitForSkillsMenu(session, 4);
       const pane = grid.join("\n");
-      expect(pane).toContain("𝒇x");
+      expect(pane).toContain("tetris");
       expect(pane).toContain("Run /help for commands");
       expect(alternateCount("\x1b[?1049h")).toBe(entersBeforeSkills);
       expect(alternateCount("\x1b[?1049l")).toBe(leavesBeforeSkills);
       expect(pane).toContain("[All]");
-      expect(pane).toContain("fx");
-      expect(pane).not.toContain("[Fx]");
+      expect(pane).toContain("tetris");
+      expect(pane).not.toContain("[Tetris]");
       expect(pane).toContain("Workspace");
       expect(pane).toContain("Claude");
       expect(pane).toContain("Codex");
       expect(pane).toContain("Agents");
       expect(pane).toContain("managed-menu");
-      expect(pane).toContain("fx · Global");
+      expect(pane).toContain("tetris · Global");
       expect(pane).toContain("workspace-menu");
-      expect(pane).toContain("fx · Workspace");
+      expect(pane).toContain("tetris · Workspace");
       expect(pane).toContain("↑↓ navigate");
       expect(pane).toContain("enter use");
 
@@ -2268,7 +2268,7 @@ describe.skipIf(SKIP)("tui: slash menu", () => {
       expect(deep_history).not.toContain("Visible skills (");
       expect(deep_history).not.toContain("skill discovery warning:");
       expect(leadingBlankLineCount(tail_history)).toBeLessThan(3);
-      expect(tail_history).not.toContain("𝒇x v0.3.7");
+      expect(tail_history).not.toContain("tetris v0.3.7");
       const escapes = await session.capturePaneEscapes();
       expect(escapes).not.toContain(`${DIM_SGR}fx-review`);
       expect(deep_history).not.toMatch(/┃ \/sk/);
@@ -2283,7 +2283,7 @@ describe.skipIf(SKIP)("tui: slash menu", () => {
       await session.waitForPane(
         (current) =>
           hasEmptyComposer(current) &&
-          current.includes("𝒇x") &&
+          current.includes("tetris") &&
           !current.includes("↑↓ navigate"),
         5_000,
       );
@@ -2294,14 +2294,14 @@ describe.skipIf(SKIP)("tui: slash menu", () => {
       await session.sendLiteralText("$work");
       grid = await waitForSkillsMenu(session, 1);
       expect(composerContains(grid.join("\n"), "$work")).toBe(true);
-      expect(grid.join("\n")).toContain("𝒇x");
+      expect(grid.join("\n")).toContain("tetris");
       expect(alternateCount("\x1b[?1049h")).toBe(entersBeforeDollar);
       expect(alternateCount("\x1b[?1049l")).toBe(leavesBeforeDollar);
       await session.sendKeys("C-[");
       await session.waitForPane(
         (current) =>
           composerContains(current, "$work") &&
-          current.includes("𝒇x") &&
+          current.includes("tetris") &&
           !current.includes("↑↓ navigate"),
         5_000,
       );
@@ -2326,7 +2326,7 @@ describe.skipIf(SKIP)("tui: slash menu", () => {
       await session.waitForPane(
         (current) =>
           composerContains(current, "hello $") &&
-          current.includes("𝒇x") &&
+          current.includes("tetris") &&
           !current.includes("Skills 4"),
         5_000,
       );
@@ -2448,7 +2448,7 @@ describe.skipIf(SKIP)("tui: slash menu", () => {
       await session.sendText("/skills");
       await waitForSkillsMenu(session, 4);
       await session.sendKeys("Tab");
-      await session.waitForText("[fx]", 5_000);
+      await session.waitForText("[tetris]", 5_000);
       await session.sendKeys("BTab");
       await session.waitForText("[All]", 5_000);
       await session.sendLiteralText("workspace");
@@ -2456,7 +2456,7 @@ describe.skipIf(SKIP)("tui: slash menu", () => {
       await session.sendKeys("Enter");
       grid = await session.capturePaneGrid();
       expect(composerContains(grid.join("\n"), "workspace-menu")).toBe(true);
-      expect(grid.join("\n")).toContain("𝒇x");
+      expect(grid.join("\n")).toContain("tetris");
       expect(grid.join("\n")).not.toContain("↑↓ navigate");
       expect(capturePaneHistory(session, -1000)).not.toContain("Unknown command");
       expect(session.isAlive()).toBe(true);
@@ -2689,7 +2689,7 @@ describe.skipIf(SKIP)("tui: slash menu", () => {
       await session.sendText("/model");
       let grid = await waitForModelsMenu(session, 4);
       let pane = grid.join("\n");
-      expect(pane).toContain("𝒇x");
+      expect(pane).toContain("tetris");
       expect(pane).toContain("Run /help for commands");
       expect(alternateCount("\x1b[?1049h")).toBe(entersBeforeModelMenu);
       expect(alternateCount("\x1b[?1049l")).toBe(leavesBeforeModelMenu);
@@ -2742,7 +2742,7 @@ describe.skipIf(SKIP)("tui: slash menu", () => {
 
       await session.sendKeys("C-[");
       await session.waitForPane(
-        (current) => hasEmptyComposer(current) && current.includes("𝒇x") && !current.includes("tab provider"),
+        (current) => hasEmptyComposer(current) && current.includes("tetris") && !current.includes("tab provider"),
         5_000,
       );
 
@@ -3508,7 +3508,7 @@ describe.skipIf(SKIP)("tui: slash menu", () => {
         expect(gateway.requests).toHaveLength(1);
         expect(gateway.requests[0]!.body).toContain("$managed-menu please");
         expect(gateway.requests[0]!.body).toContain(
-          join(fixture.home, ".fx", "skills", "managed-menu"),
+          join(fixture.home, ".tetris", "skills", "managed-menu"),
         );
 
         let history = capturePaneHistory(session, -200);
@@ -3564,7 +3564,7 @@ describe.skipIf(SKIP)("tui: slash menu", () => {
         await session.waitForPane(
           (pane) =>
             composerContains(pane, "Explain echo $HOME") &&
-            pane.includes("𝒇x") &&
+            pane.includes("tetris") &&
             !pane.includes("No skills found."),
           5_000,
         );

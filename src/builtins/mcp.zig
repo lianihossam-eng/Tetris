@@ -349,7 +349,7 @@ fn readProfile(alloc: Allocator, path: []const u8, skipped: ?*std.ArrayList(proj
     const json_text = (config_file.read(alloc, path) catch |err| {
         logConfigFailure("read", path, err);
         // Named for this file, so a caller that has only the error, such as
-        // `fx ask` at startup, can say what's wrong with ~/.fx/mcp.json.
+        // `fx ask` at startup, can say what's wrong with ~/.tetris/mcp.json.
         return switch (err) {
             error.SymLinkLoop => error.McpConfigLinkLoop,
             error.StreamTooLong => error.McpConfigTooLarge,
@@ -604,9 +604,9 @@ test "a server whose name a terminal can't show is skipped with a note that esca
     try std.testing.expectEqualStrings("caf\u{e9} two", loaded.configs.items[0].name);
     try std.testing.expectEqual(@as(usize, 3), loaded.diagnostics.items.len);
     const expected = [_][]const u8{
-        "~/.fx/mcp.json server 'bad\\xff' was skipped: its name has a character fx won't print.",
-        "~/.fx/mcp.json server 'evil\\x1b]0;x\\x07' was skipped: its name has a character fx won't print.",
-        "~/.fx/mcp.json server 'rtl\\u{202e}txt' was skipped: its name has a character fx won't print.",
+        "~/.tetris/mcp.json server 'bad\\xff' was skipped: its name has a character Tetris won't print.",
+        "~/.tetris/mcp.json server 'evil\\x1b]0;x\\x07' was skipped: its name has a character Tetris won't print.",
+        "~/.tetris/mcp.json server 'rtl\\u{202e}txt' was skipped: its name has a character Tetris won't print.",
     };
     for (loaded.diagnostics.items, expected) |diagnostic, want| {
         const note = try project_config.renderWorkspaceDiagnostic(alloc, diagnostic);
@@ -622,11 +622,11 @@ test "saving MCP config replaces the file durably" {
     defer tmp.cleanup();
 
     const original = "{\"mcp\":{\"stale\":{\"command\":\"echo\"}}}";
-    try writeTempFile(&tmp, "home/.fx/mcp.json", original);
-    const path = try tmpDirPath(alloc, tmp.dir, "home/.fx/mcp.json");
+    try writeTempFile(&tmp, "home/.tetris/mcp.json", original);
+    const path = try tmpDirPath(alloc, tmp.dir, "home/.tetris/mcp.json");
     defer alloc.free(path);
 
-    var fx_dir = try tmp.dir.openDir(io_mod.getIo(), "home/.fx", .{ .iterate = true });
+    var fx_dir = try tmp.dir.openDir(io_mod.getIo(), "home/.tetris", .{ .iterate = true });
     defer fx_dir.close(io_mod.getIo());
 
     // Seed a group-readable mode so the 0600 assertion below cannot pass just
@@ -701,7 +701,7 @@ test "MCP config diagnostic treats nonblocking profile states as clear" {
 
     var tmp = std.testing.tmpDir(.{});
     defer tmp.cleanup();
-    try tmp.dir.createDirPath(io_mod.getIo(), "home/.fx");
+    try tmp.dir.createDirPath(io_mod.getIo(), "home/.tetris");
     const home_path = try tmpDirPath(alloc, tmp.dir, "home");
     defer alloc.free(home_path);
 
@@ -715,7 +715,7 @@ test "MCP config diagnostic treats nonblocking profile states as clear" {
         }
     }
 
-    try writeTempFile(&tmp, "home/.fx/mcp.json", "{\"mcp\":{}}");
+    try writeTempFile(&tmp, "home/.tetris/mcp.json", "{\"mcp\":{}}");
     {
         const test_home = try TestHome.install(alloc, home_path);
         defer test_home.deinit();
@@ -788,12 +788,12 @@ test "workspace MCP loading expands command args environment and HTTP headers" {
     try std.testing.expectEqualStrings("Bearer secret-value", remote.headers[0].value);
 }
 
-test "fx mcp approve saves the approval of a project server" {
+test "tetris mcp approve saves the approval of a project server" {
     const alloc = std.testing.allocator;
     const mcp_verbs = @import("../core/mcp_host/verbs.zig");
     var tmp = std.testing.tmpDir(.{});
     defer tmp.cleanup();
-    try tmp.dir.createDirPath(io_mod.getIo(), "home/.fx");
+    try tmp.dir.createDirPath(io_mod.getIo(), "home/.tetris");
     try writeTempFile(&tmp, "workspace/.mcp.json",
         \\{"mcpServers":{"fixture":{"command":"fixture-server"}}}
     );
@@ -806,7 +806,7 @@ test "fx mcp approve saves the approval of a project server" {
     // Sign-ins go to a file under the test home, never the user's Keychain.
     try test_home.map.put("FX_DISABLE_KEYCHAIN", "1");
 
-    // `fx mcp` signals servers for exit when it is done, which would stop
+    // `tetris mcp` signals servers for exit when it is done, which would stop
     // every later test from starting one; this host is destroyed instead.
     const Hosts = struct {
         workspace_root: []const u8,
@@ -855,12 +855,12 @@ test "saving MCP config refuses a symlinked target" {
 
     const external = "{\"mcp\":{\"fs\":{\"command\":\"node\"}}}";
     try writeTempFile(&tmp, "home/external.json", external);
-    try tmp.dir.createDirPath(io_mod.getIo(), "home/.fx");
+    try tmp.dir.createDirPath(io_mod.getIo(), "home/.tetris");
     const external_path = try tmpDirPath(alloc, tmp.dir, "home/external.json");
     defer alloc.free(external_path);
-    try tmp.dir.symLink(io_mod.getIo(), external_path, "home/.fx/mcp.json", .{ .is_directory = false });
+    try tmp.dir.symLink(io_mod.getIo(), external_path, "home/.tetris/mcp.json", .{ .is_directory = false });
 
-    const path = try std.Io.Dir.path.join(alloc, &.{ std.Io.Dir.path.dirname(external_path).?, ".fx", "mcp.json" });
+    const path = try std.Io.Dir.path.join(alloc, &.{ std.Io.Dir.path.dirname(external_path).?, ".tetris", "mcp.json" });
     defer alloc.free(path);
 
     // The durable helper refuses a target that is not a plain private file, so

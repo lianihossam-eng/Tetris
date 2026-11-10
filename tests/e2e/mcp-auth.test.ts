@@ -140,7 +140,7 @@ function startAuthFixture(
     /** The metadata's token endpoint, in place of its own. */
     tokenEndpoint?: string;
     slackBridgeClientId?: string;
-    /** fx's Slack app signs in with `http://localhost:<port>/callback`, as fx does now, not fx.sh's redirect. */
+    /** fx's Slack app signs in with `http://localhost:<port>/callback`, as tetris does now, not fx.sh's redirect. */
     slackLocalhostRedirect?: boolean;
     /** Answer every refresh with this status and body, such as Slack's HTTP-200 `ok:false`. */
     refreshAnswer?: { status: number; body: unknown };
@@ -462,15 +462,15 @@ function createRoot(
   const openLog = join(root, "open.log");
   const callbackLog = join(root, "callback.html");
   const stderr = join(root, "stderr.log");
-  mkdirSync(join(home, ".fx"), { recursive: true, mode: 0o700 });
+  mkdirSync(join(home, ".tetris"), { recursive: true, mode: 0o700 });
   mkdirSync(workspace, { recursive: true });
   mkdirSync(bin, { recursive: true });
   writeFileSync(
-    join(home, ".fx", "settings.json"),
+    join(home, ".tetris", "settings.json"),
     JSON.stringify({}),
   );
   writeFileSync(
-    join(home, ".fx", "mcp.json"),
+    join(home, ".tetris", "mcp.json"),
     JSON.stringify({
       mcp: {
         fixture: {
@@ -503,7 +503,7 @@ function createRoot(
 }
 
 function moveAuthFixtureToWorkspace(root: ReturnType<typeof createRoot>): void {
-  const profilePath = join(root.home, ".fx", "mcp.json");
+  const profilePath = join(root.home, ".tetris", "mcp.json");
   const profile = JSON.parse(readFileSync(profilePath, "utf8"));
   writeFileSync(
     join(root.workspace, ".mcp.json"),
@@ -539,7 +539,7 @@ function seedExpiredCredentials(
 ) {
   const endpoint = activeAuth.url;
   const origin = new URL(endpoint).origin;
-  const directory = join(root.home, ".fx", "mcp-credentials");
+  const directory = join(root.home, ".tetris", "mcp-credentials");
   mkdirSync(directory, { recursive: true, mode: 0o700 });
   const path = join(directory, "credentials.json");
   writeFileSync(
@@ -575,7 +575,7 @@ function seedExpiredCredentials(
  * `seconds`; resolves once it is held.
  */
 async function holdStoreLock(root: ReturnType<typeof createRoot>, seconds: number) {
-  const path = join(root.home, ".fx", "mcp-credentials", "credentials-v3.lock");
+  const path = join(root.home, ".tetris", "mcp-credentials", "credentials-v3.lock");
   const holder = Bun.spawn(["perl", "-e", 'use Fcntl qw(:flock); open(my $f, ">>", $ARGV[0]) or die; flock($f, LOCK_EX) or die; $| = 1; print "held\n"; sleep $ARGV[1];', path, String(seconds)], { stdout: "pipe" });
   const reader = holder.stdout.getReader();
   const { value } = await reader.read();
@@ -586,7 +586,7 @@ async function holdStoreLock(root: ReturnType<typeof createRoot>, seconds: numbe
 /** A login in fx's MCP credential store (FX_DISABLE_KEYCHAIN), as fx saves it. */
 function seedV2Credential(root: ReturnType<typeof createRoot>, activeAuth: AuthFixture, fields: Record<string, unknown> = {}) {
   const origin = new URL(activeAuth.url).origin;
-  const directory = join(root.home, ".fx", "mcp-credentials");
+  const directory = join(root.home, ".tetris", "mcp-credentials");
   mkdirSync(directory, { recursive: true, mode: 0o700 });
   const credential = JSON.stringify({
     access: ACCESS_INITIAL, refresh: REFRESH_INITIAL, expires_at_ms: null, skew_ms: 30_000,
@@ -604,7 +604,7 @@ function seedV2Credential(root: ReturnType<typeof createRoot>, activeAuth: AuthF
  * needs Keychain access to it. `op` is "load" (the item's text, "" when
  * there is none) or "delete".
  */
-const MCP_KEYCHAIN_SERVICE = "FX_MCP_OAUTH_CREDENTIALS_V3";
+const MCP_KEYCHAIN_SERVICE = "TETRIS_MCP_OAUTH_CREDENTIALS_V3";
 const MCP_KEYCHAIN_ACCOUNT_PREFIX = "fx-e2e-mcp-lock-";
 const MCP_KEYCHAIN_SCRIPT = `
 ObjC.import("Security");
@@ -748,13 +748,13 @@ function toolResultText(
 
 describe("MCP login", () => {
   test(
-    "fx ask isolates failed-server authentication from healthy tool search",
+    "tetris ask isolates failed-server authentication from healthy tool search",
     async () => {
       upstream = startModernMcpHttpFixture("json");
       auth = startAuthFixture(upstream.url);
       const root = createRoot(auth);
       writeFileSync(
-        join(root.home, ".fx", "mcp.json"),
+        join(root.home, ".tetris", "mcp.json"),
         JSON.stringify({
           mcp: {
             linear: {
@@ -854,7 +854,7 @@ describe("MCP login", () => {
     fakeGatewayFinalText("Sign in first."),
   ], { models: [{ id: MODEL, type: "language", tags: ["tool-use"] }] });
 
-  test("fx ask tells the model the user signs in with fx mcp login in a terminal", async () => {
+  test("tetris ask tells the model the user signs in with tetris mcp login in a terminal", async () => {
     upstream = startModernMcpHttpFixture("json");
     auth = startAuthFixture(upstream.url);
     const root = createRoot(auth);
@@ -865,7 +865,7 @@ describe("MCP login", () => {
       timeoutMs: 20_000,
     });
     expect(result.code).toBe(0);
-    expect(gateway.requests[1]?.body).toContain("Run fx mcp login fixture in a terminal, then search again.");
+    expect(gateway.requests[1]?.body).toContain("Run tetris mcp login fixture in a terminal, then search again.");
     expect(auth.authorizationRequests).toBe(0);
   }, 30_000);
 
@@ -873,7 +873,7 @@ describe("MCP login", () => {
     upstream = startModernMcpHttpFixture("json");
     auth = startAuthFixture(upstream.url);
     const root = createRoot(auth);
-    const profile = join(root.home, ".fx", "mcp.json");
+    const profile = join(root.home, ".tetris", "mcp.json");
     const config = JSON.parse(readFileSync(profile, "utf8"));
     config.mcp.broken = { type: "local", command: ["false"], startup_timeout_ms: 5_000 };
     writeFileSync(profile, JSON.stringify(config));
@@ -890,7 +890,7 @@ describe("MCP login", () => {
     const told = toolResultText(gateway.requests[1]?.body ?? "", "search_open");
     expect(told).toContain('"state":"no_match"');
     expect(told).toContain('"mcp_unavailable":[');
-    expect(told).toContain("\"MCP server 'fixture' needs a login. Ask the user to run fx mcp login fixture in a terminal, then try again.\"");
+    expect(told).toContain("\"MCP server 'fixture' needs a login. Ask the user to run tetris mcp login fixture in a terminal, then try again.\"");
     expect(told).toContain("\"MCP server 'broken' is unavailable: ");
     expect(auth.authorizationRequests).toBe(0);
   }, 45_000);
@@ -912,11 +912,11 @@ describe("MCP login", () => {
     await tui.waitForText("Sign in first.", 20_000);
     const told = gateway.requests[1]?.body ?? "";
     expect(told).toContain("Run /mcp login fixture, then search again.");
-    expect(told).not.toContain("fx mcp login fixture in a terminal");
+    expect(told).not.toContain("tetris mcp login fixture in a terminal");
     expect(auth.authorizationRequests).toBe(0);
   }, 45_000);
 
-  test("fx mcp login signs in through the browser, and logout signs out", async () => {
+  test("tetris mcp login signs in through the browser, and logout signs out", async () => {
     upstream = startModernMcpHttpFixture("json");
     auth = startAuthFixture(upstream.url, { revokeDelayMs: 500 });
     const root = createRoot(auth);
@@ -953,7 +953,7 @@ describe("MCP login", () => {
     expect(await statusOf(root)).toBe("not_started");
   }, 60_000);
 
-  test("fx mcp login says why the server refused the sign-in, in its words", async () => {
+  test("tetris mcp login says why the server refused the sign-in, in its words", async () => {
     upstream = startModernMcpHttpFixture("json");
     auth = startAuthFixture(upstream.url, { rejectCodeExchange: true });
     const root = createRoot(auth);
@@ -966,7 +966,7 @@ describe("MCP login", () => {
     expect(await statusOf(root)).not.toBe("signed_in");
   }, 30_000);
 
-  test("fx mcp login --no-browser takes the address pasted back", async () => {
+  test("tetris mcp login --no-browser takes the address pasted back", async () => {
     upstream = startModernMcpHttpFixture("json");
     auth = startAuthFixture(upstream.url);
     const root = createRoot(auth, true, "http", auth.url, false);
@@ -1008,7 +1008,7 @@ describe("MCP login", () => {
     expect(auth.tokenExchanges).toBe(1);
   }, 40_000);
 
-  test("fx mcp login takes only its own return: a stray return and a silent connection don't end or hold up the sign-in", async () => {
+  test("tetris mcp login takes only its own return: a stray return and a silent connection don't end or hold up the sign-in", async () => {
     upstream = startModernMcpHttpFixture("json");
     auth = startAuthFixture(upstream.url);
     const root = createRoot(auth, true, "http", auth.url, false);
@@ -1059,11 +1059,11 @@ describe("MCP login", () => {
     }
   }, 40_000);
 
-  test("fx mcp login asks for the oauth.scopes in the config when the server names none", async () => {
+  test("tetris mcp login asks for the oauth.scopes in the config when the server names none", async () => {
     upstream = startModernMcpHttpFixture("json");
     auth = startAuthFixture(upstream.url, { omitScopes: true });
     const root = createRoot(auth, true, "http", auth.url, false);
-    const profile = join(root.home, ".fx", "mcp.json");
+    const profile = join(root.home, ".tetris", "mcp.json");
     const config = JSON.parse(readFileSync(profile, "utf8"));
     config.mcp.fixture.oauth.scopes = ["custom.scope", "other.scope"];
     writeFileSync(profile, JSON.stringify(config));
@@ -1104,7 +1104,7 @@ describe("MCP login", () => {
     return { seen, url: `https://0.0.0.0:${listener.port}/token`, stop: () => listener.stop(true) };
   };
 
-  test("fx mcp login refuses a sign-in server whose token endpoint is an internal address, and contacts nothing there", async () => {
+  test("tetris mcp login refuses a sign-in server whose token endpoint is an internal address, and contacts nothing there", async () => {
     const internal = internalListener();
     try {
       upstream = startModernMcpHttpFixture("json");
@@ -1116,7 +1116,7 @@ describe("MCP login", () => {
       expect(auth.authorizationRequests).toBe(0);
       expect(existsSync(root.openLog)).toBe(false);
       expect(result.code).not.toBe(0);
-      expect(result.stderr).toContain("Couldn't sign in to fixture: its sign-in server points at an internal address fx won't contact.");
+      expect(result.stderr).toContain("Couldn't sign in to fixture: its sign-in server points at an internal address Tetris won't contact.");
     } finally {
       internal.stop();
     }
@@ -1183,7 +1183,7 @@ describe("MCP login", () => {
     }
   }, 30_000);
 
-  test("fx mcp login says why the sign-in page refused, in its words", async () => {
+  test("tetris mcp login says why the sign-in page refused, in its words", async () => {
     upstream = startModernMcpHttpFixture("json");
     auth = startAuthFixture(upstream.url);
     const root = createRoot(auth, true, "http", auth.url, false);
@@ -1242,17 +1242,17 @@ describe("MCP login", () => {
     expect(pane).not.toContain(ACCESS_INITIAL);
   }, 60_000);
 
-  test("fx mcp add signs in to a new server that needs a login, --no-login skips it, and without a browser it names the command", async () => {
+  test("tetris mcp add signs in to a new server that needs a login, --no-login skips it, and without a browser it names the command", async () => {
     upstream = startModernMcpHttpFixture("json");
     auth = startAuthFixture(upstream.url, { registration: true });
     const root = createRoot(auth);
-    writeFileSync(join(root.home, ".fx", "mcp.json"), JSON.stringify({ mcp: {} }));
+    writeFileSync(join(root.home, ".tetris", "mcp.json"), JSON.stringify({ mcp: {} }));
     const env = v2Env(root);
 
     const added = await runFx(["mcp", "add", "web", auth.url], { cwd: root.workspace, env, timeoutMs: 30_000 });
     expect(added.stderr).toBe("");
     expectExit0(added);
-    expect(added.stdout).toStartWith("Added web to ~/.fx/mcp.json.\nweb needs a login.\nApprove in your browser.");
+    expect(added.stdout).toStartWith("Added web to ~/.tetris/mcp.json.\nweb needs a login.\nApprove in your browser.");
     expect(added.stdout).toEndWith("Signed in to web.\n");
     expect(added.stdout).not.toContain(ACCESS_INITIAL);
     expect(new URL(readFileSync(root.openLog, "utf8").trim()).pathname).toBe("/authorize");
@@ -1261,11 +1261,11 @@ describe("MCP login", () => {
 
     const skipped = await runFx(["mcp", "add", "--no-login", "quiet", auth.url], { cwd: root.workspace, env, timeoutMs: 30_000 });
     expectExit0(skipped);
-    expect(skipped.stdout).toBe("Added quiet to ~/.fx/mcp.json.\n");
-    // Without a browser, taking the address pasted back is `fx mcp login`'s.
+    expect(skipped.stdout).toBe("Added quiet to ~/.tetris/mcp.json.\n");
+    // Without a browser, taking the address pasted back is `tetris mcp login`'s.
     const headless = await runFx(["mcp", "add", "later", auth.url], { cwd: root.workspace, env: { ...env, FX_NO_OPEN_BROWSER: "1" }, timeoutMs: 30_000 });
     expectExit0(headless);
-    expect(headless.stdout).toBe("Added later to ~/.fx/mcp.json.\nlater needs a login. Sign in with: fx mcp login later\n");
+    expect(headless.stdout).toBe("Added later to ~/.tetris/mcp.json.\nlater needs a login. Sign in with: tetris mcp login later\n");
     expect(auth.tokenExchanges).toBe(1);
   }, 90_000);
 
@@ -1273,7 +1273,7 @@ describe("MCP login", () => {
     upstream = startModernMcpHttpFixture("json");
     auth = startAuthFixture(upstream.url, { registration: true });
     const root = createRoot(auth);
-    writeFileSync(join(root.home, ".fx", "mcp.json"), JSON.stringify({ mcp: {} }));
+    writeFileSync(join(root.home, ".tetris", "mcp.json"), JSON.stringify({ mcp: {} }));
     gateway = startFakeGateway([], { models: [{ id: MODEL, type: "language", tags: ["tool-use"] }] });
     tui = await TmuxSession.create({
       isolated: true, cwd: root.workspace, width: 140, height: 36,
@@ -1281,13 +1281,13 @@ describe("MCP login", () => {
     });
     await tui.waitForComposer(15_000);
     await tui.sendText(`/mcp add web ${auth.url}`);
-    await tui.waitForText("Added web to ~/.fx/mcp.json.", 10_000);
+    await tui.waitForText("Added web to ~/.tetris/mcp.json.", 10_000);
     // The shell loads it, sees it needs a login, and signs in as a typed /mcp login would.
     await tui.waitForText("Sign in to web in your browser.", 15_000);
     await tui.waitForText("Signed in to web.", 15_000);
     expect(auth.tokenExchanges).toBe(1);
     await tui.sendText(`/mcp add --no-login quiet ${auth.url}`);
-    await tui.waitForText("Added quiet to ~/.fx/mcp.json.", 10_000);
+    await tui.waitForText("Added quiet to ~/.tetris/mcp.json.", 10_000);
     await tui.waitForText("quiet needs login · /mcp", 15_000);
     expect(auth.tokenExchanges).toBe(1);
   }, 60_000);
@@ -1491,7 +1491,7 @@ describe("MCP login", () => {
 
     // Another server's change leaves this sign-in waiting for its browser.
     await tui.sendText("/mcp add web https://w.example/mcp");
-    await tui.waitForText("Added web to ~/.fx/mcp.json.", 10_000);
+    await tui.waitForText("Added web to ~/.tetris/mcp.json.", 10_000);
     await Bun.sleep(1_000);
     expect(await tui.capturePane()).toContain("Signing in to fixture");
     expect(await tui.captureFullScrollback()).not.toContain("Couldn't sign in to fixture");
@@ -1522,7 +1522,7 @@ describe("MCP login", () => {
     expect(auth.requests.some((r) => (r.authorization ?? "").includes(ACCESS_INITIAL))).toBe(false);
     expect(auth.refreshes).toBe(0);
     expect(readFileSync(v1Store, "utf8")).toBe(v1Before);
-    expect(existsSync(join(root.home, ".fx", "mcp-credentials", "credentials-v3.json"))).toBe(false);
+    expect(existsSync(join(root.home, ".tetris", "mcp-credentials", "credentials-v3.json"))).toBe(false);
   }, 60_000);
 
   // Older builds keep their logins in credentials-v2.json. Those from before
@@ -1530,12 +1530,12 @@ describe("MCP login", () => {
   // only their own login, and every older fx still running refreshes the
   // logins it holds apart from this one. So nothing there is carried over,
   // the server signs in once, and an older fx's writes never reach it.
-  test("an older fx's credentials-v2.json is never read or written: the server signs in once, and that fx's rewrites never reach the login", async () => {
+  test("an older tetris's credentials-v2.json is never read or written: the server signs in once, and that tetris's rewrites never reach the login", async () => {
     upstream = startModernMcpHttpFixture("json");
     auth = startAuthFixture(upstream.url);
     const root = createRoot(auth);
     const env = v2Env(root);
-    const directory = join(root.home, ".fx", "mcp-credentials");
+    const directory = join(root.home, ".tetris", "mcp-credentials");
     const older = join(directory, "credentials-v2.json");
     const own = join(directory, "credentials-v3.json");
     mkdirSync(directory, { recursive: true, mode: 0o700 });
@@ -1590,7 +1590,7 @@ describe("MCP login", () => {
     expect(auth.refreshes).toBe(1);
   }, 60_000);
 
-  test("a refresh that fails for now (503) ends fx mcp show as retrying, keeps the login, and asks for no new one", async () => {
+  test("a refresh that fails for now (503) ends tetris mcp show as retrying, keeps the login, and asks for no new one", async () => {
     upstream = startModernMcpHttpFixture("json");
     auth = startAuthFixture(upstream.url, { refreshAnswer: { status: 503, body: { error: "temporarily_unavailable" } } });
     const root = createRoot(auth);
@@ -1608,7 +1608,7 @@ describe("MCP login", () => {
     expect(readFileSync(store, "utf8")).toContain(REFRESH_INITIAL);
   }, 60_000);
 
-  test("a refresh Slack answers with a temporary error at HTTP 200 keeps the login, and fx mcp show says it's retrying", async () => {
+  test("a refresh Slack answers with a temporary error at HTTP 200 keeps the login, and tetris mcp show says it's retrying", async () => {
     upstream = startModernMcpHttpFixture("json");
     auth = startAuthFixture(upstream.url, { refreshAnswer: { status: 200, body: { ok: false, error: "internal_error" } } });
     const root = createRoot(auth);
@@ -1628,7 +1628,7 @@ describe("MCP login", () => {
 
   // Slack refreshes a PKCE app's tokens without its secret only for a
   // localhost redirect, so fx's Slack app signs in with one.
-  test("Slack signs in as fx's Slack app at Slack's own page, with a localhost redirect on its port and the app's scopes, and refreshes without a secret", async () => {
+  test("Slack signs in as tetris's Slack app at Slack's own page, with a localhost redirect on its port and the app's scopes, and refreshes without a secret", async () => {
     upstream = startModernMcpHttpFixture("json");
     // Slack's 401 names one of its own scopes; the login asks for it with
     // the app's, so it adds nothing here.
@@ -1638,7 +1638,7 @@ describe("MCP login", () => {
     const probe = Bun.serve({ hostname: "127.0.0.1", port: 0, fetch: () => new Response() });
     const port = probe.port;
     probe.stop(true);
-    const profilePath = join(root.home, ".fx", "mcp.json");
+    const profilePath = join(root.home, ".tetris", "mcp.json");
     const profile = JSON.parse(readFileSync(profilePath, "utf8"));
     profile.mcp.fixture.oauth = { client_id: FX_SLACK_CLIENT_ID, callback_port: port };
     writeFileSync(profilePath, JSON.stringify(profile));
@@ -1664,7 +1664,7 @@ describe("MCP login", () => {
     expect(auth.requests.some((r) => r.path.startsWith("/api/slack/"))).toBe(false);
     expect(auth.tokenExchanges).toBe(1);
     // Its token runs out: the refresh goes without a secret, and the server is ready.
-    const storePath = join(root.home, ".fx", "mcp-credentials", "credentials-v3.json");
+    const storePath = join(root.home, ".tetris", "mcp-credentials", "credentials-v3.json");
     const store = JSON.parse(readFileSync(storePath, "utf8"));
     const credential = JSON.parse(store.servers[0].credential);
     expect(credential.client_secret).toBeNull();
@@ -1684,7 +1684,7 @@ describe("MCP login", () => {
     const root = createRoot(auth);
     const taken = Bun.serve({ hostname: "127.0.0.1", port: 0, fetch: () => new Response("taken") });
     try {
-      const profilePath = join(root.home, ".fx", "mcp.json");
+      const profilePath = join(root.home, ".tetris", "mcp.json");
       const profile = JSON.parse(readFileSync(profilePath, "utf8"));
       profile.mcp.fixture.oauth.callback_port = taken.port;
       writeFileSync(profilePath, JSON.stringify(profile));
@@ -1698,7 +1698,7 @@ describe("MCP login", () => {
     }
   }, 60_000);
 
-  test("a server that only names fx's Slack app signs in on its own, never as fx's Slack app", async () => {
+  test("a server that only names tetris's Slack app signs in on its own, never as tetris's Slack app", async () => {
     upstream = startModernMcpHttpFixture("json");
     auth = startAuthFixture(upstream.url);
     // A stand-in for Slack at another origin, which must never be asked.
@@ -1716,7 +1716,7 @@ describe("MCP login", () => {
       const env = { ...v2Env(root), FX_TEST_SLACK_ORIGIN: `http://127.0.0.1:${bridge.port}` };
       const login = await runFx(["mcp", "login", "fixture"], { cwd: root.workspace, env, timeoutMs: 20_000 });
       expect(bridgeRequests).toEqual([]);
-      // The browser goes to the server's own page, with fx's own loopback redirect.
+      // The browser goes to the server's own page, with tetris's own loopback redirect.
       const opened = new URL(readFileSync(root.openLog, "utf8").trim());
       expect(opened.origin).toBe(new URL(auth.url).origin);
       expect(opened.pathname).toBe("/authorize");
@@ -1750,14 +1750,14 @@ describe("MCP login", () => {
     expect(auth.requests.some(r => (r.authorization ?? "").includes(ACCESS_INITIAL))).toBe(false);
   }, 60_000);
 
-  test("a saved login whose token has a CR LF doesn't crash fx; the server needs a login again", async () => {
+  test("a saved login whose token has a CR LF doesn't crash tetris; the server needs a login again", async () => {
     upstream = startModernMcpHttpFixture("json");
     auth = startAuthFixture(upstream.url);
     const root = createRoot(auth);
     const env = v2Env(root);
     expectExit0(await runFx(["mcp", "login", "fixture"], { cwd: root.workspace, env, timeoutMs: 20_000 }));
     // The saved token gains a CR LF, as an older fx could have saved it.
-    const storePath = join(root.home, ".fx", "mcp-credentials", "credentials-v3.json");
+    const storePath = join(root.home, ".tetris", "mcp-credentials", "credentials-v3.json");
     const store = JSON.parse(readFileSync(storePath, "utf8"));
     const saved = JSON.parse(store.servers[0].credential);
     saved.access += "\r\nX-Injected: 1";
@@ -1770,17 +1770,17 @@ describe("MCP login", () => {
     expect(auth.requests.some(r => (r.authorization ?? "").includes("X-Injected"))).toBe(false);
   }, 60_000);
 
-  test("a login store a newer fx saved is never written over, and login and logout say why they can't", async () => {
+  test("a login store a newer tetris saved is never written over, and login and logout say why they can't", async () => {
     upstream = startModernMcpHttpFixture("json");
     auth = startAuthFixture(upstream.url);
     const root = createRoot(auth);
     const env = v2Env(root);
     expectExit0(await runFx(["mcp", "login", "fixture"], { cwd: root.workspace, env, timeoutMs: 20_000 }));
     // A newer fx saves the same store as version 2.
-    const storePath = join(root.home, ".fx", "mcp-credentials", "credentials-v3.json");
+    const storePath = join(root.home, ".tetris", "mcp-credentials", "credentials-v3.json");
     writeFileSync(storePath, JSON.stringify({ ...JSON.parse(readFileSync(storePath, "utf8")), version: 3 }));
     const before = readFileSync(storePath, "utf8");
-    const unreadable = "fx can't read the saved MCP sign-ins in ~/.fx/mcp-credentials/credentials-v3.json. A newer fx saved them, or they're damaged; fix or delete them, then try again.\n";
+    const unreadable = "Tetris can't read the saved MCP sign-ins in ~/.tetris/mcp-credentials/credentials-v3.json. A newer Tetris saved them, or they're damaged; fix or delete them, then try again.\n";
 
     expect((await runFx(["mcp", "list", "--json"], { cwd: root.workspace, env })).code).toBe(0);
     const logout = await runFx(["mcp", "logout", "fixture"], { cwd: root.workspace, env, timeoutMs: 20_000 });
@@ -1793,7 +1793,7 @@ describe("MCP login", () => {
     expect(auth.tokenExchanges).toBe(1);
   }, 60_000);
 
-  test.skipIf(!tmuxAvailable())("a login made by another fx process reaches a running shell", async () => {
+  test.skipIf(!tmuxAvailable())("a login made by another Tetris process reaches a running shell", async () => {
     upstream = startModernMcpHttpFixture("json");
     auth = startAuthFixture(upstream.url);
     const root = createRoot(auth);
@@ -1807,7 +1807,7 @@ describe("MCP login", () => {
     expect(auth.tokenExchanges).toBe(1);
     await tui.waitForComposer(5_000);
     await tui.sendText("/mcp list");
-    await tui.waitForText(/fixture +~\/\.fx\/mcp\.json +http +(connecting|ready)/, 15_000);
+    await tui.waitForText(/fixture +~\/\.tetris\/mcp\.json +http +(connecting|ready)/, 15_000);
     await tui.sendText("/mcp show fixture");
     const pane = await tui.waitForText(/status +ready/, 15_000);
     // The shell took that login and never signed in itself.
@@ -1815,7 +1815,7 @@ describe("MCP login", () => {
     expect(auth.tokenExchanges).toBe(1);
   }, 60_000);
 
-  test.skipIf(!tmuxAvailable())("a login another fx process saved that the server can't use isn't announced, and the server still needs one", async () => {
+  test.skipIf(!tmuxAvailable())("a login another Tetris process saved that the server can't use isn't announced, and the server still needs one", async () => {
     upstream = startModernMcpHttpFixture("json");
     auth = startAuthFixture(upstream.url);
     const root = createRoot(auth);
@@ -1833,7 +1833,7 @@ describe("MCP login", () => {
     expect(auth.tokenExchanges).toBe(0);
   }, 60_000);
 
-  test.skipIf(!tmuxAvailable())("a login another fx process made before the shell first used the server is used at once", async () => {
+  test.skipIf(!tmuxAvailable())("a login another Tetris process made before the shell first used the server is used at once", async () => {
     upstream = startModernMcpHttpFixture("json");
     auth = startAuthFixture(upstream.url);
     const root = createRoot(auth);
@@ -1871,7 +1871,7 @@ describe("MCP login", () => {
     expect(auth.requests.length).toBe(before);
   }, 60_000);
 
-  test.skipIf(!tmuxAvailable())("the model's call after a login made by another fx process works without a restart", async () => {
+  test.skipIf(!tmuxAvailable())("the model's call after a login made by another Tetris process works without a restart", async () => {
     upstream = startModernMcpHttpFixture("json");
     const options: { rejectRefresh?: boolean; rotateAuthorizationToken?: boolean } = {};
     auth = startAuthFixture(upstream.url, options);
@@ -1916,13 +1916,13 @@ describe("MCP login", () => {
     expect(calls.at(-1)?.body).toContain("third");
   }, 90_000);
 
-  test.skipIf(!tmuxAvailable())("a login another fx process saved stays when the shell's own is refused, and the shell takes it", async () => {
+  test.skipIf(!tmuxAvailable())("a login another Tetris process saved stays when the shell's own is refused, and the shell takes it", async () => {
     upstream = startModernMcpHttpFixture("json");
     const options: { rejectRefresh?: boolean; rotateAuthorizationToken?: boolean } = {};
     auth = startAuthFixture(upstream.url, options);
     const root = createRoot(auth);
     const env = v2Env(root);
-    const storePath = join(root.home, ".fx", "mcp-credentials", "credentials-v3.json");
+    const storePath = join(root.home, ".tetris", "mcp-credentials", "credentials-v3.json");
     expectExit0(await runFx(["mcp", "login", "fixture"], { cwd: root.workspace, env, timeoutMs: 20_000 }));
     gateway = startFakeGateway([
       fakeGatewayToolCall("select", "mcp_select_tool", { name: "mcp_fixture_echo" }),
@@ -1952,7 +1952,7 @@ describe("MCP login", () => {
     await tui.waitForComposer(5_000);
     await tui.sendText("Call it again.");
     await tui.waitForText("Second call done.", 20_000);
-    // The shell's own login was refused, and the other fx's stays saved.
+    // The shell's own login was refused, and the other tetris's stays saved.
     expect(readFileSync(storePath, "utf8")).toContain(ACCESS_REFRESHED);
     await tui.waitForComposer(5_000);
     await tui.sendText("Try again.");
@@ -1967,7 +1967,7 @@ describe("MCP login", () => {
     auth = startAuthFixture(upstream.url, options);
     const root = createRoot(auth);
     const env = v2Env(root);
-    const storePath = join(root.home, ".fx", "mcp-credentials", "credentials-v3.json");
+    const storePath = join(root.home, ".tetris", "mcp-credentials", "credentials-v3.json");
     expectExit0(await runFx(["mcp", "login", "fixture"], { cwd: root.workspace, env, timeoutMs: 20_000 }));
     gateway = startFakeGateway([
       fakeGatewayToolCall("select", "mcp_select_tool", { name: "mcp_fixture_echo" }),
@@ -2019,12 +2019,12 @@ describe("MCP login", () => {
   for (const [rule, singleUseRefresh] of [
     ["a retired one is refused", { graceMs: 0 }],
     ["sending a retired one cancels the newest too", { graceMs: 0, revokeOnReplay: true }],
-  ] as const) test.skipIf(!tmuxAvailable())(`a shell takes the login another fx refreshed when refresh tokens work once (${rule})`, async () => {
+  ] as const) test.skipIf(!tmuxAvailable())(`a shell takes the login another Tetris refreshed when refresh tokens work once (${rule})`, async () => {
     upstream = startModernMcpHttpFixture("json");
     auth = startAuthFixture(upstream.url, { singleUseRefresh });
     const root = createRoot(auth);
     const env = v2Env(root);
-    const storePath = join(root.home, ".fx", "mcp-credentials", "credentials-v3.json");
+    const storePath = join(root.home, ".tetris", "mcp-credentials", "credentials-v3.json");
     expectExit0(await runFx(["mcp", "login", "fixture"], { cwd: root.workspace, env, timeoutMs: 20_000 }));
     gateway = startFakeGateway([
       fakeGatewayToolCall("select", "mcp_select_tool", { name: "mcp_fixture_echo" }),
@@ -2081,13 +2081,13 @@ describe("MCP login", () => {
   // that takes 15 s to answer, and then takes the login it saved: refreshing
   // with the token the first already sent would be refused. Both are
   // connected before the token runs out, as fx windows in use are.
-  test("an fx waits for another's refresh that takes 15 s, and takes the login it saved", async () => {
+  test("a tetris waits for another's refresh that takes 15 s, and takes the login it saved", async () => {
     upstream = startModernMcpHttpFixture("json");
     auth = startAuthFixture(upstream.url, { singleUseRefresh: { graceMs: 0 }, refreshDelayMs: 15_000 });
     const activeAuth = auth;
     const root = createRoot(auth);
     const env = v2Env(root);
-    const storePath = join(root.home, ".fx", "mcp-credentials", "credentials-v3.json");
+    const storePath = join(root.home, ".tetris", "mcp-credentials", "credentials-v3.json");
     expectExit0(await runFx(["mcp", "login", "fixture"], { cwd: root.workspace, env, timeoutMs: 20_000 }));
     const until = async (what: string, done: () => boolean) => {
       const deadline = Date.now() + 30_000;
@@ -2103,7 +2103,7 @@ describe("MCP login", () => {
     gateway = startFakeGateway([
       fakeGatewayToolCall("select_first", "mcp_select_tool", { name: TOOL_NAME }),
       async () => {
-        await until("the second fx to connect", () => (second?.requests.length ?? 0) >= 2);
+        await until("the second tetris to connect", () => (second?.requests.length ?? 0) >= 2);
         activeAuth.validTokens.delete(ACCESS_INITIAL);
         return fakeGatewayToolCall("first", TOOL_NAME, { text: "first" });
       },
@@ -2113,7 +2113,7 @@ describe("MCP login", () => {
     second = startFakeGateway([
       fakeGatewayToolCall("select_second", "mcp_select_tool", { name: TOOL_NAME }),
       async () => {
-        await until("the first fx's refresh", () => activeAuth.refreshes >= 1);
+        await until("the first tetris's refresh", () => activeAuth.refreshes >= 1);
         return fakeGatewayToolCall("second", TOOL_NAME, { text: "second" });
       },
       fakeGatewayFinalText("Second call done."),
@@ -2184,7 +2184,7 @@ describe("MCP login", () => {
   }, 40_000);
 
   // A login that can't be saved works only where it was made, so fx says so.
-  test("a login that can't be saved says so, and fx mcp login fails", async () => {
+  test("a login that can't be saved says so, and tetris mcp login fails", async () => {
     upstream = startModernMcpHttpFixture("json");
     const barrier = mkdtempSync(join(tmpdir(), "fx-mcp-code-barrier-"));
     const started = join(barrier, "started");
@@ -2199,15 +2199,15 @@ describe("MCP login", () => {
     writeFileSync(release, "go");
     const done = await login;
     holder.kill();
-    expect(done.stderr).toBe("Signed in to fixture, but couldn't save the login: ~/.fx/mcp-credentials/credentials-v3.json couldn't be written: another fx kept it busy. Sign in again once that's fixed.\n");
+    expect(done.stderr).toBe("Signed in to fixture, but couldn't save the login: ~/.tetris/mcp-credentials/credentials-v3.json couldn't be written: another Tetris kept it busy. Sign in again once that's fixed.\n");
     expect(done.code).toBe(1);
     expect(auth.tokenExchanges).toBe(1);
-    expect(existsSync(join(root.home, ".fx", "mcp-credentials", "credentials-v3.json"))).toBe(false);
+    expect(existsSync(join(root.home, ".tetris", "mcp-credentials", "credentials-v3.json"))).toBe(false);
   }, 60_000);
 
   // A logout that can't remove the saved login says so: every other fx, and
   // the next one, would still sign in with it.
-  test("a logout that can't remove the saved login says so, and fx mcp logout fails", async () => {
+  test("a logout that can't remove the saved login says so, and tetris mcp logout fails", async () => {
     upstream = startModernMcpHttpFixture("json");
     auth = startAuthFixture(upstream.url);
     const root = createRoot(auth);
@@ -2216,12 +2216,12 @@ describe("MCP login", () => {
     chmodSync(storePath, 0o400);
     const done = await runFx(["mcp", "logout", "fixture"], { cwd: root.workspace, env: v2Env(root), timeoutMs: 20_000 });
     expect(done.stdout).toBe("");
-    expect(done.stderr).toBe("Signed out of fixture here, but couldn't remove its saved login: ~/.fx/mcp-credentials/credentials-v3.json couldn't be written: fx isn't allowed to write it. Sign out again once that's fixed.\n");
+    expect(done.stderr).toBe("Signed out of fixture here, but couldn't remove its saved login: ~/.tetris/mcp-credentials/credentials-v3.json couldn't be written: Tetris isn't allowed to write it. Sign out again once that's fixed.\n");
     expect(done.code).toBe(1);
     expect(readFileSync(storePath, "utf8")).toContain(ACCESS_INITIAL);
   }, 60_000);
 
-  test("removing a server whose saved login can't be deleted says so, and fx mcp remove fails", async () => {
+  test("removing a server whose saved login can't be deleted says so, and tetris mcp remove fails", async () => {
     upstream = startModernMcpHttpFixture("json");
     auth = startAuthFixture(upstream.url);
     const root = createRoot(auth);
@@ -2229,9 +2229,9 @@ describe("MCP login", () => {
     chmodSync(storePath, 0o400);
     const done = await runFx(["mcp", "remove", "fixture"], { cwd: root.workspace, env: v2Env(root), timeoutMs: 20_000 });
     expect(done.stdout).toBe("");
-    expect(done.stderr).toBe("Removed fixture from ~/.fx/mcp.json, but couldn't delete its saved login: ~/.fx/mcp-credentials/credentials-v3.json couldn't be written: fx isn't allowed to write it. Once that's fixed, add it back and run fx mcp logout fixture to delete it.\n");
+    expect(done.stderr).toBe("Removed fixture from ~/.tetris/mcp.json, but couldn't delete its saved login: ~/.tetris/mcp-credentials/credentials-v3.json couldn't be written: Tetris isn't allowed to write it. Once that's fixed, add it back and run tetris mcp logout fixture to delete it.\n");
     expect(done.code).toBe(1);
-    expect(readFileSync(join(root.home, ".fx", "mcp.json"), "utf8")).not.toContain("fixture");
+    expect(readFileSync(join(root.home, ".tetris", "mcp.json"), "utf8")).not.toContain("fixture");
     expect(readFileSync(storePath, "utf8")).toContain(ACCESS_INITIAL);
   }, 60_000);
 
@@ -2249,23 +2249,23 @@ describe("MCP login", () => {
     chmodSync(storePath, 0o400);
     const done = await runFx(["mcp", "logout", "fixture"], { cwd: root.workspace, env: v2Env(root), timeoutMs: 20_000 });
     expect(done.stdout).toBe("");
-    expect(done.stderr).toBe("Couldn't sign out of fixture: ~/.fx/mcp-credentials/credentials-v3.json couldn't be written: fx isn't allowed to write it. Try again once that's fixed.\n");
+    expect(done.stderr).toBe("Couldn't sign out of fixture: ~/.tetris/mcp-credentials/credentials-v3.json couldn't be written: Tetris isn't allowed to write it. Try again once that's fixed.\n");
     expect(done.code).toBe(1);
     expect(readFileSync(storePath, "utf8")).toContain(ACCESS_INITIAL);
   }, 60_000);
 
-  test("a logout while another fx keeps the saved logins busy changes nothing and says so", async () => {
+  test("a logout while another Tetris keeps the saved logins busy changes nothing and says so", async () => {
     upstream = startModernMcpHttpFixture("json");
     auth = startAuthFixture(upstream.url);
     const root = createRoot(auth);
     const storePath = seedV2Credential(root, auth);
     // Private, as fx makes it.
-    writeFileSync(join(root.home, ".fx", "mcp-credentials", "credentials-v3.lock"), "", { mode: 0o600 });
+    writeFileSync(join(root.home, ".tetris", "mcp-credentials", "credentials-v3.lock"), "", { mode: 0o600 });
     const holder = await holdStoreLock(root, 8);
     const done = await runFx(["mcp", "logout", "fixture"], { cwd: root.workspace, env: v2Env(root), timeoutMs: 20_000 });
     holder.kill();
     expect(done.stdout).toBe("");
-    expect(done.stderr).toBe("Couldn't sign out of fixture: ~/.fx/mcp-credentials/credentials-v3.json couldn't be written: another fx kept it busy. Try again once that's fixed.\n");
+    expect(done.stderr).toBe("Couldn't sign out of fixture: ~/.tetris/mcp-credentials/credentials-v3.json couldn't be written: another Tetris kept it busy. Try again once that's fixed.\n");
     expect(done.code).toBe(1);
     expect(readFileSync(storePath, "utf8")).toContain(ACCESS_INITIAL);
   }, 60_000);
@@ -2276,7 +2276,7 @@ describe("MCP login", () => {
     auth = startAuthFixture(upstream.url, options);
     const root = createRoot(auth);
     const env = v2Env(root);
-    const storePath = join(root.home, ".fx", "mcp-credentials", "credentials-v3.json");
+    const storePath = join(root.home, ".tetris", "mcp-credentials", "credentials-v3.json");
     expectExit0(await runFx(["mcp", "login", "fixture"], { cwd: root.workspace, env, timeoutMs: 20_000 }));
     gateway = startFakeGateway([
       fakeGatewayToolCall("select", "mcp_select_tool", { name: "mcp_fixture_echo" }),
@@ -2331,7 +2331,7 @@ describe("MCP login", () => {
   // fx kept it busy", and A, taking the saved login, replayed a refresh
   // token B had already used. Now A's hung read is cut at its budget, B
   // waits for that and saves, and A takes B's login without refreshing.
-  test.skipIf(process.platform !== "darwin" || !tmuxAvailable())("a refreshed login is saved while another fx hangs in the Keychain", async () => {
+  test.skipIf(process.platform !== "darwin" || !tmuxAvailable())("a refreshed login is saved while another Tetris hangs in the Keychain", async () => {
     upstream = startModernMcpHttpFixture("json");
     auth = startAuthFixture(upstream.url, { singleUseRefresh: { graceMs: 0 } });
     const root = createRoot(auth);
@@ -2387,11 +2387,11 @@ describe("MCP login", () => {
 
       const screen = (await tui.capturePaneGrid()).join("\n").replace(/\n\s+/g, " ");
       const saved = mcpKeychainItem("load", account, root.home);
-      if (screen.includes("another fx kept it busy") || !saved.includes(`${ACCESS_REFRESHED}-1`)) {
+      if (screen.includes("another Tetris kept it busy") || !saved.includes(`${ACCESS_REFRESHED}-1`)) {
         const trace = (who: string) => existsSync(`${root.trace}.${who}`) ? readFileSync(`${root.trace}.${who}`, "utf8").split("\n").filter((l) => /\[(keychain|mcp)\].*(lock|credential|saved login|refresh|load|store)/.test(l)).map((l) => `${who} ${l}`) : [];
         console.log(`---- shell B ----\n${screen}\n---- traces ----\n${[...trace("a"), ...trace("b")].join("\n")}`);
       }
-      expect(screen).not.toContain("another fx kept it busy");
+      expect(screen).not.toContain("another Tetris kept it busy");
       // B's refreshed login is the saved one, A took it instead of
       // refreshing, and no retired refresh token was sent.
       expect(saved).toContain(`${ACCESS_REFRESHED}-1`);
@@ -2416,7 +2416,7 @@ describe("MCP login", () => {
     // /authorize and /token; fx's own address is .../mcp.
     auth = startAuthFixture(upstream.url, { resourceAtOrigin: true });
     const root = createRoot(auth);
-    const configPath = join(root.home, ".fx", "mcp.json");
+    const configPath = join(root.home, ".tetris", "mcp.json");
     const config = JSON.parse(readFileSync(configPath, "utf8"));
     config.mcp.fixture.oauth.resource = `${new URL(auth.url).origin}/`;
     writeFileSync(configPath, JSON.stringify(config));
@@ -2430,18 +2430,18 @@ describe("MCP login", () => {
     expect(await statusOf(root)).toBe("signed_in");
   }, 60_000);
 
-  test("fx mcp login explains servers it can't sign in to", async () => {
+  test("tetris mcp login explains servers it can't sign in to", async () => {
     upstream = startModernMcpHttpFixture("json");
     auth = startAuthFixture(upstream.url);
     const root = createRoot(auth);
     const env = v2Env(root);
     const unknown = await runFx(["mcp", "login", "nope"], { cwd: root.workspace, env });
     expect(unknown.code).toBe(1);
-    expect(unknown.stderr).toBe("No MCP server named nope. fx mcp list shows them.\n");
+    expect(unknown.stderr).toBe("No MCP server named nope. tetris mcp list shows them.\n");
     moveAuthFixtureToWorkspace(root);
     const waiting = await runFx(["mcp", "login", "fixture"], { cwd: root.workspace, env });
     expect(waiting.code).toBe(1);
-    expect(waiting.stderr).toBe("fixture is waiting for approval: fx mcp approve fixture.\n");
+    expect(waiting.stderr).toBe("fixture is waiting for approval: tetris mcp approve fixture.\n");
     expect(existsSync(root.openLog)).toBe(false);
     expect(auth.authorizationRequests).toBe(0);
   }, 30_000);
@@ -2449,7 +2449,7 @@ describe("MCP login", () => {
   // A saved login is renewed before it's sent once it's expired, or within
   // its renewal window (skew_ms before it expires), whatever the server's era.
   for (const era of ["2026-07-28", "2025-11-25"] as const) {
-    test(`an expired saved login is renewed before fx first talks to a ${era} server`, async () => {
+    test(`an expired saved login is renewed before tetris first talks to a ${era} server`, async () => {
       const target = era === "2026-07-28"
         ? (upstream = startModernMcpHttpFixture("json"))
         : (legacyStreamable = startLegacyStreamableHttpFixture(era));
@@ -2473,7 +2473,7 @@ describe("MCP login", () => {
     }, 30_000);
   }
 
-  test("a login that comes within its renewal window while fx runs is renewed before the next call", async () => {
+  test("a login that comes within its renewal window while tetris runs is renewed before the next call", async () => {
     upstream = startModernMcpHttpFixture("json");
     auth = startAuthFixture(upstream.url);
     const root = createRoot(auth);
@@ -2518,7 +2518,7 @@ describe("MCP login", () => {
     await tui.waitForText("Signed out of fixture.", 15_000);
     const revoked = auth.requests.filter((request) => request.path === "/revoke").map((request) => new URLSearchParams(request.body).get("token"));
     expect(revoked).toEqual([REFRESH_INITIAL]);
-    expect(readFileSync(join(root.home, ".fx", "mcp-credentials", "credentials-v3.json"), "utf8")).not.toContain("\"name\":\"fixture\"");
+    expect(readFileSync(join(root.home, ".tetris", "mcp-credentials", "credentials-v3.json"), "utf8")).not.toContain("\"name\":\"fixture\"");
   }, 60_000);
 
   // Before, a shell holding a login renewed it at its next use after another
@@ -2601,7 +2601,7 @@ describe("MCP login", () => {
   }, 60_000);
 
   // RFC 8414 section 3.2: the metadata is an application/json response.
-  test("fx mcp login refuses sign-in metadata that isn't JSON before opening the browser", async () => {
+  test("tetris mcp login refuses sign-in metadata that isn't JSON before opening the browser", async () => {
     upstream = startModernMcpHttpFixture("json");
     auth = startAuthFixture(upstream.url, { authorizationMetadataContentType: "text/plain" });
     const root = createRoot(auth);
@@ -2611,7 +2611,7 @@ describe("MCP login", () => {
     expect(existsSync(root.openLog)).toBe(false);
     expect(auth.authorizationRequests).toBe(0);
     expect(auth.tokenExchanges).toBe(0);
-    expect(existsSync(join(root.home, ".fx", "mcp-credentials", "credentials-v3.json"))).toBe(false);
+    expect(existsSync(join(root.home, ".tetris", "mcp-credentials", "credentials-v3.json"))).toBe(false);
   }, 30_000);
 
   // MongoDB's deployed server answers server/discover with a session error
@@ -2711,7 +2711,7 @@ describe("MCP login", () => {
     // This test plays the browser itself.
     const root = createRoot(auth, true, "http", auth.url, false);
     const callbackPort = unusedCallbackPort();
-    const profilePath = join(root.home, ".fx", "mcp.json");
+    const profilePath = join(root.home, ".tetris", "mcp.json");
     const profile = JSON.parse(readFileSync(profilePath, "utf8"));
     profile.mcp.fixture.oauth.callback_port = callbackPort;
     writeFileSync(profilePath, JSON.stringify(profile));

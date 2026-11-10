@@ -180,8 +180,8 @@ fn upgradeWorkerInner(
     progress: *ProgressState,
     show_progress: bool,
 ) !void {
-    const cdn_base = helpers.resolveCdnBase();
-    const fetched_target = helpers.fetchTarget(alloc, channel, cdn_base, .{}) catch {
+    const release_base = helpers.resolveReleaseBase();
+    const fetched_target = helpers.fetchTarget(alloc, channel, release_base, .{}) catch {
         result.err = .fetch_failed;
         return;
     };
@@ -196,7 +196,7 @@ fn upgradeWorkerInner(
     var rand_buf: [8]u8 = undefined;
     io_mod.getIo().random(&rand_buf);
     const rand_hex = std.fmt.bytesToHex(rand_buf, .lower);
-    const tmp_dir = try alloc.print("{s}/fx-upgrade-{s}", .{ tmp_base, rand_hex });
+    const tmp_dir = try alloc.print("{s}/tetris-upgrade-{s}", .{ tmp_base, rand_hex });
     defer alloc.free(tmp_dir);
     defer std.Io.Dir.cwd().deleteTree(io_mod.getIo(), tmp_dir) catch {};
 
@@ -205,10 +205,10 @@ fn upgradeWorkerInner(
         return;
     };
 
-    const archive_path = try alloc.print("{s}/fx.tar.gz", .{tmp_dir});
+    const archive_path = try alloc.print("{s}/tetris.tar.gz", .{tmp_dir});
     defer alloc.free(archive_path);
 
-    const archive_url = try alloc.print("{s}/{s}/fx-{s}.tar.gz", .{ cdn_base, target.artifactRef(), helpers.platform });
+    const archive_url = try alloc.print("{s}/{s}/tetris-{s}.tar.gz", .{ release_base, target.artifactRef(), helpers.platform });
     defer alloc.free(archive_url);
 
     var client: std.http.Client = .{ .allocator = alloc, .io = io_mod.getIo() };
@@ -224,7 +224,7 @@ fn upgradeWorkerInner(
     };
     progress.markFinishing();
 
-    const checksum_url = try alloc.print("{s}/{s}/fx-{s}.tar.gz.sha256", .{ cdn_base, target.artifactRef(), helpers.platform });
+    const checksum_url = try alloc.print("{s}/{s}/tetris-{s}.tar.gz.sha256", .{ release_base, target.artifactRef(), helpers.platform });
     defer alloc.free(checksum_url);
 
     helpers.verifyChecksum(&client, archive_path, checksum_url, .{}) catch |err| {
@@ -241,7 +241,7 @@ fn upgradeWorkerInner(
         return;
     };
 
-    const extracted_bin = try alloc.print("{s}/fx", .{tmp_dir});
+    const extracted_bin = try alloc.print("{s}/tetris", .{tmp_dir});
     defer alloc.free(extracted_bin);
 
     var self_exe_buf: [std.Io.Dir.max_path_bytes]u8 = undefined;
@@ -368,7 +368,7 @@ fn formatProgressStatusLine(buf: []u8, snapshot: ProgressSnapshot, current: []co
         .found => blk: {
             const latest = latest_label orelse return null;
             var out: std.Io.Writer = .fixed(buf);
-            out.print("fx {s} -> {s}", .{ current, versionLabel(latest) }) catch return out.buffered();
+            out.print("Tetris {s} -> {s}", .{ current, versionLabel(latest) }) catch return out.buffered();
             break :blk out.buffered();
         },
         .downloading_known => if (snapshot.total > 0)
@@ -547,7 +547,7 @@ test "formatProgressStatusLine renders found update before download starts" {
     var buf: [128]u8 = undefined;
 
     try std.testing.expectEqualStrings(
-        "fx 0.3.39 -> 0.3.40",
+        "Tetris 0.3.39 -> 0.3.40",
         formatProgressStatusLine(&buf, .{
             .phase = .found,
             .downloaded = 0,

@@ -4,14 +4,14 @@
 #
 # recovery.cfg and recovery-deep.cfg are the correct module and must pass.
 # Each recovery-mutation-*.cfg plants one defect, and the rule it names must
-# catch it. Most are bugs fx has shipped:
+# catch it. Most are bugs Tetris has shipped:
 #
 #   stall-stop          stops a request after repeated quick failures      NeverGivesUp
 #   no-wake             a wait whose deadline never fires                  Heals
 #   stale-socket        a dead pooled connection shown as a failure        NoFalseAlarm
 #   frozen-status       a retry warning left over a streaming answer       StatusHonest
 #   no-closing          a closed window treated as a crash                 ResumesAfterClose
-#   never-ask           a request that crashes fx resumes forever          CrashLoopAsks
+#   never-ask           a request that crashes Tetris resumes forever          CrashLoopAsks
 #   hot-retry           resending at once after a failure                  NoHotRetry
 #   send-without-save   a retry sent without saving the record first       SaveBeforeSend
 #
@@ -24,7 +24,7 @@
 #
 # Resume.tla models the app around the module across process exits.
 # resume.cfg and resume-deep.cfg are the design and must pass;
-# resume-today.cfg is fx before it, which leaves an interrupted request for
+# resume-today.cfg is Tetris before it, which leaves an interrupted request for
 # the user (AutoResumes). Each resume-mutation-*.cfg plants one defect:
 #
 #   no-closing          a closed window counted as a crash                 NoFalseCrashQuestion
@@ -34,7 +34,7 @@
 #   resume-answered     a turn whose final answer was saved sent again     DoneNeverResent
 #   resume-cancelled    a turn the user cancelled sent again               CancelNeverResumes
 #   ignore-age          a day-old request sent again without asking        OldAsks
-#   no-lock             a second fx resuming a session another holds       OneWorker
+#   no-lock             a second Tetris resuming a session another holds       OneWorker
 #
 # Needs Java 11+ and tla2tools.jar, as ../README.md describes.
 #

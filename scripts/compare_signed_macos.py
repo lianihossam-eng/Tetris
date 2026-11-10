@@ -93,9 +93,15 @@ def main() -> None:
     parser.add_argument("--candidate", type=pathlib.Path, required=True)
     parser.add_argument("--output", type=pathlib.Path, required=True)
     parser.add_argument("--source-sha", required=True)
+    parser.add_argument("--signing-identifier", required=True)
+    parser.add_argument("--team-id", required=True)
     args = parser.parse_args()
     if not re.fullmatch(r"[0-9a-f]{40}", args.source_sha):
         parser.error("source SHA must be a full commit hash")
+    if not args.signing_identifier:
+        parser.error("--signing-identifier must not be empty")
+    if not args.team_id:
+        parser.error("--team-id must not be empty")
     repo = pathlib.Path(__file__).resolve().parents[1]
     samples = 5_000
     binaries = {"control": args.control.resolve(), "candidate": args.candidate.resolve()}
@@ -105,7 +111,14 @@ def main() -> None:
         subprocess.run(["codesign", "--verify", "--strict", "--check-notarization", "-R=notarized", str(path)], check=True, timeout=60)
         details = subprocess.run(["codesign", "--display", "--verbose=4", str(path)], capture_output=True, text=True, check=True, timeout=30).stderr
         page = 4096 if label == "control" else 16384
-        for required in ("Identifier=com.vercel.fx", "TeamIdentifier=JW6Y669B67", f"Page size={page}", "flags=0x10000(runtime)", "Timestamp="):
+        required_signatures = (
+            f"Identifier={args.signing_identifier}",
+            f"TeamIdentifier={args.team_id}",
+            f"Page size={page}",
+            "flags=0x10000(runtime)",
+            "Timestamp=",
+        )
+        for required in required_signatures:
             if required not in details:
                 raise ValueError(f"unexpected {label} signature: missing {required}")
     manifest = compare_payloads(binaries["control"].read_bytes(), binaries["candidate"].read_bytes())

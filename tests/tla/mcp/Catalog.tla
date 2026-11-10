@@ -23,7 +23,7 @@
 EXTENDS Naturals
 
 CONSTANTS
-    MaxPages,      \* pages per listing (100 in fx)
+    MaxPages,      \* pages per listing (100 in Tetris)
     MaxGen,        \* invalidations, bounds the state space
     MaxProcesses
 

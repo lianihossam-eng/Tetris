@@ -1,7 +1,7 @@
 ---- MODULE StoreLockBudgetTrace ----
 \* Real runs of the MCP store lock checked against StoreLockBudget.tla's
 \* rules, on the real clock. trace.ts generates TraceObs.tla from what
-\* tests/tla/drivers/mcp_host/store-lock-budget.test.ts saw of real fx
+\* tests/tla/drivers/mcp_host/store-lock-budget.test.ts saw of real Tetris
 \* processes on the Keychain backend: their "MCP store lock" trace lines
 \* (src/core/mcp_host/credentials.zig) and the harness's own steps. Times are
 \* awake-clock milliseconds from the run's start.

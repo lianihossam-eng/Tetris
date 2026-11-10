@@ -6,7 +6,7 @@
 \* call settles (its record: time, model, tokens, gen ID), and every step but
 \* the last starts tools. The worker sends these as events in the order they
 \* happen; the app shows them in that order (the live view). The session
-\* saves the turn so far at moments the model leaves free; fx may crash at
+\* saves the turn so far at moments the model leaves free; Tetris may crash at
 \* any moment before the turn commits. A resume rebuilds the view from what
 \* was saved: per step, how many attempts failed, whether its text, its
 \* record and its tools were saved.
@@ -17,8 +17,8 @@
 \* replay shows exactly what the live view showed up to the last save.
 \*
 \* Planted bugs, one constant each:
-\*   PinTop          records go to the top of the live view (fx before this)
-\*   RecordsSaved    "never" (fx before this) or "commit": records are left
+\*   PinTop          records go to the top of the live view (Tetris before this)
+\*   RecordsSaved    "never" (Tetris before this) or "commit": records are left
 \*                   out of every write but the commit
 \*   SplitFailures   FALSE: a replay puts failed attempts after the text
 EXTENDS Naturals, Sequences, FiniteSets
@@ -41,7 +41,7 @@ VARIABLES
     stage,      \* "send", "text", "settle", "tools", "done"
     saved,      \* how many events the last write of the turn held
     committed,  \* the turn ended and was committed
-    crashed,    \* fx stopped before the commit
+    crashed,    \* Tetris stopped before the commit
     replay      \* what Ctrl+O shows after the resume
 
 vars == <<events, live, step, fails, stage, saved, committed, crashed, replay>>
@@ -140,7 +140,7 @@ Commit ==
     /\ replay' = Place(Encode(events, RecordsIn(TRUE)))
     /\ UNCHANGED <<events, live, step, fails, stage, crashed>>
 
-\* fx stops before the commit; the resume shows what the last write held,
+\* Tetris stops before the commit; the resume shows what the last write held,
 \* and nothing of a turn no write reached.
 Crash ==
     /\ Running

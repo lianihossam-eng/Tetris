@@ -1,5 +1,5 @@
-//! Puts each instance in its profile: the first in its launch profile, `fx
-//! --profile <name>` or fx's own `main`, and every later one in its own.
+//! Puts each instance in its profile: the first in its launch profile, chosen
+//! with `tetris --profile <name>` (default `main`), and every later one in its own.
 
 const std = @import("std");
 const profiles = @import("../profiles/profiles.zig");
@@ -25,12 +25,12 @@ pub const ProfileTools = struct {
 pub fn launchFailure(alloc: std.mem.Allocator, name: []const u8) !?[]u8 {
     const reason = try failureReason(alloc, name) orelse return null;
     defer alloc.free(reason);
-    return try alloc.print("fx: {s}\n", .{reason});
+    return try alloc.print("tetris: {s}\n", .{reason});
 }
 
-/// Why profile `name` cannot be loaded, such as "no profile named 'x'.
-/// Profiles: agent, main", or null when it loads. Resolves from the same home
-/// and workspace that startup uses. Caller owns the reason.
+/// Why a profile cannot be loaded, such as "no profile named 'x'.
+/// Profiles: agent, main", or null if it loads. Resolves from the same
+/// home and workspace that startup uses. Caller owns the reason.
 pub fn failureReason(alloc: std.mem.Allocator, name: []const u8) !?[]u8 {
     var arena_state = std.heap.ArenaAllocator.init(alloc);
     defer arena_state.deinit();
@@ -140,7 +140,8 @@ pub fn Runtime(comptime App: type) type {
                     @tagName(ignored.reason),
                 });
             }
-            // `tools=*` means every tool fx has; otherwise the names main kept.
+            // `tools=*` represents the unfiltered native registry; otherwise
+            // it lists the tools this profile kept.
             var names: std.ArrayList(u8) = .empty;
             defer names.deinit(app.alloc);
             if (agent.profile_tools) |set| {

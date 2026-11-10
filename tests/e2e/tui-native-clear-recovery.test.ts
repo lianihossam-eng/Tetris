@@ -74,17 +74,17 @@ tmuxTest("direct native-clear recovery resets the view and replays the held draf
   await session.waitForPane((pane) => composerContains(pane, "abc"), 10_000);
   const history = await session.captureFullScrollback();
   expect(history).not.toContain(old_marker);
-  expect(history).toContain("𝒇x v");
+  expect(history).toContain("tetris v");
   expect(readFileSync(stderr_path, "utf8")).toBe("");
 }, 30_000);
 
-tmuxTest("native-clear recovery after a tool call keeps fx running and the tool in full history", async () => {
+tmuxTest("native-clear recovery after a tool call keeps tetris running and the tool in full history", async () => {
   const dir = mkdtempSync(join(tmpdir(), "fx-native-clear-tool-"));
   temp_dirs.push(dir);
   const trace_path = join(dir, "trace.log");
   const stderr_path = join(dir, "stderr.log");
-  mkdirSync(join(dir, ".fx"), { recursive: true });
-  writeFileSync(join(dir, ".fx", "settings.json"), JSON.stringify({ sandbox: "none" }));
+  mkdirSync(join(dir, ".tetris"), { recursive: true });
+  writeFileSync(join(dir, ".tetris", "settings.json"), JSON.stringify({ sandbox: "none" }));
   const gateway = startFakeGateway([
     fakeShellRun("native_clear_tool", "echo TOOL_BEFORE_CLEAR"),
     fakeGatewayFinalText("TOOL_TURN_DONE"),
@@ -123,7 +123,7 @@ tmuxTest("native-clear recovery after a tool call keeps fx running and the tool 
 
     const history = await session.captureFullScrollback();
     expect(history).not.toContain("TOOL_TURN_DONE");
-    expect(history).toContain("𝒇x v");
+    expect(history).toContain("tetris v");
 
     await session.sendKeys("C-o");
     await session.waitForText("echo TOOL_BEFORE_CLEAR", 10_000);
@@ -236,8 +236,8 @@ tmuxTest("typing inside the ctrl+o full transcript never starts the native-clear
   temp_dirs.push(dir);
   const trace_path = join(dir, "trace.log");
   const stderr_path = join(dir, "stderr.log");
-  mkdirSync(join(dir, ".fx"), { recursive: true });
-  writeFileSync(join(dir, ".fx", "settings.json"), JSON.stringify({ sandbox: "none" }));
+  mkdirSync(join(dir, ".tetris"), { recursive: true });
+  writeFileSync(join(dir, ".tetris", "settings.json"), JSON.stringify({ sandbox: "none" }));
   const gateway = startFakeGateway([fakeGatewayFinalText("ctrl-o probe target")]);
 
   session = await TmuxSession.create({

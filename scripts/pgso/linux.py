@@ -1,4 +1,4 @@
-"""The Linux PGSO platforms: ld.lld links of the static musl fx, and ELF checks.
+"""The Linux PGSO platforms: ld.lld links of the static musl Tetris executable, and ELF checks.
 
 Zig links the static musl control with its own ld.lld. A `zig cc` link of the
 same object picks different inputs and flags, so the control build records
@@ -58,7 +58,7 @@ def external_control_strip_argv(
     # The link's `-s` already removes every symbol.
     return ()
 PROFILE_SECTIONS = ("__llvm_prf_cnts", "__llvm_prf_data")
-# The whole fx object's symbol table and the linker's removed-section list
+# The whole Tetris object's symbol table and the linker's removed-section list
 # exceed the default capture limit.
 LARGE_OUTPUT_CHARS = 256 * 1024 * 1024
 

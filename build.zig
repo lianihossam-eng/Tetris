@@ -70,7 +70,7 @@ pub fn build(b: *std.Build) void {
     });
 
     const exe = b.addExecutable(.{
-        .name = "fx",
+        .name = "tetris",
         .root_module = b.createModule(.{
             .root_source_file = b.path("src/main.zig"),
             .target = target,
@@ -99,7 +99,7 @@ pub fn build(b: *std.Build) void {
     run_cmd.step.dependOn(b.getInstallStep());
     run_cmd.addPassthruArgs();
 
-    const run_step = b.step("run", "Run fx");
+    const run_step = b.step("run", "Run Tetris");
     run_step.dependOn(&run_cmd.step);
 
     const exe_tests = b.addTest(.{
@@ -107,10 +107,10 @@ pub fn build(b: *std.Build) void {
     });
     const run_exe_tests = b.addRunArtifact(exe_tests);
     run_exe_tests.step.dependOn(b.getInstallStep());
-    // Tests launch the installed fx binary, and the session boundary test
+    // Tests launch the installed Tetris binary, and the session boundary test
     // walks the source tree.
     const test_paths = b.addOptions();
-    test_paths.addOptionPathUntracked("product_exe", b.graph.path(.install_bin, "fx"));
+    test_paths.addOptionPathUntracked("product_exe", b.graph.path(.install_bin, "tetris"));
     test_paths.addOptionPathUntracked("source_root", b.path("src"));
     const test_paths_module = test_paths.createModule();
     exe.root_module.addImport("test_paths", test_paths_module);
@@ -118,14 +118,14 @@ pub fn build(b: *std.Build) void {
     // transformed code. It builds them position independent: a test there
     // defines the wasm host's `extern "fx"` functions itself, and Zig rejects
     // a library extern in a static executable that is not. `install-test`
-    // does not install fx, so the build links only the tests. Run it from the
+    // does not install Tetris, so the build links only the tests. Run it from
     // repository root after `zig build` with the same prefix.
     const pgso_tests = b.addTest(.{ .root_module = exe.root_module });
     pgso_tests.pie = true;
-    const install_pgso_tests = b.addInstallArtifact(pgso_tests, .{ .dest_sub_path = "fx-test" });
+    const install_pgso_tests = b.addInstallArtifact(pgso_tests, .{ .dest_sub_path = "tetris-test" });
     b.step("install-test", "Install the unit test executable without running it").dependOn(&install_pgso_tests.step);
 
-    // The session manager's own tests, as fx compiles it (no hooks).
+    // The session manager's own tests, as Tetris compiles it (no hooks).
     const session_manager_tests = b.addTest(.{ .root_module = session_manager });
 
     const run_session_manager_tests = b.addRunArtifact(session_manager_tests);
@@ -350,7 +350,7 @@ pub fn build(b: *std.Build) void {
             output_name,
         );
         pgso_ir_step.dependOn(&install_ir.step);
-        // The tests launch the fx installed under this build's prefix.
+        // The tests launch the Tetris executable installed under this prefix.
         if (artifact == .unit_tests) pgso_ir_step.dependOn(b.getInstallStep());
     } else {
         const missing_artifact = b.addFail(

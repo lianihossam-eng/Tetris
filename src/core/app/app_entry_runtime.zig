@@ -229,71 +229,71 @@ fn initFailure(deps: RunDeps, launch: *cli_surface.InteractiveLaunch, alloc: All
     agents.markLoopThread();
     switch (err) {
         error.NotATerminal => {
-            writeStderr(deps, "fx requires an interactive terminal (TTY).\n");
+            writeStderr(deps, "tetris requires an interactive terminal (TTY).\n");
             return .{ .exit = 1 };
         },
         error.DumbTerminal => {
-            writeStderr(deps, "fx: TERM=dumb can't show the interactive session; use fx ask, or run fx in a terminal that supports cursor movement\n");
+            writeStderr(deps, "tetris: TERM=dumb can't show the interactive session; use tetris ask, or run tetris in a terminal that supports cursor movement\n");
             return .{ .exit = 1 };
         },
         error.TerminalTooSmall => {
-            writeStderr(deps, "fx needs at least 5 terminal rows.\n");
+            writeStderr(deps, "tetris needs at least 5 terminal rows.\n");
             return .returned;
         },
         error.RecordingStartFailed => {
-            writeStderr(deps, "fx: unable to start terminal recording.\n");
+            writeStderr(deps, "tetris: unable to start terminal recording.\n");
             return .{ .exit = 1 };
         },
         error.NoRememberedSession => {
-            writeStderr(deps, "fx: no remembered session for this workspace; choose one with fx -r or fx --resume <id>\n");
+            writeStderr(deps, "tetris: no remembered session for this workspace; choose one with tetris -r or tetris --resume <id>\n");
             return .{ .exit = 1 };
         },
         error.RememberedSessionUnavailable => {
-            writeStderr(deps, "fx: the remembered session ID could not be read; choose one with fx -r or fx --resume <id>\n");
+            writeStderr(deps, "tetris: the remembered session ID could not be read; choose one with tetris -r or tetris --resume <id>\n");
             return .{ .exit = 1 };
         },
         error.NoSavedSessions => {
-            writeStderr(deps, "fx: no saved sessions for this workspace.\n");
+            writeStderr(deps, "tetris: no saved sessions for this workspace.\n");
             return .{ .exit = 1 };
         },
         error.NoReadableSessions => {
             // The unreadable sessions can belong to any workspace, so only
             // the absence of a readable one is tied to this workspace.
-            writeStderr(deps, "fx: no readable saved sessions for this workspace, and some saved sessions are unreadable; run `fx doctor` for recovery guidance.\n");
+            writeStderr(deps, "tetris: no readable saved sessions for this workspace, and some saved sessions are unreadable; run `tetris doctor` for recovery guidance.\n");
             return .{ .exit = 1 };
         },
         error.SessionNotFound => {
-            writeStderr(deps, "fx: saved session not found.\n");
+            writeStderr(deps, "tetris: saved session not found.\n");
             return .{ .exit = 1 };
         },
         error.SessionBusy => {
-            writeStderr(deps, "fx: another fx process may be using this session (running or suspended); check other terminals or run jobs, then use fg or quit that process\n");
+            writeStderr(deps, "tetris: another Tetris process may be using this session (running or suspended); check other terminals or run jobs, then use fg or quit that process\n");
             return .{ .exit = 1 };
         },
         error.SessionLockUnsupported => {
-            writeStderr(deps, "fx: the filesystem cannot provide the required session lock\n");
+            writeStderr(deps, "tetris: the filesystem cannot provide the required session lock\n");
             return .{ .exit = 1 };
         },
         error.SessionAuthorityBoundaryUnavailable,
         error.SessionCommitBoundaryUnavailable,
         => {
-            writeStderr(deps, "fx: a saved session has an unfinished update that could not be recovered; run `fx doctor` to identify the affected session\n");
+            writeStderr(deps, "tetris: a saved session has an unfinished update that could not be recovered; run `tetris doctor` to identify the affected session\n");
             return .{ .exit = 1 };
         },
         error.OneOffSessionNotResumable => {
-            writeStderr(deps, "fx: subagent child sessions cannot be resumed directly; message the named agent from its parent session\n");
+            writeStderr(deps, "tetris: subagent child sessions cannot be resumed directly; message the named agent from its parent session\n");
             return .{ .exit = 1 };
         },
         error.InvalidSessionFormat => {
             if (launch.resume_refusal) |reason| {
-                const message = alloc.print("fx: this session can't be converted (InvalidSessionFormat): {s}\n", .{reason}) catch null;
+                const message = alloc.print("tetris: this session can't be converted (InvalidSessionFormat): {s}\n", .{reason}) catch null;
                 defer if (message) |text| alloc.free(text);
-                writeStderr(deps, message orelse "fx: this session can't be converted (InvalidSessionFormat)\n");
-            } else writeStderr(deps, "fx: saved session is unreadable. Run `fx doctor`; if it is recoverable, use `fx session recover <id>`.\n");
+                writeStderr(deps, message orelse "tetris: this session can't be converted (InvalidSessionFormat)\n");
+            } else writeStderr(deps, "tetris: saved session is unreadable. Run `tetris doctor`; if it is recoverable, use `tetris session recover <id>`.\n");
             return .{ .exit = 1 };
         },
         error.UnsupportedSessionSchema => {
-            writeStderr(deps, "fx: saved session uses an unsupported version and cannot be resumed by this fx build.\n");
+            writeStderr(deps, "tetris: saved session uses an unsupported version and cannot be resumed by this Tetris build.\n");
             return .{ .exit = 1 };
         },
         else => {
@@ -428,7 +428,7 @@ fn runInteractiveWithDeps(comptime App: type, comptime cooperative: bool, app: *
         } else {
             writeStderr(
                 deps,
-                "fx: upgrade installed, but no validated resume handoff was available. Your conversation remains on disk; run `fx doctor`.\n",
+                "tetris: upgrade installed, but no validated resume handoff was available. Your conversation remains on disk; run `tetris doctor`.\n",
             );
         }
         return .{ .exit = 1 };
@@ -449,8 +449,8 @@ fn runInteractiveWithDeps(comptime App: type, comptime cooperative: bool, app: *
 fn reportShutdownFailure(deps: RunDeps, err: anyerror) void {
     var buffer: [256]u8 = undefined;
     var plain_buf: [96]u8 = undefined;
-    const text = std.mem.print(&buffer, "fx: couldn't save the session: {s}\n", .{types.plainErrorText(@errorName(err), &plain_buf)}) catch
-        "fx: couldn't save the session\n";
+    const text = std.mem.print(&buffer, "tetris: couldn't save the session: {s}\n", .{types.plainErrorText(@errorName(err), &plain_buf)}) catch
+        "tetris: couldn't save the session\n";
     writeStderr(deps, text);
 }
 
@@ -472,9 +472,9 @@ fn writeUpgradeRelaunchFailure(
     var words: [128]u8 = undefined;
     const message = std.mem.print(
         &buffer,
-        "fx: upgrade installed, but relaunch failed: {s}\nResume this session with:\nfx --resume {s}\n",
+        "tetris: upgrade installed, but relaunch failed: {s}\nResume this session with:\ntetris --resume {s}\n",
         .{ types.plainErrorText(@errorName(err), &words), session_id },
-    ) catch "fx: upgrade installed, but relaunch failed; run `fx doctor`.\n";
+    ) catch "tetris: upgrade installed, but relaunch failed; run `tetris doctor`.\n";
     writeStderr(deps, message);
 }
 
@@ -543,7 +543,7 @@ fn writeRealStdout(_: ?*anyopaque, text: []const u8) !void {
 }
 
 fn formatResumeHandoff(buffer: []u8, session_id: []const u8) ![]const u8 {
-    return std.mem.print(buffer, "Resume this session with:\nfx --resume {s}\n", .{session_id});
+    return std.mem.print(buffer, "Resume this session with:\ntetris --resume {s}\n", .{session_id});
 }
 
 /// An error that ended the interactive session, in plain words
@@ -553,17 +553,17 @@ fn formatUnexpectedError(buffer: []u8, err: anyerror) ![]const u8 {
     const message = config_runtime.modelNotSelectedMessage(err) orelse
         mcp_verbs.profileConfigNotice(err) orelse
         types.plainErrorText(@errorName(err), &words);
-    return std.mem.print(buffer, "fx: {s}\n", .{message});
+    return std.mem.print(buffer, "tetris: {s}\n", .{message});
 }
 
 /// A v2 session that cannot be written at startup, in one sentence; null
 /// for any other error.
 fn v2StorageFaultMessage(err: anyerror) ?[]const u8 {
     return switch (err) {
-        error.AccessDenied => profile_paths.displayText("fx: this session cannot be opened for writing: permission denied. Check the permissions under ~/.fx/sessions/v2, then resume again.\n"),
-        error.ReadOnlyFileSystem => "fx: this session cannot be opened for writing: the disk is read-only.\n",
-        error.NoSpaceLeft => "fx: this session cannot be saved: the disk is full. Free some space, then resume again.\n",
-        error.FileTooBig => "fx: this session cannot be saved: a file-size limit was reached.\n",
+        error.AccessDenied => profile_paths.displayText("tetris: this session cannot be opened for writing: permission denied. Check the permissions under ~/.tetris/sessions/v2, then resume again.\n"),
+        error.ReadOnlyFileSystem => "tetris: this session cannot be opened for writing: the disk is read-only.\n",
+        error.NoSpaceLeft => "tetris: this session cannot be saved: the disk is full. Free some space, then resume again.\n",
+        error.FileTooBig => "tetris: this session cannot be saved: a file-size limit was reached.\n",
         else => null,
     };
 }
@@ -600,7 +600,7 @@ fn commandFailure(deps: RunDeps, err: anyerror) BeforeInteractiveResult {
 fn tryWriteErrorMessage(deps: RunDeps, err: anyerror) void {
     debug_trace.logf("core", "command error err={s}", .{@errorName(err)});
     var words: [128]u8 = undefined;
-    writeStderr(deps, "fx: ");
+    writeStderr(deps, "tetris: ");
     writeStderr(deps, config_runtime.modelNotSelectedMessage(err) orelse types.plainErrorText(@errorName(err), &words));
     writeStderr(deps, "\n");
 }
@@ -1042,7 +1042,7 @@ test "app entry reports persistence failure after teardown instead of a successf
     capture.record_stderr_event = true;
     const outcome = try runWithDeps(TestApp, alloc, &.{}, testConfig(), capture.deps());
     try std.testing.expectEqual(RunOutcome{ .exit = 1 }, outcome);
-    try std.testing.expectEqualStrings("fx: couldn't save the session: a disk read or write failed\n", capture.stderr.written());
+    try std.testing.expectEqualStrings("tetris: couldn't save the session: a disk read or write failed\n", capture.stderr.written());
     try std.testing.expectEqual(@as(usize, 0), capture.stdout_calls);
     try std.testing.expectEqualStrings("deinit", test_events[test_event_count - 2]);
     try std.testing.expectEqualStrings("stderr-attempt", test_events[test_event_count - 1]);
@@ -1059,7 +1059,7 @@ test "app entry writes exact resume handoff after interactive teardown" {
 
     try std.testing.expectEqual(RunOutcome.returned, outcome);
     try std.testing.expectEqualStrings(
-        "Resume this session with:\nfx --resume session-123\n",
+        "Resume this session with:\ntetris --resume session-123\n",
         capture.stdout.written(),
     );
     try std.testing.expectEqual(@as(usize, 1), capture.stdout_calls);
@@ -1099,7 +1099,7 @@ test "app entry bounds graceful-exit SIGINT suppression to handoff lifetime" {
 
     try std.testing.expectEqual(RunOutcome.returned, outcome);
     try std.testing.expectEqualStrings(
-        "Resume this session with:\nfx --resume session-123\n",
+        "Resume this session with:\ntetris --resume session-123\n",
         capture.stdout.written(),
     );
     try std.testing.expectEqual(@as(usize, 0), test_sigint_count.load(.seq_cst));
@@ -1139,7 +1139,7 @@ test "app entry relaunches only after teardown with the validated handoff" {
     try std.testing.expect(std.mem.find(
         u8,
         capture.stderr.written(),
-        "relaunch failed: invalid exe\nResume this session with:\nfx --resume session-123\n",
+        "relaunch failed: invalid exe\nResume this session with:\ntetris --resume session-123\n",
     ) != null);
     try expectEvents(&.{
         "init:none",
@@ -1225,10 +1225,10 @@ fn runWithOuterCleanup(comptime App: type, alloc: Allocator, args: []const [:0]c
 test "a command that ends on an error reports it in plain words" {
     const alloc = std.testing.allocator;
     const cases = [_]struct { err: anyerror, stderr: []const u8 }{
-        .{ .err = error.InvalidGatewaySseEvent, .stderr = "fx: unreadable reply\n" },
-        .{ .err = error.NoSpaceLeft, .stderr = "fx: the disk is full\n" },
-        .{ .err = error.ProviderRequestLimitReached, .stderr = "fx: provider request limit reached\n" },
-        .{ .err = error.OutputWriteFailed, .stderr = "fx: couldn't write the output\n" },
+        .{ .err = error.InvalidGatewaySseEvent, .stderr = "tetris: unreadable reply\n" },
+        .{ .err = error.NoSpaceLeft, .stderr = "tetris: the disk is full\n" },
+        .{ .err = error.ProviderRequestLimitReached, .stderr = "tetris: provider request limit reached\n" },
+        .{ .err = error.OutputWriteFailed, .stderr = "tetris: couldn't write the output\n" },
     };
     for (cases) |case| {
         var capture = TestCapture.init(.{ .interactive = .{} });
@@ -1260,7 +1260,7 @@ test "app entry reports unexpected init errors once and preserves identity" {
     capture.record_stderr_event = true;
 
     try std.testing.expectError(error.TestInitFailed, runWithDeps(TestApp, alloc, &.{}, testConfig(), capture.deps()));
-    try std.testing.expectEqualStrings("fx: test init failed\n", capture.stderr.written());
+    try std.testing.expectEqualStrings("tetris: test init failed\n", capture.stderr.written());
     try std.testing.expectEqual(@as(usize, 1), capture.stderr_calls);
     try expectEvents(&.{ "init:none", "stderr-attempt" });
 }
@@ -1272,10 +1272,10 @@ test "app entry reports an error that ends startup in plain words, not its name"
     capture.init_error = error.UnknownHostName;
 
     try std.testing.expectError(error.UnknownHostName, runWithDeps(TestApp, alloc, &.{}, testConfig(), capture.deps()));
-    try std.testing.expectEqualStrings("fx: cannot resolve host\n", capture.stderr.written());
+    try std.testing.expectEqualStrings("tetris: cannot resolve host\n", capture.stderr.written());
 }
 
-test "app entry says what's wrong with ~/.fx/mcp.json instead of naming the error" {
+test "app entry says what's wrong with ~/.tetris/mcp.json instead of naming the error" {
     const alloc = std.testing.allocator;
     var capture = TestCapture.init(.{ .interactive = .{} });
     defer capture.deinit();
@@ -1283,7 +1283,7 @@ test "app entry says what's wrong with ~/.fx/mcp.json instead of naming the erro
 
     try std.testing.expectError(error.McpConfigLinkLoop, runWithDeps(TestApp, alloc, &.{}, testConfig(), capture.deps()));
     try std.testing.expectEqualStrings(
-        profile_paths.displayText("fx: ~/.fx/mcp.json is a link that loops or passes through too many links; replace it with a plain file\n"),
+        profile_paths.displayText("tetris: ~/.tetris/mcp.json is a link that loops or passes through too many links; replace it with a plain file\n"),
         capture.stderr.written(),
     );
     try std.testing.expectEqual(@as(usize, 1), capture.stderr_calls);
@@ -1297,7 +1297,7 @@ test "app entry releases terminal before reporting worker start errors" {
     capture.record_stderr_event = true;
 
     try std.testing.expectError(error.TestWorkerStartFailed, runWithDeps(TestApp, alloc, &.{}, testConfig(), capture.deps()));
-    try std.testing.expectEqualStrings("fx: test worker start failed\n", capture.stderr.written());
+    try std.testing.expectEqualStrings("tetris: test worker start failed\n", capture.stderr.written());
     try std.testing.expectEqual(@as(usize, 1), capture.stderr_calls);
     try expectEvents(&.{ "init:none", "rebind-after-init", "auto-upgrade", "file-index", "worker-thread", "terminal-release", "stderr-attempt", "deinit" });
 }
@@ -1305,9 +1305,9 @@ test "app entry releases terminal before reporting worker start errors" {
 test "app entry releases terminal before reporting initial context failures exactly" {
     const alloc = std.testing.allocator;
     const cases = [_]struct { err: context_contract.ProviderError, stderr: []const u8 }{
-        .{ .err = error.OutOfMemory, .stderr = "fx: out of memory\n" },
-        .{ .err = error.NoSpaceLeft, .stderr = "fx: the disk is full\n" },
-        .{ .err = error.WriteFailed, .stderr = "fx: connection dropped\n" },
+        .{ .err = error.OutOfMemory, .stderr = "tetris: out of memory\n" },
+        .{ .err = error.NoSpaceLeft, .stderr = "tetris: the disk is full\n" },
+        .{ .err = error.WriteFailed, .stderr = "tetris: connection dropped\n" },
     };
 
     for (cases) |case| {
@@ -1346,7 +1346,7 @@ test "app entry reports run errors before deinit and outer cleanup" {
     capture.record_stderr_event = true;
 
     try std.testing.expectError(error.TestRunFailed, runWithOuterCleanup(TestApp, alloc, &.{}, testConfig(), capture.deps()));
-    try std.testing.expectEqualStrings("fx: test run failed\n", capture.stderr.written());
+    try std.testing.expectEqualStrings("tetris: test run failed\n", capture.stderr.written());
     try std.testing.expectEqual(@as(usize, 1), capture.stderr_calls);
     try std.testing.expectEqual(@as(usize, 0), capture.stdout_calls);
     try expectEvents(&.{ "init:none", "rebind-after-init", "auto-upgrade", "file-index", "worker-thread", "model-cache", "run", "terminal-release", "stderr-attempt", "deinit", "outer-defer" });
@@ -1449,7 +1449,7 @@ test "app entry maps noninteractive terminal startup to exit one" {
     const outcome = try runWithDeps(TestApp, alloc, &.{}, testConfig(), capture.deps());
 
     try std.testing.expectEqual(@as(u8, 1), outcome.exit);
-    try std.testing.expectEqualStrings("fx requires an interactive terminal (TTY).\n", capture.stderr.written());
+    try std.testing.expectEqualStrings("tetris requires an interactive terminal (TTY).\n", capture.stderr.written());
     try expectEvents(&.{"init:none"});
 }
 
@@ -1457,12 +1457,12 @@ test "app entry maps missing saved sessions to exit one" {
     const alloc = std.testing.allocator;
     const Case = struct { err: anyerror, stderr: []const u8 };
     for ([_]Case{
-        .{ .err = error.NoSavedSessions, .stderr = "fx: no saved sessions for this workspace.\n" },
+        .{ .err = error.NoSavedSessions, .stderr = "tetris: no saved sessions for this workspace.\n" },
         // Only an update's own relaunch opens a fresh session instead (D81).
-        .{ .err = error.SessionNotFound, .stderr = "fx: saved session not found.\n" },
+        .{ .err = error.SessionNotFound, .stderr = "tetris: saved session not found.\n" },
         .{
             .err = error.NoReadableSessions,
-            .stderr = "fx: no readable saved sessions for this workspace, and some saved sessions are unreadable; run `fx doctor` for recovery guidance.\n",
+            .stderr = "tetris: no readable saved sessions for this workspace, and some saved sessions are unreadable; run `tetris doctor` for recovery guidance.\n",
         },
     }) |case| {
         var capture = TestCapture.init(.{ .interactive = .{} });
@@ -1483,23 +1483,23 @@ test "app entry maps unavailable session state to one expected startup failure" 
     }{
         .{
             .init_error = error.SessionBusy,
-            .message = "fx: another fx process may be using this session (running or suspended); check other terminals or run jobs, then use fg or quit that process\n",
+            .message = "tetris: another Tetris process may be using this session (running or suspended); check other terminals or run jobs, then use fg or quit that process\n",
         },
         .{
             .init_error = error.SessionLockUnsupported,
-            .message = "fx: the filesystem cannot provide the required session lock\n",
+            .message = "tetris: the filesystem cannot provide the required session lock\n",
         },
         .{
             .init_error = error.SessionAuthorityBoundaryUnavailable,
-            .message = "fx: a saved session has an unfinished update that could not be recovered; run `fx doctor` to identify the affected session\n",
+            .message = "tetris: a saved session has an unfinished update that could not be recovered; run `tetris doctor` to identify the affected session\n",
         },
         .{
             .init_error = error.SessionCommitBoundaryUnavailable,
-            .message = "fx: a saved session has an unfinished update that could not be recovered; run `fx doctor` to identify the affected session\n",
+            .message = "tetris: a saved session has an unfinished update that could not be recovered; run `tetris doctor` to identify the affected session\n",
         },
         .{
             .init_error = error.OneOffSessionNotResumable,
-            .message = "fx: subagent child sessions cannot be resumed directly; message the named agent from its parent session\n",
+            .message = "tetris: subagent child sessions cannot be resumed directly; message the named agent from its parent session\n",
         },
     };
 
@@ -1524,10 +1524,10 @@ test "app entry names a v2 storage fault at startup, and v1 keeps the bare error
         init_error: anyerror,
         message: []const u8,
     }{
-        .{ .init_error = error.AccessDenied, .message = "fx: this session cannot be opened for writing: permission denied. Check the permissions under ~/.fx/sessions/v2, then resume again.\n" },
-        .{ .init_error = error.ReadOnlyFileSystem, .message = "fx: this session cannot be opened for writing: the disk is read-only.\n" },
-        .{ .init_error = error.NoSpaceLeft, .message = "fx: this session cannot be saved: the disk is full. Free some space, then resume again.\n" },
-        .{ .init_error = error.FileTooBig, .message = "fx: this session cannot be saved: a file-size limit was reached.\n" },
+        .{ .init_error = error.AccessDenied, .message = "tetris: this session cannot be opened for writing: permission denied. Check the permissions under ~/.tetris/sessions/v2, then resume again.\n" },
+        .{ .init_error = error.ReadOnlyFileSystem, .message = "tetris: this session cannot be opened for writing: the disk is read-only.\n" },
+        .{ .init_error = error.NoSpaceLeft, .message = "tetris: this session cannot be saved: the disk is full. Free some space, then resume again.\n" },
+        .{ .init_error = error.FileTooBig, .message = "tetris: this session cannot be saved: a file-size limit was reached.\n" },
     };
     for (cases) |case| {
         var capture = TestCapture.init(.{ .interactive = .{} });
@@ -1551,7 +1551,7 @@ test "app entry returns failure when terminal closure cannot save the session" {
     capture.record_stderr_event = true;
     const outcome = try runWithDeps(TestApp, std.testing.allocator, &.{}, testConfig(), capture.deps());
     try std.testing.expectEqual(RunOutcome{ .exit = 1 }, outcome);
-    try std.testing.expectEqualStrings("fx: couldn't save the session: a disk read or write failed\n", capture.stderr.written());
+    try std.testing.expectEqualStrings("tetris: couldn't save the session: a disk read or write failed\n", capture.stderr.written());
     try std.testing.expectEqual(@as(usize, 0), capture.stdout_calls);
     try std.testing.expectEqualStrings("deinit", test_events[test_event_count - 2]);
     try std.testing.expectEqualStrings("stderr-attempt", test_events[test_event_count - 1]);

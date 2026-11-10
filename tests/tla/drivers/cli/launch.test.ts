@@ -1,12 +1,12 @@
-// Runs the real fx binary through every launch-flag scenario the
+// Runs the real tetris binary through every launch-flag scenario the
 // LaunchSelection TLA+ model covers (tests/tla/cli/LaunchSelection.tla), then has TLC
-// replay what fx did through the model. No model calls: a local fake Gateway
+// replay what Tetris did through the model. No model calls: a local fake Gateway
 // serves the catalog and accepts only models that exist.
 //
 // 1. The binary must conform to exactly one modeled design, current or proposed.
 // 2. Controls: tampered and empty evidence must not be accepted.
 // 3. With FX_TLA_PROPOSED=1: the binary must conform to the proposed design.
-//    This fails until fx validates launch flags.
+//    This fails until Tetris validates launch flags.
 import { test } from "bun:test";
 import assert from "node:assert/strict";
 import { mkdirSync, writeFileSync } from "node:fs";
@@ -50,9 +50,9 @@ function fixture(s: Scenario): Fixture {
   const root = join(artifacts, s.id);
   const home = join(root, "home");
   const workspace = join(root, "workspace");
-  mkdirSync(join(home, ".fx"), { recursive: true, mode: 0o700 });
+  mkdirSync(join(home, ".tetris"), { recursive: true, mode: 0o700 });
   mkdirSync(workspace, { recursive: true });
-  writeFileSync(join(home, ".fx/settings.json"), JSON.stringify({ auto_upgrade: false, model: CONFIGURED }));
+  writeFileSync(join(home, ".tetris/settings.json"), JSON.stringify({ auto_upgrade: false, model: CONFIGURED }));
   const catalogRequests: Fixture["catalogRequests"] = [];
   const rejectedModels: string[] = [];
   let served = false;
@@ -229,7 +229,7 @@ function verdict(design: Design): Promise<TraceResult> {
   return verdicts.get(design)!;
 }
 
-test("real fx conforms to exactly one modeled design", async () => {
+test("real Tetris conforms to exactly one modeled design", async () => {
   const [current, proposed] = await Promise.all([verdict("current"), verdict("proposed")]);
   const accepted = [current, proposed].filter(result => result.verdict === "ACCEPTED").map(result => result.design);
   writeFileSync(join(artifacts, "summary.json"), JSON.stringify({ binary, conforms: accepted, current, proposed }, null, 2));
@@ -248,7 +248,7 @@ test("bridge rejects tampered and empty evidence", async () => {
   assert.equal((await checkTrace([], conforming, reports)).verdict, "TOOL_ERROR");
 }, TIMEOUT);
 
-test.skipIf(process.env.FX_TLA_PROPOSED !== "1")("real fx meets the proposed design", async () => {
+test.skipIf(process.env.FX_TLA_PROPOSED !== "1")("real Tetris meets the proposed design", async () => {
   const proposed = await verdict("proposed");
   assert.equal(proposed.verdict, "ACCEPTED", proposed.detail);
   assert.equal((await verdict("current")).verdict, "REJECTED");

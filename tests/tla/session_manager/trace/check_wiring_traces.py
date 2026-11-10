@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Checks fx's `wiring` trace lines against Wiring.tla (WiringTrace.tla).
+"""Checks Tetris's `wiring` trace lines against Wiring.tla (WiringTrace.tla).
 
 usage: check_wiring_traces.py FILE...   trace logs written with FX_TRACE=1,
                                         FX_TRACE_SCOPES=wiring, FX_TRACE_LOG
@@ -9,7 +9,7 @@ JOBS=N runs N TLC checks at once (default 6).
 
 The adapter writes one line per step (`action=... session=... pid=...`).
 Each process's first store open and last close become Start and Exit; a
-process whose lines stop without Exit gets a Crash. Wiring.tla models one fx
+process whose lines stop without Exit gets a Crash. Wiring.tla models one Tetris
 process at a time, so a file whose processes overlap is skipped and named.
 Exit 0 when every checked trace is accepted.
 """

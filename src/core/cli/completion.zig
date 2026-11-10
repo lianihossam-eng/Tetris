@@ -236,11 +236,11 @@ pub fn writeScript(
 
 fn writeBash(w: *Writer, model: *const Model) !void {
     try w.writeAll(
-        \\# bash completion for fx. Load it with:
-        \\#   eval "$(fx completion bash)"
+        \\# bash completion for tetris. Load it with:
+        \\#   eval "$(tetris completion bash)"
         \\# bash 3.2, the macOS default, loads nothing through source <(...).
         \\
-        \\_fx_words() {
+        \\_tetris_words() {
         \\    case "$1" in
         \\
     );
@@ -254,7 +254,7 @@ fn writeBash(w: *Writer, model: *const Model) !void {
         \\    esac
         \\}
         \\
-        \\_fx_flags() {
+        \\_tetris_flags() {
         \\    case "$1" in
         \\
     );
@@ -268,7 +268,7 @@ fn writeBash(w: *Writer, model: *const Model) !void {
         \\    esac
         \\}
         \\
-        \\_fx_values() {
+        \\_tetris_values() {
         \\    case "$1" in
         \\
     );
@@ -281,7 +281,7 @@ fn writeBash(w: *Writer, model: *const Model) !void {
         \\    esac
         \\}
         \\
-        \\_fx_takes_value() {
+        \\_tetris_takes_value() {
         \\    case "$1" in
         \\        
     );
@@ -292,7 +292,7 @@ fn writeBash(w: *Writer, model: *const Model) !void {
         \\    return 1
         \\}
         \\
-        \\_fx_takes_key() {
+        \\_tetris_takes_key() {
         \\    case "$1" in
         \\        
     );
@@ -303,13 +303,13 @@ fn writeBash(w: *Writer, model: *const Model) !void {
         \\    return 1
         \\}
         \\
-        \\_fx_keys='
+        \\_tetris_keys='
     );
     try writeWords(w, model.setting_keys.items);
     try w.writeAll(
         \\'
         \\
-        \\_fx_takes_settable_key() {
+        \\_tetris_takes_settable_key() {
         \\    case "$1" in
         \\        
     );
@@ -320,13 +320,13 @@ fn writeBash(w: *Writer, model: *const Model) !void {
         \\    return 1
         \\}
         \\
-        \\_fx_settable_keys='
+        \\_tetris_settable_keys='
     );
     try writeWords(w, model.settable_keys.items);
     try w.writeAll(
         \\'
         \\
-        \\_fx() {
+        \\_tetris() {
         \\    local cur="${COMP_WORDS[COMP_CWORD]}" prev='' path='' word words i extra=0 skip=0
         \\    (( COMP_CWORD > 0 )) && prev="${COMP_WORDS[COMP_CWORD-1]}"
         \\    for (( i = 1; i < COMP_CWORD; i++ )); do
@@ -334,9 +334,9 @@ fn writeBash(w: *Writer, model: *const Model) !void {
         \\        if (( skip )); then skip=0; continue; fi
         \\        case "$word" in
         \\            --*=*) continue ;;
-        \\            -*) _fx_takes_value "$word" && skip=1; continue ;;
+        \\            -*) _tetris_takes_value "$word" && skip=1; continue ;;
         \\        esac
-        \\        words=" $(_fx_words "$path") "
+        \\        words=" $(_tetris_words "$path") "
         \\        if (( extra == 0 )) && [[ "$words" == *" $word "* ]]; then
         \\            path="${path:+$path }$word"
         \\        else
@@ -345,26 +345,26 @@ fn writeBash(w: *Writer, model: *const Model) !void {
         \\    done
         \\    COMPREPLY=()
         \\    if (( skip )); then
-        \\        words="$(_fx_values "$prev")"
+        \\        words="$(_tetris_values "$prev")"
         \\        [[ -n "$words" ]] && COMPREPLY=($(compgen -W "$words" -- "$cur"))
         \\        return 0
         \\    fi
         \\    if [[ "$cur" == -* ]]; then
-        \\        COMPREPLY=($(compgen -W "$(_fx_flags "$path")" -- "$cur"))
+        \\        COMPREPLY=($(compgen -W "$(_tetris_flags "$path")" -- "$cur"))
         \\        return 0
         \\    fi
         \\    (( extra > 0 )) && return 0
-        \\    if _fx_takes_settable_key "$path"; then
-        \\        COMPREPLY=($(compgen -W "$_fx_settable_keys" -- "$cur"))
-        \\    elif _fx_takes_key "$path"; then
-        \\        COMPREPLY=($(compgen -W "$_fx_keys" -- "$cur"))
+        \\    if _tetris_takes_settable_key "$path"; then
+        \\        COMPREPLY=($(compgen -W "$_tetris_settable_keys" -- "$cur"))
+        \\    elif _tetris_takes_key "$path"; then
+        \\        COMPREPLY=($(compgen -W "$_tetris_keys" -- "$cur"))
         \\    else
-        \\        COMPREPLY=($(compgen -W "$(_fx_words "$path")" -- "$cur"))
+        \\        COMPREPLY=($(compgen -W "$(_tetris_words "$path")" -- "$cur"))
         \\    fi
         \\    return 0
         \\}
         \\
-        \\complete -o default -F _fx fx
+        \\complete -o default -F _tetris tetris
         \\
     );
 }
@@ -417,10 +417,10 @@ fn writeKeyPaths(w: *Writer, model: *const Model, quote: bool, list: KeyList) !v
 
 fn writeZsh(w: *Writer, model: *const Model) !void {
     try w.writeAll(
-        \\# zsh completion for fx. Load it after compinit with:
-        \\#   source <(fx completion zsh)
+        \\# zsh completion for tetris. Load it after compinit with:
+        \\#   source <(tetris completion zsh)
         \\
-        \\_fx_words() {
+        \\_tetris_words() {
         \\    case "$1" in
         \\
     );
@@ -435,7 +435,7 @@ fn writeZsh(w: *Writer, model: *const Model) !void {
         \\    esac
         \\}
         \\
-        \\_fx_flags() {
+        \\_tetris_flags() {
         \\    case "$1" in
         \\
     );
@@ -450,7 +450,7 @@ fn writeZsh(w: *Writer, model: *const Model) !void {
         \\    esac
         \\}
         \\
-        \\_fx_values() {
+        \\_tetris_values() {
         \\    case "$1" in
         \\
     );
@@ -464,7 +464,7 @@ fn writeZsh(w: *Writer, model: *const Model) !void {
         \\    esac
         \\}
         \\
-        \\_fx_takes_value() {
+        \\_tetris_takes_value() {
         \\    case "$1" in
         \\        
     );
@@ -475,7 +475,7 @@ fn writeZsh(w: *Writer, model: *const Model) !void {
         \\    return 1
         \\}
         \\
-        \\_fx_takes_key() {
+        \\_tetris_takes_key() {
         \\    case "$1" in
         \\        
     );
@@ -486,13 +486,13 @@ fn writeZsh(w: *Writer, model: *const Model) !void {
         \\    return 1
         \\}
         \\
-        \\_fx_keys=(
+        \\_tetris_keys=(
     );
     try writeWords(w, model.setting_keys.items);
     try w.writeAll(
         \\)
         \\
-        \\_fx_takes_settable_key() {
+        \\_tetris_takes_settable_key() {
         \\    case "$1" in
         \\        
     );
@@ -503,13 +503,13 @@ fn writeZsh(w: *Writer, model: *const Model) !void {
         \\    return 1
         \\}
         \\
-        \\_fx_settable_keys=(
+        \\_tetris_settable_keys=(
     );
     try writeWords(w, model.settable_keys.items);
     try w.writeAll(
         \\)
         \\
-        \\_fx() {
+        \\_tetris() {
         \\    local word path='' i extra=0 skip=0
         \\    local -a reply names
         \\    for (( i = 2; i < CURRENT; i++ )); do
@@ -517,9 +517,9 @@ fn writeZsh(w: *Writer, model: *const Model) !void {
         \\        if (( skip )); then skip=0; continue; fi
         \\        case $word in
         \\            --*=*) continue ;;
-        \\            -*) _fx_takes_value "$word" && skip=1; continue ;;
+        \\            -*) _tetris_takes_value "$word" && skip=1; continue ;;
         \\        esac
-        \\        _fx_words "$path"
+        \\        _tetris_words "$path"
         \\        names=(${reply%%:*})
         \\        if (( extra == 0 && ${names[(Ie)$word]} )); then
         \\            path=${path:+$path }$word
@@ -528,26 +528,26 @@ fn writeZsh(w: *Writer, model: *const Model) !void {
         \\        fi
         \\    done
         \\    if (( skip )); then
-        \\        _fx_values "${words[CURRENT-1]}"
+        \\        _tetris_values "${words[CURRENT-1]}"
         \\        if (( ${#reply} )); then compadd -a reply; else _files; fi
         \\        return
         \\    fi
         \\    if [[ ${words[CURRENT]} == -* ]]; then
-        \\        _fx_flags "$path"
-        \\        _describe -t options 'fx option' reply
+        \\        _tetris_flags "$path"
+        \\        _describe -t options 'tetris option' reply
         \\        return
         \\    fi
         \\    if (( extra > 0 )); then _files; return; fi
-        \\    if _fx_takes_settable_key "$path"; then compadd -a _fx_settable_keys; return; fi
-        \\    if _fx_takes_key "$path"; then compadd -a _fx_keys; return; fi
-        \\    _fx_words "$path"
-        \\    if (( ${#reply} )); then _describe -t commands 'fx command' reply; else _files; fi
+        \\    if _tetris_takes_settable_key "$path"; then compadd -a _tetris_settable_keys; return; fi
+        \\    if _tetris_takes_key "$path"; then compadd -a _tetris_keys; return; fi
+        \\    _tetris_words "$path"
+        \\    if (( ${#reply} )); then _describe -t commands 'tetris command' reply; else _files; fi
         \\}
         \\
         \\if (( $+functions[compdef] )); then
-        \\    compdef _fx fx
+        \\    compdef _tetris tetris
         \\else
-        \\    print -u2 'fx completion: run compinit before loading this script'
+        \\    print -u2 'tetris completion: run compinit before loading this script'
         \\fi
         \\
     );
@@ -571,10 +571,10 @@ fn writeZshEntries(w: *Writer, entries: []const Entry) !void {
 
 fn writeFish(w: *Writer, model: *const Model) !void {
     try w.writeAll(
-        \\# fish completion for fx. Load it with:
-        \\#   fx completion fish | source
+        \\# fish completion for tetris. Load it with:
+        \\#   tetris completion fish | source
         \\
-        \\function __fx_words
+        \\function __tetris_words
         \\    switch $argv[1]
         \\
     );
@@ -588,7 +588,7 @@ fn writeFish(w: *Writer, model: *const Model) !void {
         \\    end
         \\end
         \\
-        \\function __fx_flags
+        \\function __tetris_flags
         \\    switch $argv[1]
         \\
     );
@@ -602,7 +602,7 @@ fn writeFish(w: *Writer, model: *const Model) !void {
         \\    end
         \\end
         \\
-        \\function __fx_values
+        \\function __tetris_values
         \\    switch $argv[1]
         \\
     );
@@ -615,7 +615,7 @@ fn writeFish(w: *Writer, model: *const Model) !void {
         \\    end
         \\end
         \\
-        \\function __fx_takes_value
+        \\function __tetris_takes_value
         \\    contains -- $argv[1] 
     );
     try writeWords(w, model.value_flags.items);
@@ -623,7 +623,7 @@ fn writeFish(w: *Writer, model: *const Model) !void {
         \\
         \\end
         \\
-        \\function __fx_takes_key
+        \\function __tetris_takes_key
         \\    contains -- $argv[1] 
     );
     try writeFishKeyPaths(w, model, .all);
@@ -631,13 +631,14 @@ fn writeFish(w: *Writer, model: *const Model) !void {
         \\
         \\end
         \\
-        \\set -g __fx_keys 
+        \\set -g __tetris_keys
     );
+    try w.writeByte(' ');
     try writeWords(w, model.setting_keys.items);
     try w.writeAll(
         \\
         \\
-        \\function __fx_takes_settable_key
+        \\function __tetris_takes_settable_key
         \\    contains -- $argv[1] 
     );
     try writeFishKeyPaths(w, model, .settable);
@@ -645,13 +646,14 @@ fn writeFish(w: *Writer, model: *const Model) !void {
         \\
         \\end
         \\
-        \\set -g __fx_settable_keys 
+        \\set -g __tetris_settable_keys
     );
+    try w.writeByte(' ');
     try writeWords(w, model.settable_keys.items);
     try w.writeAll(
         \\
         \\
-        \\function __fx_complete
+        \\function __tetris_complete
         \\    set -l tokens (commandline -opc)
         \\    set -l cur (commandline -ct)
         \\    set -e tokens[1]
@@ -669,10 +671,10 @@ fn writeFish(w: *Writer, model: *const Model) !void {
         \\            case '--*=*'
         \\                continue
         \\            case '-*'
-        \\                __fx_takes_value $word; and set skip 1
+        \\                __tetris_takes_value $word; and set skip 1
         \\                continue
         \\        end
-        \\        set -l names (__fx_words "$path" | string replace -r '\t.*' '')
+        \\        set -l names (__tetris_words "$path" | string replace -r '\t.*' '')
         \\        if test $extra = 0; and contains -- $word $names
         \\            if test -z "$path"
         \\                set path $word
@@ -684,7 +686,7 @@ fn writeFish(w: *Writer, model: *const Model) !void {
         \\        end
         \\    end
         \\    if test $skip = 1
-        \\        set -l values (__fx_values $prev)
+        \\        set -l values (__tetris_values $prev)
         \\        if test (count $values) -gt 0
         \\            printf '%s\n' $values
         \\        else
@@ -693,22 +695,22 @@ fn writeFish(w: *Writer, model: *const Model) !void {
         \\        return
         \\    end
         \\    if string match -q -- '-*' $cur
-        \\        __fx_flags "$path"
+        \\        __tetris_flags "$path"
         \\        return
         \\    end
         \\    if test $extra -gt 0
         \\        __fish_complete_path $cur
         \\        return
         \\    end
-        \\    if __fx_takes_settable_key "$path"
-        \\        printf '%s\n' $__fx_settable_keys
+        \\    if __tetris_takes_settable_key "$path"
+        \\        printf '%s\n' $__tetris_settable_keys
         \\        return
         \\    end
-        \\    if __fx_takes_key "$path"
-        \\        printf '%s\n' $__fx_keys
+        \\    if __tetris_takes_key "$path"
+        \\        printf '%s\n' $__tetris_keys
         \\        return
         \\    end
-        \\    set -l words (__fx_words "$path")
+        \\    set -l words (__tetris_words "$path")
         \\    if test (count $words) -gt 0
         \\        printf '%s\n' $words
         \\    else
@@ -716,7 +718,7 @@ fn writeFish(w: *Writer, model: *const Model) !void {
         \\    end
         \\end
         \\
-        \\complete -c fx -f -a '(__fx_complete)'
+        \\complete -c tetris -f -a '(__tetris_complete)'
         \\
     );
 }
@@ -774,7 +776,7 @@ test "the model follows subcommands, keeps parent flags, and marks setting-key p
         .kind = .config,
         .token = "config",
         .usage = "config",
-        .summary = "Show and change fx settings",
+        .summary = "Show and change Tetris settings",
         .options = &.{.{ .flag = "--global", .description = "Only the profile" }},
         .subcommands = &.{
             .{ .usage = "get <key>", .description = "Print a value" },

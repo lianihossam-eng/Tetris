@@ -1972,7 +1972,7 @@ test "processQueuedPrompt sends a text-only turn while a down catalog withholds 
     try std.testing.expectEqual(@as(usize, 1), gateway.request_bodies.items.len);
     try expectBodyNotContains(&gateway, 0, "\"type\":\"file\"");
     try expectBodyNotContains(&gateway, 0, "\"name\":\"vision\"");
-    try expectBodyContains(&gateway, 0, "[Image #1 was not sent with this request: fx could not confirm image input support");
+    try expectBodyContains(&gateway, 0, "[Image #1 was not sent with this request: Tetris could not confirm image input support");
     try std.testing.expectEqualStrings("Here is the preview.", hooks.finish_assistant_text.?);
     var notices: usize = 0;
     for (hooks.texts.items) |text| {
@@ -8117,7 +8117,7 @@ test "processQueuedPrompt regenerates an unstarted local tool on every resend" {
     try std.testing.expectEqual(@as(usize, 4), gateway.request_models.items.len);
     try std.testing.expectEqual(@as(usize, 0), hooks.executed_names.items.len);
     for (1..4) |index| {
-        try expectBodyContains(&gateway, index, "fx did not execute that call");
+        try expectBodyContains(&gateway, index, "Tetris did not execute that call");
     }
     try expectRecovered(&hooks, 4);
     try std.testing.expectEqual(@as(usize, 1), hooks.history_turns.items.len);
@@ -8220,7 +8220,7 @@ test "processQueuedPrompt regenerates and executes a local tool once after ReadF
     try expectModuleStatus(&hooks, 0, .waiting, "Connection lost · next try in ");
     try expectModuleStatus(&hooks, 1, .retrying, "Connection lost · retrying · attempt 2");
     try expectRecovered(&hooks, 2);
-    try expectBodyContains(&gateway, 1, "fx did not execute that call");
+    try expectBodyContains(&gateway, 1, "Tetris did not execute that call");
     try expectBodyContains(&gateway, 2, "call_read_recovered");
     try expectBodyContains(&gateway, 2, "\"output\":{\"type\":\"text\",\"value\":\"ok\"}");
     try expectFailedLifecycleContains(
@@ -8477,7 +8477,7 @@ test "processQueuedPrompt recovers provider error after streamed tool start" {
     try expectModuleStatus(&hooks, 0, .waiting, "Gateway error · next try in ");
     try expectModuleStatus(&hooks, 1, .retrying, "Gateway error · retrying · attempt 2");
     try expectRecovered(&hooks, 2);
-    try expectBodyContains(&gateway, 1, "fx did not execute that call");
+    try expectBodyContains(&gateway, 1, "Tetris did not execute that call");
 }
 
 test "processQueuedPrompt ends a content-filtered turn without a resend when the host cannot ask" {

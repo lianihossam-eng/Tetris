@@ -1,40 +1,40 @@
-# Contributing to fx
+# Contributing to Tetris
 
-fx is open source and developed in public at [vercel-labs/fx](https://github.com/vercel-labs/fx). The fx team at Vercel maintains it and makes most changes, and pull requests from outside contributors are welcome and go through the same CI checks. Only maintainers can push branches to the repository, add labels, or start optional CI runs. Outside contributors work from a fork, and a maintainer handles those steps for them.
+Tetris is the `lianihossam-eng/Tetris` fork of [Fx](https://github.com/vercel-labs/fx). This repository is the source of truth for the Tetris product, its releases, and its GitHub Actions. Send pull requests to this repository's `main` branch. Do not push changes to upstream Fx.
 
-Code conventions live in [AGENTS.md](AGENTS.md): which module owns which behavior, how fx uses Zig 0.17, how permissions and tests are structured, and the rules coding agents follow. Read it before you change code, whether you write the change yourself or with a coding agent.
+Code conventions live in [AGENTS.md](AGENTS.md): module ownership, Zig 0.17, permissions, tests, and coding-agent rules. Read it before changing code.
 
 ## Report a problem
 
-Run `/feedback` inside fx to open the feedback form, or [open an issue](https://github.com/vercel-labs/fx/issues/new/choose) with the bug report template. Describe what you did, what you expected, and what happened instead. If something looks wrong in your terminal, `/trace` copies a private diagnostic trace that you can attach. Issues are public, so review the trace and remove secrets before you post it.
+Run `/feedback` inside Tetris or [open an issue](https://github.com/lianihossam-eng/Tetris/issues/new/choose). Describe what you did, what you expected, and what happened instead. Review `/trace` output and remove secrets before attaching it to a public issue.
 
-Report security vulnerabilities through the [contact page](https://fx.sh/contact), not in a public issue.
+Report security vulnerabilities privately through the repository's [Security page](https://github.com/lianihossam-eng/Tetris/security), not in a public issue.
 
 ## Set up a checkout
 
 You need:
 
-- [Zig 0.17.0](https://ziglang.org/download/), the version CI builds with. Check `zig version` before you build, because an older Zig fails inside `build.zig` with errors such as `no field or member function named 'poisonCache'` that don't mention the version.
-- [Bun](https://bun.sh) and [tmux](https://github.com/tmux/tmux) for the end-to-end tests.
-- [hyperfine](https://github.com/sharkdp/hyperfine), if you want to run the startup benchmark locally.
+- [Zig 0.17.0](https://ziglang.org/download/), the version CI builds with. Check `zig version` before building.
+- [Bun](https://bun.sh) and [tmux](https://github.com/tmux/tmux) for end-to-end tests.
+- [hyperfine](https://github.com/sharkdp/hyperfine) for local startup benchmarks.
 
-The unit tests and most end-to-end tests don't call a model. To try a change that does, sign in as the [README](README.md#quick-start) describes or set `AI_GATEWAY_API_KEY`.
+Most unit and end-to-end tests do not call a model. Model-backed tests need an account configured as described in the [README](README.md#quick-start) or `AI_GATEWAY_API_KEY`.
 
-Clone the repository, or your fork if you're an outside contributor, and build fx:
+Clone the Tetris repository and build its native executable:
 
 ```bash
-git clone https://github.com/vercel-labs/fx.git
-cd fx
+git clone https://github.com/lianihossam-eng/Tetris.git
+cd Tetris
 zig build
-./zig-out/bin/fx
+./zig-out/bin/tetris
 ```
 
-Test your changes with `./zig-out/bin/fx` from your checkout. A bare `fx` runs whichever copy comes first on your `PATH`, which is usually an installed release that doesn't include your change.
+Use `./zig-out/bin/tetris` to test changes. A bare `tetris` may run an installed release instead of this checkout.
 
-fx keeps its settings and sessions in `~/.fx`, and on macOS it stores API keys and OAuth credentials in your Keychain. To try a change against an empty profile without touching your own, give fx a temporary home directory and turn off Keychain storage:
+Tetris stores profile settings and sessions in `~/.tetris` by default. Set `TETRIS_HOME` to use another absolute profile directory. To test with an empty profile without changing your own:
 
 ```bash
-HOME="$(mktemp -d)" FX_DISABLE_KEYCHAIN=1 ./zig-out/bin/fx
+TETRIS_HOME="$(mktemp -d)" FX_DISABLE_KEYCHAIN=1 ./zig-out/bin/tetris
 ```
 
 ## Make a change
@@ -47,8 +47,8 @@ These rules apply to every change:
 
 - `src/main.zig` only wires runtimes together. Feature logic and state belong to the module that owns them.
 - Sensitive tool behavior goes through the permission system in `src/core/permissions/permissions.zig`. Don't add a path around it.
-- fx has no dependencies outside the Zig standard library. Talk to the maintainers before you add one.
-- Don't commit generated state from `.fx/`, `.zig-cache/`, or `zig-out/`.
+- The native Zig runtime uses only the standard library. Add executable tools to the native registry in `src/builtins/tools.zig`; profiles select them, and their calls go through the native permission engine. Don't add a parallel tool runtime or an npm dependency that bypasses those checks.
+- Don't commit generated state from `.tetris/`, `.zig-cache/`, or `zig-out/`.
 - Don't commit home-directory paths, real team IDs, or personal project slugs. `scripts/check-public-surface.sh` rejects them in CI, so use `/Users/example/` in fixtures.
 - Don't document behavior that doesn't exist yet.
 
@@ -56,18 +56,19 @@ If a coding agent helps with your change, point it at AGENTS.md. Any prose the a
 
 ### Add or change a command, flag, or setting
 
-Commands, flags, settings, environment variables, slash commands, and `--json` output are what people and scripts rely on, so fx gives them all one shape. Someone who knows git and the Unix command line should be able to guess what a control is called, where it goes, and which source wins when two disagree:
+Commands, flags, settings, environment variables, slash commands, and `--json` output are contracts that people and scripts rely on. Keep each control's name and precedence consistent across surfaces:
 
-- Each concept has one name, written in each surface's case: `permission_mode` in settings and JSON, `--permission-mode` as a flag, and `FX_PERMISSION_MODE` as an environment variable.
+- A concept has one name in each surface's case, such as `permission_mode`, `--permission-mode`, and the inherited `FX_PERMISSION_MODE` environment variable.
+- Tetris-specific profile location uses `TETRIS_HOME`. Existing Fx runtime controls keep their `FX_*` names for compatibility.
 - A subcommand is an action, a flag changes one run and never saves, a setting persists, and an environment variable carries context from CI, a wrapper script, or a test.
 - Results go to stdout and diagnostics to stderr, `--json` fields are only added, and a usage error exits with 2.
 - A rename keeps the old spelling working with a warning that names its replacement and the release that drops it.
 
-The `fx-cli-shape` skill in `.fx/skills/fx-cli-shape/` has the full rules, the names that are already decided, and a script that lists the controls a diff adds or removes. Read it before you add, rename, or remove a control, and point your coding agent at it too. CI's `python3 -m scripts.check_cli_shape` fails when code reads an `FX_*` variable, compares a flag by hand, or parses a setting that its registries don't list. A new top-level command, a new stable environment variable, or a new project-safe setting needs a maintainer's approval in the pull request.
+The `fx-cli-shape` skill in `.fx/skills/fx-cli-shape/` has the naming rules and control registry. Read it before adding or changing a control. CI's `python3 -m scripts.check_cli_shape` checks `FX_*` and `TETRIS_*` variables, hand-parsed flags, and registered settings. New stable controls need review in the pull request.
 
 ## Test your change
 
-Run the tests that cover your change, build fx, and then use `./zig-out/bin/fx` to exercise the change yourself. Tests don't always start the full runtime, attach a terminal, or spawn background threads, so a passing suite can still miss a startup crash or a rendering regression. Confirm that fx didn't abort, that stderr is clean, and that the behavior matches what you'll describe in the pull request.
+Run the tests that cover your change, build Tetris, and exercise the changed path with `./zig-out/bin/tetris`. Tests do not always start the full runtime, attach a TTY, or spawn background threads. Confirm that Tetris did not abort, stderr is clean, and the behavior matches the pull request description.
 
 ```bash
 zig fmt src/
@@ -78,7 +79,7 @@ bun install
 bun test cli.test.ts
 ```
 
-Zig unit tests sit in `test` blocks inside the source file they cover, and `zig build test` runs all of them. CI checks formatting with `zig fmt --check src/`. The end-to-end tests run the binary at `zig-out/bin/fx`, so build before you run them. Run only the end-to-end files that cover your change, because CI runs the whole suite on every push. The `tui-*` files drive fx inside tmux.
+Zig unit tests sit in `test` blocks inside the source file they cover, and `zig build test` runs them. CI checks formatting with `zig fmt --check src/`. End-to-end tests use `zig-out/bin/tetris`, so build before running them. Run only the end-to-end files that cover your change. The `tui-*` files exercise Tetris inside tmux.
 
 ### Add an end-to-end test file
 
@@ -91,19 +92,19 @@ Every root `tests/e2e/*.test.ts` file needs an entry in the first three files be
 | `tests/e2e/ci-shard-weights.json` | A weight that balances the four CI shards |
 | `tests/e2e/macos-platform-tests.json` | Needed only when the file branches on `process.platform` or `platform()` being `darwin` or `linux` |
 
-The corpus drives the macOS arm64 PGSO build, which profiles fx on the training files, optimizes the code they exercise for speed, and compiles the functions they show to be cold for size. Classify a file as training when it covers common or performance-sensitive behavior. Use verification-only for correctness, recovery, security, or rare behavior that the build must pass without treating it as hot. Use an intentional exclusion only for coverage that is nondeterministic, needs the network or credentials, involves sound, or tests the harness itself, and record the reason. A test added to an existing file inherits that file's classification, and removing a file means removing its entries.
+The corpus drives the macOS arm64 PGSO build, which profiles Tetris on the training files, optimizes the code they exercise for speed, and compiles functions they show to be cold for size. Classify common or performance-sensitive behavior as training. Use verification-only for correctness, recovery, security, or rare behavior. Exclude only coverage that is nondeterministic, needs the network or credentials, involves sound, or tests the harness itself, and record the reason.
 
 ### Reproduce a rendering bug
 
-fx prints into your terminal's scrollback instead of taking over the screen, so many rendering bugs appear only at certain sizes or after a resize. Reproduce a bug at the lowest layer that catches it:
+Tetris prints into your terminal's scrollback instead of taking over the screen, so many rendering bugs appear only at certain sizes or after a resize. Reproduce a bug at the lowest layer that catches it:
 
 1. A Zig unit test in `src/ui/resize_tests.zig` drives the transcript renderer against an in-process virtual terminal, with no TTY or signals. These tests are the fastest and run in `zig build test`.
 2. A tmux test in `tests/e2e/tui-resize.test.ts` covers bugs that need a real terminal and a real `SIGWINCH`. `tests/e2e/tmux-helpers.ts` provides `resizeWindow`, `capturePaneGrid`, and `capturePaneEscapes`.
-3. A recorded tape captures a session someone has already seen go wrong. Run fx with `FX_RECORD=/tmp/bug.fxtape`, or with `FX_DEBUG_RECORD=1` to write a private tape under `~/.fx/recordings/`, then replay it without a terminal:
+3. A recorded tape captures a session someone has already seen go wrong. Run Tetris with `FX_RECORD=/tmp/bug.fxtape`, or with `FX_DEBUG_RECORD=1` to write a private tape under `~/.tetris/recordings/`, then replay it without a terminal:
 
    ```bash
-   ./zig-out/bin/fx replay /tmp/bug.fxtape
-   ./zig-out/bin/fx replay /tmp/bug.fxtape --golden /tmp/bug.txt
+   ./zig-out/bin/tetris replay /tmp/bug.fxtape
+   ./zig-out/bin/tetris replay /tmp/bug.fxtape --golden /tmp/bug.txt
    ```
 
    `--golden` writes the final screen to a file that you can check in as the expected result.
@@ -125,14 +126,14 @@ The Fuzz workflow fuzzes each target on `main` every night for about 20 minutes,
 
 A saved input holds the values the test reads from its `std.testing.Smith`, in order. For example, a test that calls `smith.slice` reads a 4-byte little-endian length and then that many bytes. Inputs that the fuzzer saves are already in this form. Inline seeds go through `@import("fuzz_seed").slices`, which writes each one in this form for a test whose first read is `smith.slice`. A seed written as a plain string would lose its first four bytes to the length.
 
-To add a target, write the fuzz test in the file it covers and add an entry to `tests/fuzz/targets.json`. For a target outside the session manager, also import its file in `src/fuzz_targets.zig`. Pass the seeds and saved inputs to the test with `.corpus = &(@import("fuzz_seed").slices(.{ <seeds> }) ++ @import("fuzz_corpus").<target>.*)`. The session manager imports nothing from fx, so its targets keep their seeds as files in `tests/fuzz/corpus/<target>/` and pass `.corpus = &(.{""} ++ @import("build_options").fuzz_corpus_<target>.*)`. Set `iterations` so that one round of `--fuzz` takes about 30 seconds on a developer machine. `scripts/tests/test_fuzz_nightly.py` fails when an entry names a test that doesn't exist or that `zig build fuzz` can't reach. The MCP engine in `src/mcp/` imports only the standard library, so its targets live in `src/core/mcp_host/wire_tests.zig`. A file that holds only tests, like that one, is also imported from the test block in `src/main.zig`.
+To add a target, write the fuzz test in the file it covers and add an entry to `tests/fuzz/targets.json`. For a target outside the session manager, also import its file in `src/fuzz_targets.zig`. Pass the seeds and saved inputs to the test with `.corpus = &(@import("fuzz_seed").slices(.{ <seeds> }) ++ @import("fuzz_corpus").<target>.*)`. Because the session-manager code has no dependency on the main Tetris module, its targets keep their seeds as files in `tests/fuzz/corpus/<target>/` and pass `.corpus = &(.{""} ++ @import("build_options").fuzz_corpus_<target>.*)`. Set `iterations` so that one round of `--fuzz` takes about 30 seconds on a developer machine. `scripts/tests/test_fuzz_nightly.py` fails when an entry names a test that doesn't exist or that `zig build fuzz` can't reach. The MCP engine in `src/mcp/` imports only the standard library, so its targets live in `src/core/mcp_host/wire_tests.zig`. A file that holds only tests, like that one, is also imported from the test block in `src/main.zig`.
 
 ### Find data races
 
-`-Dsanitize-thread=true` builds fx and its tests with ThreadSanitizer, which reports two threads touching the same memory without synchronization. The build is slow and large, so install it to its own prefix:
+`-Dsanitize-thread=true` builds Tetris and its tests with ThreadSanitizer, which reports unsynchronized access to shared memory. The build is slow and large, so install it to its own prefix:
 
 ```bash
-TSAN_OPTIONS=halt_on_error=0:abort_on_error=0 zig build test -Dsanitize-thread=true -p /tmp/fx-tsan
+TSAN_OPTIONS=halt_on_error=0:abort_on_error=0 zig build test -Dsanitize-thread=true -p /tmp/tetris-tsan
 ```
 
 Without those options, the sanitizer aborts a test binary once it has reported a race, so that binary's later tests don't run. The Thread Sanitizer workflow runs the unit tests this way on `main` every night and lists each race in its job summary. It reports races without failing. A sanitized suite runs slower, so a few tests that depend on timing fail in it, such as the `command_runner` tests of output read after a command exits. Those failures aren't races.
@@ -145,15 +146,15 @@ The `Startup Latency` check fails a pull request when any benchmarked command ta
 ./benchmarks/startup.sh --quick
 ```
 
-The script builds a ReleaseSafe binary and needs hyperfine. On macOS, process and dynamic-loader overhead alone can exceed 2 ms, so compare local numbers between builds instead of against the budget. To measure an interactive launch up to its first frame, `benchmarks/first_frame.py` runs several binaries under the same machine load. In this example, `/tmp/fx-before` is a build of `main`:
+The script builds a ReleaseSafe binary and needs hyperfine. On macOS, process and dynamic-loader overhead alone can exceed 2 ms, so compare local numbers between builds instead of against the budget. `benchmarks/first_frame.py` measures an interactive launch and can compare a Tetris binary with a baseline.
 
 ```bash
-python3 benchmarks/first_frame.py --binary /tmp/fx-before --binary ./zig-out/bin/fx
+python3 benchmarks/first_frame.py --binary /tmp/tetris-before --binary ./zig-out/bin/tetris
 ```
 
 ### Check a TLA+ model
 
-`tests/tla/` holds TLA+ models of fx, such as the session manager, the MCP engine and host, ACP, `/usage`, the shell tool, the workspace indexer, and libfx. Most come with Bun drivers that run the real binary and have TLC check what it did. CI runs the libfx and MCP models on `main` and on pull requests that change the code they cover; run the matching checker yourself when you change behavior that one of the others describes. You need Java and `tla2tools.jar`, and `tests/tla/README.md` lists every model and covers setup.
+`tests/tla/` holds TLA+ models of Tetris's runtime and its `libfx` integration, such as the session manager, the MCP engine and host, ACP, `/usage`, the shell tool, and the workspace indexer. Most come with Bun drivers that run the real binary and have TLC check what it did. CI runs the libfx and MCP models on `main` and on pull requests that change the code they cover; run the matching checker yourself when you change behavior that one of the others describes. You need Java and `tla2tools.jar`, and `tests/tla/README.md` lists every model and covers setup.
 
 ```bash
 tests/tla/session_manager/check.sh SessionLog
@@ -163,7 +164,7 @@ bun test ./tests/tla/drivers/shell_command/
 
 ### Run the model evals
 
-The evals in `tests/evals/` drive the agent through `fx ask --json` against real models and need `AI_GATEWAY_API_KEY`. They make billed model calls and their results vary between runs, so they aren't part of the pull request checks.
+The evals in `tests/evals/` drive Tetris through `tetris ask --json` against real models and need `AI_GATEWAY_API_KEY`. They make billed model calls and their results vary between runs, so they aren't part of the pull request checks.
 
 ```bash
 cd tests/evals
@@ -171,11 +172,11 @@ bun install
 bun test
 ```
 
-`prompt-cache-ab.test.ts` compares how two fx builds keep the provider's prompt cache through mid-session changes: a branch switch, a permission change, folder rules, a restart, and a named skill. A recording proxy keeps every request, and for each run it reports the requests that break the cached prefix, the new and cached input tokens, and whether the answers are right. It runs only when the variables name two builds and the models to try:
+`prompt-cache-ab.test.ts` compares two Tetris builds through mid-session changes: a branch switch, a permission change, folder rules, a restart, and a named skill. It runs only when the variables name two builds and the models to try.
 
 ```bash
 cd tests/evals
-FX_CACHE_AB_BASELINE_BIN=/abs/path/to/base/fx FX_CACHE_AB_CANDIDATE_BIN=/abs/path/to/zig-out/bin/fx \
+FX_CACHE_AB_BASELINE_BIN=/abs/path/to/base/tetris FX_CACHE_AB_CANDIDATE_BIN=/abs/path/to/zig-out/bin/tetris \
   FX_CACHE_AB_MODELS=anthropic/claude-haiku-5.5,openai/gpt-6.1-sol bun test prompt-cache-ab.test.ts
 ```
 
@@ -183,41 +184,29 @@ FX_CACHE_AB_BASELINE_BIN=/abs/path/to/base/fx FX_CACHE_AB_CANDIDATE_BIN=/abs/pat
 
 ## Open a pull request
 
-1. Sign every commit before you push it. `main` accepts only commits with verified signatures, and squash merging is turned off, so a single unsigned commit blocks the merge. GitHub explains how to set up [commit signature verification](https://docs.github.com/en/authentication/managing-commit-signature-verification/about-commit-signature-verification) with an SSH or GPG key.
-2. Push your branch. Maintainers push to `vercel-labs/fx`. Outside contributors push to their fork and open the pull request against `main`.
-3. Open the pull request as a draft once your focused checks pass, so CI starts on it.
-4. Write the title as a plain imperative sentence, such as `Restore feedback report file clipboard`. Leave out bracketed prefixes like `[bug]`, because the type goes in a label.
-5. In the description, say what changes for users or callers, why it changes, and how you verified it, including what you ran with `./zig-out/bin/fx`.
+1. Follow the signature requirements shown for the Tetris repository. Do not assume upstream Fx branch rules apply.
+2. Push your feature branch to `lianihossam-eng/Tetris` and open a pull request with base `main`. Never push this work to `vercel-labs/fx`.
+3. Open the pull request as a draft after focused checks pass, so GitHub Actions can run.
+4. Write the title as a plain imperative sentence, such as `Restore feedback report file clipboard`. Keep type labels out of the title.
+5. Describe the user-visible change, why it is needed, and how you verified it, including the command run with `./zig-out/bin/tetris`.
 
-### Choose a label
-
-Every pull request needs exactly one `type:` label before it merges. Choose the label that matches the main reason the pull request exists:
-
-| Label | Use it when the pull request |
-| --- | --- |
-| `type: bug` | Fixes incorrect behavior |
-| `type: feature` | Adds a new user-facing capability |
-| `type: improvement` | Improves existing user-facing behavior |
-| `type: docs` | Changes documentation only |
-| `type: maintenance` | Changes internal tooling, dependencies, CI, or code structure without changing user-facing behavior |
-| `type: release` | Prepares or repairs a release |
-| `type: security` | Fixes or hardens a security boundary |
-
-Only maintainers can add labels. Maintainers add the label when they open the pull request and update it if the scope changes. When a pull request mixes kinds of change, the label follows its main purpose. Outside contributors leave the label off, and a maintainer adds it during review. A missing label never holds a pull request in draft.
+Use relevant labels from the Tetris repository's current label list. Do not assume the upstream `type:` labels or permissions apply.
 
 ## CI checks
 
-CI runs on every push to a pull request, including drafts. Linux x86_64 gates every change, because most fx behavior is the same on every platform. A result counts only for the exact commit it ran on, so each new push needs a new passing run.
+GitHub Actions runs on pushes to Tetris pull requests, including drafts. Linux x86_64 covers shared behavior. Review the checks on the latest PR commit; CI results from earlier commits do not verify a newer change.
 
-These five checks must pass before a pull request merges:
+The PR verification baseline is:
 
 | Check | What it runs |
 | --- | --- |
-| `Build & Test` | Formatting, the PGSO corpus, the public-surface, compactor-boundary, and indexer-boundary checks, the ReleaseSafe unit tests, and the SDK package jobs, including the libfx durable-session model check when the change needs it |
-| `E2E (deterministic)` | Every end-to-end file, split across four weighted shards, plus the MCP conformance baseline |
-| `Shellcheck` | `bash -n` and `shellcheck` on the scripts listed in the job, such as `benchmarks/startup.sh` and `scripts/detect-macos-need.sh` |
-| `Startup Latency` | The benchmarked CLI commands on a ReleaseSafe build, each held to 2 ms, plus the interactive performance test in `tests/e2e/tui-performance.test.ts` |
-| `macOS arm64` | The macOS checks when the change needs them, and otherwise a pass without starting a macOS runner |
+| `Build & Test` | Formatting, PGSO corpus, public-surface and module-boundary checks, unit tests, and SDK package jobs |
+| `E2E (deterministic)` | End-to-end files split across weighted shards plus the MCP conformance baseline |
+| `Shellcheck` | `bash -n` and `shellcheck` on workflow scripts |
+| `Startup Latency` | ReleaseSafe CLI startup benchmarks and the interactive performance test |
+| `macOS arm64` | macOS checks when the change needs them, otherwise a pass without starting a macOS runner |
+
+The Tetris `main` branch does not currently have branch protection configured. Review the PR checks manually before merging.
 
 CI retries a failed end-to-end file once. A file that passes only on the retry gets a warning annotation, and you should investigate it as a possible race.
 
@@ -273,14 +262,14 @@ Other runs start only on request:
 | Fuzzing of one target | `gh workflow run fuzz.yml --ref your-branch -f target=<target>` |
 | Unit tests with ThreadSanitizer | `gh workflow run tsan.yml --ref your-branch` |
 
-Only maintainers can start these runs or add the `ci:macos` label. If you're an outside contributor and your change needs one of them, ask in the pull request and a maintainer will start it. If CI doesn't start at all on your first pull request, a maintainer may need to approve the workflow run.
+Use `workflow_dispatch` in the Tetris repository for optional runs when you have write access. Runs that require GitHub secrets need those secrets configured in Tetris. A first-time workflow run may need approval in GitHub.
 
 ## Mark it ready for review
 
 Mark the pull request ready when all of these hold for its current commit:
 
-1. All five required checks passed. A queued, cancelled, skipped, or failed run doesn't count, and neither does a run on an earlier commit.
-2. You ran `./zig-out/bin/fx` through the changed behavior.
+1. The PR verification checks passed for the current commit. A queued, cancelled, skipped, or failed run does not count.
+2. You ran `./zig-out/bin/tetris` through the changed behavior.
 3. The diff against `main` contains only the files this change needs.
 4. The documentation that describes the behavior is up to date.
 
@@ -294,34 +283,28 @@ Update the documentation in the same pull request as the behavior it describes:
 - `sdk/README.md` documents libfx. Update it when libfx's public behavior or setup changes, as [sdk/AGENTS.md](sdk/AGENTS.md) describes.
 - Update this file when build steps, development setup, or collaboration rules change.
 
-Change `README.md` only when one of its statements becomes false, or when a change adds a capability as broad as the ones in its feature list. A new option, command, or environment variable belongs in `--help` and the manual.
+Keep `README.md` focused on Tetris's installation, identity, and high-level behavior. Put detailed options in `--help`; use the Fx manual only as a reference for inherited features.
 
-Don't edit `CHANGELOG.md` or the version in `src/main.zig`. Maintainers write the changelog when they prepare a release.
+For routine behavior changes, do not update the release version or changelog. Release-preparation PRs must update both versions and the changelog as described in [Releases](#releases).
 
 ### Changes to the manual
 
-The user manual at [fx.sh/docs](https://fx.sh/docs) is built from a private repository, so outside contributors can't edit it. When your change makes a manual page wrong or incomplete:
+The [Fx manual](https://fx.sh/docs) documents inherited agent features. It is maintained upstream and describes Fx's executable and profile defaults. Keep Tetris-specific installation, profile, and release instructions in this repository.
 
-- Maintainers update the page in a companion pull request and link it from theirs.
-- Outside contributors add a `## Docs` section to the pull request description with the exact change each affected page needs: the page URL, the section, and the text to add, replace, or remove. A maintainer makes the change in the manual.
-
-For example:
-
-```md
-## Docs
-
-- https://fx.sh/docs/configure-fx/permissions, "Change the mode": replace "<current text>" with "<new text>".
-- https://fx.sh/docs/using-fx/sessions: add "<new paragraph>" after the first paragraph.
-```
+When a change affects behavior documented only in the Fx manual, describe the affected page and required update in a `## Docs` section of the pull request. Do not claim that a Tetris-specific manual exists.
 
 ## Releases
 
-Maintainers prepare each release in a pull request that bumps `pub const version` in `src/main.zig` and adds the new entry to `CHANGELOG.md`. When that pull request merges, the release workflow finds no tag for the new version, builds the binaries for every platform, creates the tag, and publishes the GitHub Release along with the binaries that the install script and `fx upgrade` download. Never create a version tag by hand. The [Releasing](AGENTS.md#releasing) section of AGENTS.md describes the changelog format and release markers.
+The release workflow reads `pub const version` from `src/main.zig` and the package version from `build.zig.zon`. Keep both versions aligned. When a new tag is missing, the workflow builds the platform binaries, creates the tag, and publishes a GitHub Release in `lianihossam-eng/Tetris`. The release body comes from the current changelog markers. Never create a version tag by hand.
 
-To check release artifacts without publishing anything, run **Actions > Release** on `main` with `validate_only` enabled. The run builds every target, runs the PGSO qualification, and notarizes the macOS binaries. It creates no tag or GitHub Release, uploads nothing to the CDN, and changes no update channel.
+To check release artifacts without publishing, run **Actions > Release** on `main` with `validate_only` enabled. It builds release targets and runs the applicable signing checks. It creates no tag or GitHub Release.
 
-After CI passes on `main`, the dev release workflow publishes binaries for that commit. Run `fx upgrade --channel dev` to follow those builds, and `fx upgrade --channel stable` to go back to tagged releases.
+Before the first stable macOS release, configure these **repository-level Actions variables** with Tetris's Apple Developer identity: `APPLE_DEVELOPER_IDENTITY`, `APPLE_TEAM_ID`, and `TETRIS_SIGNING_IDENTIFIER`. The `bench.yml` signed-binary validation also reads the team and signing-identifier variables.
+
+The `apple-signing` environment must contain the existing secrets `APPLE_DEVELOPER_ID_P12_BASE64`, `APPLE_DEVELOPER_ID_P12_PASSWORD`, `APPLE_NOTARY_KEY_P8_BASE64`, `APPLE_NOTARY_KEY_ID`, and `APPLE_NOTARY_ISSUER_ID`. Without the Tetris-owned identity, team, identifier, certificate, and notarization credentials, stable macOS signing cannot run.
+
+After CI passes on `main`, the dev release workflow publishes Tetris binaries for that commit. Run `tetris upgrade --channel dev` to follow those builds, and `tetris upgrade --channel stable` to return to tagged releases.
 
 ## License
 
-fx is licensed under [Apache-2.0](LICENSE). Unless you state otherwise, a contribution you submit for inclusion in fx is licensed under the same terms, as section 5 of the license describes.
+Tetris is licensed under [Apache-2.0](LICENSE). Unless you state otherwise, a contribution submitted for inclusion in Tetris is licensed under the same terms, as section 5 of the license describes.

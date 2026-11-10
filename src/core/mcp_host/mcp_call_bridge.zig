@@ -318,11 +318,11 @@ fn writeReply(stream: std.Io.net.Stream, status: wire.Status, reason: ?wire.Reas
 
 fn refusalMessage(reason: wire.Reason) []const u8 {
     return switch (reason) {
-        .closed => "The fx session's shell call that started this command has ended. Run fx mcp call from a command in a new shell call.",
-        .unauthorized => "This command was not started by a running fx shell call, or that call has ended. Run fx mcp call from a command fx's shell tool runs, not from one left running in the background.",
-        .unsupported_version => "This fx mcp call is from another fx version than the running session. Run the fx that started the session, or restart the session with this one.",
-        .busy => "Too many fx mcp call requests are running in this session. Nothing ran; try again when one finishes.",
-        .malformed => "The request was not an fx mcp call request. Send requests with the fx that started the session.",
+        .closed => "The Tetris session's shell call that started this command has ended. Run tetris mcp call from a command in a new shell call.",
+        .unauthorized => "This command was not started by a running tetris shell call, or that call has ended. Run tetris mcp call from a command Tetris's shell tool runs, not from one left running in the background.",
+        .unsupported_version => "This tetris mcp call is from another Tetris version than the running session. Run the tetris executable that started the session, or restart the session with this one.",
+        .busy => "Too many tetris mcp call requests are running in this session. Nothing ran; try again when one finishes.",
+        .malformed => "The request was not a tetris mcp call request. Send requests with the tetris that started the session.",
         .too_large => "The request is over 1 MiB. Pass smaller arguments.",
     };
 }
@@ -379,7 +379,7 @@ fn serve(stream: std.Io.net.Stream) void {
     bridge.mutex.lockUncancelable(io);
     bridge.live.ensureUnusedCapacity(gpa, 1) catch {
         bridge.mutex.unlock(io);
-        _ = writeReply(stream, .failed, null, "fx could not take this request: out of memory.");
+        _ = writeReply(stream, .failed, null, "Tetris could not take this request: out of memory.");
         return;
     };
     const admitted = step(.{ .request = .{ .token = request.token orelse @splat(0), .version = request.version } });
