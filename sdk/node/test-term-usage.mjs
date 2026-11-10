@@ -67,7 +67,7 @@ async function startTerminal({ hold = false } = {}) {
       await new Promise((resolve) => setTimeout(resolve, 10));
     }
   };
-  await waitFor(() => grid().includes("𝒇x"), "startup");
+  await waitFor(() => grid().includes("tetris v"), "startup");
   return { terminal, runtime, reports, release, holdReads: () => { hold = true; }, grid, waitFor, stderr: () => stderr };
 }
 

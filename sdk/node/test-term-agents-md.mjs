@@ -99,7 +99,7 @@ async function systemTextsWith(workspace, label, { turns = 1, respond = () => nu
     }
   };
   try {
-    await waitFor(() => grid().includes("𝒇x"), "startup");
+    await waitFor(() => grid().includes("tetris v"), "startup");
     for (let turn = 1; turn <= turns; turn += 1) {
       runtime.write(`${label} prompt ${turn}\r`);
       await waitFor(() => grid().includes(`${label} answered ${turn}`), `turn ${turn}`);
@@ -141,17 +141,17 @@ const reads = [];
 function readRules({ path, signal }) {
   if (!(signal instanceof AbortSignal)) throw new Error("readFile did not receive an AbortSignal");
   reads.push(path);
-  if (path === "/home/visitor/.fx/AGENTS.md") return encoder.encode("GLOBAL_RULE_SENTINEL\n").buffer;
+  if (path === "/home/visitor/.tetris/AGENTS.md") return encoder.encode("GLOBAL_RULE_SENTINEL\n").buffer;
   if (path === "/workspace/AGENTS.md") return encoder.encode("PROJECT_RULE_SENTINEL\n");
   return null;
 }
 
 const [readable] = await systemTextsWith(workspaceWith(readRules), "readable");
 expectIncludes(readable, "<project-instructions-guidance>", "readable");
-expectIncludes(readable, "<global-rules from=\"/home/visitor/.fx/AGENTS.md\">\nGLOBAL_RULE_SENTINEL\n</global-rules>", "readable");
+expectIncludes(readable, "<global-rules from=\"/home/visitor/.tetris/AGENTS.md\">\nGLOBAL_RULE_SENTINEL\n</global-rules>", "readable");
 expectIncludes(readable, "<project-rules from=\"AGENTS.md\">\nPROJECT_RULE_SENTINEL\n</project-rules>", "readable");
 expectExcludes(readable, "host cannot read instruction files", "readable");
-if (reads.join(",") !== "/home/visitor/.fx/AGENTS.md,/workspace/AGENTS.md") {
+if (reads.join(",") !== "/home/visitor/.tetris/AGENTS.md,/workspace/AGENTS.md") {
   throw new Error(`readable: unexpected readFile paths: ${reads.join(",")}`);
 }
 
@@ -177,10 +177,10 @@ expectIncludes(unreadableTurnTwo, "<project-rules-omitted from=\"AGENTS.md\" rea
 expectExcludes(unreadableTurnTwo, "from=\"/AGENTS.md\"", "unreadable-after-tool");
 
 const [failing] = await systemTextsWith(workspaceWith(({ path }) => {
-  if (path === "/home/visitor/.fx/AGENTS.md") throw new Error("host read failed");
+  if (path === "/home/visitor/.tetris/AGENTS.md") throw new Error("host read failed");
   return new Uint8Array([0x72, 0x75, 0xff, 0x6c, 0x65]);
 }), "failing");
-expectIncludes(failing, "<project-rules-omitted from=\"/home/visitor/.fx/AGENTS.md\" reason=\"unreadable rule file\" />", "failing");
+expectIncludes(failing, "<project-rules-omitted from=\"/home/visitor/.tetris/AGENTS.md\" reason=\"unreadable rule file\" />", "failing");
 expectIncludes(failing, "<project-rules-omitted from=\"AGENTS.md\" reason=\"unreadable rule file\" />", "failing");
 expectExcludes(failing, "<global-rules", "failing");
 
