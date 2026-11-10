@@ -247,7 +247,7 @@ describe("poisoned repository", () => {
       expect(sentinelRuns(fixture)).toEqual([]);
       expect(gateway.classifierRequests).toHaveLength(0);
       const bodies = gateway.requests.map((request: { body: string }) => request.body);
-      expect(toolResult(bodies[1]!, "status")).toContain("tetris did not run this git command");
+      expect(toolResult(bodies[1]!, "status")).toContain("Tetris did not run this git command");
     },
     TIMEOUT,
   );

@@ -641,14 +641,20 @@ function expectSkillsMenuGrid(
   grid: string[],
   count: number,
   names: string[],
+  options: { fullHeader?: boolean } = {},
 ): void {
   const text = grid.join("\n");
   expect(text).toContain(`Skills ${count}`);
   expect(text).toContain("[All]");
   expect(text).toContain("tetris");
   expect(text).not.toContain("[Tetris]");
-  expect(text).toContain("Workspace");
-  expect(text).toContain("Codex");
+  if (options.fullHeader === false) {
+    // A narrow pane drops the other source tabs and names the active one.
+    expect(text).toContain("Source ");
+  } else {
+    expect(text).toContain("Workspace");
+    expect(text).toContain("Codex");
+  }
   expect(text).toContain("tetris · Global");
   expect(names.some((name) => text.includes(name))).toBe(true);
   expect(text).not.toContain("Visible skills (");
@@ -1208,7 +1214,7 @@ async function runLargeSkillResizeAttempt(attempt: number): Promise<string> {
     );
     expect(attemptLine(shrinkAttempt, "tmux_clear_history_complete")).toBeUndefined();
     const shrinkGrid = await waitForSkillsMenuGrid(s, LARGE_SKILL_COUNT);
-    expectSkillsMenuGrid(shrinkGrid, LARGE_SKILL_COUNT, fixture.names);
+    expectSkillsMenuGrid(shrinkGrid, LARGE_SKILL_COUNT, fixture.names, { fullHeader: false });
     const shrinkScrollback = await s.captureFullScrollback();
     writeFileSync(paneAfterShrinkPath, (await s.capturePane()) + "\n");
     writeFileSync(scrollbackAfterShrinkPath, shrinkScrollback);

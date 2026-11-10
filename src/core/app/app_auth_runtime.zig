@@ -2198,7 +2198,7 @@ pub fn Runtime(comptime App: type) type {
             alloc: std.mem.Allocator,
             failure: auth_runtime.CredentialFailure,
         ) ![]u8 {
-            const source_label = credentials.sourceLabel(failure.source);
+            const source_label = credentials.sourceSentenceLabel(failure.source);
             return switch (failure.reason) {
                 .invalid_credential => alloc.print(
                     "{s} sign-in expired.\npress enter to sign in again. Your prompt is saved.",
@@ -3545,7 +3545,7 @@ test "prompt credential refresh failure is recoverable and detail-free" {
     app.auth.refresh_error = error.OAuthRequestFailed;
 
     try std.testing.expect(!try Runtime(TestApp).preparePromptCredential(&app, (&app).agent()));
-    try std.testing.expect(std.mem.find(u8, app.transcript.items, "tetris login credential refresh failed.") != null);
+    try std.testing.expect(std.mem.find(u8, app.transcript.items, "Tetris login credential refresh failed.") != null);
     try std.testing.expect(std.mem.find(u8, app.transcript.items, "press enter to retry.") != null);
     try std.testing.expect(std.mem.find(u8, app.transcript.items, "Your prompt is saved.") != null);
     try std.testing.expect(std.mem.find(u8, app.transcript.items, "Choose another source") == null);
@@ -3575,7 +3575,7 @@ test "permanent prompt credential failure is one repair episode" {
     );
     try std.testing.expectEqual(
         @as(usize, 1),
-        std.mem.count(u8, app.transcript.items, "tetris login sign-in expired."),
+        std.mem.count(u8, app.transcript.items, "Tetris login sign-in expired."),
     );
     try std.testing.expect(std.mem.find(u8, app.transcript.items, "Your prompt is saved.") != null);
 }
@@ -3599,7 +3599,7 @@ test "prompt credential admission rejects a credential that remains unavailable"
 
     try std.testing.expect(!try Runtime(TestApp).preparePromptCredential(&app, (&app).agent()));
     try std.testing.expectEqual(@as(usize, 2), app.auth.refresh_count);
-    try std.testing.expect(std.mem.find(u8, app.transcript.items, "tetris login sign-in expired.") != null);
+    try std.testing.expect(std.mem.find(u8, app.transcript.items, "Tetris login sign-in expired.") != null);
     try std.testing.expect(std.mem.find(u8, app.transcript.items, "press enter to sign in again.") != null);
     try std.testing.expect(std.mem.find(u8, app.transcript.items, "Your prompt is saved.") != null);
     try std.testing.expect(!app.auth.picker_opened);
@@ -3650,7 +3650,7 @@ test "queued prompt admission rejects a missing credential without refreshing" {
 
     try std.testing.expect(!try Runtime(TestApp).admitQueuedPromptCredential(&app, (&app).agent()));
     try std.testing.expectEqual(@as(usize, 0), app.auth.refresh_count);
-    try std.testing.expect(std.mem.find(u8, app.transcript.items, "tetris login sign-in expired.") != null);
+    try std.testing.expect(std.mem.find(u8, app.transcript.items, "Tetris login sign-in expired.") != null);
     try std.testing.expect(std.mem.find(u8, app.transcript.items, "Your prompt is saved.") != null);
 }
 
@@ -3752,7 +3752,7 @@ test "compaction credential failure preserves the first ordinary recovery notice
     try std.testing.expect(!try runtime.recoverCredentialFailure(&app, (&app).agent(), .fx_login, error.OAuthRequestFailed));
     try std.testing.expectEqual(@as(usize, 1), app.notice_write_count);
     try std.testing.expectEqualStrings(
-        "tetris login credential refresh failed.\npress enter to retry. Your prompt is saved.",
+        "Tetris login credential refresh failed.\npress enter to retry. Your prompt is saved.",
         app.transcript.items,
     );
     try std.testing.expectEqualStrings("keep this ordinary prompt", app.agent().submission.pending.?.draft.prompt);

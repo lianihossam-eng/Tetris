@@ -921,6 +921,16 @@ pub fn sourceLabel(source: Source) []const u8 {
     };
 }
 
+/// The source's name at the start of a sentence. Other labels already
+/// start with a capital or a variable name; only a login, which mirrors the
+/// `tetris login` command, needs one.
+pub fn sourceSentenceLabel(source: Source) []const u8 {
+    return switch (source) {
+        .fx_login => "Tetris login",
+        else => sourceLabel(source),
+    };
+}
+
 pub fn sourceRefreshable(source: Source) bool {
     return source == .fx_login or source == .chatgpt_subscription or source == .grok_subscription;
 }

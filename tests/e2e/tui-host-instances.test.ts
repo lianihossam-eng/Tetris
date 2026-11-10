@@ -33,7 +33,7 @@ async function switchAgent(session: TmuxSession, target: "next" | "previous" | n
   const from = rows.findIndex((row) => row.includes("(on screen)"));
   if (from < 0 || rows.length < 2) throw new Error(`no agent list in:\n${pane}`);
   const to = typeof target === "number"
-    ? rows.findIndex((row) => new RegExp(`\\bfx ${target}(?: \\(on screen\\))? ·`).test(row))
+    ? rows.findIndex((row) => new RegExp(`\\btetris ${target}(?: \\(on screen\\))? ·`).test(row))
     : target === "next" ? (from + 1) % rows.length : (from + rows.length - 1) % rows.length;
   if (to < 0) throw new Error(`no tetris ${target} row in:\n${pane}`);
   for (let step = 0; step < Math.abs(to - from); step += 1) await session.sendKeys(to > from ? "Down" : "Up");

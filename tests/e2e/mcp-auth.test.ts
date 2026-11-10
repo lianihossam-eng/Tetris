@@ -1780,7 +1780,7 @@ describe("MCP login", () => {
     const storePath = join(root.home, ".tetris", "mcp-credentials", "credentials-v3.json");
     writeFileSync(storePath, JSON.stringify({ ...JSON.parse(readFileSync(storePath, "utf8")), version: 3 }));
     const before = readFileSync(storePath, "utf8");
-    const unreadable = "tetris can't read the saved MCP sign-ins in ~/.tetris/mcp-credentials/credentials-v3.json. A newer tetris saved them, or they're damaged; fix or delete them, then try again.\n";
+    const unreadable = "Tetris can't read the saved MCP sign-ins in ~/.tetris/mcp-credentials/credentials-v3.json. A newer Tetris saved them, or they're damaged; fix or delete them, then try again.\n";
 
     expect((await runFx(["mcp", "list", "--json"], { cwd: root.workspace, env })).code).toBe(0);
     const logout = await runFx(["mcp", "logout", "fixture"], { cwd: root.workspace, env, timeoutMs: 20_000 });

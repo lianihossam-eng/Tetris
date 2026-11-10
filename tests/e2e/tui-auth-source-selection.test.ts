@@ -7191,7 +7191,7 @@ tmuxTest(
     await session.sendKeys("Enter");
     await session.waitForText(REFRESH_RECOVERY_RESPONSE, TIMEOUT);
     const full = await session.captureFullScrollback();
-    expect(full.match(/tetris login sign-in expired\./g)).toHaveLength(1);
+    expect(full.match(/Tetris login sign-in expired\./g)).toHaveLength(1);
     expect(gateway.requests).toHaveLength(1);
     expect(gateway.requests[0]!.body).toContain(prompt);
     expect(readFileSync(stderrPath, "utf8")).toBe("");

@@ -2243,7 +2243,7 @@ exec "$FX_MCP_FIXTURE_RUNTIME" "$FX_MCP_FIXTURE_PATH"`,
     expect(JSON.parse(result.stdout).output).toContain("Operation timeout complete.");
     expect(activeGateway.requests).toHaveLength(3);
     const toolResult = toolResultText(activeGateway.requests[2]?.body ?? "", "call_mcp");
-    expect(toolResult).toStartWith("tetris stopped waiting for MCP server 'fixture': it did not answer within its operation timeout.");
+    expect(toolResult).toStartWith("Tetris stopped waiting for MCP server 'fixture': it did not answer within its operation timeout.");
     expect(toolResult).toContain("Raise operation_timeout_ms for this server in its MCP config if it needs longer.");
     expect(toolResult).not.toContain("Cancelled");
     const wire = readWire(root.wireLogPath);
@@ -3786,7 +3786,7 @@ describe("MCP stdio servers", () => {
     expect(Date.now() - started).toBeLessThan(10_000);
     expect(calls(root)).toHaveLength(0);
     expect(modelSaw()).toContain("MCP server 'fixture' is unavailable");
-    expect(modelSaw()).toContain("an MCP version tetris doesn't support");
+    expect(modelSaw()).toContain("an MCP version Tetris doesn't support");
   }, 25_000);
 
   test("capability_search finds the tool under its tetris name and the model calls it", async () => {

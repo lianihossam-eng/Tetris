@@ -609,7 +609,7 @@ exec ${shellQuote(FX_BIN)} "$@"
   const platform = `${process.platform === "darwin" ? "macos" : "linux"}-${process.arch === "arm64" ? "aarch64" : "x86_64"}`;
   const revision = options.revision ?? "abcdef0123456789abcdef0123456789abcdef01";
   const stableArchiveRoute = `/v9.9.9/tetris-${platform}.tar.gz`;
-  const devArchiveRoute = `/dev/${revision}/tetris-${platform}.tar.gz`;
+  const devArchiveRoute = `/dev-${revision}/tetris-${platform}.tar.gz`;
   const server = Bun.serve({
     hostname: "127.0.0.1",
     port: 0,

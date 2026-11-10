@@ -134,7 +134,7 @@ async function runTtyPromptPermissionsCase(
       remainOnExit: true,
     });
     const prompt = await session.waitForText("Approve? [y/N]", TIMEOUT);
-    expect(prompt).toContain("tetris wants to run:");
+    expect(prompt).toContain("Tetris wants to run:");
     expect(existsSync(marker)).toBe(false);
     await session.sendText(decision === "approve" ? "y" : "n");
     await waitForPaneExit(session, 0);

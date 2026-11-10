@@ -322,7 +322,7 @@ describe("tetris mcp", () => {
 
     const rejected = await mcp(root, "reject", "web");
     expect(rejected.code).toBe(0);
-    expect(rejected.stdout).toBe("Rejected web. tetris won't start it in this project.\n");
+    expect(rejected.stdout).toBe("Rejected web. Tetris won't start it in this project.\n");
 
     const all = await mcp(root, "approve", "--all");
     expect(all.code).toBe(0);
